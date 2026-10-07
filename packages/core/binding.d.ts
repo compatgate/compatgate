@@ -50,6 +50,7 @@ export interface GapOutput {
   browser: string
   target: string
   since?: string
+  note?: string
 }
 
 export interface PositionOutput {

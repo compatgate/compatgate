@@ -52,3 +52,18 @@ test('columns are UTF-16 units across the whole call', () => {
   const result = binding.check('const s = "Мяу 🐈‍⬛"; structuredClone(s);', { filename: 'a.js', targets: TARGETS });
   assert.deepEqual(result.findings[0].start, { line: 1, column: 22 });
 });
+
+test('partial findings carry the BCD note', () => {
+  const result = binding.check('new BarcodeDetector();', { filename: 'a.js', targets: 'Chrome >= 97' });
+  const [finding] = result.findings;
+  assert.equal(finding?.confidence, 'partial');
+  assert.match(finding?.unsupported[0]?.note ?? '', /ChromeOS/);
+});
+
+test('a prototype method is a heuristic finding', () => {
+  const result = binding.check('[3, 1].toSorted();', { filename: 'a.js', targets: TARGETS });
+  assert.deepEqual(
+    result.findings.map(finding => [finding.feature, finding.confidence]),
+    [['javascript.builtins.Array.toSorted', 'heuristic']],
+  );
+});

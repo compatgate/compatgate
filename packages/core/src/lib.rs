@@ -37,6 +37,7 @@ pub struct GapOutput {
     pub browser: String,
     pub target: String,
     pub since: Option<String>,
+    pub note: Option<String>,
 }
 
 #[napi(object)]
@@ -160,5 +161,6 @@ fn gap(gap: Gap) -> GapOutput {
         browser: gap.browser.bcd_key().to_string(),
         target: format_version(gap.target),
         since: gap.since.map(format_version),
+        note: gap.note.map(str::to_string),
     }
 }
