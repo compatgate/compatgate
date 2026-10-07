@@ -1,0 +1,16 @@
+[package]
+name = "compatgate-napi"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+compatgate = { path = "../../crates/compatgate" }
+napi = "3"
+napi-derive = "3"
+
+[build-dependencies]
+napi-build = "2"
