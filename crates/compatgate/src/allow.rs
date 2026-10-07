@@ -58,7 +58,7 @@ fn compile(entry: &AllowEntry) -> Result<CompiledEntry, Error> {
         for pattern in &entry.files {
             let pattern = normalize(pattern);
             let absolute = pattern.starts_with('/') || pattern.as_bytes().get(1) == Some(&b':');
-            let full = if absolute { pattern } else { format!("{base}/{pattern}") };
+            let full = if absolute { pattern } else { collapse_dot_segments(&format!("{base}/{pattern}")) };
             let glob = GlobBuilder::new(&full)
                 .literal_separator(true)
                 .build()
@@ -68,6 +68,22 @@ fn compile(entry: &AllowEntry) -> Result<CompiledEntry, Error> {
         Some(builder.build().map_err(|error| Error::Allow(format!("{}: {error}", entry.feature)))?)
     };
     Ok(CompiledEntry { feature: entry.feature.clone(), packages: entry.packages.clone(), files })
+}
+
+/// globset matches `.` and `..` literally, while the checked filenames are absolute paths without them.
+/// Without this step `./src/**` would never match and no error would say why.
+fn collapse_dot_segments(path: &str) -> String {
+    let mut segments: Vec<&str> = Vec::new();
+    for segment in path.split('/') {
+        match segment {
+            "." => {}
+            ".." if segments.last().is_some_and(|last| !last.is_empty() && *last != "..") => {
+                segments.pop();
+            }
+            _ => segments.push(segment),
+        }
+    }
+    segments.join("/")
 }
 
 fn normalize(path: &str) -> String {
@@ -196,5 +212,17 @@ mod tests {
             &targets,
         );
         assert_eq!(issues, [AllowIssue::UnknownFeature { index: 1 }, AllowIssue::NativeInTargets { index: 2 }]);
+    }
+
+    #[test]
+    fn files_patterns_with_dot_segments_resolve_against_base_dir() {
+        let list = AllowList::new(&[
+            AllowEntry { files: vec!["./src/**".into()], ..entry("api.A") },
+            AllowEntry { files: vec!["../shared/**".into()], base_dir: "/p/app".into(), ..entry("api.B") },
+        ])
+        .unwrap();
+        assert_eq!(list.find("api.A", "/p/src/a.js"), Some(0));
+        assert_eq!(list.find("api.B", "/p/shared/a.js"), Some(1));
+        assert_eq!(list.find("api.B", "/p/app/shared/a.js"), None);
     }
 }

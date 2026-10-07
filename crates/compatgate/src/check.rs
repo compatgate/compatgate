@@ -45,7 +45,12 @@ pub struct CheckOutput {
 }
 
 pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList) -> Result<CheckOutput, Error> {
-    let source_type = SourceType::from_path(filename).map_err(|error| Error::Parse(format!("{filename}: {error}")))?;
+    let mut source_type =
+        SourceType::from_path(filename).map_err(|error| Error::Parse(format!("{filename}: {error}")))?;
+    // oxc parses `.js` without JSX, but React projects keep JSX in `.js` files, and linters accept it.
+    if source_type.is_javascript() {
+        source_type = source_type.with_jsx(true);
+    }
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, source_type)
         .with_options(ParseOptions { parse_regular_expression: true, ..ParseOptions::default() })

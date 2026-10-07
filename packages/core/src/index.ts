@@ -4,7 +4,7 @@ import { resolveTargets } from './targets.ts';
 
 export { ALLOW_FILE, AllowConfigError, clearAllowCache, findAllowFile, loadAllow, loadAllowFile } from './allow.ts';
 export type { AllowConfig, AllowEntry } from './allow.ts';
-export { resolveTargets } from './targets.ts';
+export { TargetsConfigError, resolveTargets } from './targets.ts';
 export type { ResolveTargetsOptions } from './targets.ts';
 
 export interface CheckOptions {

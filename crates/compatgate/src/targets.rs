@@ -11,6 +11,14 @@ pub struct Targets {
 
 impl Targets {
     pub fn resolve(query: &str) -> Result<Self, Error> {
+        if has_extends(query) {
+            // browserslist-rs resolves `extends` by running `node` in the current directory of the process.
+            // That finds the wrong package or none, and on wasm32 it returns nothing without an error.
+            // The JavaScript layer expands `extends` relative to the checked file instead.
+            return Err(Error::Targets(format!(
+                "{query}: \"extends\" must be expanded before the query reaches the core"
+            )));
+        }
         let distribs = browserslist::resolve([query], &browserslist::Opts::default())
             .map_err(|error| Error::Targets(format!("{query}: {error}")))?;
         let mut minimum: Vec<(Browser, u32)> = Vec::new();
@@ -47,6 +55,16 @@ impl Targets {
     pub fn ignored(&self) -> &[String] {
         &self.ignored
     }
+}
+
+fn has_extends(query: &str) -> bool {
+    let query = query.to_ascii_lowercase();
+    query
+        .split(',')
+        .flat_map(|part| part.split(" or "))
+        .flat_map(|part| part.split(" and "))
+        .map(str::trim)
+        .any(|term| term == "extends" || term.starts_with("extends "))
 }
 
 #[cfg(test)]
@@ -86,5 +104,13 @@ mod tests {
     fn rejects_an_invalid_query_and_names_it() {
         let error = Targets::resolve("Chrom >= 97").unwrap_err();
         assert!(matches!(&error, Error::Targets(text) if text.contains("Chrom >= 97")), "{error}");
+    }
+
+    #[test]
+    fn rejects_extends_because_the_caller_must_expand_it() {
+        for query in ["extends browserslist-config-foo", "Chrome >= 97, extends foo", "Chrome >= 97 or Extends foo"] {
+            let error = Targets::resolve(query).unwrap_err();
+            assert!(matches!(&error, Error::Targets(text) if text.contains("extends")), "{query}: {error}");
+        }
     }
 }

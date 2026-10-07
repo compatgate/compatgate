@@ -109,3 +109,9 @@ fn unknown_extension_is_a_parse_error() {
     let error = check("<template></template>", "a.vue", &targets, &AllowList::empty()).unwrap_err();
     assert!(matches!(&error, Error::Parse(text) if text.contains("a.vue")), "{error}");
 }
+
+#[test]
+fn parses_jsx_in_plain_javascript_files() {
+    assert_eq!(features("const a = <div />;\nstructuredClone(a);\n", "a.js"), ["api.structuredClone"]);
+    assert_eq!(features("export const a = <div />;\nstructuredClone(a);\n", "a.mjs"), ["api.structuredClone"]);
+}
