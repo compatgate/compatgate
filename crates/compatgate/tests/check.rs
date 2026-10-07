@@ -190,3 +190,88 @@ fn parse_error_names_line_and_column() {
         "{error}"
     );
 }
+
+#[test]
+fn partial_findings_carry_the_bcd_note() {
+    let targets = Targets::resolve("Chrome >= 97").unwrap();
+    let output = check("new BarcodeDetector();", "a.js", &targets, &AllowList::empty()).unwrap();
+    assert!(output.findings[0].gaps[0].note.unwrap().contains("ChromeOS"));
+}
+
+fn findings(source: &str, filename: &str) -> Vec<(&'static str, Confidence)> {
+    let targets = Targets::resolve(QUERY).unwrap();
+    check(source, filename, &targets, &AllowList::empty())
+        .unwrap()
+        .findings
+        .into_iter()
+        .map(|finding| (finding.feature, finding.confidence))
+        .collect()
+}
+
+#[test]
+fn a_unique_method_name_is_a_heuristic_finding() {
+    assert_eq!(
+        findings("[3, 1].toSorted();", "a.js"),
+        [("javascript.builtins.Array.toSorted", Confidence::Heuristic)]
+    );
+    assert_eq!(
+        findings("other.union(set);", "a.js"),
+        [("javascript.builtins.Set.union", Confidence::Heuristic)]
+    );
+}
+
+#[test]
+fn a_name_that_a_supported_member_also_has_is_skipped() {
+    assert!(findings("[1].map(x => x).filter(Boolean).at(-1);", "a.js").is_empty());
+}
+
+#[test]
+fn methods_of_imported_modules_are_skipped() {
+    assert!(findings("import _ from 'lodash';\n_.union([1], [2]);\n", "a.js").is_empty());
+    assert!(findings("import * as R from 'ramda';\nR.take(1, list);\n", "a.js").is_empty());
+    assert!(findings("const R = require('ramda');\nR.take(1, list);\n", "a.js").is_empty());
+    assert_eq!(findings("R.take(1, list);", "a.js").len(), 1);
+}
+
+#[test]
+fn allowing_another_method_with_the_same_name_suppresses_the_finding() {
+    let targets = Targets::resolve(QUERY).unwrap();
+    let allow = AllowList::new(&[AllowEntry {
+        feature: "javascript.builtins.TypedArray.toSorted".into(),
+        ..AllowEntry::default()
+    }])
+    .unwrap();
+    let output = check("[3, 1].toSorted();", "a.js", &targets, &allow).unwrap();
+    assert!(output.findings.is_empty());
+    assert_eq!(output.used_allow, [0]);
+}
+
+#[test]
+fn static_methods_are_not_reported_as_prototype_methods() {
+    let found = findings("Object.groupBy([], f);\nPromise.withResolvers();\n", "a.js");
+    assert!(
+        found.iter().all(|&(_, confidence)| confidence != Confidence::Heuristic),
+        "{found:?}"
+    );
+}
+
+#[test]
+fn methods_of_required_or_imported_modules_in_transpiled_code_are_skipped() {
+    let skipped = [
+        "require('ramda').take(1, xs);",
+        "const _ = require('lodash').default;\n_.union(a, b);",
+        "const lodash_1 = __importDefault(require(\"lodash\"));\nlodash_1.default.union(a, b);",
+        "var _lodash = _interopRequireDefault(require(\"lodash\"));\n_lodash.default.union(a, b);",
+        "var R = __webpack_require__(42);\nR.take(1, xs);",
+        "async function f() { const m = await import('ramda'); m.take(1, xs); }",
+        "const { fp } = require('lodash');\nfp.union(a, b);",
+    ];
+    for source in skipped {
+        assert!(findings(source, "a.js").is_empty(), "{source}");
+    }
+}
+
+#[test]
+fn a_single_argument_call_that_wraps_no_module_is_not_skipped() {
+    assert_eq!(findings("const x = foo(bar);\nx.take(1);", "a.js").len(), 1);
+}

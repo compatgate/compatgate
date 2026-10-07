@@ -21,6 +21,7 @@ napi-derive = "3"
 oxc_allocator = "0.152"
 oxc_ast = "0.152"
 oxc_parser = "0.152"
+oxc_regular_expression = "0.152"
 oxc_semantic = "0.152"
 oxc_span = "0.152"
 

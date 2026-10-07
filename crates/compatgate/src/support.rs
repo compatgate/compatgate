@@ -11,6 +11,8 @@ pub struct Gap {
     pub target: u32,
     /// The first version with full support, if any.
     pub since: Option<u32>,
+    /// The BCD note for partial support, if the target has partial support and BCD explains it.
+    pub note: Option<&'static str>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -34,9 +36,13 @@ pub fn evaluate(feature: FeatureId, targets: &Targets) -> Verdict {
             browser,
             target,
             since: (full != UNSUPPORTED).then_some(full),
+            note: None,
         };
         if feature.partial_support(browser) <= target {
-            partial.push(gap);
+            partial.push(Gap {
+                note: feature.partial_note(browser),
+                ..gap
+            });
         } else {
             unsupported.push(gap);
         }
@@ -73,6 +79,7 @@ mod tests {
                 browser: Browser::Chrome,
                 target: encode_version("97").unwrap(),
                 since: encode_version("98"),
+                note: None,
             }])
         );
     }

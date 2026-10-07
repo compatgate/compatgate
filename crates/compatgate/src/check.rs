@@ -2,12 +2,12 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_parser::{ParseOptions, Parser};
-use oxc_semantic::SemanticBuilder;
+use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
 use crate::Error;
 use crate::allow::AllowList;
-use crate::detect::{Use, globals};
+use crate::detect::{Use, globals, guards, methods, regex, syntax};
 use crate::position::{LineIndex, Position};
 use crate::support::{Gap, Verdict, evaluate};
 use crate::targets::Targets;
@@ -23,7 +23,7 @@ pub enum Kind {
 pub enum Confidence {
     /// The detector knows the feature is used.
     Exact,
-    /// The detector guesses from a name. Plan 2 adds the first such detector.
+    /// The detector guesses from a name: a method call on an object of unknown type.
     Heuristic,
     /// Some targets support the feature only partially.
     Partial,
@@ -47,6 +47,35 @@ pub struct CheckOutput {
 }
 
 pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList) -> Result<CheckOutput, Error> {
+    let uses = with_semantic(source, filename, |semantic, allocator| {
+        let mut uses = globals::detect(semantic);
+        uses.extend(syntax::detect(semantic));
+        uses.extend(regex::detect(semantic, allocator));
+        uses.extend(methods::detect(semantic, targets));
+        uses.retain(|usage| !guards::is_guarded(semantic, usage));
+        uses
+    })?;
+    let lines = LineIndex::new(source);
+    let mut output = CheckOutput::default();
+    for usage in uses {
+        record(&mut output, usage, filename, targets, allow, &lines);
+    }
+    // Detectors walk hash maps, so the order of their output is not stable.
+    output
+        .findings
+        .sort_by_key(|finding| (finding.start.line, finding.start.column));
+    output.used_allow.sort_unstable();
+    output.used_allow.dedup();
+    Ok(output)
+}
+
+/// Parses the source and builds the scope data. Detector tests use it too, so they parse exactly
+/// like `check` does.
+pub(crate) fn with_semantic<R>(
+    source: &str,
+    filename: &str,
+    run: impl for<'a> FnOnce(&Semantic<'a>, &'a Allocator) -> R,
+) -> Result<R, Error> {
     // oxc knows only lower-case extensions, but `A.JS` is a valid file on case-insensitive file systems.
     let name = Path::new(filename)
         .file_name()
@@ -80,24 +109,12 @@ pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList)
         .with_build_nodes(true)
         .build(&parsed.program)
         .semantic;
-    let lines = LineIndex::new(source);
-    let mut output = CheckOutput::default();
-    for usage in globals::detect(&semantic) {
-        record(&mut output, usage, Confidence::Exact, filename, targets, allow, &lines);
-    }
-    // Detectors walk hash maps, so the order of their output is not stable.
-    output
-        .findings
-        .sort_by_key(|finding| (finding.start.line, finding.start.column));
-    output.used_allow.sort_unstable();
-    output.used_allow.dedup();
-    Ok(output)
+    Ok(run(&semantic, &allocator))
 }
 
 fn record(
     output: &mut CheckOutput,
     usage: Use,
-    confidence: Confidence,
     filename: &str,
     targets: &Targets,
     allow: &AllowList,
@@ -105,10 +122,13 @@ fn record(
 ) {
     let (confidence, gaps) = match evaluate(usage.feature, targets) {
         Verdict::Supported => return,
-        Verdict::Unsupported(gaps) => (confidence, gaps),
+        Verdict::Unsupported(gaps) => (usage.confidence, gaps),
         Verdict::Partial(gaps) => (Confidence::Partial, gaps),
     };
-    if let Some(index) = allow.find(usage.feature.as_str(), filename) {
+    let allowed = std::iter::once(usage.feature)
+        .chain(usage.alternatives.iter().copied())
+        .find_map(|feature| allow.find(feature.as_str(), filename));
+    if let Some(index) = allowed {
         output.used_allow.push(index);
         return;
     }
