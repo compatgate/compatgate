@@ -169,6 +169,9 @@ importers:
       '@mdn/browser-compat-data':
         specifier: 8.1.4
         version: 8.1.4
+      '@types/web':
+        specifier: 0.0.358
+        version: 0.0.358
       oxfmt:
         specifier: ^0.72.0
         version: 0.72.0
@@ -1019,6 +1022,9 @@ packages:
 
   '@types/node@24.19.1':
     resolution: {integrity: sha512-aS3/DG0oM05K0RIXXP+hKjinGG5IgSSVGzswZxW3O0sS3pH4/fycXundUC9XsszgKCk4gHXylTEK6hyFxVxnoQ==}
+
+  '@types/web@0.0.358':
+    resolution: {integrity: sha512-mNaTgu3PxD0NY0QTpMSFcs+BurApADI/h0oK/sKzkzobGw9F/GpAM4x3Vreul/EAsgm5I8uKzMnuSazZ1qHjgw==}
 
   '@typescript/typescript-aix-ppc64@7.0.2':
     resolution: {integrity: sha512-MTKKkWB7p/0E9xi1d1tHtZ5PiLkGEMIq88pK2CubZjOsLtYTLqhgIgi6zepFa+9GHZ6h05NMCkQxGKiPXMxXtQ==}
@@ -1912,6 +1918,8 @@ snapshots:
   '@types/node@24.19.1':
     dependencies:
       undici-types: 7.24.6
+
+  '@types/web@0.0.358': {}
 
   '@typescript/typescript-aix-ppc64@7.0.2':
     optional: true

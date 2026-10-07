@@ -7,7 +7,7 @@
 mod generated;
 
 pub use generated::BCD_VERSION;
-use generated::{FEATURES, PARTIAL};
+use generated::{FEATURES, INSTANCE_MEMBERS, NOTES, PARTIAL, SINGLETONS};
 
 /// Version value for "not supported". It is larger than any real version.
 pub const UNSUPPORTED: u32 = u32::MAX;
@@ -104,16 +104,44 @@ impl FeatureId {
 
     /// First version with partial support, or `UNSUPPORTED`.
     pub fn partial_support(self, browser: Browser) -> u32 {
+        self.partial_entry(browser).map_or(UNSUPPORTED, |entry| entry.2)
+    }
+
+    /// The BCD note that explains partial support in `browser`, if any.
+    pub fn partial_note(self, browser: Browser) -> Option<&'static str> {
+        let note = self.partial_entry(browser)?.3;
+        (note != UNSUPPORTED).then(|| NOTES[note as usize])
+    }
+
+    fn partial_entry(self, browser: Browser) -> Option<&'static (u32, u8, u32, u32)> {
         let key = (self.0, browser.index() as u8);
         PARTIAL
-            .binary_search_by(|&(feature, column, _)| (feature, column).cmp(&key))
-            .map(|index| PARTIAL[index].2)
-            .unwrap_or(UNSUPPORTED)
+            .binary_search_by(|&(feature, column, _, _)| (feature, column).cmp(&key))
+            .ok()
+            .map(|index| &PARTIAL[index])
     }
 }
 
 pub fn feature_ids() -> impl Iterator<Item = &'static str> {
     FEATURES.iter().map(|(id, _)| *id)
+}
+
+/// Instance members with this name, with a flag that tells whether a finding may name the member.
+/// JavaScript builtins can be findings; Web API members only make a name ambiguous.
+pub fn instance_members(name: &str) -> impl Iterator<Item = (FeatureId, bool)> {
+    let start = INSTANCE_MEMBERS.partition_point(|&(member, _, _)| member < name);
+    INSTANCE_MEMBERS[start..]
+        .iter()
+        .take_while(move |&&(member, _, _)| member == name)
+        .map(|&(_, feature, reportable)| (FeatureId(feature), reportable))
+}
+
+/// The Web API interface of a global singleton, for example `Navigator` for `navigator`.
+pub fn singleton_interface(name: &str) -> Option<&'static str> {
+    SINGLETONS
+        .binary_search_by(|&(singleton, _)| singleton.cmp(name))
+        .ok()
+        .map(|index| SINGLETONS[index].1)
 }
 
 /// Encodes `major.minor.patch` as `major << 16 | minor << 8 | patch`.
@@ -192,6 +220,50 @@ mod tests {
         assert_eq!(Browser::from_browserslist("ios_saf"), Some(Browser::SafariIos));
         assert_eq!(Browser::from_browserslist("and_chr"), Some(Browser::ChromeAndroid));
         assert_eq!(Browser::from_browserslist("op_mini"), None);
+    }
+
+    #[test]
+    fn reads_the_note_of_partial_support() {
+        let feature = FeatureId::find("api.BarcodeDetector").unwrap();
+        assert!(feature.partial_note(Browser::Chrome).unwrap().contains("ChromeOS"));
+        assert_eq!(feature.partial_note(Browser::Firefox), None);
+    }
+
+    #[test]
+    fn keeps_support_removed_only_in_a_preview_build() {
+        let feature = FeatureId::find("api.WebTransportDatagramDuplexStream.incomingHighWaterMark").unwrap();
+        assert_ne!(feature.full_support(Browser::Safari), UNSUPPORTED);
+    }
+
+    #[test]
+    fn finds_instance_members_by_name() {
+        let to_sorted: Vec<_> = instance_members("toSorted")
+            .map(|(feature, reportable)| (feature.as_str(), reportable))
+            .collect();
+        assert!(
+            to_sorted.contains(&("javascript.builtins.Array.toSorted", true)),
+            "{to_sorted:?}"
+        );
+        assert!(instance_members("map").any(|(feature, _)| feature.as_str() == "javascript.builtins.Array.map"));
+        assert!(instance_members("from").all(|(feature, _)| feature.as_str() != "javascript.builtins.Array.from"));
+        assert_eq!(instance_members("noSuchMember").count(), 0);
+    }
+
+    #[test]
+    fn finds_singleton_interfaces() {
+        assert_eq!(singleton_interface("navigator"), Some("Navigator"));
+        assert_eq!(singleton_interface("document"), Some("Document"));
+        assert_eq!(singleton_interface("Intl"), None);
+    }
+
+    #[test]
+    fn instance_members_are_sorted_for_binary_search() {
+        assert!(
+            generated::INSTANCE_MEMBERS
+                .windows(2)
+                .all(|pair| (pair[0].0, pair[0].1) <= (pair[1].0, pair[1].1))
+        );
+        assert!(generated::SINGLETONS.windows(2).all(|pair| pair[0].0 < pair[1].0));
     }
 
     #[test]
