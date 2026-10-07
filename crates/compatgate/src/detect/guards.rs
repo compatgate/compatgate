@@ -1,79 +1,195 @@
 //! Feature checks in the code: `'Segmenter' in Intl`, `typeof structuredClone`, `x && x()`, an early
-//! `return`, a `try` around a call, an optional call `x.m?.()`. A use under a check of the same
-//! feature is not a finding. Syntax cannot be checked this way, so syntax uses have no keys.
+//! `return`, a `try` around a call, an optional call `x.m?.()` or an optional member access `x?.y`.
+//! A use under a check of the same feature is not a finding. Syntax cannot be checked this way, so
+//! syntax uses have no keys.
+
+use std::collections::HashMap;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
     BinaryExpression, BinaryOperator, Expression, LogicalExpression, LogicalOperator, Statement, UnaryOperator,
 };
-use oxc_semantic::{AstNodes, Semantic};
+use oxc_semantic::{AstNodes, NodeId, Semantic};
 use oxc_span::{GetSpan, Span};
 
 use super::{Use, WINDOW_ALIASES};
 
-pub fn is_guarded(semantic: &Semantic<'_>, usage: &Use) -> bool {
-    let nodes = semantic.nodes();
-    let span = usage.span;
-    let call = enclosing_call(nodes, usage);
-    if usage.catchable && call.is_some_and(|(optional, callee_is_member)| optional && callee_is_member) {
-        return true;
-    }
-    let called = call.is_some();
-    let detectable = !usage.keys.is_empty();
-    // Reading a member returns `undefined` when the feature is missing, so the read is the check itself.
-    // A bare global throws `ReferenceError` instead, so reading it is a use.
-    let member_read = detectable && !called && is_member(nodes.kind(usage.node));
-    let node_span = nodes.kind(usage.node).span();
-    let tested = |expression: &Expression<'_>| member_read && is_tested_operand(semantic, expression, node_span);
-    let mut crossed_function = false;
-    for ancestor in nodes.ancestors(usage.node) {
-        let guarded = match ancestor.kind() {
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                crossed_function = true;
-                false
-            }
-            AstKind::UnaryExpression(unary) => {
-                detectable
-                    && unary.operator == UnaryOperator::Typeof
-                    && unary.argument.get_inner_expression().span() == node_span
-            }
-            AstKind::IfStatement(statement) => branch(
-                semantic,
-                usage,
-                &tested,
-                &statement.test,
-                statement.consequent.span(),
-                statement.alternate.as_ref().map(GetSpan::span),
-            ),
-            AstKind::ConditionalExpression(expression) => branch(
-                semantic,
-                usage,
-                &tested,
-                &expression.test,
-                expression.consequent.span(),
-                Some(expression.alternate.span()),
-            ),
-            AstKind::LogicalExpression(expression) => logical(semantic, usage, &tested, expression),
-            AstKind::TryStatement(statement) => {
-                // A `try` does not reach into a callback: it runs after the `try` has finished.
-                usage.catchable
-                    && called
-                    && !crossed_function
-                    && statement.handler.is_some()
-                    && within(statement.block.span, span)
-            }
-            AstKind::BlockStatement(block) => detectable && after_early_exit(semantic, &block.body, usage),
-            AstKind::FunctionBody(body) => detectable && after_early_exit(semantic, &body.statements, usage),
-            AstKind::Program(program) => detectable && after_early_exit(semantic, &program.body, usage),
-            AstKind::SwitchCase(case) => detectable && after_early_exit(semantic, &case.consequent, usage),
-            AstKind::StaticBlock(block) => detectable && after_early_exit(semantic, &block.body, usage),
-            _ => false,
-        };
-        if guarded {
-            return true;
+/// Finds the checks around uses. One instance serves all uses of a file, so the keys of early exits
+/// in a statement list are collected once, not once per use.
+pub struct Guards<'s, 'a> {
+    semantic: &'s Semantic<'a>,
+    /// For each statement list, by the node that holds it: every key that an early exit
+    /// `if (!X) return;` checks, with the index of the first such statement.
+    early_exits: HashMap<NodeId, HashMap<String, usize>>,
+}
+
+impl<'s, 'a> Guards<'s, 'a> {
+    pub fn new(semantic: &'s Semantic<'a>) -> Self {
+        Self {
+            semantic,
+            early_exits: HashMap::new(),
         }
     }
-    false
+
+    pub fn is_guarded(&mut self, usage: &Use) -> bool {
+        let detectable = !usage.keys.is_empty();
+        // Nothing can check such a use, and the walk below costs a pass over its ancestors.
+        if !detectable && !usage.catchable {
+            return false;
+        }
+        let semantic = self.semantic;
+        let nodes = semantic.nodes();
+        let span = usage.span;
+        let call = enclosing_call(nodes, usage);
+        if usage.catchable && call.is_some_and(|(optional, callee_is_member)| optional && callee_is_member) {
+            return true;
+        }
+        let called = call.is_some();
+        // Reading a member returns `undefined` when the feature is missing, so the read is the check itself.
+        // A bare global throws `ReferenceError` instead, so reading it is a use.
+        let member_read = detectable && !called && is_member(nodes.kind(usage.node));
+        if member_read && is_optional_object(nodes, usage.node) {
+            return true;
+        }
+        let node_span = nodes.kind(usage.node).span();
+        // The use is the tested value of the node that the walk comes from: `X`, `!X`, `A && X`, `X != null`.
+        // The walk keeps this flag instead of searching each tested expression for the use, which made
+        // long `||` chains cubic.
+        let mut tested = member_read;
+        let mut crossed_function = false;
+        for ancestor in nodes.ancestors(usage.node) {
+            let kind = ancestor.kind();
+            let guarded = match kind {
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
+                    crossed_function = true;
+                    false
+                }
+                AstKind::UnaryExpression(unary) => {
+                    detectable
+                        && unary.operator == UnaryOperator::Typeof
+                        && unary.argument.get_inner_expression().span() == node_span
+                }
+                AstKind::IfStatement(statement) => branch(
+                    semantic,
+                    usage,
+                    tested,
+                    &statement.test,
+                    statement.consequent.span(),
+                    statement.alternate.as_ref().map(GetSpan::span),
+                ),
+                AstKind::ConditionalExpression(expression) => branch(
+                    semantic,
+                    usage,
+                    tested,
+                    &expression.test,
+                    expression.consequent.span(),
+                    Some(expression.alternate.span()),
+                ),
+                AstKind::LogicalExpression(expression) => logical(semantic, usage, tested, expression),
+                AstKind::TryStatement(statement) => {
+                    // A `try` does not reach into a callback: it runs after the `try` has finished.
+                    usage.catchable
+                        && called
+                        && !crossed_function
+                        && statement.handler.is_some()
+                        && within(statement.block.span, span)
+                }
+                AstKind::BlockStatement(block) => {
+                    detectable && self.after_early_exit(ancestor.id(), &block.body, usage)
+                }
+                AstKind::FunctionBody(body) => {
+                    detectable && self.after_early_exit(ancestor.id(), &body.statements, usage)
+                }
+                AstKind::Program(program) => detectable && self.after_early_exit(ancestor.id(), &program.body, usage),
+                AstKind::SwitchCase(case) => {
+                    detectable && self.after_early_exit(ancestor.id(), &case.consequent, usage)
+                }
+                AstKind::StaticBlock(block) => detectable && self.after_early_exit(ancestor.id(), &block.body, usage),
+                _ => false,
+            };
+            if guarded {
+                return true;
+            }
+            tested = tested && passes_tested_value(semantic, kind, node_span);
+        }
+        false
+    }
+
+    /// `if (!X) return;` before the use, in the same statement list.
+    fn after_early_exit(&mut self, list: NodeId, statements: &[Statement<'_>], usage: &Use) -> bool {
+        let position = statements.partition_point(|statement| statement.span().end <= usage.span.start);
+        if !statements
+            .get(position)
+            .is_some_and(|statement| within(statement.span(), usage.span))
+        {
+            return false;
+        }
+        let semantic = self.semantic;
+        let first_exits = self
+            .early_exits
+            .entry(list)
+            .or_insert_with(|| early_exit_keys(semantic, statements));
+        usage
+            .keys
+            .iter()
+            .any(|key| first_exits.get(key).is_some_and(|&first| first < position))
+    }
+}
+
+fn early_exit_keys(semantic: &Semantic<'_>, statements: &[Statement<'_>]) -> HashMap<String, usize> {
+    let mut first_exits = HashMap::new();
+    for (index, statement) in statements.iter().enumerate() {
+        if let Statement::IfStatement(check) = statement
+            && check.alternate.is_none()
+            && exits(&check.consequent)
+        {
+            for key in negative_keys(semantic, &check.test) {
+                first_exits.entry(key).or_insert(index);
+            }
+        }
+    }
+    first_exits
+}
+
+/// Whether `kind` passes on the tested value from its child: `!X`, `A && X`, `(X)`, `X != null`.
+/// A member read that the code dereferences, `X.y`, throws when `X` is missing, so it is not a check.
+fn passes_tested_value(semantic: &Semantic<'_>, kind: AstKind<'_>, node_span: Span) -> bool {
+    match kind {
+        AstKind::ParenthesizedExpression(_)
+        | AstKind::TSAsExpression(_)
+        | AstKind::TSSatisfiesExpression(_)
+        | AstKind::TSInstantiationExpression(_)
+        | AstKind::TSNonNullExpression(_)
+        | AstKind::TSTypeAssertion(_)
+        | AstKind::LogicalExpression(_) => true,
+        AstKind::UnaryExpression(unary) => unary.operator == UnaryOperator::LogicalNot,
+        AstKind::BinaryExpression(binary) => {
+            is_equality(binary.operator)
+                && compared_with_undefined(semantic, binary).is_some_and(|operand| operand.span() == node_span)
+        }
+        _ => false,
+    }
+}
+
+/// `X?.y` and `X?.m()`: optional chaining reads nothing from a missing `X`.
+fn is_optional_object(nodes: &AstNodes<'_>, node: NodeId) -> bool {
+    let mut id = node;
+    while matches!(
+        nodes.parent_kind(id),
+        AstKind::ParenthesizedExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSTypeAssertion(_)
+    ) {
+        id = nodes.parent_id(id);
+    }
+    let span = nodes.kind(id).span();
+    match nodes.parent_kind(id) {
+        AstKind::StaticMemberExpression(member) => member.optional && member.object.span() == span,
+        AstKind::ComputedMemberExpression(member) => member.optional && member.object.span() == span,
+        _ => false,
+    }
 }
 
 /// The call whose callee is the use, or the use itself when it is a call: `(optional, callee is a member)`.
@@ -113,7 +229,7 @@ fn is_member(kind: AstKind<'_>) -> bool {
 fn branch(
     semantic: &Semantic<'_>,
     usage: &Use,
-    tested: &dyn Fn(&Expression<'_>) -> bool,
+    tested: bool,
     test: &Expression<'_>,
     consequent: Span,
     alternate: Option<Span>,
@@ -122,7 +238,7 @@ fn branch(
         return false;
     }
     if within(test.span(), usage.span) {
-        return tested(test);
+        return tested;
     }
     if within(consequent, usage.span) {
         return matches(usage, &positive_keys(semantic, test));
@@ -130,17 +246,12 @@ fn branch(
     alternate.is_some_and(|alternate| within(alternate, usage.span) && matches(usage, &negative_keys(semantic, test)))
 }
 
-fn logical(
-    semantic: &Semantic<'_>,
-    usage: &Use,
-    tested: &dyn Fn(&Expression<'_>) -> bool,
-    expression: &LogicalExpression<'_>,
-) -> bool {
+fn logical(semantic: &Semantic<'_>, usage: &Use, tested: bool, expression: &LogicalExpression<'_>) -> bool {
     if usage.keys.is_empty() {
         return false;
     }
     if within(expression.left.span(), usage.span) {
-        return tested(&expression.left);
+        return tested;
     }
     within(expression.right.span(), usage.span)
         && match expression.operator {
@@ -148,24 +259,6 @@ fn logical(
             LogicalOperator::Or => matches(usage, &negative_keys(semantic, &expression.left)),
             LogicalOperator::Coalesce => false,
         }
-}
-
-/// `if (!X) return;` before the use, in the same statement list.
-fn after_early_exit(semantic: &Semantic<'_>, statements: &[Statement<'_>], usage: &Use) -> bool {
-    let Some(position) = statements
-        .iter()
-        .position(|statement| within(statement.span(), usage.span))
-    else {
-        return false;
-    };
-    statements[..position].iter().any(|statement| match statement {
-        Statement::IfStatement(check) => {
-            check.alternate.is_none()
-                && exits(&check.consequent)
-                && matches(usage, &negative_keys(semantic, &check.test))
-        }
-        _ => false,
-    })
 }
 
 fn exits(statement: &Statement<'_>) -> bool {
@@ -298,24 +391,6 @@ fn within(outer: Span, inner: Span) -> bool {
     outer.start <= inner.start && inner.end <= outer.end
 }
 
-/// The use is the tested operand itself: `if (X)`, `!X`, `A && X`. A member read that the code
-/// dereferences, `X.y`, throws when `X` is missing, so it is not a check.
-fn is_tested_operand(semantic: &Semantic<'_>, expression: &Expression<'_>, node_span: Span) -> bool {
-    match expression.get_inner_expression() {
-        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
-            is_tested_operand(semantic, &unary.argument, node_span)
-        }
-        Expression::LogicalExpression(logical) => {
-            is_tested_operand(semantic, &logical.left, node_span)
-                || is_tested_operand(semantic, &logical.right, node_span)
-        }
-        Expression::BinaryExpression(binary) if is_equality(binary.operator) => {
-            compared_with_undefined(semantic, binary).is_some_and(|operand| operand.span() == node_span)
-        }
-        other => other.span() == node_span,
-    }
-}
-
 /// esbuild writes `typeof X !== "undefined"` as `typeof X < "u"`, and `typeof X === "undefined"` as
 /// `typeof X > "u"`. `present` selects the form that means "X is present".
 fn minified_typeof_keys(binary: &BinaryExpression<'_>, present: bool) -> Vec<String> {
@@ -342,13 +417,16 @@ fn minified_typeof_keys(binary: &BinaryExpression<'_>, present: bool) -> Vec<Str
     typeof_argument(operand).unwrap_or_default()
 }
 
-/// The member chain that `binary` compares with `undefined` or `void 0`. Member chains only: a bare
-/// global compared to `undefined` throws when it is missing.
+/// The member chain that `binary` compares with `undefined`, `void 0` or, with `==` and `!=`, with
+/// `null`. `undefined == null`, but `undefined !== null`. Member chains only: a bare global compared
+/// to `undefined` throws when it is missing.
 fn compared_with_undefined<'b, 'a>(
     semantic: &Semantic<'_>,
     binary: &'b BinaryExpression<'a>,
 ) -> Option<&'b Expression<'a>> {
+    let loose = matches!(binary.operator, BinaryOperator::Equality | BinaryOperator::Inequality);
     let is_undefined = |expression: &Expression<'_>| match expression.get_inner_expression() {
+        Expression::NullLiteral(_) => loose,
         Expression::UnaryExpression(unary) => unary.operator == UnaryOperator::Void,
         Expression::Identifier(identifier) => {
             identifier.name == "undefined"
@@ -374,7 +452,7 @@ fn compared_with_undefined<'b, 'a>(
     .then_some(operand)
 }
 
-/// `X !== undefined`, `void 0 !== X` and the `!=` forms. Callers pick the sign by operator.
+/// `X !== undefined`, `void 0 !== X`, `X != null` and the `==` forms. Callers pick the sign by operator.
 fn undefined_keys(semantic: &Semantic<'_>, binary: &BinaryExpression<'_>) -> Vec<String> {
     compared_with_undefined(semantic, binary)
         .map(chain_keys)

@@ -120,7 +120,10 @@ export function collectInstanceMembers(data) {
       // BCD does not mark prototype members, but their spec anchors do: "sec-array.prototype.tosorted".
       const specUrls = [].concat(value.__compat?.spec_url ?? []);
       if (specUrls.some(url => /\.prototype\./i.test(url))) {
-        members.push({ name, id: `javascript.builtins.${object}.${name}`, reportable: true });
+        // An accessor such as `ArrayBuffer.prototype.detached` is never called, so `x.detached()` is not it.
+        // It still makes the name ambiguous: a supported accessor of the same name hides the method.
+        const accessor = specUrls.some(url => /#sec-(get|set)-/i.test(url));
+        members.push({ name, id: `javascript.builtins.${object}.${name}`, reportable: !accessor });
       }
     }
   }

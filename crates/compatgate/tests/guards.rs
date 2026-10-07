@@ -140,3 +140,83 @@ fn negative_branches_and_minified_forms() {
     assert!(features("if (void 0 !== window.structuredClone) structuredClone(1);").is_empty());
     assert!(features("if (window.structuredClone !== undefined) structuredClone(1);").is_empty());
 }
+
+#[test]
+fn optional_chaining_on_the_member_checks_it() {
+    assert!(features("navigator.userAgentData?.brands;").is_empty());
+    assert!(features("navigator.userAgentData?.getHighEntropyValues(['platform']);").is_empty());
+    assert!(features("if (navigator.userAgentData?.mobile) {}").is_empty());
+    // The optional access comes after `brands` is read from `userAgentData`, which throws when it is missing.
+    assert_eq!(
+        features("navigator.userAgentData.brands?.length;"),
+        ["api.Navigator.userAgentData"]
+    );
+}
+
+#[test]
+fn a_loose_comparison_with_null_is_a_check() {
+    assert!(features("if (window.structuredClone != null) structuredClone(1);").is_empty());
+    assert!(features("if (null != window.structuredClone) structuredClone(1);").is_empty());
+    assert!(features("function f() { if (window.structuredClone == null) return; structuredClone(1); }").is_empty());
+}
+
+#[test]
+fn a_strict_comparison_with_null_is_not_a_check() {
+    // `undefined !== null`, so the call still runs in browsers without `structuredClone`.
+    let targets = Targets::resolve(QUERY).unwrap();
+    let source = "if (window.structuredClone !== null) structuredClone(1);";
+    let call = source.find("structuredClone(1)").unwrap() as u32;
+    let findings = check(source, "a.js", &targets, &AllowList::empty()).unwrap().findings;
+    assert!(
+        findings
+            .iter()
+            .any(|finding| finding.feature == "api.structuredClone" && finding.start.column == call),
+        "{findings:?}"
+    );
+}
+
+// Guard detection used to walk whole subtrees and whole statement lists for every use, so large
+// generated files in node_modules took minutes. These budgets are generous for a debug build; the
+// old code needed far longer, so a failure means the cost became super-linear again.
+const BUDGET: std::time::Duration = std::time::Duration::from_secs(2);
+
+fn time_check(source: String, filename: &'static str) -> (usize, std::time::Duration) {
+    // oxc visits the AST recursively, and a debug build overflows the 2 MiB stack of a test thread
+    // on a chain of 2000 terms. A release build on a main thread does not.
+    std::thread::Builder::new()
+        .stack_size(64 << 20)
+        .spawn(move || {
+            let targets = Targets::resolve(QUERY).unwrap();
+            let start = std::time::Instant::now();
+            let findings = check(&source, filename, &targets, &AllowList::empty())
+                .unwrap()
+                .findings
+                .len();
+            (findings, start.elapsed())
+        })
+        .unwrap()
+        .join()
+        .unwrap()
+}
+
+#[test]
+fn a_long_logical_chain_of_member_reads_is_checked_in_linear_time() {
+    let terms: Vec<String> = (0..2000).map(|i| format!("navigator.userActivation.a{i}")).collect();
+    // One term per line: on a single line, converting 4000 offsets to UTF-16 columns would dominate.
+    let (findings, elapsed) = time_check(format!("x = {};", terms.join(" ||\n")), "a.js");
+    assert_eq!(findings, 2000);
+    assert!(elapsed < BUDGET, "{elapsed:?}");
+}
+
+#[test]
+fn many_early_exits_are_checked_in_linear_time() {
+    let mut source = String::new();
+    for i in 0..20_000 {
+        source.push_str(&format!(
+            "if (!a{i}) return;\nObject.assign(t, s{i});\nstructuredClone(v{i});\n"
+        ));
+    }
+    let (findings, elapsed) = time_check(source, "a.cjs");
+    assert_eq!(findings, 20_000);
+    assert!(elapsed < BUDGET, "{elapsed:?}");
+}

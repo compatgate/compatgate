@@ -94,6 +94,29 @@ test('noteText strips HTML and takes the first note', () => {
   assert.equal(noteText(undefined), null);
 });
 
+test('collectInstanceMembers keeps getters and setters of builtins but does not report them', () => {
+  const compat = spec => ({ __compat: { spec_url: spec, support: {} } });
+  const members = collectInstanceMembers({
+    javascript: {
+      builtins: {
+        ArrayBuffer: {
+          detached: compat('https://tc39.es/#sec-get-arraybuffer.prototype.detached'),
+          transfer: compat('https://tc39.es/#sec-arraybuffer.prototype.transfer'),
+        },
+        Example: {
+          value: compat(['https://tc39.es/#sec-set-example.prototype.value']),
+        },
+      },
+    },
+    api: {},
+  });
+  assert.deepEqual(members, [
+    { name: 'detached', id: 'javascript.builtins.ArrayBuffer.detached', reportable: false },
+    { name: 'transfer', id: 'javascript.builtins.ArrayBuffer.transfer', reportable: true },
+    { name: 'value', id: 'javascript.builtins.Example.value', reportable: false },
+  ]);
+});
+
 test('collectInstanceMembers takes prototype members of builtins and members of Web API interfaces', () => {
   const compat = spec => ({ __compat: { spec_url: spec, support: {} } });
   const members = collectInstanceMembers({

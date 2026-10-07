@@ -7,7 +7,8 @@ use oxc_span::SourceType;
 
 use crate::Error;
 use crate::allow::AllowList;
-use crate::detect::{Use, globals, guards, methods, regex, syntax};
+use crate::detect::guards::Guards;
+use crate::detect::{Use, globals, methods, regex, syntax};
 use crate::position::{LineIndex, Position};
 use crate::support::{Gap, Verdict, evaluate};
 use crate::targets::Targets;
@@ -52,13 +53,20 @@ pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList)
         uses.extend(syntax::detect(semantic));
         uses.extend(regex::detect(semantic, allocator));
         uses.extend(methods::detect(semantic, targets));
-        uses.retain(|usage| !guards::is_guarded(semantic, usage));
-        uses
+        // Most uses are supported, and support is cheaper to look up than a check in the code.
+        let mut guards = Guards::new(semantic);
+        uses.into_iter()
+            .filter_map(|usage| match evaluate(usage.feature, targets) {
+                Verdict::Supported => None,
+                verdict => Some((usage, verdict)),
+            })
+            .filter(|(usage, _)| !guards.is_guarded(usage))
+            .collect::<Vec<_>>()
     })?;
     let lines = LineIndex::new(source);
     let mut output = CheckOutput::default();
-    for usage in uses {
-        record(&mut output, usage, filename, targets, allow, &lines);
+    for (usage, verdict) in uses {
+        record(&mut output, usage, verdict, filename, allow, &lines);
     }
     // Detectors walk hash maps, so the order of their output is not stable.
     output
@@ -115,12 +123,12 @@ pub(crate) fn with_semantic<R>(
 fn record(
     output: &mut CheckOutput,
     usage: Use,
+    verdict: Verdict,
     filename: &str,
-    targets: &Targets,
     allow: &AllowList,
     lines: &LineIndex<'_>,
 ) {
-    let (confidence, gaps) = match evaluate(usage.feature, targets) {
+    let (confidence, gaps) = match verdict {
         Verdict::Supported => return,
         Verdict::Unsupported(gaps) => (usage.confidence, gaps),
         Verdict::Partial(gaps) => (Confidence::Partial, gaps),

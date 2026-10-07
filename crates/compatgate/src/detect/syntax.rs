@@ -17,7 +17,6 @@ use crate::data::FeatureId;
 
 mod key {
     pub const BINARY_LITERALS: &str = "javascript.grammar.binary_numeric_literals";
-    pub const HASHBANG: &str = "javascript.grammar.hashbang_comments";
     pub const NUMERIC_SEPARATORS: &str = "javascript.grammar.numeric_separators";
     pub const OCTAL_LITERALS: &str = "javascript.grammar.octal_numeric_literals";
     pub const TEMPLATE_LITERALS: &str = "javascript.grammar.template_literals";
@@ -96,7 +95,6 @@ mod key {
 #[allow(dead_code)]
 pub const EMITTED: &[&str] = &[
     key::BINARY_LITERALS,
-    key::HASHBANG,
     key::NUMERIC_SEPARATORS,
     key::OCTAL_LITERALS,
     key::TEMPLATE_LITERALS,
@@ -233,6 +231,8 @@ pub fn untracked_reason(key: &str) -> Option<&'static str> {
         Some(BEHAVIOR)
     } else if key == "javascript.regular_expressions.buffer_boundary_assertion" {
         Some("a proposal that oxc does not parse yet")
+    } else if key == "javascript.grammar.hashbang_comments" {
+        Some("a hashbang line is stripped by Node and bundlers; browsers never see it")
     } else {
         None
     }
@@ -268,7 +268,6 @@ pub fn detect(semantic: &Semantic<'_>) -> Vec<Use> {
         }
         let mut add = |key: &'static str, span: Span| push(&mut uses, key, Kind::Syntax, span, id);
         match node.kind() {
-            AstKind::Hashbang(it) => add(key::HASHBANG, it.span),
             AstKind::NumericLiteral(it) => {
                 let raw = it.raw.as_ref().map_or("", |raw| raw.as_str());
                 numeric(
@@ -625,7 +624,6 @@ mod tests {
 
     const SAMPLES: &[(&str, &str)] = &[
         (key::BINARY_LITERALS, "0b101;"),
-        (key::HASHBANG, "#!/usr/bin/env node\n1;"),
         (key::NUMERIC_SEPARATORS, "1_000;"),
         (key::OCTAL_LITERALS, "0o17;"),
         (key::TEMPLATE_LITERALS, "`a`;"),
@@ -707,6 +705,13 @@ mod tests {
                 .unwrap_or_else(|| panic!("{key} has no sample"));
             assert!(detected(source, "a.js").contains(key), "{key} not detected in {source}");
         }
+    }
+
+    #[test]
+    fn a_hashbang_is_not_tracked() {
+        let hashbang = "javascript.grammar.hashbang_comments";
+        assert!(untracked_reason(hashbang).is_some());
+        assert!(!detected("#!/usr/bin/env node\n1;", "a.js").contains(&hashbang));
     }
 
     #[test]

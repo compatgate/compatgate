@@ -25,10 +25,9 @@ Pass `targets` or `allow` to skip the lookup.
   Module syntax (`import`, `export`, `import()`, top-level `await`) is not checked: bundlers replace it.
 - **Regular expressions**: lookbehind, named groups, modifiers, `\p{…}`, the `d`, `s`, `v`, `y` and `u` flags,
   in literals and in `RegExp()` with string arguments.
-- **Builtins and Web APIs** reached as globals: `structuredClone()`, `new Intl.Segmenter()`, `Object.groupBy()`,
-  `window.X`, and members of singletons such as `navigator.userActivation`.
-  `window.X`, `self.X` and `globalThis.X` count as the global `X`, also through chains such as
-  `window.navigator.userActivation`.
+- **Builtins and Web APIs** reached as globals: `structuredClone()`, `new Intl.Segmenter()`, `Object.groupBy()`
+  and members of singletons such as `navigator.userActivation`. `window.X`, `self.X` and `globalThis.X` count
+  as the global `X`, also through chains such as `window.navigator.userActivation`.
 - **Prototype methods** by name, such as `.toSorted()`. These findings are heuristic: names that a supported
   method also has (`.map()`) and calls on imported or required modules (`_.union()`), including transpiled
   `require` wrappers, are skipped.
@@ -51,13 +50,16 @@ Rules for checks:
 
 - A member read is a check only when it is the tested value itself: `if (navigator.userActivation)`.
   Reading something from it, as in `if (navigator.userActivation.isActive)`, is a finding.
+- Optional chaining on the member is a check: `navigator.userAgentData?.brands`.
+  In `navigator.userAgentData.brands?.length` the optional access comes too late, so it is a finding.
+- A loose comparison with `null` is a check: `window.X != null`. A strict one, `window.X !== null`, is not:
+  a missing member is `undefined`, not `null`.
+- Reading a bare global such as `if (structuredClone)` is still a finding: it throws in browsers that lack it.
 - Minified checks such as `typeof X<"u"` and `void 0 !== window.X` are recognized.
 - A `try` protects a call or a constructor only when it has a `catch` and the call runs inside the `try` block,
   not in a callback defined there.
 - Syntax is never protected by `try` or by an optional call.
 - A write that defines a global (`structuredClone = function () {}`) is not a use.
-
-Reading a bare global such as `if (structuredClone)` is still a finding: it throws in browsers that lack it.
 
 ## compatgate.jsonc
 
