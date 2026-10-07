@@ -48,3 +48,8 @@ test('validateAllow reports unknown and native features', () => {
 test('bcdVersion names the data version', () => {
   assert.equal(binding.bcdVersion(), '8.1.4');
 });
+
+test('columns are UTF-16 units across the whole call', () => {
+  const result = binding.check('const s = "привет 😀"; structuredClone(s);', { filename: 'a.js', targets: TARGETS });
+  assert.deepEqual(result.findings[0].start, { line: 1, column: 23 });
+});

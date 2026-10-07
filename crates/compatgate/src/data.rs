@@ -1,5 +1,7 @@
 //! Browser support data compiled from @mdn/browser-compat-data.
 
+// The generator writes this file. Formatting it would make it differ from the generator output.
+#[rustfmt::skip]
 mod generated;
 
 pub use generated::BCD_VERSION;
@@ -188,5 +190,14 @@ mod tests {
         assert_eq!(Browser::from_browserslist("ios_saf"), Some(Browser::SafariIos));
         assert_eq!(Browser::from_browserslist("and_chr"), Some(Browser::ChromeAndroid));
         assert_eq!(Browser::from_browserslist("op_mini"), None);
+    }
+
+    #[test]
+    fn partial_support_is_sorted_for_binary_search() {
+        assert!(
+            generated::PARTIAL
+                .windows(2)
+                .all(|pair| (pair[0].0, pair[0].1) < (pair[1].0, pair[1].1))
+        );
     }
 }

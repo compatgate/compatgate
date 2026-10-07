@@ -40,7 +40,9 @@ impl Targets {
             }
         }
         if minimum.is_empty() {
-            return Err(Error::Targets(format!("{query}: selects no browser with compatibility data")));
+            return Err(Error::Targets(format!(
+                "{query}: selects no browser with compatibility data"
+            )));
         }
         minimum.sort();
         ignored.sort();
@@ -103,14 +105,24 @@ mod tests {
     #[test]
     fn rejects_an_invalid_query_and_names_it() {
         let error = Targets::resolve("Chrom >= 97").unwrap_err();
-        assert!(matches!(&error, Error::Targets(text) if text.contains("Chrom >= 97")), "{error}");
+        assert!(
+            matches!(&error, Error::Targets(text) if text.contains("Chrom >= 97")),
+            "{error}"
+        );
     }
 
     #[test]
     fn rejects_extends_because_the_caller_must_expand_it() {
-        for query in ["extends browserslist-config-foo", "Chrome >= 97, extends foo", "Chrome >= 97 or Extends foo"] {
+        for query in [
+            "extends browserslist-config-foo",
+            "Chrome >= 97, extends foo",
+            "Chrome >= 97 or Extends foo",
+        ] {
             let error = Targets::resolve(query).unwrap_err();
-            assert!(matches!(&error, Error::Targets(text) if text.contains("extends")), "{query}: {error}");
+            assert!(
+                matches!(&error, Error::Targets(text) if text.contains("extends")),
+                "{query}: {error}"
+            );
         }
     }
 }

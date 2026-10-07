@@ -30,7 +30,11 @@ pub fn evaluate(feature: FeatureId, targets: &Targets) -> Verdict {
         if full <= target {
             continue;
         }
-        let gap = Gap { browser, target, since: (full != UNSUPPORTED).then_some(full) };
+        let gap = Gap {
+            browser,
+            target,
+            since: (full != UNSUPPORTED).then_some(full),
+        };
         if feature.partial_support(browser) <= target {
             partial.push(gap);
         } else {
@@ -75,7 +79,8 @@ mod tests {
 
     #[test]
     fn segmenter_is_unsupported_in_firefox_115() {
-        let Verdict::Unsupported(gaps) = evaluate(feature("javascript.builtins.Intl.Segmenter"), &targets(QUERY)) else {
+        let Verdict::Unsupported(gaps) = evaluate(feature("javascript.builtins.Intl.Segmenter"), &targets(QUERY))
+        else {
             panic!("expected Unsupported");
         };
         assert_eq!(gaps.len(), 1);
@@ -85,12 +90,18 @@ mod tests {
 
     #[test]
     fn feature_present_in_all_targets_is_supported() {
-        assert_eq!(evaluate(feature("javascript.builtins.Array.at"), &targets(QUERY)), Verdict::Supported);
+        assert_eq!(
+            evaluate(feature("javascript.builtins.Array.at"), &targets(QUERY)),
+            Verdict::Supported
+        );
     }
 
     #[test]
     fn only_partial_support_gives_partial() {
         let verdict = evaluate(feature("api.BarcodeDetector"), &targets("Chrome >= 97"));
-        assert!(matches!(verdict, Verdict::Partial(ref gaps) if gaps[0].browser == Browser::Chrome), "{verdict:?}");
+        assert!(
+            matches!(verdict, Verdict::Partial(ref gaps) if gaps[0].browser == Browser::Chrome),
+            "{verdict:?}"
+        );
     }
 }

@@ -42,9 +42,16 @@ impl<'a> LineIndex<'a> {
 
     pub fn position(&self, offset: u32) -> Position {
         let line = self.line_starts.partition_point(|&start| start <= offset) - 1;
-        let start = self.line_starts[line] as usize;
+        let mut start = self.line_starts[line] as usize;
+        // ESLint removes the byte order mark before it counts columns, so it is not a column here either.
+        if line == 0 && self.source.starts_with('\u{FEFF}') {
+            start = start.max('\u{FEFF}'.len_utf8()).min(offset as usize);
+        }
         let column = self.source[start..offset as usize].encode_utf16().count() as u32;
-        Position { line: line as u32 + 1, column }
+        Position {
+            line: line as u32 + 1,
+            column,
+        }
     }
 }
 
@@ -80,5 +87,11 @@ mod tests {
     fn end_of_source_is_a_valid_offset() {
         let source = "ab\n";
         assert_eq!(LineIndex::new(source).position(3), Position { line: 2, column: 0 });
+    }
+
+    #[test]
+    fn byte_order_mark_is_not_a_column() {
+        assert_eq!(at("\u{FEFF}ab", "b"), Position { line: 1, column: 1 });
+        assert_eq!(at("\u{FEFF}a\nb", "b"), Position { line: 2, column: 0 });
     }
 }

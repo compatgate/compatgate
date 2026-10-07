@@ -97,12 +97,20 @@ function readConfig(path: string, chain: readonly string[]): AllowEntry[] {
 
 function resolveExtends(target: string, from: string): string {
   if (target.startsWith('.') || isAbsolute(target)) {
-    return resolve(dirname(from), target);
+    const path = resolve(dirname(from), target);
+    if (!existsSync(path)) {
+      throw new AllowConfigError(`${from}: "extends" points to a missing file: ${path}`);
+    }
+    return path;
   }
+  // A package name means its compatgate.jsonc; a path that ends with .jsonc names a file inside the package.
+  const request = target.endsWith('.jsonc') ? target : `${target}/${ALLOW_FILE}`;
   try {
-    return createRequire(from).resolve(`${target}/${ALLOW_FILE}`);
+    return createRequire(from).resolve(request);
   } catch {
-    throw new AllowConfigError(`${from}: cannot resolve "extends": "${target}" has no ${ALLOW_FILE}`);
+    throw new AllowConfigError(
+      `${from}: cannot resolve "extends": "${request}". The package is missing, or its "exports" hide the file`,
+    );
   }
 }
 

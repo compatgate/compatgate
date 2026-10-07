@@ -81,3 +81,28 @@ test('invalid content is an error that names the file', () => {
     });
   }
 });
+
+test('a missing relative extends names the config that references it', () => {
+  const root = project({ 'compatgate.jsonc': '{ "extends": "./missing.jsonc" }' });
+  const config = join(root, 'compatgate.jsonc');
+  assert.throws(() => loadAllowFile(config), (error: unknown) => {
+    assert.ok(error instanceof AllowConfigError);
+    assert.ok(error.message.includes(config), error.message);
+    assert.ok(error.message.includes('missing.jsonc'), error.message);
+    return true;
+  });
+});
+
+test('extends may name a jsonc file inside a package', () => {
+  const root = project({
+    'node_modules/@co/allow/package.json': JSON.stringify({ name: '@co/allow' }),
+    'node_modules/@co/allow/strict.jsonc': '{ "allow": ["api.S"] }',
+    'compatgate.jsonc': '{ "extends": "@co/allow/strict.jsonc" }',
+  });
+  assert.deepEqual(loadAllowFile(join(root, 'compatgate.jsonc')).entries.map(entry => entry.feature), ['api.S']);
+});
+
+test('an unresolvable package names the file it looked for', () => {
+  const root = project({ 'compatgate.jsonc': '{ "extends": "@co/nothing" }' });
+  assert.throws(() => loadAllowFile(join(root, 'compatgate.jsonc')), /@co\/nothing\/compatgate\.jsonc/);
+});

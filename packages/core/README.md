@@ -40,6 +40,9 @@ The linter and the bundler read the same file, so an entry works in both places.
 }
 ```
 
+`extends` takes a relative path, a package name (its `compatgate.jsonc`), or a `.jsonc` file
+inside a package, such as `@company/compat-allow/strict.jsonc`.
+
 A feature id is the full path of the feature in
 [@mdn/browser-compat-data](https://github.com/mdn/browser-compat-data).
 Copy it from the message of a finding.

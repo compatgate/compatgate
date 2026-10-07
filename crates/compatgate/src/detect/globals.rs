@@ -30,12 +30,21 @@ pub fn detect(semantic: &Semantic<'_>) -> Vec<Use> {
                 && member.object.span() == identifier.span
                 && let Some(feature) = member_feature(name, member.property.name.as_str())
             {
-                uses.push(Use { feature, kind: kind_of(feature), span: member.span });
+                uses.push(Use {
+                    feature,
+                    kind: kind_of(feature),
+                    span: member.span,
+                });
                 continue;
             }
-            let is_new = matches!(parent, AstKind::NewExpression(expression) if expression.callee.span() == identifier.span);
+            let is_new =
+                matches!(parent, AstKind::NewExpression(expression) if expression.callee.span() == identifier.span);
             if let Some(feature) = global_feature(name, is_new) {
-                uses.push(Use { feature, kind: kind_of(feature), span: identifier.span });
+                uses.push(Use {
+                    feature,
+                    kind: kind_of(feature),
+                    span: identifier.span,
+                });
             }
         }
     }
@@ -59,10 +68,18 @@ fn global_feature(name: &str, is_new: bool) -> Option<FeatureId> {
     let constructor = is_new.then(|| format!("api.{name}.{name}"));
     constructor
         .into_iter()
-        .chain([format!("javascript.builtins.{name}"), format!("api.{name}"), format!("api.Window.{name}")])
+        .chain([
+            format!("javascript.builtins.{name}"),
+            format!("api.{name}"),
+            format!("api.Window.{name}"),
+        ])
         .find_map(|id| FeatureId::find(&id))
 }
 
 fn kind_of(feature: FeatureId) -> Kind {
-    if feature.as_str().starts_with("api.") { Kind::Api } else { Kind::Builtin }
+    if feature.as_str().starts_with("api.") {
+        Kind::Api
+    } else {
+        Kind::Builtin
+    }
 }

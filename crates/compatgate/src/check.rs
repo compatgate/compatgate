@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use oxc_allocator::Allocator;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
@@ -45,27 +47,48 @@ pub struct CheckOutput {
 }
 
 pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList) -> Result<CheckOutput, Error> {
-    let mut source_type =
-        SourceType::from_path(filename).map_err(|error| Error::Parse(format!("{filename}: {error}")))?;
+    // oxc knows only lower-case extensions, but `A.JS` is a valid file on case-insensitive file systems.
+    let name = Path::new(filename)
+        .file_name()
+        .map(|name| name.to_string_lossy().to_lowercase());
+    let mut source_type = SourceType::from_path(name.as_deref().unwrap_or(filename))
+        .map_err(|error| Error::Parse(format!("{filename}: {error}")))?;
     // oxc parses `.js` without JSX, but React projects keep JSX in `.js` files, and linters accept it.
     if source_type.is_javascript() {
         source_type = source_type.with_jsx(true);
     }
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, source_type)
-        .with_options(ParseOptions { parse_regular_expression: true, ..ParseOptions::default() })
+        .with_options(ParseOptions {
+            parse_regular_expression: true,
+            // CommonJS lets a module return at the top level, and packages in node_modules do it.
+            allow_return_outside_function: true,
+            ..ParseOptions::default()
+        })
         .parse();
     if let Some(error) = parsed.diagnostics.errors().next() {
-        return Err(Error::Parse(format!("{filename}: {error}")));
+        let location = error
+            .labels
+            .first()
+            .map(|label| LineIndex::new(source).position(label.offset()))
+            .map_or(String::new(), |position| {
+                format!(":{}:{}", position.line, position.column + 1)
+            });
+        return Err(Error::Parse(format!("{filename}{location}: {}", error.message)));
     }
-    let semantic = SemanticBuilder::new().with_build_nodes(true).build(&parsed.program).semantic;
+    let semantic = SemanticBuilder::new()
+        .with_build_nodes(true)
+        .build(&parsed.program)
+        .semantic;
     let lines = LineIndex::new(source);
     let mut output = CheckOutput::default();
     for usage in globals::detect(&semantic) {
         record(&mut output, usage, Confidence::Exact, filename, targets, allow, &lines);
     }
     // Detectors walk hash maps, so the order of their output is not stable.
-    output.findings.sort_by_key(|finding| (finding.start.line, finding.start.column));
+    output
+        .findings
+        .sort_by_key(|finding| (finding.start.line, finding.start.column));
     output.used_allow.sort_unstable();
     output.used_allow.dedup();
     Ok(output)

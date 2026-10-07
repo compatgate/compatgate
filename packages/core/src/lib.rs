@@ -111,8 +111,14 @@ pub fn validate_allow(allow: Vec<AllowEntryInput>, targets_query: String) -> Res
     Ok(validate_entries(&entries(allow), &targets)
         .into_iter()
         .map(|issue| match issue {
-            AllowIssue::UnknownFeature { index } => AllowIssueOutput { index: index as u32, kind: "unknown-feature".into() },
-            AllowIssue::NativeInTargets { index } => AllowIssueOutput { index: index as u32, kind: "native-in-targets".into() },
+            AllowIssue::UnknownFeature { index } => AllowIssueOutput {
+                index: index as u32,
+                kind: "unknown-feature".into(),
+            },
+            AllowIssue::NativeInTargets { index } => AllowIssueOutput {
+                index: index as u32,
+                kind: "native-in-targets".into(),
+            },
         })
         .collect())
 }
@@ -137,8 +143,14 @@ fn finding(finding: Finding) -> FindingOutput {
             Confidence::Partial => "partial",
         }
         .into(),
-        start: PositionOutput { line: finding.start.line, column: finding.start.column },
-        end: PositionOutput { line: finding.end.line, column: finding.end.column },
+        start: PositionOutput {
+            line: finding.start.line,
+            column: finding.start.column,
+        },
+        end: PositionOutput {
+            line: finding.end.line,
+            column: finding.end.column,
+        },
         unsupported: finding.gaps.into_iter().map(gap).collect(),
     }
 }
