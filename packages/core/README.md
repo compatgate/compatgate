@@ -35,8 +35,8 @@ The linter and the bundler read the same file, so an entry works in both places.
     { "feature": "api.ResizeObserver", "packages": ["some-lib"] },
 
     // Only for these files, relative to this config
-    { "feature": "api.ResizeObserver", "files": ["src/desktop/**"] }
-  ]
+    { "feature": "api.ResizeObserver", "files": ["src/desktop/**"] },
+  ],
 }
 ```
 

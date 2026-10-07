@@ -1,6 +1,4 @@
 target/
 node_modules/
 packages/*/dist/
-packages/core/binding.cjs
-packages/core/binding.d.cts
 packages/core/*.node

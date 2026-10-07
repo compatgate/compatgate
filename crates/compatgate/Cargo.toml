@@ -1,14 +1,18 @@
 [package]
 name = "compatgate"
-version = "0.0.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 publish = false
 
 [dependencies]
-browserslist-rs = "0.21"
-globset = "0.4"
-oxc_allocator = "0.152"
-oxc_ast = "0.152"
-oxc_parser = "0.152"
-oxc_semantic = "0.152"
-oxc_span = "0.152"
+browserslist-rs.workspace = true
+globset.workspace = true
+oxc_allocator.workspace = true
+oxc_ast.workspace = true
+oxc_parser.workspace = true
+oxc_semantic.workspace = true
+oxc_span.workspace = true
+
+[lints]
+workspace = true

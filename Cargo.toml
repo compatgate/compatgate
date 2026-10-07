@@ -1,3 +1,38 @@
 [workspace]
 resolver = "3"
 members = ["crates/compatgate", "packages/core"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+# oxc_parser 0.152 needs Rust 1.96.
+rust-version = "1.96"
+
+[workspace.dependencies]
+compatgate = { path = "crates/compatgate" }
+browserslist-rs = "0.21"
+globset = "0.4"
+napi = "3"
+napi-build = "2"
+napi-derive = "3"
+# All oxc crates must have the same version.
+oxc_allocator = "0.152"
+oxc_ast = "0.152"
+oxc_parser = "0.152"
+oxc_semantic = "0.152"
+oxc_span = "0.152"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+dbg_macro = "warn"
+print_stderr = "warn"
+print_stdout = "warn"
+todo = "warn"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+strip = "symbols"
+# A panic in the core must reach JavaScript as an error, so that the linter or the bundler
+# of the user keeps running. `#[napi(catch_unwind)]` needs unwinding; "abort" would kill the process.
+panic = "unwind"

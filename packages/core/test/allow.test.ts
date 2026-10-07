@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { AllowConfigError, clearAllowCache, loadAllow, loadAllowFile } from '../src/allow.ts';
+import { AllowConfigError, clearAllowCache, loadAllow, loadAllowFile } from '../src-js/allow.ts';
 
 beforeEach(() => clearAllowCache());
 
@@ -74,23 +74,29 @@ test('invalid content is an error that names the file', () => {
     'key.jsonc': '{ "allow": [{ "feature": "api.A", "reason": "x" }] }',
   });
   for (const name of ['syntax.jsonc', 'shape.jsonc', 'key.jsonc']) {
-    assert.throws(() => loadAllowFile(join(root, name)), (error: unknown) => {
-      assert.ok(error instanceof AllowConfigError);
-      assert.match(error.message, new RegExp(name.replace('.', '\\.')));
-      return true;
-    });
+    assert.throws(
+      () => loadAllowFile(join(root, name)),
+      (error: unknown) => {
+        assert.ok(error instanceof AllowConfigError);
+        assert.match(error.message, new RegExp(name.replace('.', '\\.')));
+        return true;
+      },
+    );
   }
 });
 
 test('a missing relative extends names the config that references it', () => {
   const root = project({ 'compatgate.jsonc': '{ "extends": "./missing.jsonc" }' });
   const config = join(root, 'compatgate.jsonc');
-  assert.throws(() => loadAllowFile(config), (error: unknown) => {
-    assert.ok(error instanceof AllowConfigError);
-    assert.ok(error.message.includes(config), error.message);
-    assert.ok(error.message.includes('missing.jsonc'), error.message);
-    return true;
-  });
+  assert.throws(
+    () => loadAllowFile(config),
+    (error: unknown) => {
+      assert.ok(error instanceof AllowConfigError);
+      assert.ok(error.message.includes(config), error.message);
+      assert.ok(error.message.includes('missing.jsonc'), error.message);
+      return true;
+    },
+  );
 });
 
 test('extends may name a jsonc file inside a package', () => {
@@ -99,7 +105,10 @@ test('extends may name a jsonc file inside a package', () => {
     'node_modules/@co/allow/strict.jsonc': '{ "allow": ["api.S"] }',
     'compatgate.jsonc': '{ "extends": "@co/allow/strict.jsonc" }',
   });
-  assert.deepEqual(loadAllowFile(join(root, 'compatgate.jsonc')).entries.map(entry => entry.feature), ['api.S']);
+  assert.deepEqual(
+    loadAllowFile(join(root, 'compatgate.jsonc')).entries.map(entry => entry.feature),
+    ['api.S'],
+  );
 });
 
 test('an unresolvable package names the file it looked for', () => {

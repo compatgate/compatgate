@@ -1,8 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-
-const binding = createRequire(import.meta.url)('../binding.cjs');
+import * as binding from '../binding.js';
 const TARGETS = 'Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115';
 
 test('check returns findings with readable versions', () => {

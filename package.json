@@ -2,18 +2,27 @@
   "name": "compatgate-monorepo",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@12.9.1",
   "scripts": {
-    "generate": "node scripts/generate-data.mjs",
+    "generate": "node scripts/generate-data.js",
+    "generate:check": "node scripts/generate-data.js --check",
+    "build:debug": "pnpm --filter @compatgate/core build:debug && pnpm --filter @compatgate/core build:js",
+    "lint": "oxlint --deny-warnings && cargo clippy --workspace --all-targets -- -D warnings",
+    "fmt": "oxfmt && cargo fmt --all",
+    "fmt:check": "oxfmt --check && cargo fmt --all --check",
+    "typecheck": "pnpm --filter @compatgate/core typecheck",
     "test": "pnpm run test:scripts && pnpm run test:rust && pnpm run test:js",
-    "test:scripts": "node --test \"scripts/*.test.mjs\"",
+    "test:scripts": "node --test \"scripts/*.test.js\"",
     "test:rust": "cargo test -p compatgate",
-    "test:js": "pnpm --filter @compatgate/core build && pnpm --filter @compatgate/core test"
+    "test:js": "pnpm run build:debug && pnpm --filter @compatgate/core test",
+    "check": "pnpm run generate:check && pnpm run fmt:check && pnpm run lint && pnpm run test && pnpm run typecheck"
   },
   "devDependencies": {
-    "@mdn/browser-compat-data": "8.1.4"
+    "@mdn/browser-compat-data": "8.1.4",
+    "oxfmt": "^0.72.0",
+    "oxlint": "^1.87.0"
   },
   "engines": {
     "node": ">=24"
-  }
+  },
+  "packageManager": "pnpm@12.9.1"
 }

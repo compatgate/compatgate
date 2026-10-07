@@ -1,0 +1,8 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 120,
+  "singleQuote": true,
+  "arrowParens": "avoid",
+  "trailingComma": "all",
+  "ignorePatterns": ["packages/core/binding.js", "packages/core/binding.d.ts", "pnpm-lock.yaml"]
+}

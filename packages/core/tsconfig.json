@@ -5,7 +5,7 @@
     "moduleResolution": "NodeNext",
     "strict": true,
     "declaration": true,
-    "rootDir": "src",
+    "rootDir": "src-js",
     "outDir": "dist",
     "rewriteRelativeImportExtensions": true,
     "erasableSyntaxOnly": true,
@@ -13,5 +13,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src-js"]
 }

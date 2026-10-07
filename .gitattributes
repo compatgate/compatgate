@@ -1,0 +1,6 @@
+* text=auto eol=lf
+
+# Generated files: collapsed in diffs and left out of the language statistics.
+crates/compatgate/src/data/generated.rs linguist-generated=true
+packages/core/binding.js linguist-generated=true
+packages/core/binding.d.ts linguist-generated=true

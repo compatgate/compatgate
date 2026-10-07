@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { BROWSERS, UNSUPPORTED, browserSupport, collectFeatures, encodeVersion, renderRust } from './generate-data.mjs';
+import { BROWSERS, UNSUPPORTED, browserSupport, collectFeatures, encodeVersion, renderRust } from './generate-data.js';
 
 test('encodeVersion', () => {
   assert.equal(encodeVersion('15.4'), (15 << 16) | (4 << 8));
@@ -36,7 +36,10 @@ test('collectFeatures walks only api and javascript and sorts ids', () => {
     javascript: { builtins: { X: { __compat: compat } } },
     css: { properties: { color: { __compat: compat } } },
   });
-  assert.deepEqual(features.map(feature => feature.id), ['api.A', 'api.A.child', 'api.B', 'javascript.builtins.X']);
+  assert.deepEqual(
+    features.map(feature => feature.id),
+    ['api.A', 'api.A.child', 'api.B', 'javascript.builtins.X'],
+  );
   assert.equal(features[0].full.length, BROWSERS.length);
   assert.equal(features[0].full[0], 1 << 16);
 });
@@ -49,4 +52,12 @@ test('renderRust writes browser keys, features and sparse partial support', () =
   assert.match(text, /pub const BROWSER_KEYS: \[&str; 11\] = \["chrome", "chrome_android"/);
   assert.match(text, /\("api\.A", \[U, U, U, U, U, U, U, U, U, U, U\]\),/);
   assert.match(text, /\(0, 2, 327680\),/);
+});
+
+test('--check passes when the committed data matches the generator output', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const output = execFileSync(process.execPath, [new URL('./generate-data.js', import.meta.url).pathname, '--check'], {
+    encoding: 'utf8',
+  });
+  assert.match(output, /up to date/);
 });

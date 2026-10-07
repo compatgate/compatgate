@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { resolveTargets } from '../src/targets.ts';
+import { resolveTargets } from '../src-js/targets.ts';
 
 function project(files: Record<string, string>): string {
   const root = mkdtempSync(join(tmpdir(), 'compatgate-targets-'));
@@ -36,7 +36,8 @@ test('expands extends relative to the file, not to the process directory', () =>
     'node_modules/browserslist-config-base/package.json': JSON.stringify({ name: 'browserslist-config-base' }),
     'node_modules/browserslist-config-base/index.js': "module.exports = ['Safari >= 16'];",
     'node_modules/browserslist-config-foo/package.json': JSON.stringify({ name: 'browserslist-config-foo' }),
-    'node_modules/browserslist-config-foo/index.js': "module.exports = ['Chrome >= 100', 'extends browserslist-config-base'];",
+    'node_modules/browserslist-config-foo/index.js':
+      "module.exports = ['Chrome >= 100', 'extends browserslist-config-base'];",
     '.browserslistrc': 'extends browserslist-config-foo\nFirefox >= 120\n',
     'src/a.js': '',
   });
@@ -46,7 +47,8 @@ test('expands extends relative to the file, not to the process directory', () =>
 test('picks the environment section of a shared config', () => {
   const root = project({
     'node_modules/browserslist-config-env/package.json': JSON.stringify({ name: 'browserslist-config-env' }),
-    'node_modules/browserslist-config-env/index.js': "module.exports = { defaults: ['Chrome >= 90'], legacy: ['Chrome >= 50'] };",
+    'node_modules/browserslist-config-env/index.js':
+      "module.exports = { defaults: ['Chrome >= 90'], legacy: ['Chrome >= 50'] };",
     '.browserslistrc': 'extends browserslist-config-env\n',
     'a.js': '',
   });

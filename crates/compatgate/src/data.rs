@@ -1,7 +1,9 @@
 //! Browser support data compiled from @mdn/browser-compat-data.
 
-// The generator writes this file. Formatting it would make it differ from the generator output.
+// The generator writes this file. Formatting it would make it differ from the generator output,
+// and lints about long numeric literals would report every row of the tables.
 #[rustfmt::skip]
+#[allow(clippy::all)]
 mod generated;
 
 pub use generated::BCD_VERSION;
@@ -26,7 +28,7 @@ pub enum Browser {
 }
 
 impl Browser {
-    /// Same order as `BROWSERS` in scripts/generate-data.mjs.
+    /// Same order as `BROWSERS` in scripts/generate-data.js.
     pub const ALL: [Browser; 11] = [
         Browser::Chrome,
         Browser::ChromeAndroid,

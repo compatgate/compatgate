@@ -93,7 +93,7 @@ fn entries(input: Vec<AllowEntryInput>) -> Vec<AllowEntry> {
         .collect()
 }
 
-#[napi]
+#[napi(catch_unwind)]
 pub fn check(source: String, input: CheckInput) -> Result<CheckResultOutput> {
     let targets = targets(&input.targets)?;
     let allow = AllowList::new(&entries(input.allow.unwrap_or_default())).map_err(to_napi)?;
@@ -105,7 +105,7 @@ pub fn check(source: String, input: CheckInput) -> Result<CheckResultOutput> {
     })
 }
 
-#[napi]
+#[napi(catch_unwind)]
 pub fn validate_allow(allow: Vec<AllowEntryInput>, targets_query: String) -> Result<Vec<AllowIssueOutput>> {
     let targets = targets(&targets_query)?;
     Ok(validate_entries(&entries(allow), &targets)
@@ -123,7 +123,7 @@ pub fn validate_allow(allow: Vec<AllowEntryInput>, targets_query: String) -> Res
         .collect())
 }
 
-#[napi]
+#[napi(catch_unwind)]
 pub fn bcd_version() -> String {
     BCD_VERSION.to_string()
 }
