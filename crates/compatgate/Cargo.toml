@@ -1,0 +1,14 @@
+[package]
+name = "compatgate"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+browserslist-rs = "0.21"
+globset = "0.4"
+oxc_allocator = "0.152"
+oxc_ast = "0.152"
+oxc_parser = "0.152"
+oxc_semantic = "0.152"
+oxc_span = "0.152"

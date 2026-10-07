@@ -1,0 +1,19 @@
+{
+  "name": "compatgate-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.9.1",
+  "scripts": {
+    "generate": "node scripts/generate-data.mjs",
+    "test": "pnpm run test:scripts && pnpm run test:rust && pnpm run test:js",
+    "test:scripts": "node --test \"scripts/*.test.mjs\"",
+    "test:rust": "cargo test -p compatgate",
+    "test:js": "pnpm --filter @compatgate/core build && pnpm --filter @compatgate/core test"
+  },
+  "devDependencies": {
+    "@mdn/browser-compat-data": "8.1.4"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
