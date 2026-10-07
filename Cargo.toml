@@ -1,4 +1,6 @@
 [workspace]
+# A workspace without a root package has no edition, so the resolver must be set here.
+# Resolver 3 picks dependency versions that support our rust-version.
 resolver = "3"
 members = ["crates/compatgate", "packages/core"]
 

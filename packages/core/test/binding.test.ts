@@ -48,6 +48,7 @@ test('bcdVersion names the data version', () => {
 });
 
 test('columns are UTF-16 units across the whole call', () => {
-  const result = binding.check('const s = "привет 😀"; structuredClone(s);', { filename: 'a.js', targets: TARGETS });
-  assert.deepEqual(result.findings[0].start, { line: 1, column: 23 });
+  // 🐈‍⬛ is four UTF-16 units: a surrogate pair, a zero-width joiner and one more character.
+  const result = binding.check('const s = "Мяу 🐈‍⬛"; structuredClone(s);', { filename: 'a.js', targets: TARGETS });
+  assert.deepEqual(result.findings[0].start, { line: 1, column: 22 });
 });
