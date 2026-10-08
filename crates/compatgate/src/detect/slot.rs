@@ -42,13 +42,21 @@ pub enum Slot {
     /// `` X`…` ``.
     Tag,
     LogicalLeft(LogicalOperator),
-    LogicalRight,
+    LogicalRight(LogicalOperator),
     /// `X ? a : b`.
     CondTest,
-    /// `c ? X : a` and `c ? a : X`.
-    CondBranch,
+    /// `c ? X : a`.
+    CondConsequent,
+    /// `c ? a : X`.
+    CondAlternate,
     /// The test of `if`, `while`, `do … while` and `for`.
     Test,
+    /// `if (c) X`.
+    IfConsequent,
+    /// `if (c) a; else X`.
+    IfAlternate,
+    /// The body of `while` and of `for`, which runs only after its test is true.
+    LoopBody,
     Not,
     Typeof,
     Void,
@@ -79,7 +87,7 @@ pub enum Slot {
     },
     /// `class C extends X {}`.
     Extends,
-    /// `X;`: the value is dropped.
+    /// `X;` and the init and the update of `for (X; ; X)`: the value is dropped.
     Statement,
     Other,
 }
@@ -114,13 +122,18 @@ pub fn slot(nodes: &AstNodes<'_>, child: NodeId) -> Slot {
         AstKind::NewExpression(_) => Slot::Argument,
         AstKind::TaggedTemplateExpression(expression) if is(&expression.tag) => Slot::Tag,
         AstKind::LogicalExpression(logical) if is(&logical.left) => Slot::LogicalLeft(logical.operator),
-        AstKind::LogicalExpression(_) => Slot::LogicalRight,
+        AstKind::LogicalExpression(logical) => Slot::LogicalRight(logical.operator),
         AstKind::ConditionalExpression(expression) if is(&expression.test) => Slot::CondTest,
-        AstKind::ConditionalExpression(_) => Slot::CondBranch,
+        AstKind::ConditionalExpression(expression) if is(&expression.consequent) => Slot::CondConsequent,
+        AstKind::ConditionalExpression(_) => Slot::CondAlternate,
         AstKind::IfStatement(statement) if is(&statement.test) => Slot::Test,
+        AstKind::IfStatement(statement) if is(&statement.consequent) => Slot::IfConsequent,
+        AstKind::IfStatement(_) => Slot::IfAlternate,
         AstKind::WhileStatement(statement) if is(&statement.test) => Slot::Test,
+        AstKind::WhileStatement(_) => Slot::LoopBody,
         AstKind::DoWhileStatement(statement) if is(&statement.test) => Slot::Test,
         AstKind::ForStatement(statement) if statement.test.as_ref().is_some_and(|test| is(test)) => Slot::Test,
+        AstKind::ForStatement(statement) if is(&statement.body) => Slot::LoopBody,
         AstKind::UnaryExpression(unary) => match unary.operator {
             UnaryOperator::LogicalNot => Slot::Not,
             UnaryOperator::Typeof => Slot::Typeof,
@@ -182,6 +195,12 @@ pub fn slot(nodes: &AstNodes<'_>, child: NodeId) -> Slot {
             Slot::Extends
         }
         AstKind::ExpressionStatement(_) => Slot::Statement,
+        AstKind::ForStatement(statement)
+            if statement.init.as_ref().is_some_and(|init| is(init))
+                || statement.update.as_ref().is_some_and(|update| is(update)) =>
+        {
+            Slot::Statement
+        }
         _ => Slot::Other,
     }
 }
@@ -202,18 +221,6 @@ pub fn destructuring<'a>(nodes: &AstNodes<'a>, source: NodeId) -> Option<Pattern
         AstKind::AssignmentPattern(assignment) => Some(Pattern::Binding(&assignment.left)),
         AstKind::AssignmentExpression(assignment) => Some(Pattern::Target(&assignment.left)),
         AstKind::AssignmentTargetWithDefault(target) => Some(Pattern::Target(&target.binding)),
-        _ => None,
-    }
-}
-
-/// The value that the pattern `pattern` destructures: the reverse of `destructuring`.
-pub fn destructured_source<'a>(nodes: &AstNodes<'a>, pattern: NodeId) -> Option<&'a Expression<'a>> {
-    match nodes.parent_kind(pattern) {
-        AstKind::VariableDeclarator(declarator) => declarator.init.as_ref(),
-        AstKind::FormalParameter(parameter) => parameter.initializer.as_deref(),
-        AstKind::AssignmentPattern(assignment) => Some(&assignment.right),
-        AstKind::AssignmentExpression(assignment) => Some(&assignment.right),
-        AstKind::AssignmentTargetWithDefault(target) => Some(&target.init),
         _ => None,
     }
 }

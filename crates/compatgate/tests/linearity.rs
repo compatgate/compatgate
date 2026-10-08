@@ -203,3 +203,106 @@ fn many_sibling_blocks_before_uses_are_checked_in_linear_time() {
         assert_linear(terms, steps.guards, "guards");
     }
 }
+
+/// Depths of nested tests. A test that is evaluated once per value at each level doubles its work per
+/// level, so the smaller depth already breaks the bound, and it still ends in a moment.
+const DEPTHS: [usize; 2] = [16, 64];
+
+/// `((a ? b : c) ? b : c)` nested `depth` times: the test of each `?:` is another `?:`.
+fn nested_conditional(depth: usize) -> String {
+    (0..depth).fold(String::from("a"), |test, _| format!("({test} ? b : c)"))
+}
+
+#[test]
+fn nested_conditional_tests_are_checked_in_linear_time() {
+    for depth in DEPTHS {
+        let source = format!("if ({}) structuredClone(v);\n", nested_conditional(depth));
+        let (findings, steps) = run(source, "a.js");
+        assert_eq!(findings, 1);
+        assert_linear(depth, steps.climb, "climb");
+        assert_linear(depth, steps.guards, "guards");
+    }
+}
+
+#[test]
+fn an_early_exit_on_nested_conditional_tests_is_checked_in_linear_time() {
+    for depth in DEPTHS {
+        let source = format!(
+            "function f() {{ if ({}) return; structuredClone(v); }}\n",
+            nested_conditional(depth)
+        );
+        let (findings, steps) = run(source, "a.js");
+        assert_eq!(findings, 1);
+        assert_linear(depth, steps.climb, "climb");
+        assert_linear(depth, steps.guards, "guards");
+    }
+}
+
+/// Checks that name BCD features. `OLD` supports them all, so none of them implies a feature that a
+/// use lacks, and each use asks every one.
+const CHECKED: [&str; 4] = [
+    "window.fetch",
+    "window.Promise",
+    "window.requestAnimationFrame",
+    "window.Map",
+];
+
+#[test]
+fn many_early_exits_on_features_before_uses_are_checked_in_linear_time() {
+    // Every use asks whether a feature checked before it implies its own. Scanning every checked
+    // feature of the list for each use was quadratic.
+    for terms in SIZES {
+        let source: String = (0..terms)
+            .map(|i| format!("if (!{}) return;\nnavigation.x;\n", CHECKED[i % CHECKED.len()]))
+            .collect();
+        let (findings, steps) = run(source, "a.cjs");
+        assert_eq!(findings, terms);
+        assert_linear(terms, steps.climb, "climb");
+        assert_linear(terms, steps.guards, "guards");
+    }
+}
+
+#[test]
+fn a_long_and_chain_of_features_above_many_distinct_uses_is_checked_in_linear_time() {
+    // Every use asks the chain whether a feature that it checks implies the feature of the use.
+    for terms in SIZES {
+        let uses = terms / 10;
+        let test = (0..terms)
+            .map(|i| CHECKED[i % CHECKED.len()])
+            .collect::<Vec<_>>()
+            .join(" &&\n");
+        let source = format!("if ({test}) {{\n{}}}\n", distinct_uses(uses));
+        let (findings, steps) = run_with(source, "a.js", OLD);
+        assert_eq!(findings, uses);
+        assert_linear(terms + uses, steps.climb, "climb");
+        assert_linear(terms + uses, steps.guards, "guards");
+    }
+}
+
+/// `count` checks `if (!window.<name>) return;`, each of a distinct global API.
+fn distinct_checks(count: usize) -> String {
+    let names: Vec<&str> = compatgate::data::feature_ids()
+        .filter_map(|id| id.strip_prefix("api."))
+        .filter(|name| !name.contains('.'))
+        .take(count)
+        .collect();
+    assert_eq!(names.len(), count);
+    names
+        .iter()
+        .map(|name| format!("if (!window.{name}) return;\n"))
+        .collect()
+}
+
+#[test]
+fn many_distinct_uses_before_many_early_exits_on_features_are_checked_in_linear_time() {
+    // A use asks only the statements before it, and here they name no feature. Finding the checked
+    // features that imply the feature of a use over the whole list cost uses × checks.
+    for terms in [250, 1000] {
+        let uses = terms / 4;
+        let source = format!("{}{}", distinct_uses(uses), distinct_checks(terms));
+        let (findings, steps) = run_with(source, "a.cjs", OLD);
+        assert_eq!(findings, uses);
+        assert_linear(terms + uses, steps.climb, "climb");
+        assert_linear(terms + uses, steps.guards, "guards");
+    }
+}

@@ -53,7 +53,7 @@ pub struct CheckOutput {
 }
 
 pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList) -> Result<CheckOutput, Error> {
-    let uses = with_semantic(source, filename, |semantic, allocator| {
+    let mut output = with_semantic(source, filename, |semantic, allocator| {
         let ambient = syntax::ambient_nodes(semantic.nodes());
         // Detectors skip the features that the targets support, so every use is a candidate for a finding.
         let mut uses = globals::detect(semantic, targets);
@@ -61,7 +61,7 @@ pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList)
         uses.extend(regex::detect(semantic, allocator, targets));
         uses.extend(methods::detect(semantic, targets));
         let mut guards = Guards::new(semantic, targets);
-        let uses: Vec<Use> = uses
+        let uses: Vec<Use<'_>> = uses
             .into_iter()
             // TypeScript declarations produce no JavaScript: `declare namespace N { const a = X; }` never runs.
             .filter(|usage| !ambient[usage.node.index()])
@@ -73,21 +73,18 @@ pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList)
             .filter(|usage| allowed(usage, allow, filename).is_none())
             .map(|usage| usage.node)
             .collect();
-        uses.into_iter()
-            .filter(|usage| !usage.member.is_some_and(|member| reported.contains(&member)))
-            .map(|usage| {
-                let verdict = evaluate(usage.feature, targets);
-                (usage, verdict)
-            })
-            .collect::<Vec<_>>()
-    })?;
-    let mut output = CheckOutput::default();
-    if !uses.is_empty() {
-        let lines = LineIndex::new(source);
-        for (usage, verdict) in uses {
-            record(&mut output, usage, verdict, filename, allow, &lines);
+        let mut output = CheckOutput::default();
+        let mut lines = None;
+        for usage in uses {
+            if usage.member.is_some_and(|member| reported.contains(&member)) {
+                continue;
+            }
+            let verdict = evaluate(usage.feature, targets);
+            let lines = lines.get_or_insert_with(|| LineIndex::new(source));
+            record(&mut output, usage, verdict, filename, allow, lines);
         }
-    }
+        output
+    })?;
     // Detectors walk hash maps, so the order of their output is not stable. Several findings can start
     // at one position, such as two flags of a regular expression; the feature and the end order them.
     output.findings.sort_by_key(|finding| {
@@ -164,7 +161,7 @@ pub(crate) fn with_semantic<R>(
 
 fn record(
     output: &mut CheckOutput,
-    usage: Use,
+    usage: Use<'_>,
     verdict: Verdict,
     filename: &str,
     allow: &AllowList,
@@ -193,7 +190,7 @@ fn record(
 }
 
 /// The `allow` entry that suppresses the finding of the use, if any.
-fn allowed(usage: &Use, allow: &AllowList, filename: &str) -> Option<usize> {
+fn allowed(usage: &Use<'_>, allow: &AllowList, filename: &str) -> Option<usize> {
     std::iter::once(usage.feature)
         .chain(usage.alternatives.iter().copied())
         .find_map(|feature| allow.find(feature.as_str(), filename))

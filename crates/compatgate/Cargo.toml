@@ -18,6 +18,8 @@ oxc_span.workspace = true
 [dev-dependencies]
 # The integration tests read the step counters, which only this feature builds into the library.
 compatgate = { path = ".", features = ["counters"] }
+# The corpus reads the `allow` entries of a file as JSON.
+serde_json.workspace = true
 
 [features]
 # Step counters for the linearity tests: `compatgate::counters`. Off in every build that ships.

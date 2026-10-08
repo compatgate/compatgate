@@ -25,6 +25,15 @@ test('reads the browserslist field of package.json', () => {
   assert.equal(resolveTargets(join(root, 'a.js')), 'Safari >= 16');
 });
 
+test('reads a browserslist field of package.json that is one string', () => {
+  // browserslist accepts a string as well as a list in package.json.
+  const root = project({
+    'package.json': JSON.stringify({ browserslist: 'Chrome >= 97, Firefox >= 120' }),
+    'a.js': '',
+  });
+  assert.equal(resolveTargets(join(root, 'a.js')), 'Chrome >= 97, Firefox >= 120');
+});
+
 test('falls back to defaultTargets and then to defaults', () => {
   const root = project({ 'a.js': '' });
   assert.equal(resolveTargets(join(root, 'a.js'), { defaultTargets: 'Chrome >= 97' }), 'Chrome >= 97');

@@ -13,12 +13,12 @@ use oxc_span::Span;
 
 use super::path::{Member, WINDOW_ALIASES, key_name, member_at, member_over};
 use super::slot::{Pattern, Slot, destructuring, outermost, slot};
-use super::{Origin, Use};
+use super::{Key, Origin, Use};
 use crate::check::Kind;
 use crate::data::{FeatureId, interface_parents, singleton_interface};
 use crate::targets::Targets;
 
-pub fn detect(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use> {
+pub fn detect<'a>(semantic: &Semantic<'a>, targets: &Targets) -> Vec<Use<'a>> {
     let scoping = semantic.scoping();
     let nodes = semantic.nodes();
     let mut uses = Uses {
@@ -26,8 +26,7 @@ pub fn detect(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use> {
         targets,
     };
     let mut globals = GlobalFeatures::default();
-    for (name, references) in scoping.root_unresolved_references().iter() {
-        let name = name.as_str();
+    for references in scoping.root_unresolved_references().values() {
         for &reference_id in references.iter() {
             let reference = scoping.get_reference(reference_id);
             // A type position such as `let o: ResizeObserver` does not use the API at run time.
@@ -42,6 +41,7 @@ pub fn detect(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use> {
             let AstKind::IdentifierReference(identifier) = nodes.kind(node_id) else {
                 continue;
             };
+            let name = identifier.name.as_str();
             let is_alias = WINDOW_ALIASES.contains(&name);
             // The root of a chain is a use of its own: `navigation` in `navigation.currentEntry` throws where
             // it is missing. Through an alias the root is a member, `window.navigation`.
@@ -68,7 +68,7 @@ pub fn detect(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use> {
                             continue;
                         }
                         if let Some(feature) = member_feature_of(first.property, second.property) {
-                            uses.chain(root, &[(feature, second)], true);
+                            uses.chain(root, &[first.property], &[(feature, second)], true);
                             continue;
                         }
                     } else {
@@ -79,18 +79,18 @@ pub fn detect(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use> {
                             member_feature_of(first.property, property)
                         });
                         if !members.is_empty() {
-                            uses.chain(root, &members, false);
+                            uses.chain(root, &[first.property], &members, false);
                             continue;
                         }
                     }
                     if let Some(feature) = globals.get(first.property, is_new_callee(nodes, first.id)) {
-                        uses.add(feature, Origin::Member, first.span, first.id);
+                        uses.add(feature, Origin::Member, first.span, first.id, vec![first.property]);
                     }
                     continue;
                 }
                 if let Some(feature) = member_feature_of(name, first.property) {
                     let root = root(&mut globals);
-                    uses.chain(root, &[(feature, first)], true);
+                    uses.chain(root, &[name], &[(feature, first)], true);
                     continue;
                 }
             } else {
@@ -103,8 +103,11 @@ pub fn detect(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use> {
                     }
                 });
                 if !members.is_empty() {
-                    let root = if is_alias { None } else { root(&mut globals) };
-                    uses.chain(root, &members, false);
+                    // `const { structuredClone } = window` reads the global `structuredClone`.
+                    match is_alias {
+                        true => uses.chain(None, &[], &members, false),
+                        false => uses.chain(root(&mut globals), &[name], &members, false),
+                    }
                     continue;
                 }
             }
@@ -116,7 +119,7 @@ pub fn detect(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use> {
                 continue;
             }
             if let Some(feature) = globals.get(name, position == Slot::NewCallee) {
-                uses.add(feature, Origin::Global, identifier.span, node_id);
+                uses.add(feature, Origin::Global, identifier.span, node_id, vec![name]);
             }
         }
     }
@@ -125,15 +128,19 @@ pub fn detect(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use> {
 
 /// The uses of a file. A resolved feature that the targets support is no use, but it still stops
 /// the resolution: `Object.groupBy` is not a use of `Object` when the targets support `groupBy`.
-struct Uses<'r> {
-    uses: Vec<Use>,
+struct Uses<'r, 'a> {
+    uses: Vec<Use<'a>>,
     targets: &'r Targets,
 }
 
-impl Uses<'_> {
-    fn add(&mut self, feature: FeatureId, origin: Origin, span: Span, node: NodeId) {
+impl<'a> Uses<'_, 'a> {
+    /// `path` is the key of the use: the path without the aliases of the global object.
+    fn add(&mut self, feature: FeatureId, origin: Origin, span: Span, node: NodeId, path: Vec<&'a str>) {
         if !self.targets.is_supported(feature) {
-            self.uses.push(Use::new(feature, kind_of(feature), origin, span, node));
+            self.uses.push(Use {
+                key: Some(Key::Path(path)),
+                ..Use::new(feature, kind_of(feature), origin, span, node)
+            });
         }
     }
 
@@ -144,22 +151,31 @@ impl Uses<'_> {
     /// A member read (`read`) that implies the root takes the place of the root: `scheduler.yield()` is one
     /// finding of `Scheduler.yield` while it is a finding. A destructuring reads the root once for all
     /// its members, so its root stays.
+    ///
+    /// `path` is the path of the root, and each member adds its name to it.
     fn chain(
         &mut self,
         root: Option<(FeatureId, Origin, Span, NodeId)>,
-        members: &[(FeatureId, Member<'_>)],
+        path: &[&'a str],
+        members: &[(FeatureId, Member<'a>)],
         read: bool,
     ) {
         let start = self.uses.len();
         if let Some((feature, origin, span, node)) = root {
-            self.add(feature, origin, span, node);
+            self.add(feature, origin, span, node, path.to_vec());
         }
         let added_root = self.uses.len() > start;
         for &(feature, ref member) in members {
             if root.is_some_and(|(root, ..)| self.targets.implies(root, feature)) {
                 continue;
             }
-            self.add(feature, Origin::Member, member.span, member.id);
+            self.add(
+                feature,
+                Origin::Member,
+                member.span,
+                member.id,
+                [path, &[member.property]].concat(),
+            );
             if let Some((root, ..)) = root
                 && read
                 && added_root
@@ -406,7 +422,7 @@ mod tests {
             detect(semantic, &targets())
                 .into_iter()
                 .map(|usage| {
-                    let key = super::super::guards::key_text(semantic, &usage);
+                    let key = super::super::guards::key_text(&usage);
                     (usage.feature.as_str(), key.into_iter().collect())
                 })
                 .collect()

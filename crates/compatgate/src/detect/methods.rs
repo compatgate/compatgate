@@ -12,13 +12,13 @@ use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_semantic::{Semantic, SymbolFlags};
 
 use super::path::{key_name, property, root};
-use super::{Origin, Use};
+use super::{Key, Origin, Use};
 use crate::check::{Confidence, Kind};
 use crate::data::{FeatureId, instance_member_names, instance_members};
 use crate::support::{SupportTable, TargetSupport};
 use crate::targets::Targets;
 
-pub fn detect(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use> {
+pub fn detect<'a>(semantic: &Semantic<'a>, targets: &Targets) -> Vec<Use<'a>> {
     let mut declared = None;
     let mut uses = Vec::new();
     for node in semantic.nodes().iter() {
@@ -43,6 +43,7 @@ pub fn detect(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use> {
         uses.push(Use {
             alternatives: decision.alternatives,
             confidence: Confidence::Heuristic,
+            key: Some(Key::Method(name)),
             ..Use::new(
                 decision.feature,
                 Kind::Builtin,

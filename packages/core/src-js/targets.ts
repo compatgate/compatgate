@@ -23,9 +23,11 @@ export function resolveTargets(filename: string, options: ResolveTargetsOptions 
   if (process.env.BROWSERSLIST) {
     return process.env.BROWSERSLIST;
   }
-  const config = browserslist.loadConfig({ path: filename });
-  if (config && config.length > 0) {
-    return expandExtends(config, resolve(filename), []).join(', ');
+  // The browserslist field of package.json can be one string instead of a list, and loadConfig returns it as it is.
+  const config: string | readonly string[] | undefined = browserslist.loadConfig({ path: filename });
+  const queries = typeof config === 'string' ? [config] : config;
+  if (queries && queries.length > 0) {
+    return expandExtends(queries, resolve(filename), []).join(', ');
   }
   return options.defaultTargets ?? 'defaults';
 }

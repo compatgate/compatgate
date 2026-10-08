@@ -3,7 +3,9 @@
 //! chains, string keys and the aliases of the global object.
 
 use oxc_ast::AstKind;
-use oxc_ast::ast::{ChainElement, Expression, IdentifierReference, MemberExpression, PropertyKey};
+use oxc_ast::ast::{
+    ChainElement, ComputedMemberExpression, Expression, IdentifierReference, MemberExpression, PropertyKey,
+};
 use oxc_semantic::{AstNodes, NodeId, Semantic};
 use oxc_span::Span;
 
@@ -36,11 +38,16 @@ pub fn as_member<'b, 'a>(expression: &'b Expression<'a>) -> Option<&'b MemberExp
 pub fn property<'a>(member: &MemberExpression<'a>) -> Option<&'a str> {
     match member {
         MemberExpression::StaticMemberExpression(member) => Some(member.property.name.as_str()),
-        MemberExpression::ComputedMemberExpression(member) => match member.expression.get_inner_expression() {
-            Expression::StringLiteral(name) => Some(name.value.as_str()),
-            _ => None,
-        },
+        MemberExpression::ComputedMemberExpression(member) => computed_name(member),
         MemberExpression::PrivateFieldExpression(_) => None,
+    }
+}
+
+/// `b` in `a['b']`: the key when it is a string.
+fn computed_name<'a>(member: &ComputedMemberExpression<'a>) -> Option<&'a str> {
+    match member.expression.get_inner_expression() {
+        Expression::StringLiteral(name) => Some(name.value.as_str()),
+        _ => None,
     }
 }
 
@@ -126,10 +133,7 @@ pub fn member_at<'a>(nodes: &AstNodes<'a>, object: NodeId, position: Slot) -> Op
     let id = nodes.parent_id(object);
     let (span, property) = match nodes.kind(id) {
         AstKind::StaticMemberExpression(member) => (member.span, member.property.name.as_str()),
-        AstKind::ComputedMemberExpression(member) => match member.expression.get_inner_expression() {
-            Expression::StringLiteral(name) => (member.span, name.value.as_str()),
-            _ => return None,
-        },
+        AstKind::ComputedMemberExpression(member) => (member.span, computed_name(member)?),
         _ => return None,
     };
     Some(Member { id, span, property })

@@ -267,7 +267,7 @@ pub(crate) fn ancient(key: &str) -> bool {
 
 /// `ambient` comes from `ambient_nodes`. `check` computes it once per file for all detectors.
 /// Syntax that the targets support is no use: most nodes of a modern file are such syntax.
-pub fn detect(semantic: &Semantic<'_>, ambient: &[bool], targets: &Targets) -> Vec<Use> {
+pub fn detect<'a>(semantic: &Semantic<'a>, ambient: &[bool], targets: &Targets) -> Vec<Use<'a>> {
     // Everything in a declaration file is ambient, `export` without `declare` included.
     if semantic.source_type().is_typescript_definition() {
         return Vec::new();
@@ -553,7 +553,7 @@ pub fn detect(semantic: &Semantic<'_>, ambient: &[bool], targets: &Targets) -> V
 }
 
 /// `10n` is syntax too: a browser without `BigInt` does not parse the file, so its origin is `Parse`.
-fn push(uses: &mut Vec<Use>, targets: &Targets, feature: FeatureId, kind: Kind, span: Span, node: NodeId) {
+fn push(uses: &mut Vec<Use<'_>>, targets: &Targets, feature: FeatureId, kind: Kind, span: Span, node: NodeId) {
     if !targets.is_supported(feature) {
         uses.push(Use::new(feature, kind, Origin::Parse, span, node));
     }

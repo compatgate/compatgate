@@ -83,7 +83,7 @@ impl Flags {
     }
 }
 
-pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets: &Targets) -> Vec<Use> {
+pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets: &Targets) -> Vec<Use<'a>> {
     let mut uses = Vec::new();
     for node in semantic.nodes().iter() {
         let (callee, arguments, span) = match node.kind() {
@@ -143,7 +143,7 @@ pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets: &T
         uses.extend(
             found
                 .into_iter()
-                .filter(|usage| !known.iter().any(|old: &Use| old.feature == usage.feature))
+                .filter(|usage| !known.iter().any(|old: &Use<'_>| old.feature == usage.feature))
                 .map(|usage| Use {
                     origin: Origin::Call,
                     ..usage
@@ -153,7 +153,7 @@ pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets: &T
     uses
 }
 
-fn report_literal(uses: &mut Vec<Use>, targets: &Targets, literal: &RegExpLiteral<'_>, node: NodeId) {
+fn report_literal(uses: &mut Vec<Use<'_>>, targets: &Targets, literal: &RegExpLiteral<'_>, node: NodeId) {
     // oxc parsed the pattern with spans in the file: the pattern starts after the `/`.
     let source = Source {
         text: literal.regex.pattern.text.as_str(),
@@ -204,7 +204,7 @@ struct Source<'a> {
 }
 
 fn report<'a>(
-    uses: &mut Vec<Use>,
+    uses: &mut Vec<Use<'_>>,
     targets: &Targets,
     pattern: Option<&Pattern<'a>>,
     source: Source<'a>,

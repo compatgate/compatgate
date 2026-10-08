@@ -84,3 +84,29 @@ if ((a && null) ? b : c) navigator.share(d); //~ api.Navigator.share exact
 // `Object.groupBy` lacks `Promise.withResolvers` too. The other way round does not hold.
 if (Promise.withResolvers) Object.groupBy(a, f); //~ none
 if (Object.groupBy) Promise.withResolvers(); //~ javascript.builtins.Promise.withResolvers exact
+
+// a_default_value_replaces_a_missing_member: as with `??`, the code expects that it may be missing.
+{ const { share = f } = navigator; } //~ none
+{ const { share: s = f } = navigator; } //~ none
+{ let share; ({ share = f } = navigator); } //~ none
+{ let s; ({ share: s = f } = navigator); } //~ none
+// Without a default the name holds `undefined`, and a default of another property does not help.
+{ const { share, canShare = f } = navigator; } //~ api.Navigator.share exact
+{ let s; ({ share: s } = navigator); } //~ api.Navigator.share exact
+
+// the_init_and_the_update_of_a_for_loop_are_dropped
+for (navigator.share; ; ) break; //~ none
+for (; ; navigator.share) break; //~ none
+// The value is read further, or it is stored.
+for (navigator.share.length; ; ) break; //~ api.Navigator.share exact
+for (let s = navigator.share; ; ) break; //~ api.Navigator.share exact
+
+// a_checked_path_proves_its_prefixes: where `navigator.share.call` is present, `navigator.share` is too.
+if (navigator.share?.call) navigator.share(d); //~ none
+if (typeof navigator.share?.call === 'function') navigator.share(d); //~ none
+if (list.toSorted?.call) list.toSorted(); //~ none
+// A prefix proves nothing about the path, a path proves nothing about its siblings, and a missing path
+// proves nothing about its prefix.
+if (navigator.share) navigator.share.call(n, d); //~ none
+if (navigator.share?.call) navigator.canShare(d); //~ api.Navigator.canShare exact
+function m11() { if (navigator.share?.call) return; navigator.share(d); } //~ api.Navigator.share exact

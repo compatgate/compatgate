@@ -106,13 +106,38 @@ impl Targets {
     /// The masks of the table are not enough: a browser can lack `check` only in its lowest target version
     /// and `usage` in many more.
     pub fn implies(&self, check: FeatureId, usage: FeatureId) -> bool {
+        let first = || self.first_supports(check);
+        self.implies_by(check, usage, first)
+    }
+
+    /// `implies` with `first_supports(check)` from the caller, which can keep it: each version costs
+    /// a binary search in the data, and a file can ask about one check thousands of times. The masks
+    /// are the quick check, so `first` runs only when they pass.
+    pub(crate) fn implies_by<F: AsRef<[u32]>>(
+        &self,
+        check: FeatureId,
+        usage: FeatureId,
+        first: impl FnOnce() -> F,
+    ) -> bool {
         let gaps = self.support(usage).gaps();
-        // The masks are the quick check: a browser without full support of `usage` must lack `check`.
-        !gaps.is_empty()
-            && gaps.is_subset(self.support(check).missing)
-            && self.minimum.iter().all(|&(browser, target)| {
-                !gaps.contains(browser) || check.first_support(browser, target) >= usage.full_support(browser)
-            })
+        // A browser without full support of `usage` must lack `check`.
+        if gaps.is_empty() || !gaps.is_subset(self.support(check).missing) {
+            return false;
+        }
+        let first = first();
+        self.minimum
+            .iter()
+            .zip(first.as_ref())
+            .all(|(&(browser, _), &first)| !gaps.contains(browser) || first >= usage.full_support(browser))
+    }
+
+    /// The first version with any support of `check` from the target on, for each target browser in
+    /// the order of `minimum`.
+    pub(crate) fn first_supports(&self, check: FeatureId) -> Box<[u32]> {
+        self.minimum
+            .iter()
+            .map(|&(browser, target)| check.first_support(browser, target))
+            .collect()
     }
 
     /// The finding for a call `.name()` on an object of unknown type, if the name has one.

@@ -31,9 +31,18 @@ pub enum Origin {
     Parse,
 }
 
+/// The name under which a check proves a feature present.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Key<'a> {
+    /// `["navigator", "share"]`, without the aliases of the global object.
+    Path(Vec<&'a str>),
+    /// The name of a method of any object: a check of `a.toSorted` proves `b.toSorted` too.
+    Method(&'a str),
+}
+
 /// One use of a BCD feature in the source. Detectors create uses only for features that the targets
 /// do not support fully, so a use is a candidate for a finding.
-pub struct Use {
+pub struct Use<'a> {
     pub feature: FeatureId,
     /// Other features the same code may use. A heuristic detector cannot tell them apart,
     /// so an `allow` entry for any of them suppresses the finding.
@@ -43,16 +52,18 @@ pub struct Use {
     pub origin: Origin,
     pub span: Span,
     /// The AST node of the use: the identifier of a global, the member expression of a member or of a
-    /// method, the property of a destructuring, the node of the syntax. The guards walk up from it and
-    /// read the key of the use from it.
+    /// method, the property of a destructuring, the node of the syntax. The guards walk up from it.
     pub node: NodeId,
+    /// The name under which a check proves the feature present, as the detector resolved it. `None` for
+    /// a use that code cannot check: syntax and a pattern that `new RegExp` parses.
+    pub key: Option<Key<'a>>,
     /// For the root of a chain: the node of the member read at the same place, when every target version
     /// without full support of the root lacks the member too. The finding of the member then tells about
     /// the root as well, so the root is no finding while the member is one.
     pub member: Option<NodeId>,
 }
 
-impl Use {
+impl Use<'_> {
     pub fn new(feature: FeatureId, kind: Kind, origin: Origin, span: Span, node: NodeId) -> Self {
         Self {
             feature,
@@ -62,6 +73,7 @@ impl Use {
             origin,
             span,
             node,
+            key: None,
             member: None,
         }
     }
