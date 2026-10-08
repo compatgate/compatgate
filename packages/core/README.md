@@ -19,6 +19,83 @@ for (const finding of result.findings) {
 `check` finds the browserslist config and `compatgate.jsonc` above `filename`.
 Pass `targets` or `allow` to skip the lookup.
 
+A linter or a bundler checks many files with one configuration. It creates a checker once:
+
+```js
+import { createChecker, loadAllow, resolveTargets } from '@compatgate/core';
+
+const checker = createChecker({
+  targets: resolveTargets('/project/src/index.ts'),
+  allow: [...loadAllow('/project/src/index.ts').entries, 'api.structuredClone'],
+});
+const result = checker.check(source, '/project/src/app.ts');
+```
+
+The checker resolves the query, builds the support table and compiles the globs of `allow` once.
+It never changes after `createChecker`, so workers can each hold a checker and check at the same time.
+`check` keeps the checkers of the 16 most recently used configurations.
+
+`allow` takes feature ids and entries in the form of `compatgate.jsonc`, plus an optional `baseDir`
+for relative `files`. Without it, `files` resolve against the `baseDir` option, then against the process
+directory. `normalizeAllowEntry(entry, baseDir)` gives the form that `loadAllow` returns.
+`validateAllow(allow, targets)` reports entries with an unknown feature id and entries that the targets
+support natively.
+
+### Result
+
+```ts
+interface CheckResult {
+  findings: Finding[];
+  usedAllow: number[]; // indexes of the allow entries that suppressed a finding
+  ignoredBrowsers: string[]; // browserslist names without compatibility data
+  parseError?: {
+    kind: 'syntax' | 'unsupported-file';
+    message: string; // without the filename and the position
+    line?: number; // for a syntax error
+    column?: number;
+  };
+}
+
+interface Finding {
+  feature: string; // BCD id, such as 'api.structuredClone'
+  kind: 'syntax' | 'builtin' | 'api';
+  confidence: 'exact' | 'heuristic' | 'partial';
+  alternatives: string[]; // for a heuristic finding: other ids that the same code may use
+  start: { line: number; column: number };
+  end: { line: number; column: number };
+  range: [number, number];
+  unsupported: { browser: string; target: string; since?: string; note?: string }[];
+}
+```
+
+Lines start at 1, columns at 0. Columns and `range` count UTF-16 code units, as JavaScript strings do.
+`source.slice(...range)` is the code of the finding. Columns skip a byte order mark, as ESLint does;
+`range` counts it.
+
+An `allow` entry for the feature or for any of its `alternatives` suppresses a heuristic finding.
+
+A source that does not parse is no error: the result has no findings and a `parseError`.
+A linter shows its own parse errors, and a bundler skips the module. The kind `unsupported-file` means
+that the extension selects no parser: `.vue`, `.css`, a file without an extension.
+`isCheckable(filename)` tells it before the call.
+
+The filename must be a path. A bundler id such as `/src/a.ts?v=123` has a query: strip `?…` before
+the call, as Vite's `cleanUrl` does. compatgate does not strip it itself: `?` and `#` are valid
+in file names, and the `files` globs of `allow` match the same filename.
+
+### Errors
+
+Invalid configuration throws an `Error` with a `code`:
+
+| `code`                | Cause                                                                      |
+| --------------------- | -------------------------------------------------------------------------- |
+| `COMPATGATE_TARGETS`  | An invalid browserslist query or config (`TargetsConfigError` in JS).      |
+| `COMPATGATE_ALLOW`    | An invalid `allow` entry, glob or `compatgate.jsonc` (`AllowConfigError`). |
+| `COMPATGATE_INTERNAL` | A bug in compatgate. Please report it with the checked file.               |
+
+An argument of a wrong type, such as a number for `source`, is a programming error. napi throws it
+with its own code, such as `StringExpected`.
+
 ## What it checks
 
 - **Syntax** newer than your targets: class fields and static blocks, `??=`, optional catch binding and more.

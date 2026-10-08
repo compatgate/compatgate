@@ -7,12 +7,22 @@ import type { ParseError } from 'jsonc-parser';
 
 export const ALLOW_FILE = 'compatgate.jsonc';
 
+/** An entry in the form that the core takes. */
 export interface AllowEntry {
   feature: string;
   packages: string[];
   files: string[];
   /** Directory of the config file. `files` patterns are relative to it. */
   baseDir: string;
+}
+
+/** An entry as a user writes it: in `compatgate.jsonc` or inline in the options of an adapter. */
+export interface AllowEntryInput {
+  feature: string;
+  packages?: string | string[];
+  files?: string | string[];
+  /** Directory that relative `files` patterns resolve against. Not accepted in `compatgate.jsonc`. */
+  baseDir?: string;
 }
 
 export interface AllowConfig {
@@ -22,6 +32,7 @@ export interface AllowConfig {
 
 export class AllowConfigError extends Error {
   override name = 'AllowConfigError';
+  readonly code = 'COMPATGATE_ALLOW';
 }
 
 const cache = new Map<string, AllowConfig>();
@@ -91,7 +102,7 @@ function readConfig(path: string, chain: readonly string[]): AllowEntry[] {
   if (!Array.isArray(allow)) {
     throw new AllowConfigError(`${path}: "allow" must be an array`);
   }
-  const own = allow.map((entry, index) => toEntry(entry, dirname(path), `${path}: allow[${index}]`));
+  const own = allow.map((entry, index) => toEntry(entry, dirname(path), `${path}: allow[${index}]`, false));
   return [...inherited, ...own];
 }
 
@@ -114,23 +125,38 @@ function resolveExtends(target: string, from: string): string {
   }
 }
 
-function toEntry(value: unknown, baseDir: string, where: string): AllowEntry {
+/**
+ * Turns an entry as a user writes it into the form that the core takes. A feature id becomes an entry
+ * for any file. Relative `files` patterns resolve against the `baseDir` of the entry, then against
+ * `baseDir`; a relative directory resolves against the process directory. Throws `AllowConfigError`
+ * for a value of another shape.
+ */
+export function normalizeAllowEntry(value: string | AllowEntryInput, baseDir: string = process.cwd()): AllowEntry {
+  return toEntry(value, baseDir, 'allow entry', true);
+}
+
+/** `inline`: the entry comes from code, not from compatgate.jsonc, and may name its own `baseDir`. */
+export function toEntry(value: unknown, baseDir: string, where: string, inline: boolean): AllowEntry {
   if (typeof value === 'string') {
-    return { feature: value, packages: [], files: [], baseDir };
+    return { feature: value, packages: [], files: [], baseDir: resolve(baseDir) };
   }
   if (!isRecord(value) || typeof value.feature !== 'string') {
     throw new AllowConfigError(`${where}: expected a feature id or { "feature": string, "packages"?, "files"? }`);
   }
   for (const key of Object.keys(value)) {
-    if (key !== 'feature' && key !== 'packages' && key !== 'files') {
+    if (key !== 'feature' && key !== 'packages' && key !== 'files' && !(inline && key === 'baseDir')) {
       throw new AllowConfigError(`${where}: unknown key "${key}". Write the reason as a comment`);
     }
+  }
+  if (value.baseDir !== undefined && typeof value.baseDir !== 'string') {
+    throw new AllowConfigError(`${where}.baseDir: expected a string`);
   }
   return {
     feature: value.feature,
     packages: stringList(value.packages, `${where}.packages`),
     files: stringList(value.files, `${where}.files`),
-    baseDir,
+    // A relative directory would never match: linters and bundlers pass absolute filenames.
+    baseDir: resolve(value.baseDir ?? baseDir),
   };
 }
 

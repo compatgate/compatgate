@@ -23,5 +23,5 @@ pub mod position;
 pub mod support;
 pub mod targets;
 
-pub use check::{CheckOutput, Confidence, Finding, Kind, check};
-pub use error::Error;
+pub use check::{CheckOutput, Confidence, Finding, Kind, check, is_checkable};
+pub use error::{Error, ParseError};

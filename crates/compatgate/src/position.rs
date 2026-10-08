@@ -6,6 +6,9 @@ pub struct Position {
     pub line: u32,
     /// Starts at 0. Counted in UTF-16 code units.
     pub column: u32,
+    /// UTF-16 code units from the start of the source, as an index into a JavaScript string.
+    /// Unlike `column`, it counts the byte order mark: a caller slices the string it passed in.
+    pub offset: u32,
 }
 
 pub struct LineIndex<'a> {
@@ -16,6 +19,8 @@ pub struct LineIndex<'a> {
     checkpoints: Vec<Checkpoint>,
     /// Line `n` owns `checkpoints[checkpoint_starts[n]..checkpoint_starts[n + 1]]`. The range is empty for ASCII lines.
     checkpoint_starts: Vec<u32>,
+    /// UTF-16 offset of the first character of each line.
+    line_offsets: Vec<u32>,
 }
 
 /// Distance in bytes between two checkpoints.
@@ -51,28 +56,35 @@ impl<'a> LineIndex<'a> {
             }
             index += 1;
         }
-        let (checkpoints, checkpoint_starts) = Self::build_checkpoints(source, &line_starts);
+        let (checkpoints, checkpoint_starts, line_offsets) = Self::build_checkpoints(source, &line_starts);
         Self {
             source,
             line_starts,
             checkpoints,
             checkpoint_starts,
+            line_offsets,
         }
     }
 
     /// One pass over the source. A line gets checkpoints only if it has a non-ASCII byte.
-    fn build_checkpoints(source: &str, line_starts: &[u32]) -> (Vec<Checkpoint>, Vec<u32>) {
+    /// The pass also sums the UTF-16 length of the lines into the offset of each line.
+    fn build_checkpoints(source: &str, line_starts: &[u32]) -> (Vec<Checkpoint>, Vec<u32>, Vec<u32>) {
         let mut checkpoints = Vec::new();
         let mut per_line = Vec::with_capacity(line_starts.len());
+        let mut line_offsets = Vec::with_capacity(line_starts.len());
+        let mut line_offset = 0u32;
         for (line, &start) in line_starts.iter().enumerate() {
+            line_offsets.push(line_offset);
             let mut start = start as usize;
             // ESLint removes the byte order mark before it counts columns, so it is not a column here either.
             if line == 0 && source.starts_with('\u{FEFF}') {
                 start = '\u{FEFF}'.len_utf8();
+                line_offset += 1;
             }
             let end = line_starts.get(line + 1).map_or(source.len(), |&next| next as usize);
             per_line.push(checkpoints.len() as u32);
             if source.as_bytes()[start..end].is_ascii() {
+                line_offset += (end - start) as u32;
                 continue;
             }
             let mut column = 0u32;
@@ -87,17 +99,21 @@ impl<'a> LineIndex<'a> {
                 }
                 column += ch.len_utf16() as u32;
             }
+            line_offset += column;
         }
         per_line.push(checkpoints.len() as u32);
-        (checkpoints, per_line)
+        (checkpoints, per_line, line_offsets)
     }
 
     pub fn position(&self, offset: u32) -> Position {
         count!(positions);
         let line = self.line_starts.partition_point(|&start| start <= offset) - 1;
         let mut start = self.line_starts[line];
+        // The mark is one UTF-16 unit before the first column, except for an offset inside the mark itself.
+        let mut bom = 0;
         if line == 0 && self.source.starts_with('\u{FEFF}') {
             start = start.max('\u{FEFF}'.len_utf8() as u32).min(offset);
+            bom = u32::from(start > 0);
         }
         let (first, end) = (self.checkpoint_starts[line], self.checkpoint_starts[line + 1]);
         let column = match first < end {
@@ -113,6 +129,7 @@ impl<'a> LineIndex<'a> {
         Position {
             line: line as u32 + 1,
             column,
+            offset: self.line_offsets[line] + bom + column,
         }
     }
 }
@@ -121,41 +138,71 @@ impl<'a> LineIndex<'a> {
 mod tests {
     use super::*;
 
-    fn at(source: &str, needle: &str) -> Position {
-        LineIndex::new(source).position(source.find(needle).unwrap() as u32)
+    /// Line and column of the first `needle`.
+    fn at(source: &str, needle: &str) -> (u32, u32) {
+        let position = LineIndex::new(source).position(source.find(needle).unwrap() as u32);
+        (position.line, position.column)
+    }
+
+    fn offset(source: &str, needle: &str) -> u32 {
+        LineIndex::new(source)
+            .position(source.find(needle).unwrap() as u32)
+            .offset
     }
 
     #[test]
     fn first_line_starts_at_one() {
-        assert_eq!(at("abc", "b"), Position { line: 1, column: 1 });
+        assert_eq!(at("abc", "b"), (1, 1));
     }
 
     #[test]
     fn counts_all_line_terminators() {
-        assert_eq!(at("a\nb", "b"), Position { line: 2, column: 0 });
-        assert_eq!(at("a\r\nb", "b"), Position { line: 2, column: 0 });
-        assert_eq!(at("a\rb", "b"), Position { line: 2, column: 0 });
-        assert_eq!(at("a\u{2028}b", "b"), Position { line: 2, column: 0 });
-        assert_eq!(at("a\u{2029}b", "b"), Position { line: 2, column: 0 });
+        assert_eq!(at("a\nb", "b"), (2, 0));
+        assert_eq!(at("a\r\nb", "b"), (2, 0));
+        assert_eq!(at("a\rb", "b"), (2, 0));
+        assert_eq!(at("a\u{2028}b", "b"), (2, 0));
+        assert_eq!(at("a\u{2029}b", "b"), (2, 0));
     }
 
     #[test]
     fn columns_are_utf16_units() {
-        assert_eq!(at("привет x", "x"), Position { line: 1, column: 7 });
-        assert_eq!(at("😀x", "x"), Position { line: 1, column: 2 });
+        assert_eq!(at("привет x", "x"), (1, 7));
+        assert_eq!(at("😀x", "x"), (1, 2));
     }
 
     #[test]
     fn end_of_source_is_a_valid_offset() {
         let source = "ab\n";
-        assert_eq!(LineIndex::new(source).position(3), Position { line: 2, column: 0 });
+        assert_eq!(
+            LineIndex::new(source).position(3),
+            Position {
+                line: 2,
+                column: 0,
+                offset: 3
+            }
+        );
     }
 
     #[test]
     fn byte_order_mark_is_not_a_column() {
-        assert_eq!(at("\u{FEFF}ab", "b"), Position { line: 1, column: 1 });
-        assert_eq!(at("\u{FEFF}a\nb", "b"), Position { line: 2, column: 0 });
-        assert_eq!(at("\u{FEFF}привет x", "x"), Position { line: 1, column: 7 });
+        assert_eq!(at("\u{FEFF}ab", "b"), (1, 1));
+        assert_eq!(at("\u{FEFF}a\nb", "b"), (2, 0));
+        assert_eq!(at("\u{FEFF}привет x", "x"), (1, 7));
+    }
+
+    #[test]
+    fn offsets_are_utf16_units_from_the_source_start() {
+        assert_eq!(offset("ab\ncd", "d"), 4);
+        assert_eq!(offset("привет\n😀x", "x"), 9);
+        assert_eq!(offset("a\r\nb\u{2028}c", "c"), 5);
+    }
+
+    #[test]
+    fn the_byte_order_mark_counts_in_the_offset() {
+        // The offset indexes the source string as JavaScript sees it, the mark included.
+        assert_eq!(offset("\u{FEFF}ab", "b"), 2);
+        assert_eq!(offset("\u{FEFF}привет\nx", "x"), 8);
+        assert_eq!(LineIndex::new("\u{FEFF}a").position(0).offset, 0);
     }
 
     fn naive(source: &str, offset: usize) -> Position {
@@ -184,6 +231,7 @@ mod tests {
         Position {
             line,
             column: source[start..offset].encode_utf16().count() as u32,
+            offset: source[..offset].encode_utf16().count() as u32,
         }
     }
 

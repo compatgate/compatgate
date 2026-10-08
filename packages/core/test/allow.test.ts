@@ -2,9 +2,9 @@ import { beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
-import { AllowConfigError, clearAllowCache, loadAllow, loadAllowFile } from '../src-js/allow.ts';
+import { AllowConfigError, clearAllowCache, loadAllow, loadAllowFile, normalizeAllowEntry } from '../src-js/allow.ts';
 
 beforeEach(() => clearAllowCache());
 
@@ -114,4 +114,45 @@ test('extends may name a jsonc file inside a package', () => {
 test('an unresolvable package names the file it looked for', () => {
   const root = project({ 'compatgate.jsonc': '{ "extends": "@co/nothing" }' });
   assert.throws(() => loadAllowFile(join(root, 'compatgate.jsonc')), /@co\/nothing\/compatgate\.jsonc/);
+});
+
+test('normalizeAllowEntry turns an inline entry into the form of compatgate.jsonc', () => {
+  assert.deepEqual(normalizeAllowEntry('api.structuredClone', '/p'), {
+    feature: 'api.structuredClone',
+    packages: [],
+    files: [],
+    baseDir: '/p',
+  });
+  assert.deepEqual(normalizeAllowEntry({ feature: 'api.a', packages: 'lib', files: ['src/**'] }, '/p'), {
+    feature: 'api.a',
+    packages: ['lib'],
+    files: ['src/**'],
+    baseDir: '/p',
+  });
+  // The directory of the entry wins over the argument.
+  assert.equal(normalizeAllowEntry({ feature: 'api.a', baseDir: '/q' }, '/p').baseDir, '/q');
+  assert.equal(normalizeAllowEntry('api.a').baseDir, process.cwd());
+  // A relative directory would never match the absolute paths that a linter or a bundler passes.
+  assert.equal(normalizeAllowEntry({ feature: 'api.a', baseDir: 'sub' }, '/p').baseDir, resolve('sub'));
+  assert.equal(normalizeAllowEntry('api.a', 'sub').baseDir, resolve('sub'));
+});
+
+test('normalizeAllowEntry rejects an invalid entry with the code of an allow error', () => {
+  // The values come from user configs, so their types are not checked at compile time.
+  const values: unknown[] = [42, { feature: 'api.a', reason: 'x' }, { feature: 'api.a', files: [1] }];
+  for (const value of values) {
+    assert.throws(
+      () => normalizeAllowEntry(value as string, '/p'),
+      (error: unknown) => {
+        assert.ok(error instanceof AllowConfigError);
+        assert.equal(error.code, 'COMPATGATE_ALLOW');
+        return true;
+      },
+    );
+  }
+});
+
+test('compatgate.jsonc does not accept baseDir: the directory of the file is the base', () => {
+  const root = project({ 'compatgate.jsonc': '{ "allow": [{ "feature": "api.a", "baseDir": "/x" }] }' });
+  assert.throws(() => loadAllowFile(join(root, 'compatgate.jsonc')), /unknown key "baseDir"/);
 });

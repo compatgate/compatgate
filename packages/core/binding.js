@@ -716,8 +716,13 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { bcdVersion, check, validateAllow } = nativeBinding
+const { Checker, AllowIssueKind, bcdVersion, FindingConfidence, FindingKind, isCheckable, ParseErrorKind, validateAllow } = nativeBinding
+export { Checker }
+export { AllowIssueKind }
 export { bcdVersion }
-export { check }
+export { FindingConfidence }
+export { FindingKind }
+export { isCheckable }
+export { ParseErrorKind }
 export { validateAllow }
 export const __napiBindingTarget = __napiLoadedBindingTarget

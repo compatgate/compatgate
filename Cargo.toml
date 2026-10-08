@@ -37,5 +37,6 @@ codegen-units = 1
 lto = "fat"
 strip = "symbols"
 # A panic in the core must reach JavaScript as an error, so that the linter or the bundler
-# of the user keeps running. `#[napi(catch_unwind)]` needs unwinding; "abort" would kill the process.
+# of the user keeps running. The binding catches it with `catch_unwind` (`guard` in packages/core/src/lib.rs)
+# and throws COMPATGATE_INTERNAL. That needs unwinding; "abort" would kill the process.
 panic = "unwind"

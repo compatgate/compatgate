@@ -15,8 +15,8 @@
     }
   },
   "scripts": {
-    "build:native": "napi build --platform --release --esm --js binding.js --dts binding.d.ts",
-    "build:debug": "napi build --platform --esm --js binding.js --dts binding.d.ts",
+    "build:native": "napi build --platform --release --esm --no-const-enum --js binding.js --dts binding.d.ts",
+    "build:debug": "napi build --platform --esm --no-const-enum --js binding.js --dts binding.d.ts",
     "build:js": "tsc -p tsconfig.json",
     "build": "pnpm run build:native && pnpm run build:js",
     "typecheck": "tsc -p tsconfig.test.json",

@@ -12,9 +12,12 @@ test('the published entry point exports the public API', () => {
     'bcdVersion',
     'check',
     'clearAllowCache',
+    'createChecker',
     'findAllowFile',
+    'isCheckable',
     'loadAllow',
     'loadAllowFile',
+    'normalizeAllowEntry',
     'resolveTargets',
     'validateAllow',
   ];
@@ -23,4 +26,7 @@ test('the published entry point exports the public API', () => {
   }
   const result = published.check('structuredClone(1);', { filename: 'a.js', targets: 'Chrome >= 97', allow: [] });
   assert.equal(result.findings[0]?.feature, 'api.structuredClone');
+  const checker = published.createChecker({ targets: 'Chrome >= 97' });
+  assert.deepEqual(checker.check('structuredClone(1);', 'a.js'), result);
+  assert.equal(published.isCheckable('a.vue'), false);
 });

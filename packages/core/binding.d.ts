@@ -9,6 +9,21 @@
  */
 export declare const __napiBindingTarget: 'native' | 'wasm32-wasi' | 'wasm32-wasip1'
 
+/**
+ * Resolved targets and compiled `allow` entries. One checker serves every file of a project: the
+ * query, the support table and the globs are built once. The checker never changes after `new`, so
+ * the checkers of several workers run at the same time without locks.
+ */
+export declare class Checker {
+  /** Throws an error with the code `COMPATGATE_TARGETS` or `COMPATGATE_ALLOW`. */
+  constructor(targets: string, allow?: Array<AllowEntryInput> | undefined | null)
+  /**
+   * A source that does not parse gives no findings and a `parseError`: a linter shows its own parse
+   * errors, and a bundler skips the module.
+   */
+  check(source: string, filename: string): CheckResultOutput
+}
+
 export interface AllowEntryInput {
   feature: string
   packages?: Array<string>
@@ -16,33 +31,34 @@ export interface AllowEntryInput {
   baseDir?: string
 }
 
+export type AllowIssueKind = 'unknown-feature' | 'native-in-targets'
+
 export interface AllowIssueOutput {
   index: number
-  kind: string
+  kind: AllowIssueKind
 }
 
 export declare function bcdVersion(): string
-
-export declare function check(source: string, input: CheckInput): CheckResultOutput
-
-export interface CheckInput {
-  filename: string
-  targets: string
-  allow?: Array<AllowEntryInput>
-}
 
 export interface CheckResultOutput {
   findings: Array<FindingOutput>
   usedAllow: Array<number>
   ignoredBrowsers: Array<string>
+  parseError?: ParseErrorOutput
 }
+
+export type FindingConfidence = 'exact' | 'heuristic' | 'partial'
+
+export type FindingKind = 'syntax' | 'builtin' | 'api'
 
 export interface FindingOutput {
   feature: string
-  kind: 'syntax' | 'builtin' | 'api'
-  confidence: 'exact' | 'heuristic' | 'partial'
+  kind: FindingKind
+  confidence: FindingConfidence
+  alternatives: Array<string>
   start: PositionOutput
   end: PositionOutput
+  range: [number, number]
   unsupported: Array<GapOutput>
 }
 
@@ -53,9 +69,27 @@ export interface GapOutput {
   note?: string
 }
 
+/**
+ * Whether `Checker.check` can parse a file with this name. A bundler id with a query (`a.ts?v=1`)
+ * is no file name: the adapter strips the query first.
+ */
+export declare function isCheckable(filename: string): boolean
+
+export type ParseErrorKind = 'syntax' | 'unsupported-file'
+
+export interface ParseErrorOutput {
+  kind: ParseErrorKind
+  message: string
+  /** Set for a syntax error only. */
+  line?: number
+  /** Set for a syntax error only. */
+  column?: number
+}
+
 export interface PositionOutput {
   line: number
   column: number
 }
 
+/** Resolves the query on every call: a project validates its entries once, not per file. */
 export declare function validateAllow(allow: Array<AllowEntryInput>, targetsQuery: string): Array<AllowIssueOutput>

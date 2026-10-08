@@ -10,6 +10,7 @@ export interface ResolveTargetsOptions {
 
 export class TargetsConfigError extends Error {
   override name = 'TargetsConfigError';
+  readonly code = 'COMPATGATE_TARGETS';
 }
 
 /**

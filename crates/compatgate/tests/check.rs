@@ -4,7 +4,7 @@
 use compatgate::allow::{AllowEntry, AllowList};
 use compatgate::position::Position;
 use compatgate::targets::Targets;
-use compatgate::{Confidence, Error, Kind, check};
+use compatgate::{Confidence, Error, Kind, ParseError, check, is_checkable};
 
 const QUERY: &str = "Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115";
 
@@ -33,8 +33,22 @@ fn finds_a_global_function_missing_in_a_target() {
     assert_eq!(finding.feature, "api.structuredClone");
     assert_eq!(finding.kind, Kind::Api);
     assert_eq!(finding.confidence, Confidence::Exact);
-    assert_eq!(finding.start, Position { line: 2, column: 0 });
-    assert_eq!(finding.end, Position { line: 2, column: 15 });
+    assert_eq!(
+        finding.start,
+        Position {
+            line: 2,
+            column: 0,
+            offset: 13
+        }
+    );
+    assert_eq!(
+        finding.end,
+        Position {
+            line: 2,
+            column: 15,
+            offset: 28
+        }
+    );
 }
 
 #[test]
@@ -106,24 +120,48 @@ fn findings_are_sorted_by_position() {
     );
 }
 
-#[test]
-fn syntax_error_is_a_parse_error_with_the_filename() {
+fn parse_error(source: &str, filename: &str) -> ParseError {
     let targets = Targets::resolve(QUERY).unwrap();
-    let error = check("const = ;", "broken.js", &targets, &AllowList::empty()).unwrap_err();
-    assert!(
-        matches!(&error, Error::Parse(text) if text.contains("broken.js")),
-        "{error}"
-    );
+    match check(source, filename, &targets, &AllowList::empty()) {
+        Err(Error::Parse(error)) => error,
+        other => panic!("expected a parse error, got {other:?}"),
+    }
 }
 
 #[test]
-fn unknown_extension_is_a_parse_error() {
+fn syntax_error_is_a_parse_error_with_a_position() {
+    let error = parse_error("const = ;", "broken.js");
+    assert!(!error.message.is_empty());
+    assert_eq!((error.position.line, error.position.column), (1, 6), "{error:?}");
+}
+
+#[test]
+fn an_unknown_extension_is_an_unsupported_file() {
     let targets = Targets::resolve(QUERY).unwrap();
-    let error = check("<template></template>", "a.vue", &targets, &AllowList::empty()).unwrap_err();
-    assert!(
-        matches!(&error, Error::Parse(text) if text.contains("a.vue")),
-        "{error}"
-    );
+    for (filename, named) in [("/p/a.vue", "\".vue\""), ("/p/Makefile", "without an extension")] {
+        let error = check("<template></template>", filename, &targets, &AllowList::empty()).unwrap_err();
+        let Error::UnsupportedFile(message) = &error else {
+            panic!("expected an unsupported file, got {error:?}");
+        };
+        assert!(message.contains(named), "{message}");
+        assert!(
+            !message.contains("/p/"),
+            "the message does not repeat the filename: {message}"
+        );
+    }
+}
+
+#[test]
+fn is_checkable_tells_the_files_that_check_can_parse() {
+    for filename in [
+        "a.js", "a.mjs", "a.cjs", "a.jsx", "a.ts", "a.mts", "a.cts", "a.tsx", "a.d.ts", "/p/A.JS",
+    ] {
+        assert!(is_checkable(filename), "{filename}");
+    }
+    // A bundler id with a query names no file: the adapter strips the query first.
+    for filename in ["a.vue", "a.css", "Makefile", "a.ts?v=123", "a.ts#x"] {
+        assert!(!is_checkable(filename), "{filename}");
+    }
 }
 
 #[test]
@@ -133,12 +171,47 @@ fn uppercase_extension_is_accepted() {
 
 #[test]
 fn parse_error_names_line_and_column() {
-    let targets = Targets::resolve(QUERY).unwrap();
-    let error = check("const a = 1;\nconst = ;", "broken.js", &targets, &AllowList::empty()).unwrap_err();
+    let error = parse_error("const a = 1;\nconst = ;", "broken.js");
+    assert_eq!((error.position.line, error.position.column), (2, 6), "{error:?}");
+    assert_eq!(error.position.offset, 19);
     assert!(
-        matches!(&error, Error::Parse(text) if text.contains("broken.js:2:")),
-        "{error}"
+        Error::Parse(error).to_string().contains("2:7"),
+        "the message counts columns from 1"
     );
+}
+
+#[test]
+fn a_range_is_utf16_offsets_into_the_source() {
+    // 🐈‍⬛ is four UTF-16 units: a surrogate pair, a zero-width joiner and one more character.
+    let targets = Targets::resolve(QUERY).unwrap();
+    let source = "const s = \"Мяу 🐈‍⬛\";\nstructuredClone(s);";
+    let output = check(source, "a.js", &targets, &AllowList::empty()).unwrap();
+    let finding = &output.findings[0];
+    assert_eq!((finding.start.offset, finding.end.offset), (22, 37));
+    let utf16: Vec<u16> = source.encode_utf16().collect();
+    let text = String::from_utf16(&utf16[finding.start.offset as usize..finding.end.offset as usize]).unwrap();
+    assert_eq!(text, "structuredClone");
+}
+
+#[test]
+fn a_heuristic_finding_names_the_other_members_with_the_name() {
+    let targets = Targets::resolve(QUERY).unwrap();
+    let output = check("list.toSorted();", "a.js", &targets, &AllowList::empty()).unwrap();
+    let finding = &output.findings[0];
+    let alternatives: Vec<&str> = finding.alternatives.iter().map(|id| id.as_str()).collect();
+    assert!(!alternatives.is_empty(), "{finding:?}");
+    assert!(!alternatives.contains(&finding.feature), "{alternatives:?}");
+    assert!(
+        alternatives.iter().all(|id| id.ends_with(".toSorted")),
+        "{alternatives:?}"
+    );
+}
+
+#[test]
+fn an_exact_finding_has_no_alternatives() {
+    let targets = Targets::resolve(QUERY).unwrap();
+    let output = check("structuredClone(1);", "a.js", &targets, &AllowList::empty()).unwrap();
+    assert!(output.findings[0].alternatives.is_empty());
 }
 
 #[test]

@@ -6,48 +6,30 @@ use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::{NodeId, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
-use crate::Error;
 use crate::allow::AllowList;
+use crate::data::FeatureId;
 use crate::detect::guards::Guards;
 use crate::detect::{Use, globals, methods, regex, syntax};
 use crate::position::{LineIndex, Position};
 use crate::support::{Gap, Verdict, evaluate};
 use crate::targets::Targets;
+use crate::{Error, ParseError};
 
-/// Declares a fieldless enum together with `ALL`, so the list cannot fall behind the variants.
-macro_rules! variants {
-    ($(#[$meta:meta])* pub enum $name:ident { $($(#[$vmeta:meta])* $variant:ident),+ $(,)? }) => {
-        $(#[$meta])*
-        pub enum $name {
-            $($(#[$vmeta])* $variant),+
-        }
-
-        impl $name {
-            /// Every variant.
-            pub const ALL: &'static [$name] = &[$($name::$variant),+];
-        }
-    };
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Kind {
+    Syntax,
+    Builtin,
+    Api,
 }
 
-variants! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub enum Kind {
-        Syntax,
-        Builtin,
-        Api,
-    }
-}
-
-variants! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    pub enum Confidence {
-        /// The detector knows the feature is used.
-        Exact,
-        /// The detector guesses from a name: a method call on an object of unknown type.
-        Heuristic,
-        /// Some targets support the feature only partially. A heuristic use stays `Heuristic` in this case.
-        Partial,
-    }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Confidence {
+    /// The detector knows the feature is used.
+    Exact,
+    /// The detector guesses from a name: a method call on an object of unknown type.
+    Heuristic,
+    /// Some targets support the feature only partially. A heuristic use stays `Heuristic` in this case.
+    Partial,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -55,6 +37,9 @@ pub struct Finding {
     pub feature: &'static str,
     pub kind: Kind,
     pub confidence: Confidence,
+    /// Other features the same code may use, for a heuristic finding. An `allow` entry for any of them
+    /// suppresses the finding. Empty for other findings.
+    pub alternatives: &'static [FeatureId],
     pub start: Position,
     pub end: Position,
     pub gaps: Vec<Gap>,
@@ -119,6 +104,29 @@ pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList)
     Ok(output)
 }
 
+/// Whether `check` can parse a file with this name: JavaScript or TypeScript by the extension.
+/// A bundler id with a query (`a.ts?v=1`) is no file name: the caller strips the query first.
+pub fn is_checkable(filename: &str) -> bool {
+    source_type(filename).is_ok()
+}
+
+fn source_type(filename: &str) -> Result<SourceType, Error> {
+    // oxc knows only lower-case extensions, but `A.JS` is a valid file on case-insensitive file systems.
+    let name = Path::new(filename)
+        .file_name()
+        .map(|name| name.to_string_lossy().to_lowercase());
+    let name = name.as_deref().unwrap_or(filename);
+    SourceType::from_path(name).map_err(|_| {
+        let what = match Path::new(name).extension() {
+            Some(extension) => format!("the file extension \".{}\"", extension.to_string_lossy()),
+            None => "a file without an extension".to_string(),
+        };
+        Error::UnsupportedFile(format!(
+            "no parser for {what}; compatgate checks .js, .mjs, .cjs, .jsx, .ts, .mts, .cts and .tsx"
+        ))
+    })
+}
+
 /// Parses the source and builds the scope data. Detector tests use it too, so they parse exactly
 /// like `check` does.
 pub(crate) fn with_semantic<R>(
@@ -126,12 +134,7 @@ pub(crate) fn with_semantic<R>(
     filename: &str,
     run: impl for<'a> FnOnce(&Semantic<'a>, &'a Allocator) -> R,
 ) -> Result<R, Error> {
-    // oxc knows only lower-case extensions, but `A.JS` is a valid file on case-insensitive file systems.
-    let name = Path::new(filename)
-        .file_name()
-        .map(|name| name.to_string_lossy().to_lowercase());
-    let mut source_type = SourceType::from_path(name.as_deref().unwrap_or(filename))
-        .map_err(|error| Error::Parse(format!("{filename}: {error}")))?;
+    let mut source_type = source_type(filename)?;
     // oxc parses `.js` without JSX, but React projects keep JSX in `.js` files, and linters accept it.
     if source_type.is_javascript() {
         source_type = source_type.with_jsx(true);
@@ -146,14 +149,11 @@ pub(crate) fn with_semantic<R>(
         })
         .parse();
     if let Some(error) = parsed.diagnostics.errors().next() {
-        let location = error
-            .labels
-            .first()
-            .map(|label| LineIndex::new(source).position(label.offset()))
-            .map_or(String::new(), |position| {
-                format!(":{}:{}", position.line, position.column + 1)
-            });
-        return Err(Error::Parse(format!("{filename}{location}: {}", error.message)));
+        let offset = error.labels.first().map_or(0, |label| label.offset());
+        return Err(Error::Parse(ParseError {
+            message: error.message.to_string(),
+            position: LineIndex::new(source).position(offset),
+        }));
     }
     let semantic = SemanticBuilder::new()
         .with_build_nodes(true)
@@ -185,6 +185,7 @@ fn record(
         feature: usage.feature.as_str(),
         kind: usage.kind,
         confidence,
+        alternatives: usage.alternatives,
         start: lines.position(usage.span.start),
         end: lines.position(usage.span.end),
         gaps,

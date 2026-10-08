@@ -57,5 +57,8 @@ test('picks the environment section of a shared config', () => {
 
 test('an extends package that cannot be resolved is an error that names it', () => {
   const root = project({ '.browserslistrc': 'extends browserslist-config-missing\n', 'a.js': '' });
-  assert.throws(() => resolveTargets(join(root, 'a.js')), /browserslist-config-missing/);
+  assert.throws(() => resolveTargets(join(root, 'a.js')), {
+    code: 'COMPATGATE_TARGETS',
+    message: /browserslist-config-missing/,
+  });
 });
