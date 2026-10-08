@@ -93,6 +93,7 @@ impl<'a> LineIndex<'a> {
     }
 
     pub fn position(&self, offset: u32) -> Position {
+        count!(positions);
         let line = self.line_starts.partition_point(|&start| start <= offset) - 1;
         let mut start = self.line_starts[line];
         if line == 0 && self.source.starts_with('\u{FEFF}') {
@@ -104,6 +105,7 @@ impl<'a> LineIndex<'a> {
                 let marks = &self.checkpoints[first as usize..end as usize];
                 // The first checkpoint sits at the line start, past the BOM, and `offset > start` here.
                 let mark = marks[marks.partition_point(|mark| mark.byte <= offset).max(1) - 1];
+                count!(positions, (offset - mark.byte) as usize);
                 mark.column + self.source[mark.byte as usize..offset as usize].encode_utf16().count() as u32
             }
             _ => offset - start,
@@ -205,18 +207,27 @@ mod tests {
     }
 
     #[test]
-    fn many_positions_in_one_long_line_are_fast() {
-        // About 2.55 MB on one line.
-        let source = "привет😀x".repeat(150_000);
-        let index = LineIndex::new(&source);
-        let boundaries: Vec<usize> = (0..=source.len()).filter(|&i| source.is_char_boundary(i)).collect();
-        let started = std::time::Instant::now();
-        let mut checksum = 0u64;
-        for k in 0..100_000 {
-            let offset = boundaries[(boundaries.len() - 1) * k / 99_999];
-            checksum += u64::from(index.position(offset as u32).column);
+    fn a_position_in_a_long_line_costs_at_most_one_checkpoint_step() {
+        // Counting a column from the line start costs the whole line. The checkpoints bound the count
+        // by `CHECKPOINT_STEP` bytes, whatever the length of the line. The second line is four times
+        // longer than the first: a count from the line start breaks the bound on both.
+        const LOOKUPS: usize = 10_000;
+        for repeats in [10_000, 40_000] {
+            let source = "привет😀x".repeat(repeats);
+            let index = LineIndex::new(&source);
+            let boundaries: Vec<usize> = (0..=source.len()).filter(|&i| source.is_char_boundary(i)).collect();
+            crate::counters::take();
+            for k in 0..LOOKUPS {
+                let offset = boundaries[(boundaries.len() - 1) * k / (LOOKUPS - 1)];
+                index.position(offset as u32);
+            }
+            // One step for the lookup, the bytes after the checkpoint, and at most one character
+            // that crosses the checkpoint mark.
+            let steps = crate::counters::take().positions;
+            assert!(
+                steps <= LOOKUPS * (1 + CHECKPOINT_STEP + 4),
+                "{repeats} repeats: {steps} steps"
+            );
         }
-        assert!(checksum > 0);
-        assert!(started.elapsed().as_secs() < 10, "took {:?}", started.elapsed());
     }
 }

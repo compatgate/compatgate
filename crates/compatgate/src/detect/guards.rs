@@ -90,6 +90,7 @@ impl<'s, 'a> Guards<'s, 'a> {
         let mut crossed_function = false;
         let mut child = node_span;
         for ancestor in nodes.ancestors(usage.node) {
+            count!(climb);
             let kind = ancestor.kind();
             let guarded = match kind {
                 AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
@@ -215,6 +216,7 @@ impl<'s, 'a> Guards<'s, 'a> {
         let mut id = test.node_id();
         let mut current = value;
         loop {
+            count!(guards);
             let parent = nodes.parent_id(id);
             match nodes.kind(parent) {
                 kind if passes_value(semantic, kind, nodes.kind(id).span()) => {}
@@ -247,6 +249,7 @@ impl<'s, 'a> Guards<'s, 'a> {
         // A stack instead of recursion: a chain of thousands of operands is as deep as it is long.
         let mut steps = vec![Step::Join(root, value)];
         while let Some(step) = steps.pop() {
+            count!(guards);
             match step {
                 Step::Join(logical, value) => {
                     steps.push(Step::Close(logical.node_id(), value, count));
@@ -296,6 +299,7 @@ impl<'s, 'a> Guards<'s, 'a> {
         let mut id = node;
         let mut logicals = Vec::new();
         let throws = loop {
+            count!(guards);
             let parent = nodes.parent_id(id);
             let span = nodes.kind(id).span();
             match nodes.kind(parent) {
@@ -328,6 +332,7 @@ impl<'s, 'a> Guards<'s, 'a> {
 
     /// `if (!X) return;` before the use, in the same statement list.
     fn after_early_exit(&mut self, list: NodeId, statements: &[Statement<'_>], usage: &Use) -> bool {
+        count!(guards);
         let position = statements.partition_point(|statement| statement.span().end <= usage.span.start);
         if !statements
             .get(position)
@@ -350,6 +355,7 @@ impl<'s, 'a> Guards<'s, 'a> {
 fn early_exit_keys(semantic: &Semantic<'_>, statements: &[Statement<'_>]) -> HashMap<String, usize> {
     let mut first_exits = HashMap::new();
     for (index, statement) in statements.iter().enumerate() {
+        count!(guards);
         if let Statement::IfStatement(check) = statement
             && check.alternate.is_none()
             && exits(&check.consequent)
@@ -404,6 +410,7 @@ fn passes_value(semantic: &Semantic<'_>, kind: AstKind<'_>, span: Span) -> bool 
 /// sequence is its last expression, and the other expressions do not count.
 fn tested_value<'b, 'a>(semantic: &Semantic<'_>, mut test: &'b Expression<'a>) -> &'b Expression<'a> {
     loop {
+        count!(guards);
         test = match test.get_inner_expression() {
             Expression::SequenceExpression(sequence) => match sequence.expressions.last() {
                 Some(last) => last,
@@ -440,6 +447,7 @@ fn is_last(sequence: &SequenceExpression<'_>, span: Span) -> bool {
 fn is_optional_object(nodes: &AstNodes<'_>, node: NodeId) -> bool {
     let mut id = node;
     while is_wrapper(nodes.parent_kind(id)) {
+        count!(guards);
         id = nodes.parent_id(id);
     }
     let span = nodes.kind(id).span();
@@ -459,6 +467,7 @@ fn is_boolean_read(semantic: &Semantic<'_>, node: NodeId) -> bool {
     let mut id = node;
     // `a?.X` keeps the value, and `a?.X.y` does not end the chain at `X`.
     loop {
+        count!(guards);
         let span = nodes.kind(id).span();
         match nodes.parent_kind(id) {
             AstKind::ChainExpression(_) => {}
@@ -536,6 +545,7 @@ fn enclosing_call(nodes: &AstNodes<'_>, usage: &Use) -> Option<(bool, bool)> {
     let mut id = usage.node;
     let mut span = usage.span;
     loop {
+        count!(guards);
         let parent = nodes.parent_id(id);
         let lifts = match nodes.kind(parent) {
             AstKind::SequenceExpression(sequence) => {
@@ -588,6 +598,7 @@ fn without_not<'b, 'a>(
     mut value: bool,
 ) -> (&'b Expression<'a>, bool) {
     loop {
+        count!(guards);
         match tested_value(semantic, test) {
             Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
                 value = !value;
@@ -623,6 +634,7 @@ fn all_keys(semantic: &Semantic<'_>, test: &Expression<'_>, value: bool) -> Vec<
     let mut keys = Vec::new();
     let mut operands = vec![(test, value)];
     while let Some((operand, value)) = operands.pop() {
+        count!(guards);
         let (operand, value) = without_not(semantic, operand, value);
         match join_of(semantic, operand, value) {
             Some(logical) => {
@@ -696,6 +708,7 @@ fn chain_keys(semantic: &Semantic<'_>, expression: &Expression<'_>) -> Vec<Strin
 
 /// `a.b['c']` and `a?.b.c` as `a.b.c`. `window.X` is `X`. `None` when the root is not a global.
 fn chain(semantic: &Semantic<'_>, expression: &Expression<'_>) -> Option<String> {
+    count!(guards);
     if let Expression::Identifier(identifier) = expression.get_inner_expression() {
         return is_global(semantic, identifier).then(|| identifier.name.as_str().to_string());
     }

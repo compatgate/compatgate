@@ -162,6 +162,7 @@ name = "compatgate"
 version = "0.0.0"
 dependencies = [
  "browserslist-rs",
+ "compatgate",
  "globset",
  "oxc_allocator",
  "oxc_ast",

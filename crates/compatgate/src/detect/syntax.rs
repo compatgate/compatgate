@@ -574,6 +574,8 @@ pub(crate) fn ambient_nodes(nodes: &AstNodes<'_>) -> Vec<bool> {
 
 /// TypeScript declarations produce no JavaScript, so their syntax never reaches a browser.
 fn is_ambient(kind: AstKind<'_>) -> bool {
+    // The count is here, not in `ambient_nodes`: a walk over ancestors calls this once per ancestor.
+    count!(ambient);
     match kind {
         AstKind::Class(class) => class.declare,
         AstKind::Function(function) => {
@@ -800,28 +802,31 @@ mod tests {
 
     // The ambient check used to walk all ancestors of every node, so a deep expression cost
     // O(depth²): a chain of 20 000 terms is 20 000 levels deep. Generated files in node_modules
-    // have such chains. Member reads add nodes per level: with plain `a` terms the quadratic code
-    // needed 6.5 s in a debug build and passed; with `a.b.c.d.e` it needs 33 s. The budget is
-    // generous for a debug build on a slow machine; a failure means the cost became super-linear again.
+    // have such chains. Member reads add nodes per level. The test counts the nodes that the check
+    // visits at two sizes; a quadratic walk breaks the bound already at the smaller one.
     #[test]
     fn a_deep_expression_is_checked_in_linear_time() {
-        let source = format!("x = {};", vec!["a.b.c.d.e"; 20_000].join(" + "));
-        // oxc builds and visits the AST recursively; a debug build needs more than the 2 MiB
-        // stack of a test thread for this depth.
-        let elapsed = std::thread::Builder::new()
-            .stack_size(64 << 20)
-            .spawn(move || {
-                with_semantic(&source, "a.js", |semantic, _| {
-                    let start = std::time::Instant::now();
-                    detect(semantic, &ambient_nodes(semantic.nodes()));
-                    start.elapsed()
+        // `a.b.c.d.e + ` is ten nodes.
+        const STEPS_PER_TERM: usize = 16;
+        for terms in [1000, 4000] {
+            let source = format!("x = {};", vec!["a.b.c.d.e"; terms].join(" + "));
+            // oxc builds and visits the AST recursively; a debug build needs more than the 2 MiB
+            // stack of a test thread for this depth. The counters belong to the thread.
+            let steps = std::thread::Builder::new()
+                .stack_size(64 << 20)
+                .spawn(move || {
+                    with_semantic(&source, "a.js", |semantic, _| {
+                        crate::counters::take();
+                        detect(semantic, &ambient_nodes(semantic.nodes()));
+                        crate::counters::take()
+                    })
+                    .unwrap()
                 })
                 .unwrap()
-            })
-            .unwrap()
-            .join()
-            .unwrap();
-        assert!(elapsed < std::time::Duration::from_secs(10), "{elapsed:?}");
+                .join()
+                .unwrap();
+            assert!(steps.ambient <= STEPS_PER_TERM * terms, "{terms} terms: {steps:?}");
+        }
     }
 
     #[test]

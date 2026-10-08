@@ -1,4 +1,9 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": ["packages/core/binding.js", "packages/core/binding.d.ts", "packages/*/dist"]
+  "ignorePatterns": [
+    "crates/compatgate/tests/corpus",
+    "packages/core/binding.js",
+    "packages/core/binding.d.ts",
+    "packages/*/dist"
+  ]
 }
