@@ -1,8 +1,9 @@
+use std::collections::HashSet;
 use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_parser::{ParseOptions, Parser};
-use oxc_semantic::{Semantic, SemanticBuilder};
+use oxc_semantic::{NodeId, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
 use crate::Error;
@@ -74,11 +75,21 @@ pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList)
         uses.extend(syntax::detect(semantic, &ambient, targets));
         uses.extend(regex::detect(semantic, allocator, targets));
         uses.extend(methods::detect(semantic, targets));
-        let mut guards = Guards::new(semantic);
-        uses.into_iter()
+        let mut guards = Guards::new(semantic, targets);
+        let uses: Vec<Use> = uses
+            .into_iter()
             // TypeScript declarations produce no JavaScript: `declare namespace N { const a = X; }` never runs.
             .filter(|usage| !ambient[usage.node.index()])
             .filter(|usage| !guards.is_guarded(usage))
+            .collect();
+        // A root gives way to the member read at the same place when the member is reported.
+        let reported: HashSet<NodeId> = uses
+            .iter()
+            .filter(|usage| allowed(usage, allow, filename).is_none())
+            .map(|usage| usage.node)
+            .collect();
+        uses.into_iter()
+            .filter(|usage| !usage.member.is_some_and(|member| reported.contains(&member)))
             .map(|usage| {
                 let verdict = evaluate(usage.feature, targets);
                 (usage, verdict)
@@ -153,7 +164,7 @@ pub(crate) fn with_semantic<R>(
 
 fn record(
     output: &mut CheckOutput,
-    usage: Use<'_>,
+    usage: Use,
     verdict: Verdict,
     filename: &str,
     allow: &AllowList,
@@ -166,10 +177,7 @@ fn record(
         Verdict::Partial(gaps) if usage.confidence == Confidence::Heuristic => (Confidence::Heuristic, gaps),
         Verdict::Partial(gaps) => (Confidence::Partial, gaps),
     };
-    let allowed = std::iter::once(usage.feature)
-        .chain(usage.alternatives.iter().copied())
-        .find_map(|feature| allow.find(feature.as_str(), filename));
-    if let Some(index) = allowed {
+    if let Some(index) = allowed(&usage, allow, filename) {
         output.used_allow.push(index);
         return;
     }
@@ -181,6 +189,13 @@ fn record(
         end: lines.position(usage.span.end),
         gaps,
     });
+}
+
+/// The `allow` entry that suppresses the finding of the use, if any.
+fn allowed(usage: &Use, allow: &AllowList, filename: &str) -> Option<usize> {
+    std::iter::once(usage.feature)
+        .chain(usage.alternatives.iter().copied())
+        .find_map(|feature| allow.find(feature.as_str(), filename))
 }
 
 #[cfg(test)]

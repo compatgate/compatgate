@@ -1,887 +1,979 @@
-//! Feature checks in the code: `'Segmenter' in Intl`, `typeof structuredClone`, `x && x()`, an early
-//! `return`, a `try` around a call, an optional call `x.m?.()` or an optional member access `x?.y`.
-//! A use under a check of the same feature is not a finding. Syntax cannot be checked this way, so
-//! syntax uses have no keys.
+//! Whether the code protects a use of a feature that some target browser lacks. One model answers it;
+//! the README lists its tables under "Rules for checks".
 //!
-//! A test sees through what passes the value on unchanged: parentheses, the last expression of a
-//! sequence and a call of the global `Boolean`. Coverage instrumentation wraps tested operands in
-//! sequences, `(cov().b[1][1]++, navigator.share)`.
+//! - The flow: what the parents do with the value of the use in a browser without the feature. A bare
+//!   global throws `ReferenceError` when it is read, except under `typeof`. A member reads as
+//!   `undefined`, and each parent passes it on, drops it, throws on it, or lets it escape into a name,
+//!   an argument or a return value. A value that passed `||`, `&&`, `??`, `?:` or `?.` is optional: the
+//!   code expects that it may be missing, so its escape is no finding.
+//! - The facts: the features that a check proves present at the use. The branches of `if`, `?:`, `&&`,
+//!   `||` and of loops, and the statements before the use that exit early, check features.
 //!
-//! A check names a global only when the root of its chain is not declared in the file: a local `Intl`
-//! or `window` is another object. The key `#name` is the exception. The methods detector finds a
-//! method by its name and does not know the object, so a check of `a.toSorted` guards `b.toSorted()`.
+//! A use that throws is no finding under a fact that covers it or inside a `try` with a `catch` in the
+//! same function. A raw value that escapes is no finding under a fact that covers it. A fact covers a
+//! use when it names the same path or, for a method, the same name, or when it names a feature that
+//! every target version without full support of the use lacks too.
+//!
+//! The outcome of the flow and the facts are kept by node, so the uses of a file cost linear work.
 
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
+use std::rc::Rc;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    BinaryExpression, BinaryOperator, CallExpression, ChainElement, Expression, IdentifierReference, LogicalExpression,
-    LogicalOperator, MemberExpression, SequenceExpression, Statement, UnaryOperator,
+    AssignmentOperator, BinaryExpression, BinaryOperator, Expression, LogicalExpression, LogicalOperator, Statement,
+    UnaryOperator,
 };
-use oxc_semantic::{AstNodes, NodeId, Semantic};
+use oxc_semantic::{NodeId, Semantic};
 use oxc_span::{GetSpan, Span};
 
-use super::{Origin, Use, WINDOW_ALIASES};
+use super::globals::path_feature;
+use super::path::{as_member, is_global, key_name, member_path, path, property};
+use super::slot::{Slot, SpreadInto, destructured_source, is_boolean, is_boolean_argument, outermost, slot};
+use super::{Origin, Use};
+use crate::data::FeatureId;
+use crate::targets::Targets;
 
-/// Finds the checks around uses. One instance serves all uses of a file, so the keys of early exits
-/// in a statement list and the keys of `&&` and `||` chains are collected once, not once per use.
+/// The state of the value on the way from the use to the root.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+enum Flow {
+    /// It passed `||`, `&&`, `??`, `?:` or `?.`: the code expects that it may be missing.
+    Optional,
+    /// The value as it is.
+    Raw,
+}
+
+/// The end of the flow. The order is the severity: when an assignment both passes the value on and
+/// stores it, the worse outcome counts.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum Outcome {
+    Safe,
+    Escapes(Flow),
+    Throws,
+}
+
+/// The name under which a check proves a feature present.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+enum Key<'a> {
+    /// `["navigator", "share"]`, without the aliases of the global object.
+    Path(Vec<&'a str>),
+    /// The name of a method of any object: a check of `a.toSorted` proves `b.toSorted` too.
+    Method(&'a str),
+}
+
+/// A key that a check proves present, interned. The key of a use is interned the same way, so a fact
+/// covers the use with the same key by equality.
+type Fact = u32;
+
+/// A use that the facts are asked about: its key and its feature.
+#[derive(Clone, Copy)]
+struct Subject {
+    fact: Fact,
+    feature: FeatureId,
+}
+
+/// The facts that hold where a check has a value. They do not depend on the use, so one answer serves
+/// every use under the check.
+#[derive(Clone)]
+enum Facts {
+    /// The check never has the value, so the code there never runs: every fact holds.
+    All,
+    /// Sorted facts and the features that they name.
+    Set(Rc<FactSet>),
+    /// The facts of the operands `start..end` of an `&&` chain that is true or an `||` chain that is
+    /// false: the index of the chain answers for every part of it.
+    Range { index: usize, start: usize, end: usize },
+}
+
+#[derive(Default)]
+struct FactSet {
+    facts: Vec<Fact>,
+    features: Vec<FeatureId>,
+}
+
+/// The facts of a sequence by position: the operands of a chain or the statements of a list. A query
+/// asks whether a position in a range proves the subject. Flat sorted pairs keep the build to one
+/// allocation per sequence.
+#[derive(Default)]
+struct Index {
+    /// `(fact, position)`, sorted.
+    facts: Vec<(Fact, usize)>,
+    /// `(feature, position)`, sorted.
+    features: Vec<(FeatureId, usize)>,
+    /// For a statement list: the number of statements, and its nested blocks with their own indexes.
+    len: usize,
+    nested: Vec<(usize, usize)>,
+}
+
+impl Index {
+    /// Adds the facts of the position `at`. Positions come in increasing order.
+    fn add(&mut self, at: usize, all: bool, facts: &[Fact], features: &[FeatureId]) {
+        if all {
+            self.facts.push((ALL, at));
+        }
+        self.facts.extend(facts.iter().map(|&fact| (fact, at)));
+        self.features.extend(features.iter().map(|&feature| (feature, at)));
+    }
+
+    fn finish(mut self) -> Self {
+        self.facts.sort_unstable();
+        self.facts.dedup();
+        self.features
+            .sort_unstable_by_key(|&(feature, at)| (feature.index(), at));
+        self.features.dedup();
+        self
+    }
+
+    fn holds(&self, fact: Fact, start: usize, end: usize) -> bool {
+        let first = self.facts.partition_point(|&entry| entry < (fact, start));
+        self.facts
+            .get(first)
+            .is_some_and(|&(found, at)| found == fact && at < end)
+    }
+
+    /// The facts and the features of the positions `start..end`.
+    fn range(&self, start: usize, end: usize) -> (Vec<Fact>, Vec<FeatureId>) {
+        let mut facts: Vec<Fact> = self
+            .facts
+            .iter()
+            .filter(|&&(fact, at)| fact != ALL && (start..end).contains(&at))
+            .map(|&(fact, _)| fact)
+            .collect();
+        facts.dedup();
+        (facts, self.features(start, end))
+    }
+
+    /// The features of the positions `start..end`. Few facts name a feature, so this list is short.
+    fn features(&self, start: usize, end: usize) -> Vec<FeatureId> {
+        let mut features: Vec<FeatureId> = self
+            .features
+            .iter()
+            .filter(|&&(_, at)| (start..end).contains(&at))
+            .map(|&(feature, _)| feature)
+            .collect();
+        features.dedup();
+        features
+    }
+}
+
+/// The fact of `Facts::All` in an index: a position where every fact holds.
+const ALL: Fact = Fact::MAX;
+
+/// Whether a sorted list of positions has one in `start..end`.
+fn within(positions: &[usize], start: usize, end: usize) -> bool {
+    let first = positions.partition_point(|&position| position < start);
+    positions.get(first).is_some_and(|&position| position < end)
+}
+
+/// The question of a climb that asks for a `try`, beside the subjects that ask for facts.
+const CAUGHT: usize = usize::MAX;
+
+/// A step of the flow from a node with a flow.
+enum Step {
+    /// To the parent, with this flow.
+    Up(Flow),
+    /// To the parent with the same flow, and an escape of the value into the target of an assignment.
+    Fork,
+    /// To the optional chain around the parent, with `Flow::Optional`.
+    Chain,
+    Done(Outcome),
+}
+
+/// Answers for the uses of one file. The answers are kept by node, so uses with common ancestors share
+/// the work.
 pub struct Guards<'s, 'a> {
     semantic: &'s Semantic<'a>,
-    /// For each statement list, by the node that holds it: every key that an early exit
-    /// `if (!X) return;` checks, with the index of the first such statement.
-    early_exits: HashMap<NodeId, HashMap<String, usize>>,
-    /// The keys of a test, by the test node and the value of the test: with `true`, the keys that are
-    /// present when the test is true.
-    tests: HashMap<(NodeId, bool), TestKeys>,
-    /// For each `&&` or `||` chain: every key, with the indexes of the operands that check it.
-    chains: Vec<HashMap<String, Vec<usize>>>,
-    /// For each logical expression: whether `undefined` as its value throws, as in `(a || X)(y)`.
-    throwing_logicals: HashMap<NodeId, bool>,
-}
-
-/// What the current checks need to know about a use.
-// TODO(task 3): the model reads `Use::origin` and builds the key of a use only when a check needs it.
-struct Probe {
-    span: Span,
-    node: NodeId,
-    /// Names under which code can test for the feature: `Intl.Segmenter`, `structuredClone`,
-    /// `#toSorted` for a method of any object. Empty for syntax, which code cannot test for.
-    keys: Vec<String>,
-    /// The use fails at run time, so a `try` or an optional call can protect it. Parse-time syntax cannot be protected.
-    catchable: bool,
-}
-
-enum TestKeys {
-    Own(Vec<String>),
-    /// The operands `start..end` of a chain in `Guards::chains`.
-    Operands {
-        chain: usize,
-        start: usize,
-        end: usize,
-    },
+    targets: &'s Targets,
+    /// The outcome of the flow from a node with a flow.
+    flows: HashMap<(NodeId, Flow), Outcome>,
+    /// Interned keys and the features that they name.
+    facts: HashMap<Key<'a>, Fact>,
+    fact_features: Vec<Option<FeatureId>>,
+    subjects: Vec<Subject>,
+    subject_ids: HashMap<(Fact, FeatureId), usize>,
+    /// The answers of the climbs by node and question: whether the facts at the node cover a subject,
+    /// and with `CAUGHT`, whether a `try` catches what the node throws.
+    answers: HashMap<(NodeId, usize), bool>,
+    /// `F(T, p)` by test node and value.
+    tests: HashMap<(NodeId, bool), Facts>,
+    /// Whether a block or an `if` always exits.
+    exits: HashMap<NodeId, bool>,
+    /// For a list index and a subject: the positions of the nested blocks that cover the subject.
+    nested: HashMap<(usize, usize), Vec<usize>>,
+    /// The indexes of chains and of statement lists.
+    indexes: Vec<Index>,
+    /// For each statement list: its index.
+    lists: HashMap<NodeId, usize>,
+    /// `Targets::implies` by the checked feature and the feature of the use.
+    implied: HashMap<(FeatureId, FeatureId), bool>,
 }
 
 impl<'s, 'a> Guards<'s, 'a> {
-    pub fn new(semantic: &'s Semantic<'a>) -> Self {
+    pub fn new(semantic: &'s Semantic<'a>, targets: &'s Targets) -> Self {
         Self {
             semantic,
-            early_exits: HashMap::new(),
+            targets,
+            flows: HashMap::new(),
+            facts: HashMap::new(),
+            fact_features: Vec::new(),
+            subjects: Vec::new(),
+            subject_ids: HashMap::new(),
+            answers: HashMap::new(),
             tests: HashMap::new(),
-            chains: Vec::new(),
-            throwing_logicals: HashMap::new(),
+            exits: HashMap::new(),
+            nested: HashMap::new(),
+            indexes: Vec::new(),
+            lists: HashMap::new(),
+            implied: HashMap::new(),
         }
     }
 
-    pub fn is_guarded(&mut self, usage: &Use<'_>) -> bool {
-        let usage = &Probe {
-            span: usage.span,
-            node: usage.node,
-            keys: use_keys(self.semantic, usage),
-            catchable: usage.origin != Origin::Parse,
-        };
-        let detectable = !usage.keys.is_empty();
-        // Nothing can check such a use, and the walk below costs a pass over its ancestors.
-        if !detectable && !usage.catchable {
-            return false;
-        }
-        let semantic = self.semantic;
-        let nodes = semantic.nodes();
-        let span = usage.span;
-        let call = enclosing_call(nodes, usage);
-        if usage.catchable && call.is_some_and(|(optional, callee_is_member)| optional && callee_is_member) {
-            return true;
-        }
-        let called = call.is_some();
-        // Reading a member returns `undefined` when the feature is missing, so the read is the check itself.
-        // A bare global throws `ReferenceError` instead, so reading it is a use.
-        // `(a || X)(y)` calls `undefined` when `X` is missing, so `X` is used and not tested.
-        let member_read =
-            detectable && !called && is_member(nodes.kind(usage.node)) && !self.missing_value_throws(usage.node);
-        if member_read && (is_optional_object(nodes, usage.node) || is_boolean_read(semantic, usage.node)) {
-            return true;
-        }
-        let node_span = nodes.kind(usage.node).span();
-        // The use is the tested value of the node that the walk comes from: `X`, `!X`, `A && X`, `X != null`.
-        // The walk keeps this flag instead of searching each tested expression for the use, which made
-        // long `||` chains cubic.
-        let mut tested = member_read;
-        let mut crossed_function = false;
-        let mut child = node_span;
-        for ancestor in nodes.ancestors(usage.node) {
-            count!(climb);
-            let kind = ancestor.kind();
-            let guarded = match kind {
-                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                    crossed_function = true;
-                    false
-                }
-                AstKind::UnaryExpression(unary) => {
-                    // `typeof x.m()` calls `m`. The use of the methods detector is the call itself,
-                    // so its span is the argument of `typeof`, and only `called` tells it apart.
-                    detectable
-                        && !called
-                        && unary.operator == UnaryOperator::Typeof
-                        && unary.argument.get_inner_expression().span() == node_span
-                }
-                AstKind::IfStatement(statement) => self.branch(
-                    usage,
-                    tested,
-                    &statement.test,
-                    statement.consequent.span(),
-                    statement.alternate.as_ref().map(GetSpan::span),
-                ),
-                AstKind::ConditionalExpression(expression) => self.branch(
-                    usage,
-                    tested,
-                    &expression.test,
-                    expression.consequent.span(),
-                    Some(expression.alternate.span()),
-                ),
-                AstKind::LogicalExpression(expression) => self.logical(usage, tested, expression),
-                AstKind::TryStatement(statement) => {
-                    // A `try` does not reach into a callback: it runs after the `try` has finished.
-                    usage.catchable
-                        && called
-                        && !crossed_function
-                        && statement.handler.is_some()
-                        && within(statement.block.span, span)
-                }
-                AstKind::BlockStatement(block) => {
-                    detectable && self.after_early_exit(ancestor.id(), &block.body, usage)
-                }
-                AstKind::FunctionBody(body) => {
-                    detectable && self.after_early_exit(ancestor.id(), &body.statements, usage)
-                }
-                AstKind::Program(program) => detectable && self.after_early_exit(ancestor.id(), &program.body, usage),
-                AstKind::SwitchCase(case) => {
-                    detectable && self.after_early_exit(ancestor.id(), &case.consequent, usage)
-                }
-                AstKind::StaticBlock(block) => detectable && self.after_early_exit(ancestor.id(), &block.body, usage),
-                _ => false,
-            };
-            if guarded {
-                return true;
-            }
-            tested = tested && passes_tested_value(kind, child);
-            child = kind.span();
-        }
-        false
-    }
-
-    fn branch(
-        &mut self,
-        usage: &Probe,
-        tested: bool,
-        test: &'a Expression<'a>,
-        consequent: Span,
-        alternate: Option<Span>,
-    ) -> bool {
-        if usage.keys.is_empty() {
-            return false;
-        }
-        if within(test.span(), usage.span) {
-            return tested;
-        }
-        if within(consequent, usage.span) {
-            return self.checks(test, true, usage);
-        }
-        alternate.is_some_and(|alternate| within(alternate, usage.span)) && self.checks(test, false, usage)
-    }
-
-    fn logical(&mut self, usage: &Probe, tested: bool, expression: &'a LogicalExpression<'a>) -> bool {
-        if usage.keys.is_empty() {
-            return false;
-        }
-        if within(expression.left.span(), usage.span) {
-            // `const ua = navigator.userAgentData || null` is guarded, though the result is a value and
-            // not a test: reading a member does not throw, and the code that uses the result checks it.
-            return tested;
-        }
-        within(expression.right.span(), usage.span)
-            && match expression.operator {
-                LogicalOperator::And => self.checks(&expression.left, true, usage),
-                LogicalOperator::Or => self.checks(&expression.left, false, usage),
-                LogicalOperator::Coalesce => false,
-            }
-    }
-
-    /// Whether `test` checks a key of `usage` when the value of `test` is `value`.
-    fn checks(&mut self, test: &'a Expression<'a>, value: bool, usage: &Probe) -> bool {
-        let (test, value) = without_not(self.semantic, test, value);
-        let key = (test.node_id(), value);
-        if !self.tests.contains_key(&key) {
-            self.index(test, value);
-        }
-        match self.tests.get(&key) {
-            Some(TestKeys::Own(keys)) => matches(usage, keys),
-            Some(&TestKeys::Operands { chain, start, end }) => usage.keys.iter().any(|key| {
-                self.chains[chain].get(key).is_some_and(|operands| {
-                    let first = operands.partition_point(|&operand| operand < start);
-                    operands.get(first).is_some_and(|&operand| operand < end)
-                })
-            }),
+    pub fn is_guarded(&mut self, usage: &Use) -> bool {
+        match self.outcome(usage) {
             None => false,
+            Some(Outcome::Safe | Outcome::Escapes(Flow::Optional)) => true,
+            Some(Outcome::Escapes(Flow::Raw)) => self.is_covered(usage),
+            Some(Outcome::Throws) => self.is_covered(usage) || self.is_caught(usage.node),
         }
     }
 
-    /// Stores the keys of `test`. When `test` is a part of an `&&` or `||` chain, stores the keys of
-    /// every part of the outermost chain at once. A use in operand N of a chain asks for the keys of
-    /// operands 0..N, so collecting them on each request made a long chain quadratic.
-    fn index(&mut self, test: &'a Expression<'a>, value: bool) {
+    /// `None` for syntax: the file does not parse, so nothing protects it.
+    fn outcome(&mut self, usage: &Use) -> Option<Outcome> {
+        let nodes = self.semantic.nodes();
+        Some(match usage.origin {
+            Origin::Parse => return None,
+            Origin::Call => Outcome::Throws,
+            Origin::Global if slot(nodes, outermost(nodes, usage.node)) == Slot::Typeof => Outcome::Safe,
+            Origin::Global => Outcome::Throws,
+            Origin::Member | Origin::Method => match nodes.kind(usage.node) {
+                AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_) => self.flow(usage.node),
+                // A destructured property is bound to a name, and the value goes on from there.
+                _ => Outcome::Escapes(Flow::Raw),
+            },
+        })
+    }
+
+    /// Table 1: the climb from the member read `start` to the end of its flow.
+    fn flow(&mut self, start: NodeId) -> Outcome {
         let semantic = self.semantic;
         let nodes = semantic.nodes();
-        let mut root = join_of(semantic, test, value).map(|logical| (logical, value));
-        let mut id = test.node_id();
-        let mut current = value;
-        loop {
-            count!(guards);
-            let parent = nodes.parent_id(id);
-            match nodes.kind(parent) {
-                kind if passes_value(semantic, kind, nodes.kind(id).span()) => {}
-                AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => current = !current,
-                AstKind::LogicalExpression(logical) if joins(logical.operator, current) => {
-                    root = Some((logical, current));
+        let mut visited = Vec::new();
+        let (mut id, mut flow) = (start, Flow::Raw);
+        let mut outcome = loop {
+            if let Some(&known) = self.flows.get(&(id, flow)) {
+                break known;
+            }
+            count!(climb);
+            let step = match slot(nodes, id) {
+                Slot::Wrapper | Slot::SeqLast | Slot::Await => Step::Up(flow),
+                Slot::LogicalLeft(LogicalOperator::And) | Slot::LogicalRight | Slot::CondBranch => {
+                    Step::Up(Flow::Optional)
                 }
-                _ => break,
-            }
-            id = parent;
-        }
-        match root {
-            Some((logical, value)) => self.index_chain(logical, value),
-            None => {
-                let keys = own_keys(self.semantic, test, value);
-                self.tests.insert((test.node_id(), value), TestKeys::Own(keys));
-            }
-        }
-    }
-
-    fn index_chain(&mut self, root: &'a LogicalExpression<'a>, value: bool) {
-        enum Step<'a> {
-            Join(&'a LogicalExpression<'a>, bool),
-            Close(NodeId, bool, usize),
-            Operand(&'a Expression<'a>, bool),
-        }
-        let chain = self.chains.len();
-        let mut operands: HashMap<String, Vec<usize>> = HashMap::new();
-        let mut count = 0;
-        // A stack instead of recursion: a chain of thousands of operands is as deep as it is long.
-        let mut steps = vec![Step::Join(root, value)];
-        while let Some(step) = steps.pop() {
-            count!(guards);
+                Slot::AssignValue => Step::Fork,
+                Slot::Object { optional: true } | Slot::Callee { optional: true } => Step::Chain,
+                Slot::Object { .. }
+                | Slot::Callee { .. }
+                | Slot::NewCallee
+                | Slot::Tag
+                | Slot::InstanceofRight
+                | Slot::InRight
+                | Slot::Spread {
+                    into: SpreadInto::Array | SpreadInto::Call,
+                }
+                | Slot::ForOfRight
+                | Slot::DestructuringSource
+                | Slot::Yield { delegate: true }
+                | Slot::Extends => Step::Done(Outcome::Throws),
+                Slot::SeqDiscard
+                | Slot::LogicalLeft(_)
+                | Slot::CondTest
+                | Slot::Test
+                | Slot::Not
+                | Slot::Typeof
+                | Slot::Void
+                | Slot::Delete
+                | Slot::Compare
+                | Slot::InstanceofLeft
+                | Slot::Spread {
+                    into: SpreadInto::Object,
+                }
+                | Slot::ForInRight
+                | Slot::AssignTarget
+                | Slot::Statement => Step::Done(Outcome::Safe),
+                Slot::Argument if is_boolean_argument(semantic, id) => Step::Done(Outcome::Safe),
+                Slot::Argument | Slot::Yield { delegate: false } | Slot::Other => Step::Done(Outcome::Escapes(flow)),
+            };
+            visited.push((id, flow, matches!(step, Step::Fork)));
             match step {
-                Step::Join(logical, value) => {
-                    steps.push(Step::Close(logical.node_id(), value, count));
-                    steps.push(Step::Operand(&logical.right, value));
-                    steps.push(Step::Operand(&logical.left, value));
+                Step::Done(outcome) => break outcome,
+                Step::Up(next) => {
+                    id = nodes.parent_id(id);
+                    flow = next;
                 }
-                Step::Close(id, value, start) => {
-                    self.tests.insert(
-                        (id, value),
-                        TestKeys::Operands {
-                            chain,
-                            start,
-                            end: count,
-                        },
-                    );
-                }
-                Step::Operand(expression, value) => {
-                    let (expression, value) = without_not(self.semantic, expression, value);
-                    if let Some(logical) = join_of(self.semantic, expression, value) {
-                        steps.push(Step::Join(logical, value));
-                        continue;
+                Step::Fork => id = nodes.parent_id(id),
+                Step::Chain => {
+                    id = nodes.parent_id(id);
+                    while !matches!(nodes.kind(id), AstKind::ChainExpression(_)) {
+                        count!(climb);
+                        id = nodes.parent_id(id);
                     }
-                    for key in own_keys(self.semantic, expression, value) {
-                        operands.entry(key).or_default().push(count);
-                    }
-                    self.tests.insert(
-                        (expression.node_id(), value),
-                        TestKeys::Operands {
-                            chain,
-                            start: count,
-                            end: count + 1,
-                        },
-                    );
-                    count += 1;
+                    flow = Flow::Optional;
                 }
             }
+        };
+        for (id, flow, fork) in visited.into_iter().rev() {
+            if fork {
+                outcome = outcome.max(Outcome::Escapes(flow));
+            }
+            self.flows.insert((id, flow), outcome);
         }
-        self.chains.push(operands);
+        outcome
     }
 
-    /// Whether `undefined` in place of the member read `node` reaches a position that throws on it. The
-    /// value passes through wrappers and logical expressions, except the left operand of `||` and `??`:
-    /// the right operand replaces a missing member there. The verdict of each logical expression is kept,
-    /// so the uses of a long chain do not walk the chain again.
-    fn missing_value_throws(&mut self, node: NodeId) -> bool {
-        let nodes = self.semantic.nodes();
-        let mut id = node;
-        let mut logicals = Vec::new();
-        let throws = loop {
-            count!(guards);
-            let parent = nodes.parent_id(id);
-            let span = nodes.kind(id).span();
+    /// A `try` with a `catch` around the node in the same function: it catches what the node throws.
+    fn is_caught(&mut self, node: NodeId) -> bool {
+        self.climb(node, CAUGHT, |guards, parent, child, _| {
+            let nodes = guards.semantic.nodes();
+            let child_span = nodes.kind(child).span();
             match nodes.kind(parent) {
-                AstKind::LogicalExpression(logical) => {
-                    if logical.operator != LogicalOperator::And && logical.left.span() == span {
-                        break false;
-                    }
-                    if let Some(&throws) = self.throwing_logicals.get(&parent) {
-                        break throws;
-                    }
-                    logicals.push(parent);
+                AstKind::TryStatement(statement) => {
+                    (statement.handler.is_some() && statement.block.span == child_span).then_some(true)
                 }
-                // `(0, a || X)(y)` calls the last expression of the sequence.
-                AstKind::SequenceExpression(sequence) => {
-                    if sequence.expressions.last().is_none_or(|last| last.span() != span) {
-                        break false;
-                    }
+                // A callback runs after the `try` has finished, and so does the value of an instance field:
+                // the class runs it when it makes an object. Static values, keys and decorators run with
+                // the class, inside the `try`.
+                AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => Some(false),
+                AstKind::PropertyDefinition(field)
+                    if !field.r#static && field.value.as_ref().is_some_and(|value| value.span() == child_span) =>
+                {
+                    Some(false)
                 }
-                AstKind::ChainExpression(_) => {}
-                kind if is_wrapper(kind) => {}
-                _ => break throws_on_undefined(nodes, parent, span),
+                AstKind::AccessorProperty(field)
+                    if !field.r#static && field.value.as_ref().is_some_and(|value| value.span() == child_span) =>
+                {
+                    Some(false)
+                }
+                _ => None,
+            }
+        })
+    }
+
+    /// Climbs from `node` until `decide` answers the question at a parent, a node has a known answer, or
+    /// the climb reaches the root. Every node on the way keeps the answer, so the next climb stops there.
+    fn climb(
+        &mut self,
+        node: NodeId,
+        question: usize,
+        decide: impl Fn(&mut Self, NodeId, NodeId, usize) -> Option<bool>,
+    ) -> bool {
+        let nodes = self.semantic.nodes();
+        let mut visited = Vec::new();
+        let mut id = node;
+        let answer = loop {
+            if let Some(&known) = self.answers.get(&(id, question)) {
+                break known;
+            }
+            let parent = nodes.parent_id(id);
+            if parent == id {
+                break false;
+            }
+            count!(climb);
+            visited.push(id);
+            if let Some(answer) = decide(self, parent, id, question) {
+                break answer;
             }
             id = parent;
         };
-        for logical in logicals {
-            self.throwing_logicals.insert(logical, throws);
+        for id in visited {
+            self.answers.insert((id, question), answer);
         }
-        throws
+        answer
     }
 
-    /// `if (!X) return;` before the use, in the same statement list.
-    fn after_early_exit(&mut self, list: NodeId, statements: &[Statement<'_>], usage: &Probe) -> bool {
-        count!(guards);
-        let position = statements.partition_point(|statement| statement.span().end <= usage.span.start);
-        if !statements
-            .get(position)
-            .is_some_and(|statement| within(statement.span(), usage.span))
-        {
+    fn is_covered(&mut self, usage: &Use) -> bool {
+        let Some(key) = self.key(usage) else {
             return false;
+        };
+        let fact = self.intern(key);
+        let next = self.subjects.len();
+        let subject = *self.subject_ids.entry((fact, usage.feature)).or_insert(next);
+        if subject == next {
+            self.subjects.push(Subject {
+                fact,
+                feature: usage.feature,
+            });
         }
+        self.climb(usage.node, subject, |guards, parent, child, subject| {
+            guards.facts_of(parent, child, subject).then_some(true)
+        })
+    }
+
+    fn intern(&mut self, key: Key<'a>) -> Fact {
+        let next = self.fact_features.len() as Fact;
+        match self.facts.entry(key) {
+            Entry::Occupied(entry) => *entry.get(),
+            Entry::Vacant(entry) => {
+                let feature = match entry.key() {
+                    Key::Path(path) => path_feature(path),
+                    Key::Method(_) => None,
+                };
+                self.fact_features.push(feature);
+                entry.insert(next);
+                next
+            }
+        }
+    }
+
+    /// The key of the use, read from its node. `None` for a use that code cannot check: a pattern that
+    /// `new RegExp` parses.
+    fn key(&self, usage: &Use) -> Option<Key<'a>> {
         let semantic = self.semantic;
-        let first_exits = self
-            .early_exits
-            .entry(list)
-            .or_insert_with(|| early_exit_keys(semantic, statements));
-        usage
-            .keys
-            .iter()
-            .any(|key| first_exits.get(key).is_some_and(|&first| first < position))
-    }
-}
-
-fn early_exit_keys(semantic: &Semantic<'_>, statements: &[Statement<'_>]) -> HashMap<String, usize> {
-    let mut first_exits = HashMap::new();
-    for (index, statement) in statements.iter().enumerate() {
-        count!(guards);
-        if let Statement::IfStatement(check) = statement
-            && check.alternate.is_none()
-            && exits(&check.consequent)
-        {
-            for key in all_keys(semantic, &check.test, false) {
-                first_exits.entry(key).or_insert(index);
+        let nodes = semantic.nodes();
+        let member = |object: &Expression<'a>, name: &'a str| member_path(semantic, object, name).map(Key::Path);
+        match (usage.origin, nodes.kind(usage.node)) {
+            (Origin::Global, AstKind::IdentifierReference(identifier)) => {
+                Some(Key::Path(vec![identifier.name.as_str()]))
             }
-        }
-    }
-    first_exits
-}
-
-/// Whether `kind` passes on the tested value from its child with `span`: `!X`, `A && X`, `(X)`, `X?.y`,
-/// `X != null`, `(a, X)`. A comparison reads the member and does not throw, whatever the other operand is.
-/// A member read that the code dereferences, `X.y`, throws when `X` is missing, so it is not a check.
-fn passes_tested_value(kind: AstKind<'_>, span: Span) -> bool {
-    match kind {
-        AstKind::ChainExpression(_) | AstKind::LogicalExpression(_) => true,
-        AstKind::SequenceExpression(sequence) => is_last(sequence, span),
-        AstKind::UnaryExpression(unary) => unary.operator == UnaryOperator::LogicalNot,
-        AstKind::BinaryExpression(binary) => is_equality(binary.operator),
-        kind => is_wrapper(kind),
-    }
-}
-
-/// `(X)`, `X as T`, `X satisfies T`, `X<T>`, `X!`, `<T>X`: the nodes that `get_inner_expression` skips.
-fn is_wrapper(kind: AstKind<'_>) -> bool {
-    matches!(
-        kind,
-        AstKind::ParenthesizedExpression(_)
-            | AstKind::TSAsExpression(_)
-            | AstKind::TSSatisfiesExpression(_)
-            | AstKind::TSInstantiationExpression(_)
-            | AstKind::TSNonNullExpression(_)
-            | AstKind::TSTypeAssertion(_)
-    )
-}
-
-/// Whether `kind` has the value of its child with `span`: a wrapper, a sequence that ends with the child,
-/// or `Boolean(X)`, whose truth is the truth of `X`. The inverse of `tested_value`.
-fn passes_value(semantic: &Semantic<'_>, kind: AstKind<'_>, span: Span) -> bool {
-    match kind {
-        AstKind::SequenceExpression(sequence) => is_last(sequence, span),
-        AstKind::CallExpression(call) => {
-            boolean_argument(semantic, call).is_some_and(|argument| argument.span() == span)
-        }
-        kind => is_wrapper(kind),
-    }
-}
-
-/// The expression whose truth `test` has: `X` for `(X)`, `(a, X)` and `Boolean(X)`. The value of a
-/// sequence is its last expression, and the other expressions do not count.
-fn tested_value<'b, 'a>(semantic: &Semantic<'_>, mut test: &'b Expression<'a>) -> &'b Expression<'a> {
-    loop {
-        count!(guards);
-        test = match test.get_inner_expression() {
-            Expression::SequenceExpression(sequence) => match sequence.expressions.last() {
-                Some(last) => last,
-                None => return test.get_inner_expression(),
-            },
-            Expression::CallExpression(call) => match boolean_argument(semantic, call) {
-                Some(argument) => argument,
-                None => return test.get_inner_expression(),
-            },
-            inner => return inner,
-        };
-    }
-}
-
-/// `X` in `Boolean(X)` with the global `Boolean` and one argument that is not a spread.
-fn boolean_argument<'b, 'a>(semantic: &Semantic<'_>, call: &'b CallExpression<'a>) -> Option<&'b Expression<'a>> {
-    let Expression::Identifier(callee) = call.callee.get_inner_expression() else {
-        return None;
-    };
-    if callee.name != "Boolean" || !is_global(semantic, callee) {
-        return None;
-    }
-    match call.arguments.as_slice() {
-        [argument] => argument.as_expression(),
-        _ => None,
-    }
-}
-
-fn is_last(sequence: &SequenceExpression<'_>, span: Span) -> bool {
-    sequence.expressions.last().is_some_and(|last| last.span() == span)
-}
-
-/// `X?.y` and `X?.m()`: optional chaining reads nothing from a missing `X`.
-fn is_optional_object(nodes: &AstNodes<'_>, node: NodeId) -> bool {
-    let mut id = node;
-    while is_wrapper(nodes.parent_kind(id)) {
-        count!(guards);
-        id = nodes.parent_id(id);
-    }
-    let span = nodes.kind(id).span();
-    match nodes.parent_kind(id) {
-        AstKind::StaticMemberExpression(member) => member.optional && member.object.span() == span,
-        AstKind::ComputedMemberExpression(member) => member.optional && member.object.span() == span,
-        _ => false,
-    }
-}
-
-/// A member read whose value serves only as a boolean: `!X`, `Boolean(X)`, an operand of `&&`, `||` or
-/// `??`, the test of `?:`, an operand of a comparison. A missing member reads as `undefined`, so such a
-/// read is a check. Only the parent counts: `Boolean(X.y)` reads from `X`, and `f(!X)` is still a check.
-/// The parent of `X` in `(a, X)` is the parent of the sequence.
-fn is_boolean_read(semantic: &Semantic<'_>, node: NodeId) -> bool {
-    let nodes = semantic.nodes();
-    let mut id = node;
-    // `a?.X` keeps the value, and `a?.X.y` does not end the chain at `X`.
-    loop {
-        count!(guards);
-        let span = nodes.kind(id).span();
-        match nodes.parent_kind(id) {
-            AstKind::ChainExpression(_) => {}
-            AstKind::SequenceExpression(sequence) if is_last(sequence, span) => {}
-            kind if is_wrapper(kind) => {}
-            _ => break,
-        }
-        id = nodes.parent_id(id);
-    }
-    let span = nodes.kind(id).span();
-    match nodes.parent_kind(id) {
-        AstKind::UnaryExpression(unary) => unary.operator == UnaryOperator::LogicalNot,
-        AstKind::LogicalExpression(_) => true,
-        AstKind::ConditionalExpression(expression) => expression.test.span() == span,
-        AstKind::BinaryExpression(binary) => binary.operator.is_equality() || binary.operator.is_compare(),
-        // A spread argument has its own span, so `Boolean(...X)` does not match.
-        AstKind::CallExpression(call) => {
-            matches!(call.callee.get_inner_expression(), Expression::Identifier(callee) if callee.name == "Boolean" && is_global(semantic, callee))
-                && call.arguments.first().is_some_and(|argument| argument.span() == span)
-        }
-        _ => false,
-    }
-}
-
-/// Whether the child with `span` of `parent` throws when it is `undefined`: a callee, a tag, the object
-/// of a member, a spread into an array or arguments, the source of `for of`, `yield*`, `extends` and of
-/// a destructuring, the right operand of `in`. A spread into an object skips `undefined`.
-fn throws_on_undefined(nodes: &AstNodes<'_>, parent: NodeId, span: Span) -> bool {
-    match nodes.kind(parent) {
-        AstKind::CallExpression(call) => !call.optional && call.callee.span() == span,
-        AstKind::NewExpression(expression) => expression.callee.span() == span,
-        AstKind::TaggedTemplateExpression(expression) => expression.tag.span() == span,
-        AstKind::StaticMemberExpression(member) => !member.optional && member.object.span() == span,
-        AstKind::ComputedMemberExpression(member) => !member.optional && member.object.span() == span,
-        AstKind::PrivateFieldExpression(member) => !member.optional && member.object.span() == span,
-        AstKind::SpreadElement(_) => !matches!(nodes.parent_kind(parent), AstKind::ObjectExpression(_)),
-        AstKind::ForOfStatement(statement) => statement.right.span() == span,
-        AstKind::YieldExpression(expression) => expression.delegate,
-        AstKind::Class(class) => class
-            .heritage
-            .as_ref()
-            .is_some_and(|heritage| heritage.expression.span() == span),
-        AstKind::VariableDeclarator(declarator) => !declarator.id.is_binding_identifier(),
-        AstKind::AssignmentExpression(assignment) => {
-            assignment.right.span() == span && assignment.left.is_assignment_target_pattern()
-        }
-        AstKind::AssignmentTargetWithDefault(target) => {
-            target.init.span() == span && target.binding.is_assignment_target_pattern()
-        }
-        AstKind::AssignmentPattern(pattern) => pattern.right.span() == span && !pattern.left.is_binding_identifier(),
-        AstKind::FormalParameter(parameter) => {
-            parameter
-                .initializer
-                .as_ref()
-                .is_some_and(|initializer| initializer.span() == span)
-                && !parameter.pattern.is_binding_identifier()
-        }
-        AstKind::BinaryExpression(binary) => {
-            matches!(binary.operator, BinaryOperator::In | BinaryOperator::Instanceof) && binary.right.span() == span
-        }
-        _ => false,
-    }
-}
-
-/// The call whose callee is the use, or the use itself when it is a call: `(optional, callee is a member)`.
-/// The callee may wrap the use: `(0, window.structuredClone)(x)`, `(window.structuredClone as F)(x)`
-/// and `(window?.structuredClone)(x)`.
-fn enclosing_call(nodes: &AstNodes<'_>, usage: &Probe) -> Option<(bool, bool)> {
-    let describe = |callee: &Expression<'_>, optional: bool| (optional, as_member(callee).is_some());
-    match nodes.kind(usage.node) {
-        AstKind::CallExpression(call) => return Some(describe(&call.callee, call.optional)),
-        AstKind::NewExpression(expression) => return Some(describe(&expression.callee, false)),
-        _ => {}
-    }
-    let mut id = usage.node;
-    let mut span = usage.span;
-    loop {
-        count!(guards);
-        let parent = nodes.parent_id(id);
-        let lifts = match nodes.kind(parent) {
-            AstKind::SequenceExpression(sequence) => {
-                sequence.expressions.last().is_some_and(|last| last.span() == span)
+            (Origin::Method, AstKind::StaticMemberExpression(method)) => {
+                Some(Key::Method(method.property.name.as_str()))
             }
-            // `(window?.X)(y)`: the optional chain ends at the parentheses, and the call is outside it.
-            AstKind::ChainExpression(_) => true,
-            kind => is_wrapper(kind),
-        };
-        if !lifts {
-            break;
-        }
-        id = parent;
-        span = nodes.kind(id).span();
-    }
-    let member = is_member(nodes.kind(usage.node));
-    match nodes.parent_kind(id) {
-        AstKind::CallExpression(call) if call.callee.span() == span => Some((call.optional, member)),
-        AstKind::NewExpression(expression) if expression.callee.span() == span => Some((false, member)),
-        _ => None,
-    }
-}
-
-fn is_member(kind: AstKind<'_>) -> bool {
-    matches!(
-        kind,
-        AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_)
-    )
-}
-
-fn exits(statement: &Statement<'_>) -> bool {
-    match statement {
-        Statement::ReturnStatement(_)
-        | Statement::ThrowStatement(_)
-        | Statement::ContinueStatement(_)
-        | Statement::BreakStatement(_) => true,
-        Statement::BlockStatement(block) => block.body.last().is_some_and(exits),
-        _ => false,
-    }
-}
-
-fn matches(usage: &Probe, keys: &[String]) -> bool {
-    usage.keys.iter().any(|key| keys.contains(key))
-}
-
-/// `!X` with the value `v` is `X` with the value `!v`. The result is a `tested_value`.
-fn without_not<'b, 'a>(
-    semantic: &Semantic<'_>,
-    mut test: &'b Expression<'a>,
-    mut value: bool,
-) -> (&'b Expression<'a>, bool) {
-    loop {
-        count!(guards);
-        match tested_value(semantic, test) {
-            Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
-                value = !value;
-                test = &unary.argument;
+            (Origin::Member, AstKind::StaticMemberExpression(read)) => {
+                member(&read.object, read.property.name.as_str())
             }
-            inner => return (inner, value),
-        }
-    }
-}
-
-/// `A && B` is true when both are true, `A || B` is false when both are false. Then the keys of the
-/// test are the keys of both operands.
-fn joins(operator: LogicalOperator, value: bool) -> bool {
-    matches!(
-        (operator, value),
-        (LogicalOperator::And, true) | (LogicalOperator::Or, false)
-    )
-}
-
-fn join_of<'b, 'a>(
-    semantic: &Semantic<'_>,
-    test: &'b Expression<'a>,
-    value: bool,
-) -> Option<&'b LogicalExpression<'a>> {
-    match tested_value(semantic, test) {
-        Expression::LogicalExpression(logical) if joins(logical.operator, value) => Some(logical),
-        _ => None,
-    }
-}
-
-/// Features that are present when `test` has the value `value`.
-fn all_keys(semantic: &Semantic<'_>, test: &Expression<'_>, value: bool) -> Vec<String> {
-    let mut keys = Vec::new();
-    let mut operands = vec![(test, value)];
-    while let Some((operand, value)) = operands.pop() {
-        count!(guards);
-        let (operand, value) = without_not(semantic, operand, value);
-        match join_of(semantic, operand, value) {
-            Some(logical) => {
-                operands.push((&logical.right, value));
-                operands.push((&logical.left, value));
-            }
-            None => keys.extend(own_keys(semantic, operand, value)),
-        }
-    }
-    keys
-}
-
-/// Features that are present when `test` has the value `value`, for a test that is neither `!X` nor
-/// a chain that `joins`.
-fn own_keys(semantic: &Semantic<'_>, test: &Expression<'_>, value: bool) -> Vec<String> {
-    let binary = match tested_value(semantic, test) {
-        Expression::BinaryExpression(binary) => binary,
-        other if value => return chain_keys(semantic, other),
-        _ => return Vec::new(),
-    };
-    match (binary.operator, value) {
-        (BinaryOperator::In, true) => in_keys(semantic, binary),
-        (BinaryOperator::LessThan | BinaryOperator::GreaterThan, _) => minified_typeof_keys(semantic, binary, value),
-        (BinaryOperator::Inequality | BinaryOperator::StrictInequality, true)
-        | (BinaryOperator::Equality | BinaryOperator::StrictEquality, false) => {
-            let mut keys = typeof_keys(semantic, binary, |kind| kind == "undefined");
-            keys.extend(undefined_keys(semantic, binary));
-            keys
-        }
-        (BinaryOperator::Equality | BinaryOperator::StrictEquality, true)
-        | (BinaryOperator::Inequality | BinaryOperator::StrictInequality, false) => {
-            typeof_keys(semantic, binary, |kind| kind == "function" || kind == "object")
-        }
-        _ => Vec::new(),
-    }
-}
-
-/// `'name' in object`.
-fn in_keys(semantic: &Semantic<'_>, binary: &BinaryExpression<'_>) -> Vec<String> {
-    let Expression::StringLiteral(name) = binary.left.get_inner_expression() else {
-        return Vec::new();
-    };
-    let name = name.value.as_str();
-    chain(semantic, &binary.right)
-        .map(|object| join(&object, name))
-        .into_iter()
-        .chain(std::iter::once(format!("#{name}")))
-        .collect()
-}
-
-/// `typeof chain === 'kind'` in either order.
-fn typeof_keys(semantic: &Semantic<'_>, binary: &BinaryExpression<'_>, accept: impl Fn(&str) -> bool) -> Vec<String> {
-    let (unary, literal) = match (binary.left.get_inner_expression(), binary.right.get_inner_expression()) {
-        (Expression::UnaryExpression(unary), Expression::StringLiteral(literal))
-        | (Expression::StringLiteral(literal), Expression::UnaryExpression(unary)) => (unary, literal),
-        _ => return Vec::new(),
-    };
-    if unary.operator != UnaryOperator::Typeof || !accept(literal.value.as_str()) {
-        return Vec::new();
-    }
-    chain_keys(semantic, &unary.argument)
-}
-
-/// The chain itself, if it names a global, and `#name` for its last member.
-fn chain_keys(semantic: &Semantic<'_>, expression: &Expression<'_>) -> Vec<String> {
-    let method = as_member(expression)
-        .and_then(property_name)
-        .map(|name| format!("#{name}"));
-    chain(semantic, expression).into_iter().chain(method).collect()
-}
-
-/// `a.b['c']` and `a?.b.c` as `a.b.c`. `window.X` is `X`. `None` when the root is not a global.
-fn chain(semantic: &Semantic<'_>, expression: &Expression<'_>) -> Option<String> {
-    count!(guards);
-    if let Expression::Identifier(identifier) = expression.get_inner_expression() {
-        return is_global(semantic, identifier).then(|| identifier.name.as_str().to_string());
-    }
-    let member = as_member(expression)?;
-    Some(join(&chain(semantic, member.object())?, property_name(member)?))
-}
-
-/// The member expression in `expression`, also inside an optional chain.
-fn as_member<'b, 'a>(expression: &'b Expression<'a>) -> Option<&'b MemberExpression<'a>> {
-    match expression.get_inner_expression() {
-        Expression::ChainExpression(chain) => match &chain.expression {
-            ChainElement::TSNonNullExpression(non_null) => as_member(&non_null.expression),
-            element => element.as_member_expression(),
-        },
-        other => other.as_member_expression(),
-    }
-}
-
-fn property_name<'b>(member: &'b MemberExpression<'_>) -> Option<&'b str> {
-    match member {
-        MemberExpression::StaticMemberExpression(member) => Some(member.property.name.as_str()),
-        MemberExpression::ComputedMemberExpression(member) => match member.expression.get_inner_expression() {
-            Expression::StringLiteral(name) => Some(name.value.as_str()),
-            _ => None,
-        },
-        MemberExpression::PrivateFieldExpression(_) => None,
-    }
-}
-
-/// A reference that resolves to no declaration in the file.
-fn is_global(semantic: &Semantic<'_>, identifier: &IdentifierReference<'_>) -> bool {
-    semantic
-        .scoping()
-        .get_reference(identifier.reference_id())
-        .symbol_id()
-        .is_none()
-}
-
-fn join(object: &str, property: &str) -> String {
-    if WINDOW_ALIASES.contains(&object) {
-        property.to_string()
-    } else {
-        format!("{object}.{property}")
-    }
-}
-
-/// The names under which code can check the feature of `usage`: `Intl.Segmenter`, `structuredClone`,
-/// `#toSorted` for a method of any object. Empty for a use that code cannot check: syntax, and a pattern
-/// that `new RegExp` parses. The keys follow the node of the use, so only uses that reach the guards
-/// pay for the strings.
-// TODO(task 3): `path.rs` builds the key of a use and of a check the same way; this function goes then.
-pub(crate) fn use_keys(semantic: &Semantic<'_>, usage: &Use<'_>) -> Vec<String> {
-    let nodes = semantic.nodes();
-    let key = match (usage.origin, nodes.kind(usage.node)) {
-        (Origin::Parse | Origin::Call, _) => None,
-        (Origin::Global, AstKind::IdentifierReference(identifier)) => Some(identifier.name.as_str().to_string()),
-        // The methods detector points at the call: `a.toSorted()`.
-        (Origin::Member, AstKind::CallExpression(call)) => match call.callee.get_inner_expression() {
-            Expression::StaticMemberExpression(member) => Some(format!("#{}", member.property.name)),
-            _ => None,
-        },
-        (Origin::Member, AstKind::StaticMemberExpression(member)) => {
-            member_key(&member.object, member.property.name.as_str())
-        }
-        (Origin::Member, AstKind::ComputedMemberExpression(member)) => match member.expression.get_inner_expression() {
-            Expression::StringLiteral(name) => member_key(&member.object, name.value.as_str()),
-            _ => None,
-        },
-        (Origin::Member, AstKind::BindingProperty(property)) => property
-            .key
-            .static_name()
-            .and_then(|name| destructured_key(nodes, usage.node, &name)),
-        (Origin::Member, AstKind::AssignmentTargetPropertyIdentifier(property)) => {
-            destructured_key(nodes, usage.node, property.binding.name.as_str())
-        }
-        (Origin::Member, AstKind::AssignmentTargetPropertyProperty(property)) => property
-            .name
-            .static_name()
-            .and_then(|name| destructured_key(nodes, usage.node, &name)),
-        _ => None,
-    };
-    key.into_iter().collect()
-}
-
-/// The key of `object.property` as the globals detector names it: `window.X` is `X`, and
-/// `window.navigator.share` is `navigator.share`.
-fn member_key(object: &Expression<'_>, property: &str) -> Option<String> {
-    match object.get_inner_expression() {
-        Expression::Identifier(object) if WINDOW_ALIASES.contains(&object.name.as_str()) => Some(property.to_string()),
-        Expression::Identifier(object) => Some(format!("{}.{property}", object.name)),
-        Expression::ChainExpression(chain) => match &chain.expression {
-            ChainElement::StaticMemberExpression(member) => Some(format!("{}.{property}", member.property.name)),
-            ChainElement::ComputedMemberExpression(member) => match member.expression.get_inner_expression() {
-                Expression::StringLiteral(name) => Some(format!("{}.{property}", name.value)),
+            (Origin::Member, AstKind::ComputedMemberExpression(read)) => match read.expression.get_inner_expression() {
+                Expression::StringLiteral(name) => member(&read.object, name.value.as_str()),
                 _ => None,
             },
+            (Origin::Member, AstKind::BindingProperty(property)) => member(
+                destructured_source(nodes, nodes.parent_id(usage.node))?,
+                key_name(&property.key)?,
+            ),
+            (Origin::Member, AstKind::AssignmentTargetPropertyIdentifier(property)) => member(
+                destructured_source(nodes, nodes.parent_id(usage.node))?,
+                property.binding.name.as_str(),
+            ),
+            (Origin::Member, AstKind::AssignmentTargetPropertyProperty(property)) => member(
+                destructured_source(nodes, nodes.parent_id(usage.node))?,
+                key_name(&property.name)?,
+            ),
             _ => None,
-        },
-        Expression::StaticMemberExpression(member) => Some(format!("{}.{property}", member.property.name)),
-        Expression::ComputedMemberExpression(member) => match member.expression.get_inner_expression() {
-            Expression::StringLiteral(name) => Some(format!("{}.{property}", name.value)),
-            _ => None,
-        },
+        }
+    }
+
+    /// Table 2: whether the parent proves the subject present in its child `child`.
+    fn facts_of(&mut self, parent: NodeId, child: NodeId, subject: usize) -> bool {
+        let nodes = self.semantic.nodes();
+        let span = nodes.kind(child).span();
+        let (test, value) = match nodes.kind(parent) {
+            AstKind::IfStatement(statement) if statement.consequent.span() == span => (&statement.test, true),
+            AstKind::IfStatement(statement) if statement.alternate.as_ref().is_some_and(|it| it.span() == span) => {
+                (&statement.test, false)
+            }
+            AstKind::ConditionalExpression(expression) if expression.consequent.span() == span => {
+                (&expression.test, true)
+            }
+            AstKind::ConditionalExpression(expression) if expression.alternate.span() == span => {
+                (&expression.test, false)
+            }
+            AstKind::WhileStatement(statement) if statement.body.span() == span => (&statement.test, true),
+            AstKind::ForStatement(statement) if statement.body.span() == span => match &statement.test {
+                Some(test) => (test, true),
+                None => return false,
+            },
+            AstKind::LogicalExpression(logical) if logical.right.span() == span => match logical.operator {
+                LogicalOperator::And => (&logical.left, true),
+                LogicalOperator::Or => (&logical.left, false),
+                LogicalOperator::Coalesce => return false,
+            },
+            AstKind::Program(program) => return self.list(parent, &program.body, span, subject),
+            AstKind::BlockStatement(block) => return self.list(parent, &block.body, span, subject),
+            AstKind::FunctionBody(body) => return self.list(parent, &body.statements, span, subject),
+            AstKind::StaticBlock(block) => return self.list(parent, &block.body, span, subject),
+            AstKind::SwitchCase(case) => return self.list(parent, &case.consequent, span, subject),
+            _ => return false,
+        };
+        let facts = self.test(test, value);
+        self.covers(&facts, subject)
+    }
+
+    /// `N(S)` of the statements before `child` in a statement list. The list gets an index once, so each
+    /// use asks it instead of reading the statements again.
+    fn list(&mut self, list: NodeId, statements: &'a [Statement<'a>], child: Span, subject: usize) -> bool {
+        let index = self.list_index(list, statements);
+        let position = statements.partition_point(|statement| statement.span().end <= child.start);
+        self.covers(
+            &Facts::Range {
+                index,
+                start: 0,
+                end: position,
+            },
+            subject,
+        )
+    }
+
+    /// The index of a statement list. A nested block `{ … }` keeps its own index, and the list refers to
+    /// it: copying the facts of nested blocks into every list around them would grow with the depth.
+    fn list_index(&mut self, list: NodeId, statements: &'a [Statement<'a>]) -> usize {
+        if let Some(&index) = self.lists.get(&list) {
+            return index;
+        }
+        let mut index = Index {
+            len: statements.len(),
+            ..Index::default()
+        };
+        for (at, statement) in statements.iter().enumerate() {
+            count!(guards);
+            if let Statement::BlockStatement(block) = statement {
+                let nested = self.list_index(block.node_id(), &block.body);
+                index.nested.push((at, nested));
+                continue;
+            }
+            let facts = self.after(statement);
+            let (all, facts, features) = self.expand(&facts);
+            index.add(at, all, &facts, &features);
+        }
+        self.indexes.push(index.finish());
+        self.lists.insert(list, self.indexes.len() - 1);
+        self.indexes.len() - 1
+    }
+
+    /// `N(S)` of a statement other than a block: the facts after its normal end.
+    fn after(&mut self, statement: &'a Statement<'a>) -> Facts {
+        let Statement::IfStatement(check) = statement else {
+            return Facts::Set(Rc::default());
+        };
+        let consequent = self.exits(&check.consequent);
+        match &check.alternate {
+            None if consequent => self.compute(&check.test, false),
+            Some(alternate) => match (consequent, self.exits(alternate)) {
+                (false, true) => self.compute(&check.test, true),
+                (true, false) => self.compute(&check.test, false),
+                _ => Facts::Set(Rc::default()),
+            },
+            None => Facts::Set(Rc::default()),
+        }
+    }
+
+    /// Whether a nested block in `start..end` of a list covers the subject after its end. The answer for
+    /// each block of the list is kept by subject, so a deep nest costs its depth once per subject.
+    fn nested_covers(&mut self, index: usize, start: usize, end: usize, subject: usize) -> bool {
+        if self.indexes[index].nested.is_empty() {
+            return false;
+        }
+        if !self.nested.contains_key(&(index, subject)) {
+            let mut covering = Vec::new();
+            for (at, nested) in self.indexes[index].nested.clone() {
+                count!(guards);
+                let range = Facts::Range {
+                    index: nested,
+                    start: 0,
+                    end: self.indexes[nested].len,
+                };
+                if self.covers(&range, subject) {
+                    covering.push(at);
+                }
+            }
+            self.nested.insert((index, subject), covering);
+        }
+        within(&self.nested[&(index, subject)], start, end)
+    }
+
+    /// Whether the statement never ends normally: `return`, `throw`, `break`, `continue`, a block with such
+    /// a statement, and an `if` whose branches both exit.
+    fn exits(&mut self, statement: &'a Statement<'a>) -> bool {
+        let id = statement.node_id();
+        if let Some(&exits) = self.exits.get(&id) {
+            return exits;
+        }
+        count!(guards);
+        let exits = match statement {
+            Statement::ReturnStatement(_)
+            | Statement::ThrowStatement(_)
+            | Statement::ContinueStatement(_)
+            | Statement::BreakStatement(_) => return true,
+            Statement::BlockStatement(block) => block.body.iter().any(|statement| self.exits(statement)),
+            Statement::IfStatement(check) => match &check.alternate {
+                Some(alternate) => self.exits(alternate) && self.exits(&check.consequent),
+                None => false,
+            },
+            _ => return false,
+        };
+        // Only nested blocks and `if`s are asked again.
+        self.exits.insert(id, exits);
+        exits
+    }
+
+    /// `F(test, value)` for the tests that uses ask about, kept by node and value. The parts of a test
+    /// are asked only by the test itself, so they are not kept.
+    fn test(&mut self, test: &'a Expression<'a>, value: bool) -> Facts {
+        let key = (test.node_id(), value);
+        if let Some(facts) = self.tests.get(&key) {
+            return facts.clone();
+        }
+        let facts = self.compute(test, value);
+        self.tests.insert(key, facts.clone());
+        facts
+    }
+
+    /// Table 3: `F(test, value)`.
+    fn compute(&mut self, test: &'a Expression<'a>, value: bool) -> Facts {
+        count!(guards);
+        let semantic = self.semantic;
+        match test.get_inner_expression() {
+            Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
+                self.compute(&unary.argument, !value)
+            }
+            Expression::SequenceExpression(sequence) if !sequence.expressions.is_empty() => {
+                self.compute(&sequence.expressions[sequence.expressions.len() - 1], value)
+            }
+            Expression::AssignmentExpression(assignment) if assignment.operator == AssignmentOperator::Assign => {
+                self.compute(&assignment.right, value)
+            }
+            Expression::CallExpression(call) if is_boolean(semantic, &call.callee) => match call.arguments.as_slice() {
+                [argument] if let Some(argument) = argument.as_expression() => self.compute(argument, value),
+                _ => Facts::Set(Rc::default()),
+            },
+            // `A && B` is true when both are, `A || B` is false when both are: the facts of every operand.
+            Expression::LogicalExpression(logical)
+                if (logical.operator == LogicalOperator::And && value)
+                    || (logical.operator == LogicalOperator::Or && !value) =>
+            {
+                match self.tests.get(&(logical.node_id(), value)) {
+                    Some(facts) => facts.clone(),
+                    None => self.chain(logical, value),
+                }
+            }
+            // Otherwise one of the operands decides: the facts that every operand proves.
+            Expression::LogicalExpression(logical) if logical.operator != LogicalOperator::Coalesce => {
+                let mut facts = Facts::All;
+                for operand in flatten(logical).0 {
+                    let next = self.compute(operand, value);
+                    facts = self.intersect(&facts, &next);
+                    if matches!(&facts, Facts::Set(set) if set.facts.is_empty() && set.features.is_empty()) {
+                        break;
+                    }
+                }
+                facts
+            }
+            Expression::ConditionalExpression(conditional) => {
+                let (yes, then) = (
+                    self.compute(&conditional.test, true),
+                    self.compute(&conditional.consequent, value),
+                );
+                let (no, otherwise) = (
+                    self.compute(&conditional.test, false),
+                    self.compute(&conditional.alternate, value),
+                );
+                let (first, second) = (self.union(yes, then), self.union(no, otherwise));
+                self.intersect(&first, &second)
+            }
+            leaf => match constant(semantic, leaf) {
+                // A test that always has the other value never gets here.
+                Some(truth) if truth != value => Facts::All,
+                Some(_) => Facts::Set(Rc::default()),
+                None => self.leaf(leaf, value),
+            },
+        }
+    }
+
+    /// The facts of a chain of one operator: an index of all its operands, built once for the whole
+    /// chain. Every logical of the chain gets the range of its operands as its facts.
+    fn chain(&mut self, logical: &'a LogicalExpression<'a>, value: bool) -> Facts {
+        let nodes = self.semantic.nodes();
+        // The outermost logical of the chain: parents with the same operator, through parentheses.
+        let mut top = logical;
+        let mut id = logical.node_id();
+        loop {
+            count!(guards);
+            id = nodes.parent_id(id);
+            match nodes.kind(id) {
+                AstKind::ParenthesizedExpression(_) => {}
+                AstKind::LogicalExpression(parent) if parent.operator == logical.operator => top = parent,
+                _ => break,
+            }
+        }
+        let (operands, ranges) = flatten(top);
+        let mut index = Index::default();
+        for (at, operand) in operands.into_iter().enumerate() {
+            let facts = self.compute(operand, value);
+            let (all, facts, features) = self.expand(&facts);
+            index.add(at, all, &facts, &features);
+        }
+        self.indexes.push(index.finish());
+        let index = self.indexes.len() - 1;
+        for (node, start, end) in ranges {
+            self.tests.insert((node, value), Facts::Range { index, start, end });
+        }
+        self.tests[&(logical.node_id(), value)].clone()
+    }
+
+    /// The leaves of table 3: a path, `typeof`, a comparison with `undefined`, `in` and `instanceof`.
+    fn leaf(&mut self, test: &'a Expression<'a>, value: bool) -> Facts {
+        let value_of = |guards: &mut Self, expression: &'a Expression<'a>| guards.present(expression, None);
+        let Expression::BinaryExpression(binary) = test else {
+            return if value {
+                value_of(self, test)
+            } else {
+                Facts::Set(Rc::default())
+            };
+        };
+        let none = Facts::Set(Rc::default());
+        match binary.operator {
+            BinaryOperator::In if value => match binary.left.get_inner_expression() {
+                Expression::StringLiteral(name) => self.present(&binary.right, Some(name.value.as_str())),
+                _ => none,
+            },
+            BinaryOperator::Instanceof if value => value_of(self, &binary.left),
+            BinaryOperator::LessThan | BinaryOperator::GreaterThan => match minified_typeof(binary, value) {
+                Some(argument) => value_of(self, argument),
+                None => none,
+            },
+            operator if operator.is_equality() => {
+                // Whether the operands are equal when the test has the value.
+                let equal = matches!(operator, BinaryOperator::Equality | BinaryOperator::StrictEquality) == value;
+                let operand = match typeof_compared(binary) {
+                    Some((argument, kind)) => {
+                        let present = if equal {
+                            kind == "function" || kind == "object"
+                        } else {
+                            kind == "undefined"
+                        };
+                        present.then_some(argument)
+                    }
+                    None => compared_with_undefined(self.semantic, binary).filter(|_| !equal),
+                };
+                match operand {
+                    Some(operand) => value_of(self, operand),
+                    None => none,
+                }
+            }
+            _ => none,
+        }
+    }
+
+    /// The facts of a present value `X`, or of `X.name` with `name`: the path and, for a member, the
+    /// name of the method `#name`.
+    fn present(&mut self, value: &'a Expression<'a>, name: Option<&'a str>) -> Facts {
+        let semantic = self.semantic;
+        let (path, method) = match name {
+            Some(name) => (member_path(semantic, value, name), Some(name)),
+            None => (path(semantic, value), as_member(value).and_then(property)),
+        };
+        let mut set = FactSet::default();
+        if let Some(path) = path {
+            let fact = self.intern(Key::Path(path));
+            set.facts.push(fact);
+            set.features.extend(self.fact_features[fact as usize]);
+        }
+        if let Some(method) = method {
+            set.facts.push(self.intern(Key::Method(method)));
+        }
+        set.facts.sort_unstable();
+        Facts::Set(Rc::new(set))
+    }
+
+    /// The facts as a list: every fact holds, the facts, and the features that they name. The range of
+    /// a statement list leaves out its nested blocks; only chains, which have none, are expanded.
+    fn expand(&self, facts: &Facts) -> (bool, Vec<Fact>, Vec<FeatureId>) {
+        match facts {
+            Facts::All => (true, Vec::new(), Vec::new()),
+            Facts::Set(set) => (false, set.facts.clone(), set.features.clone()),
+            &Facts::Range { index, start, end } => {
+                let index = &self.indexes[index];
+                if index.holds(ALL, start, end) {
+                    return (true, Vec::new(), Vec::new());
+                }
+                let (facts, features) = index.range(start, end);
+                (false, facts, features)
+            }
+        }
+    }
+
+    /// Whether every fact holds: `Facts::All`, or a range with a position where every fact holds.
+    fn is_all(&self, facts: &Facts) -> bool {
+        match facts {
+            Facts::All => true,
+            Facts::Set(_) => false,
+            &Facts::Range { index, start, end } => self.indexes[index].holds(ALL, start, end),
+        }
+    }
+
+    fn union(&self, first: Facts, second: Facts) -> Facts {
+        let empty = |facts: &Facts| matches!(facts, Facts::Set(set) if set.facts.is_empty());
+        if empty(&first) {
+            return second;
+        }
+        if empty(&second) {
+            return first;
+        }
+        if self.is_all(&first) || self.is_all(&second) {
+            return Facts::All;
+        }
+        let (_, mut facts, mut features) = self.expand(&first);
+        let (_, more, more_features) = self.expand(&second);
+        facts.extend(more);
+        facts.sort_unstable();
+        facts.dedup();
+        features.extend(more_features);
+        features.sort_unstable_by_key(|feature| feature.index());
+        features.dedup();
+        Facts::Set(Rc::new(FactSet { facts, features }))
+    }
+
+    fn intersect(&self, first: &Facts, second: &Facts) -> Facts {
+        if self.is_all(first) {
+            return second.clone();
+        }
+        if self.is_all(second) {
+            return first.clone();
+        }
+        let (_, facts, features) = self.expand(first);
+        let (_, other, other_features) = self.expand(second);
+        Facts::Set(Rc::new(FactSet {
+            facts: facts
+                .into_iter()
+                .filter(|fact| other.binary_search(fact).is_ok())
+                .collect(),
+            features: features
+                .into_iter()
+                .filter(|feature| other_features.contains(feature))
+                .collect(),
+        }))
+    }
+
+    /// Whether the facts cover the subject: they hold its key, or they name a feature that every target
+    /// version without full support of the subject lacks too.
+    fn covers(&mut self, facts: &Facts, subject: usize) -> bool {
+        let Subject { fact, feature } = self.subjects[subject];
+        let features = match facts {
+            Facts::All => return true,
+            Facts::Set(set) => {
+                if set.facts.binary_search(&fact).is_ok() {
+                    return true;
+                }
+                set.features.clone()
+            }
+            &Facts::Range {
+                index: range,
+                start,
+                end,
+            } => {
+                let index = &self.indexes[range];
+                if index.holds(ALL, start, end) || index.holds(fact, start, end) {
+                    return true;
+                }
+                let features = index.features(start, end);
+                if self.nested_covers(range, start, end, subject) {
+                    return true;
+                }
+                features
+            }
+        };
+        features.into_iter().any(|checked| {
+            *self
+                .implied
+                .entry((checked, feature))
+                .or_insert_with(|| self.targets.implies(checked, feature))
+        })
+    }
+}
+
+/// The operands of a chain of one operator, in order (`a`, `b`, `c` of `a && (b && c)`), and for every
+/// logical of the chain the range of its operands. A stack instead of recursion: a chain of thousands
+/// of operands is as deep as it is long.
+#[allow(clippy::type_complexity)]
+fn flatten<'b, 'a>(logical: &'b LogicalExpression<'a>) -> (Vec<&'b Expression<'a>>, Vec<(NodeId, usize, usize)>) {
+    enum Step<'b, 'a> {
+        Visit(&'b Expression<'a>),
+        Close(NodeId, usize),
+    }
+    let mut operands = Vec::new();
+    let mut ranges = Vec::new();
+    let mut steps = vec![
+        Step::Close(logical.node_id(), 0),
+        Step::Visit(&logical.right),
+        Step::Visit(&logical.left),
+    ];
+    while let Some(step) = steps.pop() {
+        count!(guards);
+        match step {
+            Step::Visit(expression) => match expression.get_inner_expression() {
+                Expression::LogicalExpression(inner) if inner.operator == logical.operator => {
+                    steps.push(Step::Close(inner.node_id(), operands.len()));
+                    steps.push(Step::Visit(&inner.right));
+                    steps.push(Step::Visit(&inner.left));
+                }
+                _ => operands.push(expression),
+            },
+            Step::Close(node, start) => ranges.push((node, start, operands.len())),
+        }
+    }
+    (operands, ranges)
+}
+
+/// The truth of a test that has one value: `void 0`, `undefined`, `null`, `false`, `0`, `""` are false;
+/// `true`, other numbers and other strings are true.
+fn constant(semantic: &Semantic<'_>, test: &Expression<'_>) -> Option<bool> {
+    match test {
+        Expression::BooleanLiteral(literal) => Some(literal.value),
+        Expression::NullLiteral(_) => Some(false),
+        Expression::NumericLiteral(literal) => Some(literal.value != 0.0 && !literal.value.is_nan()),
+        Expression::StringLiteral(literal) => Some(!literal.value.is_empty()),
+        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::Void => Some(false),
+        Expression::Identifier(identifier) if identifier.name == "undefined" && is_global(semantic, identifier) => {
+            Some(false)
+        }
         _ => None,
     }
 }
 
-/// The key of a property that a destructuring takes from its source: `const { a } = X`, `({ a } = X)`,
-/// `function f({ a } = X) {}`, `[{ a } = X] = list`.
-fn destructured_key(nodes: &AstNodes<'_>, property: NodeId, name: &str) -> Option<String> {
-    let pattern = nodes.parent_id(property);
-    let source = match nodes.parent_kind(pattern) {
-        AstKind::VariableDeclarator(declarator) => declarator.init.as_ref()?,
-        AstKind::FormalParameter(parameter) => parameter.initializer.as_deref()?,
-        AstKind::AssignmentPattern(assignment) => &assignment.right,
-        AstKind::AssignmentExpression(assignment) => &assignment.right,
-        AstKind::AssignmentTargetWithDefault(target) => &target.init,
-        _ => return None,
-    };
-    member_key(source, name)
+/// The key of a use as text, `navigator.share` or `#toSorted`, for the tests of the detectors.
+#[cfg(test)]
+pub(crate) fn key_text(semantic: &Semantic<'_>, usage: &Use) -> Option<String> {
+    let targets = Targets::missing_everything();
+    match Guards::new(semantic, &targets).key(usage)? {
+        Key::Path(path) => Some(path.join(".")),
+        Key::Method(name) => Some(format!("#{name}")),
+    }
 }
 
-fn within(outer: Span, inner: Span) -> bool {
-    outer.start <= inner.start && inner.end <= outer.end
+/// `X` and the string in `typeof X === 'kind'`, in either order.
+fn typeof_compared<'b, 'a>(binary: &'b BinaryExpression<'a>) -> Option<(&'b Expression<'a>, &'a str)> {
+    match (binary.left.get_inner_expression(), binary.right.get_inner_expression()) {
+        (Expression::UnaryExpression(unary), Expression::StringLiteral(literal))
+        | (Expression::StringLiteral(literal), Expression::UnaryExpression(unary))
+            if unary.operator == UnaryOperator::Typeof =>
+        {
+            Some((&unary.argument, literal.value.as_str()))
+        }
+        _ => None,
+    }
 }
 
 /// esbuild writes `typeof X !== "undefined"` as `typeof X < "u"`, and `typeof X === "undefined"` as
-/// `typeof X > "u"`. `present` selects the form that means "X is present".
-fn minified_typeof_keys(semantic: &Semantic<'_>, binary: &BinaryExpression<'_>, present: bool) -> Vec<String> {
+/// `typeof X > "u"`. `X` when the test with the value means that `X` is present.
+fn minified_typeof<'b, 'a>(binary: &'b BinaryExpression<'a>, value: bool) -> Option<&'b Expression<'a>> {
     let is_u = |expression: &Expression<'_>| matches!(expression.get_inner_expression(), Expression::StringLiteral(literal) if literal.value == "u");
-    let typeof_argument = |expression: &Expression<'_>| match expression.get_inner_expression() {
-        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::Typeof => {
-            Some(chain_keys(semantic, &unary.argument))
-        }
-        _ => None,
-    };
     // `typeof X < "u"` and `"u" > typeof X` mean present; `typeof X > "u"` and `"u" < typeof X` mean missing.
     let (operand, operand_is_left) = if is_u(&binary.right) {
         (&binary.left, true)
     } else if is_u(&binary.left) {
         (&binary.right, false)
     } else {
-        return Vec::new();
+        return None;
     };
-    let less_than = binary.operator == BinaryOperator::LessThan;
-    let means_present = less_than == operand_is_left;
-    if means_present != present {
-        return Vec::new();
+    let means_present = (binary.operator == BinaryOperator::LessThan) == operand_is_left;
+    match operand.get_inner_expression() {
+        Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::Typeof && means_present == value => {
+            Some(&unary.argument)
+        }
+        _ => None,
     }
-    typeof_argument(operand).unwrap_or_default()
 }
 
-/// The member chain that `binary` compares with `undefined`, `void 0` or, with `==` and `!=`, with
-/// `null`. `undefined == null`, but `undefined !== null`. Member chains only, `X?.y` included: a bare
-/// global compared to `undefined` throws when it is missing.
+/// The operand that `binary` compares with `undefined`, `void 0` or, with `==` and `!=`, with `null`.
+/// `undefined == null`, but `undefined !== null`.
 fn compared_with_undefined<'b, 'a>(
     semantic: &Semantic<'_>,
     binary: &'b BinaryExpression<'a>,
@@ -893,29 +985,11 @@ fn compared_with_undefined<'b, 'a>(
         Expression::Identifier(identifier) => identifier.name == "undefined" && is_global(semantic, identifier),
         _ => false,
     };
-    let operand = if is_undefined(&binary.right) {
-        &binary.left
+    if is_undefined(&binary.right) {
+        Some(&binary.left)
     } else if is_undefined(&binary.left) {
-        &binary.right
+        Some(&binary.right)
     } else {
-        return None;
-    };
-    as_member(operand).is_some().then_some(operand)
-}
-
-/// `X !== undefined`, `void 0 !== X`, `X != null` and the `==` forms. Callers pick the sign by operator.
-fn undefined_keys(semantic: &Semantic<'_>, binary: &BinaryExpression<'_>) -> Vec<String> {
-    compared_with_undefined(semantic, binary)
-        .map(|operand| chain_keys(semantic, operand))
-        .unwrap_or_default()
-}
-
-fn is_equality(operator: BinaryOperator) -> bool {
-    matches!(
-        operator,
-        BinaryOperator::Equality
-            | BinaryOperator::StrictEquality
-            | BinaryOperator::Inequality
-            | BinaryOperator::StrictInequality
-    )
+        None
+    }
 }

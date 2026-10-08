@@ -66,7 +66,13 @@ impl Targets {
     /// Targets under which every feature is missing in every browser, for detector tests.
     #[cfg(test)]
     pub(crate) fn missing_everything() -> Self {
-        let table = SupportTable::missing_everything();
+        Self::missing_except(&[])
+    }
+
+    /// Targets under which every feature but `supported` is missing in every browser, for detector tests.
+    #[cfg(test)]
+    pub(crate) fn missing_except(supported: &[FeatureId]) -> Self {
+        let table = SupportTable::missing_except(supported);
         let methods = MethodTable::new(&table);
         Self {
             minimum: Browser::ALL.iter().map(|&browser| (browser, 0)).collect(),
@@ -95,8 +101,22 @@ impl Targets {
         self.table.get(feature).is_supported()
     }
 
+    /// Whether every target version without full support of `usage` lacks `check` entirely, partial
+    /// support included. Then code that runs only where `check` is present finds `usage` fully supported.
+    /// The masks of the table are not enough: a browser can lack `check` only in its lowest target version
+    /// and `usage` in many more.
+    pub fn implies(&self, check: FeatureId, usage: FeatureId) -> bool {
+        let gaps = self.support(usage).gaps();
+        // The masks are the quick check: a browser without full support of `usage` must lack `check`.
+        !gaps.is_empty()
+            && gaps.is_subset(self.support(check).missing)
+            && self.minimum.iter().all(|&(browser, target)| {
+                !gaps.contains(browser) || check.first_support(browser, target) >= usage.full_support(browser)
+            })
+    }
+
     /// The finding for a call `.name()` on an object of unknown type, if the name has one.
-    pub(crate) fn method(&self, name: &str) -> Option<Decision<'_>> {
+    pub(crate) fn method(&self, name: &str) -> Option<Decision> {
         self.methods.get(name)
     }
 }

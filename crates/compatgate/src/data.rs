@@ -101,19 +101,36 @@ impl FeatureId {
         self.0 as usize
     }
 
-    /// The feature with an id that the code names, found at compile time: use it in a `const` item.
-    /// An id that the data lacks fails the build, so a detector never looks up a key at run time.
-    pub const fn known(id: &str) -> Self {
+    /// The feature with an id that the code names, found at compile time. Call it only in a `const`
+    /// item: there an id that the data lacks fails the build, and at run time it would panic.
+    pub(crate) const fn known(id: &str) -> Self {
+        match Self::lookup(id) {
+            Some(feature) => feature,
+            None => panic!("the feature is not in the BCD data"),
+        }
+    }
+
+    /// `find` for `known`: a binary search that a `const` item can run.
+    const fn lookup(id: &str) -> Option<Self> {
         let (mut low, mut high) = (0, FEATURES.len());
         while low < high {
             let middle = low + (high - low) / 2;
             match compare(FEATURES[middle].0, id) {
                 std::cmp::Ordering::Less => low = middle + 1,
                 std::cmp::Ordering::Greater => high = middle,
-                std::cmp::Ordering::Equal => return Self(middle as u32),
+                std::cmp::Ordering::Equal => return Some(Self(middle as u32)),
             }
         }
-        panic!("the feature is not in the BCD data");
+        None
+    }
+
+    /// `find` for the id that the parts make together: `["api.", "Navigator", ".", "share"]`. It builds
+    /// no string, and the globals detector asks it for every name of a file.
+    pub fn find_parts(parts: &[&str]) -> Option<Self> {
+        FEATURES
+            .binary_search_by(|(key, _)| key.bytes().cmp(parts.iter().flat_map(|part| part.bytes())))
+            .ok()
+            .map(|index| Self(index as u32))
     }
 
     pub fn find(id: &str) -> Option<Self> {
@@ -140,6 +157,17 @@ impl FeatureId {
             return Support::Full;
         }
         support_from(since, browser_rows(RANGES, self.0, browser.index() as u8), target)
+    }
+}
+
+impl FeatureId {
+    /// The first version from `target` on with any support, partial or full, or `UNSUPPORTED`.
+    pub fn first_support(self, browser: Browser, target: u32) -> u32 {
+        browser_rows(RANGES, self.0, browser.index() as u8)
+            .iter()
+            .filter(|row| row.3 > target)
+            .map(|row| row.2.max(target))
+            .fold(self.full_support(browser).max(target), u32::min)
     }
 }
 
@@ -314,8 +342,9 @@ mod tests {
         const CLONE: FeatureId = FeatureId::known("api.structuredClone");
         assert_eq!(Some(CLONE), FeatureId::find("api.structuredClone"));
         for id in feature_ids() {
-            assert_eq!(FeatureId::known(id).as_str(), id);
+            assert_eq!(FeatureId::lookup(id).map(FeatureId::as_str), Some(id));
         }
+        assert_eq!(FeatureId::lookup("api.DoesNotExist"), None);
         assert_eq!(compare("a.b", "a.bc"), std::cmp::Ordering::Less);
         assert_eq!(compare("a.c", "a.bc"), std::cmp::Ordering::Greater);
         assert_eq!(compare("a.b", "a.b"), std::cmp::Ordering::Equal);

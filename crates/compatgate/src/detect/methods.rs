@@ -4,19 +4,21 @@
 //! - a name that the file declares as a member (`class Q { union() {} }`) is skipped;
 //! - a call on an imported module (`_.union()` of lodash, `R.take()` of Ramda) is skipped.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+use std::sync::LazyLock;
 
 use oxc_ast::AstKind;
-use oxc_ast::ast::{AssignmentTarget, Expression, IdentifierReference, PropertyKey};
+use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_semantic::{Semantic, SymbolFlags};
 
+use super::path::{key_name, property, root};
 use super::{Origin, Use};
 use crate::check::{Confidence, Kind};
 use crate::data::{FeatureId, instance_member_names, instance_members};
 use crate::support::{SupportTable, TargetSupport};
 use crate::targets::Targets;
 
-pub fn detect<'t>(semantic: &Semantic<'_>, targets: &'t Targets) -> Vec<Use<'t>> {
+pub fn detect(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use> {
     let mut declared = None;
     let mut uses = Vec::new();
     for node in semantic.nodes().iter() {
@@ -44,9 +46,9 @@ pub fn detect<'t>(semantic: &Semantic<'_>, targets: &'t Targets) -> Vec<Use<'t>>
             ..Use::new(
                 decision.feature,
                 Kind::Builtin,
-                Origin::Member,
+                Origin::Method,
                 member.property.span,
-                node.id(),
+                member.node_id(),
             )
         });
     }
@@ -55,45 +57,74 @@ pub fn detect<'t>(semantic: &Semantic<'_>, targets: &'t Targets) -> Vec<Use<'t>>
 
 /// The finding for a call of a method name: the feature it names and the other members with the name.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Decision<'t> {
+pub struct Decision {
     pub feature: FeatureId,
-    pub alternatives: &'t [FeatureId],
+    pub alternatives: &'static [FeatureId],
 }
 
 /// The decisions for every method name under one set of targets. Only names with a finding have an
 /// entry: a name that a supported member of any type also has (`.map()` of arrays) has none.
 #[derive(Clone, PartialEq, Eq)]
 pub struct MethodTable {
-    /// By name: the feature of the finding and the range of its alternatives in `alternatives`.
-    names: Box<[(&'static str, FeatureId, u32, u32)]>,
-    alternatives: Box<[FeatureId]>,
+    names: Box<[(&'static str, Decision)]>,
 }
 
 impl MethodTable {
     pub fn new(table: &SupportTable) -> Self {
-        let mut names = Vec::new();
-        let mut alternatives = Vec::new();
-        for name in instance_member_names() {
-            let Some((feature, others)) = decide(name, table) else {
-                continue;
-            };
-            let start = alternatives.len() as u32;
-            alternatives.extend(others);
-            names.push((name, feature, start, alternatives.len() as u32));
-        }
-        Self {
-            names: names.into(),
-            alternatives: alternatives.into(),
-        }
+        let names = instance_member_names()
+            .filter_map(|name| {
+                let feature = decide(name, table)?;
+                Some((
+                    name,
+                    Decision {
+                        feature,
+                        alternatives: alternatives(name, feature),
+                    },
+                ))
+            })
+            .collect();
+        Self { names }
     }
 
-    pub fn get(&self, name: &str) -> Option<Decision<'_>> {
-        let index = self.names.binary_search_by(|&(known, ..)| known.cmp(name)).ok()?;
-        let (_, feature, start, end) = self.names[index];
-        Some(Decision {
-            feature,
-            alternatives: &self.alternatives[start as usize..end as usize],
-        })
+    pub fn get(&self, name: &str) -> Option<Decision> {
+        let index = self.names.binary_search_by(|&(known, _)| known.cmp(name)).ok()?;
+        Some(self.names[index].1)
+    }
+}
+
+/// For every reportable member of every name, the other reportable members of the name, in the order
+/// of their ids. They do not depend on the targets, so a decision points into this table.
+static ALTERNATIVES: LazyLock<Alternatives> = LazyLock::new(|| {
+    let mut list = Vec::new();
+    let mut ranges = HashMap::new();
+    for name in instance_member_names() {
+        let reportable: Vec<FeatureId> = instance_members(name)
+            .filter_map(|(feature, reportable)| reportable.then_some(feature))
+            .collect();
+        for &chosen in &reportable {
+            let start = list.len() as u32;
+            list.extend(reportable.iter().copied().filter(|&other| other != chosen));
+            ranges.insert((name, chosen), (start, list.len() as u32));
+        }
+    }
+    Alternatives {
+        list: list.into(),
+        ranges,
+    }
+});
+
+struct Alternatives {
+    list: Box<[FeatureId]>,
+    /// By name and chosen member: the range of the others in `list`.
+    ranges: HashMap<(&'static str, FeatureId), (u32, u32)>,
+}
+
+/// The reportable members of `name` other than `chosen`.
+fn alternatives(name: &'static str, chosen: FeatureId) -> &'static [FeatureId] {
+    let alternatives = &*ALTERNATIVES;
+    match alternatives.ranges.get(&(name, chosen)) {
+        Some(&(start, end)) => &alternatives.list[start as usize..end as usize],
+        None => &[],
     }
 }
 
@@ -116,14 +147,7 @@ fn declared_names<'a>(semantic: &Semantic<'a>) -> HashSet<&'a str> {
             AstKind::PropertyDefinition(property) => key_name(&property.key),
             AstKind::AccessorProperty(property) => key_name(&property.key),
             AstKind::ObjectProperty(property) => key_name(&property.key),
-            AstKind::AssignmentExpression(assignment) => match &assignment.left {
-                AssignmentTarget::StaticMemberExpression(member) => Some(member.property.name.as_str()),
-                AssignmentTarget::ComputedMemberExpression(member) => match &member.expression {
-                    Expression::StringLiteral(literal) => Some(literal.value.as_str()),
-                    _ => None,
-                },
-                _ => None,
-            },
+            AstKind::AssignmentExpression(assignment) => assignment.left.as_member_expression().and_then(property),
             _ => None,
         };
         if let Some(name) = name {
@@ -133,16 +157,7 @@ fn declared_names<'a>(semantic: &Semantic<'a>) -> HashSet<&'a str> {
     names
 }
 
-/// `take` in `take() {}`, `take: f` and `'take': f`.
-fn key_name<'a>(key: &PropertyKey<'a>) -> Option<&'a str> {
-    match key {
-        PropertyKey::StaticIdentifier(identifier) => Some(identifier.name.as_str()),
-        PropertyKey::StringLiteral(literal) => Some(literal.value.as_str()),
-        _ => None,
-    }
-}
-
-fn decide(name: &str, table: &SupportTable) -> Option<(FeatureId, Vec<FeatureId>)> {
+fn decide(name: &str, table: &SupportTable) -> Option<FeatureId> {
     let mut candidates = Vec::new();
     // `instance_members` yields the members in the order of their ids: the data is sorted by name
     // and feature index, and the features are sorted by id. Tests in `data` check both orders.
@@ -161,7 +176,7 @@ fn decide(name: &str, table: &SupportTable) -> Option<(FeatureId, Vec<FeatureId>
 /// The call may be any of the candidates, so the finding names the one with the worst support:
 /// missing in some target before partial. Ties go to the first candidate. The candidates come in the
 /// order of their ids.
-fn choose(candidates: &[(FeatureId, TargetSupport)]) -> Option<(FeatureId, Vec<FeatureId>)> {
+fn choose(candidates: &[(FeatureId, TargetSupport)]) -> Option<FeatureId> {
     let severity = |support: &TargetSupport| {
         if !support.missing.is_empty() {
             2
@@ -177,26 +192,14 @@ fn choose(candidates: &[(FeatureId, TargetSupport)]) -> Option<(FeatureId, Vec<F
             worst = index;
         }
     }
-    let feature = candidates.get(worst)?.0;
-    let alternatives = candidates
-        .iter()
-        .enumerate()
-        .filter(|&(index, _)| index != worst)
-        .map(|(_, &(feature, _))| feature)
-        .collect();
-    Some((feature, alternatives))
+    Some(candidates.get(worst)?.0)
 }
 
 /// `_.union()` with `import _ from 'lodash'` or `const _ = require('lodash')` calls a module function.
 fn receiver_is_module(semantic: &Semantic<'_>, object: &Expression<'_>) -> bool {
-    let mut current = object.get_inner_expression();
-    let identifier = loop {
-        match current {
-            Expression::Identifier(identifier) => break identifier,
-            Expression::StaticMemberExpression(member) => current = member.object.get_inner_expression(),
-            Expression::ComputedMemberExpression(member) => current = member.object.get_inner_expression(),
-            _ => return is_module_expression(semantic, current),
-        }
+    let identifier = match root(object) {
+        Expression::Identifier(identifier) => identifier,
+        other => return is_module_expression(semantic, other),
     };
     let scoping = semantic.scoping();
     let Some(symbol) = scoping.get_reference(identifier.reference_id()).symbol_id() else {
@@ -296,23 +299,13 @@ mod tests {
             missing: firefox,
             partial: BrowserSet::EMPTY,
         };
-        assert_eq!(
-            choose(&[(first, partial), (second, unsupported)]),
-            Some((second, vec![first]))
-        );
-        assert_eq!(
-            choose(&[(first, unsupported), (second, partial)]),
-            Some((first, vec![second]))
-        );
-        assert_eq!(
-            choose(&[(first, unsupported), (second, unsupported)]),
-            Some((first, vec![second]))
-        );
-        assert_eq!(
-            choose(&[(first, partial), (second, partial)]),
-            Some((first, vec![second]))
-        );
+        assert_eq!(choose(&[(first, partial), (second, unsupported)]), Some(second));
+        assert_eq!(choose(&[(first, unsupported), (second, partial)]), Some(first));
+        assert_eq!(choose(&[(first, unsupported), (second, unsupported)]), Some(first));
+        assert_eq!(choose(&[(first, partial), (second, partial)]), Some(first));
         assert_eq!(choose(&[]), None);
+        assert!(alternatives("toSorted", first).contains(&second));
+        assert!(!alternatives("toSorted", first).contains(&first));
     }
 
     #[test]

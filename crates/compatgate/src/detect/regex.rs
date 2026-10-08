@@ -4,18 +4,19 @@
 
 use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Argument, ChainElement, Expression, RegExpFlags, RegExpLiteral};
+use oxc_ast::ast::{Argument, Expression, RegExpFlags, RegExpLiteral};
 use oxc_regular_expression::ast::{
     CapturingGroup, Character, CharacterKind, IgnoreGroup, LookAroundAssertion, LookAroundAssertionKind,
     NamedReference, Pattern, UnicodePropertyEscape,
 };
 use oxc_regular_expression::visit::{Visit, walk};
 use oxc_regular_expression::{LiteralParser, Options};
-use oxc_semantic::{NodeId, Scoping, Semantic};
+use oxc_semantic::{NodeId, Semantic};
 use oxc_span::Span;
 
+use super::path::{is_global, path};
 use super::syntax::has_code_point_escape;
-use super::{Origin, Use, WINDOW_ALIASES};
+use super::{Origin, Use};
 use crate::check::Kind;
 use crate::data::FeatureId;
 use crate::targets::Targets;
@@ -82,8 +83,7 @@ impl Flags {
     }
 }
 
-pub fn detect<'a, 't>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets: &Targets) -> Vec<Use<'t>> {
-    let scoping = semantic.scoping();
+pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets: &Targets) -> Vec<Use> {
     let mut uses = Vec::new();
     for node in semantic.nodes().iter() {
         let (callee, arguments, span) = match node.kind() {
@@ -103,12 +103,12 @@ pub fn detect<'a, 't>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets
             continue;
         }
         // A local `RegExp` is not the builtin.
-        if scoping.get_reference(identifier.reference_id()).symbol_id().is_some() {
+        if !is_global(semantic, identifier) {
             continue;
         }
         let flags_text = match arguments.get(1) {
             None => None,
-            Some(argument) => match literal_text(argument, scoping) {
+            Some(argument) => match literal_text(argument, semantic) {
                 Some(text) => Some(text),
                 None => continue,
             },
@@ -122,7 +122,7 @@ pub fn detect<'a, 't>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets
                 report_literal(&mut known, targets, literal, node.id());
                 literal.regex.pattern.text.as_str()
             }
-            Some(argument) => match literal_text(argument, scoping) {
+            Some(argument) => match literal_text(argument, semantic) {
                 Some(text) => text,
                 None => continue,
             },
@@ -153,7 +153,7 @@ pub fn detect<'a, 't>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets
     uses
 }
 
-fn report_literal(uses: &mut Vec<Use<'_>>, targets: &Targets, literal: &RegExpLiteral<'_>, node: NodeId) {
+fn report_literal(uses: &mut Vec<Use>, targets: &Targets, literal: &RegExpLiteral<'_>, node: NodeId) {
     // oxc parsed the pattern with spans in the file: the pattern starts after the `/`.
     let source = Source {
         text: literal.regex.pattern.text.as_str(),
@@ -171,7 +171,7 @@ fn report_literal(uses: &mut Vec<Use<'_>>, targets: &Targets, literal: &RegExpLi
 }
 
 /// The value of a string literal, of a template without expressions, or of `String.raw` with such a template.
-fn literal_text<'a>(argument: &Argument<'a>, scoping: &Scoping) -> Option<&'a str> {
+fn literal_text<'a>(argument: &Argument<'a>, semantic: &Semantic<'_>) -> Option<&'a str> {
     // A value with lone surrogates is stored with a substitute escape, not as the program sees it.
     match argument {
         Argument::StringLiteral(literal) if !literal.lone_surrogates => Some(literal.value.as_str()),
@@ -179,7 +179,7 @@ fn literal_text<'a>(argument: &Argument<'a>, scoping: &Scoping) -> Option<&'a st
             template.single_quasi().map(|cooked| cooked.as_str())
         }
         // `String.raw` keeps the backslashes as written, so the raw text is the value.
-        Argument::TaggedTemplateExpression(tagged) if is_string_raw(&tagged.tag, scoping) => {
+        Argument::TaggedTemplateExpression(tagged) if is_string_raw(&tagged.tag, semantic) => {
             match tagged.quasi.quasis.as_slice() {
                 [only] => Some(only.value.raw.as_str()),
                 _ => None,
@@ -190,35 +190,9 @@ fn literal_text<'a>(argument: &Argument<'a>, scoping: &Scoping) -> Option<&'a st
 }
 
 /// `String.raw`, `(String?.raw)`, or `String.raw` through the global object: `globalThis.String.raw`.
-fn is_string_raw(tag: &Expression<'_>, scoping: &Scoping) -> bool {
-    let Some((object, "raw")) = static_member(tag) else {
-        return false;
-    };
-    let string = match static_member(object) {
-        Some((alias, "String")) => match alias.get_inner_expression() {
-            Expression::Identifier(alias) if WINDOW_ALIASES.contains(&alias.name.as_str()) => alias,
-            _ => return false,
-        },
-        Some(_) => return false,
-        None => match object.get_inner_expression() {
-            Expression::Identifier(string) if string.name.as_str() == "String" => string,
-            _ => return false,
-        },
-    };
-    // A local `String` or `window` is not the global.
-    scoping.get_reference(string.reference_id()).symbol_id().is_none()
-}
-
-/// The object and the property of `X.p` or `X?.p`, which may be wrapped.
-fn static_member<'b, 'a>(expression: &'b Expression<'a>) -> Option<(&'b Expression<'a>, &'b str)> {
-    match expression.get_inner_expression() {
-        Expression::StaticMemberExpression(member) => Some((&member.object, member.property.name.as_str())),
-        Expression::ChainExpression(chain) => match &chain.expression {
-            ChainElement::StaticMemberExpression(member) => Some((&member.object, member.property.name.as_str())),
-            _ => None,
-        },
-        _ => None,
-    }
+/// A local `String` or `window` is not the global.
+fn is_string_raw(tag: &Expression<'_>, semantic: &Semantic<'_>) -> bool {
+    path(semantic, tag).is_some_and(|path| path == ["String", "raw"])
 }
 
 /// The pattern text and its offset: spans of a parsed literal count from the start of the file,
@@ -230,7 +204,7 @@ struct Source<'a> {
 }
 
 fn report<'a>(
-    uses: &mut Vec<Use<'_>>,
+    uses: &mut Vec<Use>,
     targets: &Targets,
     pattern: Option<&Pattern<'a>>,
     source: Source<'a>,

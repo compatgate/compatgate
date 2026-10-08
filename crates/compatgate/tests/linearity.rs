@@ -13,18 +13,22 @@ const QUERY: &str = "Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115";
 /// The input sizes of every test: the second is four times the first.
 const SIZES: [usize; 2] = [1000, 4000];
 
-/// The most expensive shape, a called `&&` chain, takes about 19 guard steps per term.
-const STEPS_PER_TERM: usize = 32;
+/// The most expensive shape, a long chain of member reads, takes 7 climb steps per term.
+const STEPS_PER_TERM: usize = 16;
 
 /// Checks `source` and returns the number of findings and the steps it took.
 fn run(source: String, filename: &'static str) -> (usize, Steps) {
+    run_with(source, filename, QUERY)
+}
+
+fn run_with(source: String, filename: &'static str, query: &'static str) -> (usize, Steps) {
     // oxc visits the AST recursively, and a debug build overflows the 2 MiB stack of a test thread
     // on a chain of 2000 terms. A release build on a main thread does not. The counters belong to
     // the thread, so the new thread reads them too.
     std::thread::Builder::new()
         .stack_size(64 << 20)
         .spawn(move || {
-            let targets = Targets::resolve(QUERY).unwrap();
+            let targets = Targets::resolve(query).unwrap();
             counters::take();
             let findings = check(&source, filename, &targets, &AllowList::empty())
                 .unwrap()
@@ -86,7 +90,6 @@ fn a_long_logical_chain_of_member_reads_is_checked_in_linear_time() {
 }
 
 #[test]
-#[ignore = "quadratic on 9366fb2: each unguarded use climbs to the root, through the whole chain above it"]
 fn a_long_logical_chain_of_member_reads_climbs_in_linear_time() {
     for terms in SIZES {
         let (_, steps) = run(member_reads(terms), "a.js");
@@ -116,6 +119,86 @@ fn a_long_and_chain_of_unsupported_reads_is_checked_in_linear_time() {
         let source = format!("x = {};", vec!["window.structuredClone"; terms].join(" &&\n"));
         let (findings, steps) = run(source, "a.js");
         assert_eq!(findings, 0);
+        assert_linear(terms, steps.climb, "climb");
+        assert_linear(terms, steps.guards, "guards");
+    }
+}
+
+/// Old targets lack many global APIs, so each use below has a key of its own.
+const OLD: &str = "Chrome >= 50";
+
+/// `count` global APIs that `OLD` lacks: `use;` for each is a distinct unsupported use.
+fn distinct_uses(count: usize) -> String {
+    let targets = Targets::resolve(OLD).unwrap();
+    let names: Vec<&str> = compatgate::data::feature_ids()
+        .filter_map(|id| id.strip_prefix("api."))
+        .filter(|name| !name.contains('.'))
+        .filter(|name| {
+            let feature = compatgate::data::FeatureId::find(&format!("api.{name}")).unwrap();
+            !targets.is_supported(feature)
+        })
+        .take(count)
+        .collect();
+    assert_eq!(names.len(), count);
+    names.iter().map(|name| format!("{name};\n")).collect()
+}
+
+#[test]
+fn many_early_exits_before_many_distinct_uses_are_checked_in_linear_time() {
+    // Every use asks the statements before it. Reading them again for each key was quadratic.
+    for terms in SIZES {
+        let uses = terms / 10;
+        let mut source: String = (0..terms).map(|i| format!("if (!a{i}) return;\n")).collect();
+        source.push_str(&distinct_uses(uses));
+        let (findings, steps) = run_with(source, "a.cjs", OLD);
+        assert_eq!(findings, uses);
+        assert_linear(terms + uses, steps.climb, "climb");
+        assert_linear(terms + uses, steps.guards, "guards");
+    }
+}
+
+#[test]
+fn a_long_and_chain_above_many_distinct_uses_is_checked_in_linear_time() {
+    // Every use asks the test of the `if`. Evaluating the chain again for each key was quadratic.
+    for terms in SIZES {
+        let uses = terms / 10;
+        let test = (0..terms).map(|i| format!("a{i}")).collect::<Vec<_>>().join(" &&\n");
+        let source = format!("if ({test}) {{\n{}}}\n", distinct_uses(uses));
+        let (findings, steps) = run_with(source, "a.js", OLD);
+        assert_eq!(findings, uses);
+        assert_linear(terms + uses, steps.climb, "climb");
+        assert_linear(terms + uses, steps.guards, "guards");
+    }
+}
+
+#[test]
+fn deeply_nested_blocks_with_early_exits_are_checked_in_linear_time() {
+    // Each block proves its own key to the code after it, and every level has a use. Copying the facts
+    // of the nested blocks into each list around them grew with the depth.
+    for terms in SIZES {
+        let mut source = String::from("function f() {\n");
+        for i in 0..terms {
+            source.push_str(&format!("{{ if (!a{i}) return; structuredClone(v{i});\n"));
+        }
+        source.push_str(&"}".repeat(terms));
+        source.push_str("\nstructuredClone(w);\n}\n");
+        let (findings, steps) = run(source, "a.js");
+        assert_eq!(findings, terms + 1);
+        assert_linear(terms, steps.climb, "climb");
+        assert_linear(terms, steps.guards, "guards");
+    }
+}
+
+#[test]
+fn many_sibling_blocks_before_uses_are_checked_in_linear_time() {
+    // Each use asks every block before it in the same list. The answers of the blocks are kept as one
+    // list of positions per subject; asking each block again per use was quadratic.
+    for terms in SIZES {
+        let source: String = (0..terms)
+            .map(|i| format!("{{ if (!a{i}) return; }}\nstructuredClone(v{i});\n"))
+            .collect();
+        let (findings, steps) = run(source, "a.cjs");
+        assert_eq!(findings, terms);
         assert_linear(terms, steps.climb, "climb");
         assert_linear(terms, steps.guards, "guards");
     }

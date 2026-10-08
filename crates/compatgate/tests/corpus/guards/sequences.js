@@ -8,6 +8,6 @@ if ((c++, navigator.share)) navigator.share(d); //~ none
 { const ok = Boolean((c++, window.navigator?.share)); } //~ none
 { function f() { if (!(c++, navigator.share)) return; navigator.share(d); } } //~ none
 
-// other_expressions_of_a_sequence_are_not_tested: the value of the sequence is `c`. The read is a use,
-// and it does not guard the call.
-if ((navigator.share, c)) navigator.share(d); //~ @6 api.Navigator.share exact; @27 api.Navigator.share exact
+// other_expressions_of_a_sequence_are_not_tested: the value of the sequence is `c`. The read is dropped,
+// so it is no use, and it does not guard the call.
+if ((navigator.share, c)) navigator.share(d); //~ api.Navigator.share exact

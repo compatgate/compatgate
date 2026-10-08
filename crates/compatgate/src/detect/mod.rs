@@ -4,7 +4,9 @@
 pub mod globals;
 pub mod guards;
 pub mod methods;
+pub mod path;
 pub mod regex;
+pub mod slot;
 pub mod syntax;
 
 use oxc_semantic::NodeId;
@@ -13,16 +15,16 @@ use oxc_span::Span;
 use crate::check::{Confidence, Kind};
 use crate::data::FeatureId;
 
-/// Names under which the global object is reachable. `window.X` is the global `X`.
-pub(crate) const WINDOW_ALIASES: [&str; 3] = ["window", "self", "globalThis"];
-
 /// What happens at the use in a browser without the feature.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Origin {
     /// Reading the name throws `ReferenceError`: `structuredClone`, `navigation`.
     Global,
-    /// Reading the member gives `undefined`: `navigator.share`, `arr.toSorted`.
+    /// Reading the member gives `undefined`: `navigator.share`, `window.structuredClone`.
     Member,
+    /// A member of an object of unknown type, found by its name: `arr.toSorted`. Reading it gives
+    /// `undefined` too, but a check names it by the name alone.
+    Method,
     /// The call itself throws: `new RegExp('(?<=a)')`.
     Call,
     /// Syntax: the file does not parse, so no check in the code helps.
@@ -30,21 +32,27 @@ pub enum Origin {
 }
 
 /// One use of a BCD feature in the source. Detectors create uses only for features that the targets
-/// do not support fully, so a use is a candidate for a finding. `'t` is the lifetime of the targets.
-pub struct Use<'t> {
+/// do not support fully, so a use is a candidate for a finding.
+pub struct Use {
     pub feature: FeatureId,
     /// Other features the same code may use. A heuristic detector cannot tell them apart,
     /// so an `allow` entry for any of them suppresses the finding.
-    pub alternatives: &'t [FeatureId],
+    pub alternatives: &'static [FeatureId],
     pub kind: Kind,
     pub confidence: Confidence,
     pub origin: Origin,
     pub span: Span,
-    /// The AST node of the use. Guard detection walks up from it and reads the keys of the use from it.
+    /// The AST node of the use: the identifier of a global, the member expression of a member or of a
+    /// method, the property of a destructuring, the node of the syntax. The guards walk up from it and
+    /// read the key of the use from it.
     pub node: NodeId,
+    /// For the root of a chain: the node of the member read at the same place, when every target version
+    /// without full support of the root lacks the member too. The finding of the member then tells about
+    /// the root as well, so the root is no finding while the member is one.
+    pub member: Option<NodeId>,
 }
 
-impl Use<'_> {
+impl Use {
     pub fn new(feature: FeatureId, kind: Kind, origin: Origin, span: Span, node: NodeId) -> Self {
         Self {
             feature,
@@ -54,6 +62,7 @@ impl Use<'_> {
             origin,
             span,
             node,
+            member: None,
         }
     }
 }

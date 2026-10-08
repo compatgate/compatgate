@@ -35,7 +35,7 @@ window?.structuredClone(1); //~ api.structuredClone exact
 
 // a_check_guards_destructuring_from_a_global
 if (navigator.userActivation) { const { userActivation } = navigator; } //~ none
-{
+function g0() {
   if (!Object.groupBy) throw new Error(); //~ none
   const { groupBy } = Object; //~ none
 }

@@ -44,8 +44,9 @@ differs from the current one.
 
 ## Rules for snippets
 
-- Snippets of one file share the scope and the file-wide state. A snippet that declares a name or exits
-  early sits in a block `{ … }` or in a function, so it does not change the other snippets.
+- Snippets of one file share the scope and the file-wide state. A snippet that declares a name sits in
+  a block `{ … }` or in a function, so it does not change the other snippets. A snippet that exits early
+  sits in a function: the facts of an early exit hold after the block that holds it.
 - A snippet that declares a member name (`class Q { union() {} }`, `{ take: f }`, `api.take = f`)
   stops method findings of that name in the whole file. Such a snippet gets its own file.
 - So does a snippet with `import`, a top-level `var` or `function` that other snippets of the file

@@ -11,6 +11,7 @@ use oxc_ast::ast::{
 use oxc_semantic::{AstNodes, NodeId, Semantic};
 use oxc_span::{GetSpan, Span};
 
+use super::slot::{SpreadInto, spread_into};
 use super::{Origin, Use};
 use crate::check::Kind;
 use crate::data::FeatureId;
@@ -266,7 +267,7 @@ pub(crate) fn ancient(key: &str) -> bool {
 
 /// `ambient` comes from `ambient_nodes`. `check` computes it once per file for all detectors.
 /// Syntax that the targets support is no use: most nodes of a modern file are such syntax.
-pub fn detect<'t>(semantic: &Semantic<'_>, ambient: &[bool], targets: &Targets) -> Vec<Use<'t>> {
+pub fn detect(semantic: &Semantic<'_>, ambient: &[bool], targets: &Targets) -> Vec<Use> {
     // Everything in a declaration file is ambient, `export` without `declare` included.
     if semantic.source_type().is_typescript_definition() {
         return Vec::new();
@@ -335,11 +336,11 @@ pub fn detect<'t>(semantic: &Semantic<'_>, ambient: &[bool], targets: &Targets) 
                 PropertyKind::Set if it.computed => add(key::SET_COMPUTED, it.span),
                 _ => {}
             },
-            AstKind::SpreadElement(it) => match nodes.parent_kind(id) {
-                AstKind::ArrayExpression(_) => add(key::SPREAD_IN_ARRAYS, it.span),
-                AstKind::ObjectExpression(_) => add(key::SPREAD_IN_OBJECTS, it.span),
-                AstKind::CallExpression(_) | AstKind::NewExpression(_) => add(key::SPREAD_IN_CALLS, it.span),
-                _ => {}
+            AstKind::SpreadElement(it) => match spread_into(nodes, id) {
+                Some(SpreadInto::Array) => add(key::SPREAD_IN_ARRAYS, it.span),
+                Some(SpreadInto::Object) => add(key::SPREAD_IN_OBJECTS, it.span),
+                Some(SpreadInto::Call) => add(key::SPREAD_IN_CALLS, it.span),
+                None => {}
             },
             AstKind::CallExpression(it) => {
                 if it
@@ -552,7 +553,7 @@ pub fn detect<'t>(semantic: &Semantic<'_>, ambient: &[bool], targets: &Targets) 
 }
 
 /// `10n` is syntax too: a browser without `BigInt` does not parse the file, so its origin is `Parse`.
-fn push(uses: &mut Vec<Use<'_>>, targets: &Targets, feature: FeatureId, kind: Kind, span: Span, node: NodeId) {
+fn push(uses: &mut Vec<Use>, targets: &Targets, feature: FeatureId, kind: Kind, span: Span, node: NodeId) {
     if !targets.is_supported(feature) {
         uses.push(Use::new(feature, kind, Origin::Parse, span, node));
     }

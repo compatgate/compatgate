@@ -61,43 +61,64 @@ try {
 } catch {}
 ```
 
-Rules for checks:
+Rules for checks. A use is no finding when the code drops its value or when a check protects it.
+Three tables decide it.
 
-- In a test, a member read is a check: `if (navigator.userActivation)`.
-  Reading something from it, as in `if (navigator.userActivation.isActive)`, is a finding.
-- Optional chaining on the member is a check: `navigator.userAgentData?.brands`.
-  In `navigator.userAgentData.brands?.length` the optional access comes too late, so it is a finding.
-  In a test, `X?.y` is a check too: `if (navigator?.userActivation)`.
-- A member read whose value serves only as a boolean is not a finding anywhere. These positions count:
-  the operand of `!` and of `Boolean(...)`, an operand of `&&`, `||` and `??`, the condition of `?:`,
-  and an operand of a comparison (`===`, `!==`, `==`, `!=`, `<`, `>`, `<=`, `>=`).
-  Examples: `!!navigator.share`, `Boolean(navigator.share)`, `const ok = window.X !== undefined`.
-  The right operand of `||` and `??` counts too, though it is the result value: `return a || navigator.share`.
-- A logical expression does not count when its value goes where `undefined` throws:
-  `(a || navigator.share)(x)` is a finding. Such places are a callee (also `(0, X)()`), `new`, a tag,
-  the object of a member, a spread into an array or arguments, `for of`, `yield*`, `extends`,
-  the source of a destructuring or its default, and the right operand of `in` and `instanceof`.
-  A missing member on the left of `||` or `??` is replaced by the right operand first,
-  so `(navigator.share || fallback)(x)` is not a finding. Neither is `(a || navigator.share)?.(x)`:
-  an optional call on `undefined` does nothing.
-- The previous rules decide whether the read itself is a finding. Whether a check protects the code
-  that follows is a separate question. Of the comparisons with a value, only those that rule out `undefined`
-  protect it: `!= null`, `!= undefined`, `!== undefined` and `!== void 0`, in either order.
-  A strict `!== null` does not: `if (window.structuredClone !== null) structuredClone(1)` still reports
-  the call, because a missing member is `undefined`, not `null`.
-- Other forms that protect: `'X' in obj`, truthiness, `typeof X !== 'undefined'`,
-  `typeof X === 'function'` and `typeof X === 'object'`.
-- A check keeps its meaning in the last expression of a sequence and in a call of the global `Boolean`:
-  `if ((c++, navigator.share))` and `if (Boolean(navigator.share))` protect `navigator.share(d)`.
-  Coverage instrumentation wraps tested operands in such sequences. In `(navigator.share, c)` the value is `c`.
-- Method checks match by name on any object: `if (list.toSorted) other.toSorted()` is protected,
-  because methods are found by name.
-- Reading a bare global such as `if (structuredClone)` is still a finding: it throws in browsers that lack it.
-- Minified checks such as `typeof X<"u"` and `void 0 !== window.X` are recognized.
-- A `try` protects a call or a constructor only when it has a `catch` and the call runs inside the `try` block,
-  not in a callback defined there.
-- Syntax is never protected by `try` or by an optional call.
-- Calls through wrappers, `(0, window.X)()` and `(window.X as any)()`, are calls.
+1. Where the value goes. A bare global such as `structuredClone` throws when it is missing, except under
+   `typeof`. A member such as `navigator.share` reads as `undefined`, and its parents decide what follows:
+
+   | The value is                  | Examples                                                                                                                                         | Result                                           |
+   | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
+   | passed on                     | `(X)`, `X as T`, `(a, X)`, `await X`, `y = X`                                                                                                    | as at the parent                                 |
+   | made optional                 | `a \|\| X`, `a && X`, `X && a`, `a ?? X`, `c ? X : a`, `X?.y`, `X?.()`                                                                           | as at the parent, optional                       |
+   | dropped or tested             | `X;`, `(X, a)`, `X \|\| a`, `X ?? a`, `!X`, `typeof X`, `X === a`, `X instanceof F`, `Boolean(X)`, `if (X)`, `{ ...X }`, `for (k in X)`          | no finding                                       |
+   | used where `undefined` throws | `X.y`, `X()`, `new X`, `` X`…` ``, `'p' in X`, `a instanceof X`, `[...X]`, `f(...X)`, `for (a of X)`, `yield* X`, `extends X`, `const { a } = X` | a finding, unless a check or a `try` protects it |
+   | stored or passed              | `y = X`, `const y = X`, `f(X)`, `return X`, `{ a: X }`, `` `${X}` ``                                                                             | a finding, unless a check protects it            |
+
+   `y = X` both passes the value on and stores it, and the worse result counts: `y = navigator.share;` is a
+   finding, `(y = a || navigator.share)(d)` too.
+
+2. Where a check holds:
+
+   | Code                                                     | The check `T` holds in                     |
+   | -------------------------------------------------------- | ------------------------------------------ |
+   | `if (T) A; else B`, `T ? A : B`                          | `A` with `T` true, `B` with `T` false      |
+   | `while (T) A`, `for (; T; ) A`                           | `A` with `T` true; not in `do A while (T)` |
+   | `T && A`, `T \|\| A`                                     | `A` with `T` true, with `T` false          |
+   | `if (T) return;`, `if (T) {} else throw e;`, other exits | the code after it, with `T` false, true    |
+
+   The code after an exit is the rest of its statement list. Facts leave only a plain nested block
+   `{ … }`: `{ if (!X) return; } X();` is protected. They do not leave the body of an `if`, of a loop,
+   of a function or any other list.
+
+3. What a check proves:
+
+   | Check                                                                                                                      | Proves present when it is true         | when it is false             |
+   | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---------------------------- |
+   | `X`, `typeof X === 'function'` or `'object'`, `typeof X !== 'undefined'`, `X != null`, `X !== undefined`, `X instanceof F` | `X`                                    | nothing                      |
+   | `typeof X === 'undefined'`, `X == null`, `X === undefined`                                                                 | nothing                                | `X`                          |
+   | `'p' in X`                                                                                                                 | `X.p`                                  | nothing                      |
+   | `!T`, `(a, T)`, `Boolean(T)`, `y = T`                                                                                      | as `T`; `!` swaps true and false       |                              |
+   | `A && B`, `A \|\| B`                                                                                                       | both, what both prove                  | what both prove, both        |
+   | `c ? A : B`                                                                                                                | what both `c && A` and `!c && B` prove | the same with `A`, `B` false |
+   | `void 0`, `undefined`, `null`, `false`, `0`, `""`                                                                          | everything                             | nothing                      |
+   | `true`, other numbers, other strings                                                                                       | nothing                                | everything                   |
+
+   A test that never has a value proves everything there: that code never runs. So
+   `if (c ? void 0 : navigator.share) navigator.share(d)` is protected.
+
+   Minified forms such as `typeof X<"u"` and `void 0 !== window.X` count. A check proves `X` for uses of
+   `X`, and `a.m` for calls `b.m()` of a method found by name. It also proves a use that every target
+   version without full support of the use lacks `X` in: `if (window.navigation) navigation.navigate('/')`.
+   The root of a chain is a use of its own: `navigation.currentEntry` reports `api.Window.navigation`,
+   and the member only where the root does not cover its gap. When the member covers the gap of the root
+   instead, the member reports both: `scheduler.yield()` is one finding, `api.Scheduler.yield`.
+
+- A `try` with a `catch` protects whatever throws in its block in the same function, not in a callback
+  or in the initializer of an instance field defined there: those run after the `try`.
+- A value that passed `||`, `&&`, `??`, `?:` or `?.` is no finding where it escapes: `const f = a || navigator.share`
+  is not a finding, `const f = navigator.share` is.
+- Syntax is never protected: a file with it does not parse.
 - A check on a shadowed local `window` or `Intl` does not protect uses of the global.
 - A write that defines a global (`structuredClone = function () {}`) is not a use.
   Neither are a write through destructuring (`[window.X] = a`) and `delete window.X`.

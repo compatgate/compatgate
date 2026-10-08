@@ -27,6 +27,10 @@ impl BrowserSet {
     pub fn is_subset(self, other: Self) -> bool {
         self.0 & !other.0 == 0
     }
+
+    pub fn union(self, other: Self) -> Self {
+        Self(self.0 | other.0)
+    }
 }
 
 impl FromIterator<Browser> for BrowserSet {
@@ -46,7 +50,9 @@ fn bit(browser: Browser) -> u16 {
 /// Support of one feature under the targets.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct TargetSupport {
-    /// The absence mask: target browsers that have a gap in support from their lowest target version on.
+    /// The absence mask: target browsers that lack the feature in some version from their lowest target
+    /// version on. Empty when the feature has no gap in the target browsers. A browser outside the
+    /// targets is never in the mask.
     pub missing: BrowserSet,
     /// Target browsers with only partial support from their lowest target version on.
     pub partial: BrowserSet,
@@ -56,6 +62,11 @@ impl TargetSupport {
     /// Every target browser supports the feature fully.
     pub fn is_supported(self) -> bool {
         self.missing.is_empty() && self.partial.is_empty()
+    }
+
+    /// Target browsers without full support: missing or partial.
+    pub fn gaps(self) -> BrowserSet {
+        self.missing.union(self.partial)
     }
 }
 
@@ -88,11 +99,21 @@ impl SupportTable {
     /// every use that a detector finds.
     #[cfg(test)]
     pub fn missing_everything() -> Self {
+        Self::missing_except(&[])
+    }
+
+    /// A table in which every feature but `supported` is missing in every browser.
+    #[cfg(test)]
+    pub fn missing_except(supported: &[FeatureId]) -> Self {
         let all = Browser::ALL.into_iter().collect();
         Self {
             features: FeatureId::all()
-                .map(|_| TargetSupport {
-                    missing: all,
+                .map(|feature| TargetSupport {
+                    missing: if supported.contains(&feature) {
+                        BrowserSet::EMPTY
+                    } else {
+                        all
+                    },
                     partial: BrowserSet::EMPTY,
                 })
                 .collect(),

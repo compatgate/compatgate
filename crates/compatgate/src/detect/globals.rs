@@ -1,24 +1,24 @@
 //! Uses of global objects, constructors and functions: `structuredClone()`, `new Intl.Segmenter()`,
 //! `window.structuredClone`, `navigator.userActivation`, `const { groupBy } = Object`. Only references
-//! that resolve to no declared binding count, so a local `structuredClone` is ignored.
+//! that resolve to no declared binding count, so a local `structuredClone` is ignored. The root of a
+//! chain is a use of its own: `navigation.currentEntry` reads `navigation`, which throws where it is missing.
 
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use oxc_ast::AstKind;
-use oxc_ast::ast::{
-    AssignmentOperator, AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, UnaryOperator,
-};
+use oxc_ast::ast::{AssignmentTarget, AssignmentTargetProperty, BindingPattern};
 use oxc_semantic::{AstNodes, NodeId, Semantic};
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
-use super::{Origin, Use, WINDOW_ALIASES};
+use super::path::{Member, WINDOW_ALIASES, key_name, member_at, member_over};
+use super::slot::{Pattern, Slot, destructuring, outermost, slot};
+use super::{Origin, Use};
 use crate::check::Kind;
 use crate::data::{FeatureId, interface_parents, singleton_interface};
 use crate::targets::Targets;
 
-pub fn detect<'t>(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use<'t>> {
+pub fn detect(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use> {
     let scoping = semantic.scoping();
     let nodes = semantic.nodes();
     let mut uses = Uses {
@@ -43,58 +43,68 @@ pub fn detect<'t>(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use<'t>> {
                 continue;
             };
             let is_alias = WINDOW_ALIASES.contains(&name);
-            if let Some(first) = member_of(nodes, node_id) {
+            // The root of a chain is a use of its own: `navigation` in `navigation.currentEntry` throws where
+            // it is missing. Through an alias the root is a member, `window.navigation`.
+            let root = |globals: &mut GlobalFeatures| {
+                globals
+                    .get(name, false)
+                    .map(|feature| (feature, Origin::Global, identifier.span, node_id))
+            };
+            // The position of the reference decides the rest, so it is found once.
+            let outer = outermost(nodes, node_id);
+            let position = slot(nodes, outer);
+            if let Some(first) = member_at(nodes, outer, position) {
                 // `window.structuredClone = polyfill` and `Object.groupBy = polyfill` define a member.
-                if is_written_or_deleted(nodes, &first) {
+                if is_written_or_deleted(nodes, first.id) {
                     continue;
                 }
                 if is_alias {
+                    let root = globals
+                        .get(first.property, false)
+                        .map(|feature| (feature, Origin::Member, first.span, first.id));
                     // `window.navigator.userActivation` resolves like `navigator.userActivation`.
-                    if let Some(second) = member_of(nodes, first.id) {
-                        if is_written_or_deleted(nodes, &second) {
+                    if let Some(second) = member_over(nodes, first.id) {
+                        if is_written_or_deleted(nodes, second.id) {
                             continue;
                         }
-                        if let Some(feature) = member_feature_of(&first.property, &second.property) {
-                            uses.add(feature, Origin::Member, second.span, second.id);
+                        if let Some(feature) = member_feature_of(first.property, second.property) {
+                            uses.chain(root, &[(feature, second)], true);
                             continue;
                         }
                     } else {
                         // `const { share } = window.navigator` resolves like `= navigator`.
-                        let mut resolved = false;
-                        for member in destructured(nodes, chain_or_self(nodes, first.id)) {
-                            if let Some(feature) = member_feature_of(&first.property, &member.property) {
-                                uses.add(feature, Origin::Member, member.span, member.id);
-                                resolved = true;
-                            }
-                        }
-                        if resolved {
+                        let outer = outermost(nodes, first.id);
+                        let position = slot(nodes, outer);
+                        let members = resolve_members(destructured(nodes, outer, position), |property| {
+                            member_feature_of(first.property, property)
+                        });
+                        if !members.is_empty() {
+                            uses.chain(root, &members, false);
                             continue;
                         }
                     }
-                    if let Some(feature) = globals.get(&first.property, is_new_callee(nodes, &first)) {
+                    if let Some(feature) = globals.get(first.property, is_new_callee(nodes, first.id)) {
                         uses.add(feature, Origin::Member, first.span, first.id);
                     }
                     continue;
                 }
-                if let Some(feature) = member_feature_of(name, &first.property) {
-                    uses.add(feature, Origin::Member, first.span, first.id);
+                if let Some(feature) = member_feature_of(name, first.property) {
+                    let root = root(&mut globals);
+                    uses.chain(root, &[(feature, first)], true);
                     continue;
                 }
             } else {
                 // `const { groupBy } = Object` reads `Object.groupBy`, as the member access does.
-                let mut resolved = false;
-                for member in destructured(nodes, node_id) {
-                    let feature = if is_alias {
-                        globals.get(&member.property, false)
+                let members = resolve_members(destructured(nodes, outer, position), |property| {
+                    if is_alias {
+                        globals.get(property, false)
                     } else {
-                        member_feature_of(name, &member.property)
-                    };
-                    if let Some(feature) = feature {
-                        uses.add(feature, Origin::Member, member.span, member.id);
-                        resolved = true;
+                        member_feature_of(name, property)
                     }
-                }
-                if resolved {
+                });
+                if !members.is_empty() {
+                    let root = if is_alias { None } else { root(&mut globals) };
+                    uses.chain(root, &members, false);
                     continue;
                 }
             }
@@ -102,13 +112,10 @@ pub fn detect<'t>(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use<'t>> {
             if is_alias {
                 continue;
             }
-            let (outer_id, outer_span) = outermost(nodes, node_id);
-            let parent = nodes.parent_kind(outer_id);
-            if matches!(parent, AstKind::UnaryExpression(e) if e.operator == UnaryOperator::Delete) {
+            if position == Slot::Delete {
                 continue;
             }
-            let is_new = matches!(parent, AstKind::NewExpression(e) if e.callee.span() == outer_span);
-            if let Some(feature) = globals.get(name, is_new) {
+            if let Some(feature) = globals.get(name, position == Slot::NewCallee) {
                 uses.add(feature, Origin::Global, identifier.span, node_id);
             }
         }
@@ -118,102 +125,79 @@ pub fn detect<'t>(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use<'t>> {
 
 /// The uses of a file. A resolved feature that the targets support is no use, but it still stops
 /// the resolution: `Object.groupBy` is not a use of `Object` when the targets support `groupBy`.
-struct Uses<'t, 'r> {
-    uses: Vec<Use<'t>>,
+struct Uses<'r> {
+    uses: Vec<Use>,
     targets: &'r Targets,
 }
 
-impl Uses<'_, '_> {
+impl Uses<'_> {
     fn add(&mut self, feature: FeatureId, origin: Origin, span: Span, node: NodeId) {
         if !self.targets.is_supported(feature) {
             self.uses.push(Use::new(feature, kind_of(feature), origin, span, node));
         }
     }
-}
 
-struct Member {
-    id: NodeId,
-    span: Span,
-    property: String,
-}
-
-/// The node itself, or its outermost wrapper: `(X)`, `X as T`, `X!`, `X satisfies T`, `<T>X`.
-fn outermost(nodes: &AstNodes<'_>, node_id: NodeId) -> (NodeId, Span) {
-    let mut id = node_id;
-    while matches!(
-        nodes.parent_kind(id),
-        AstKind::ParenthesizedExpression(_)
-            | AstKind::TSAsExpression(_)
-            | AstKind::TSNonNullExpression(_)
-            | AstKind::TSSatisfiesExpression(_)
-            | AstKind::TSTypeAssertion(_)
+    /// The root of a chain and the members that the chain reads from it. A member is no use when every
+    /// target version without full support of it lacks the root: the root reports the gap, and a check
+    /// of the root covers the member.
+    ///
+    /// A member read (`read`) that implies the root takes the place of the root: `scheduler.yield()` is one
+    /// finding of `Scheduler.yield` while it is a finding. A destructuring reads the root once for all
+    /// its members, so its root stays.
+    fn chain(
+        &mut self,
+        root: Option<(FeatureId, Origin, Span, NodeId)>,
+        members: &[(FeatureId, Member<'_>)],
+        read: bool,
     ) {
-        id = nodes.parent_id(id);
-    }
-    (id, nodes.kind(id).span())
-}
-
-/// The optional chain that ends at the node, as in `window?.navigator`, or the node itself.
-fn chain_or_self(nodes: &AstNodes<'_>, node_id: NodeId) -> NodeId {
-    let (outer_id, _) = outermost(nodes, node_id);
-    let parent_id = nodes.parent_id(outer_id);
-    if matches!(nodes.kind(parent_id), AstKind::ChainExpression(_)) {
-        parent_id
-    } else {
-        node_id
-    }
-}
-
-/// `X.member` or `X['member']` around the expression `X`, which may be wrapped.
-fn member_of(nodes: &AstNodes<'_>, node_id: NodeId) -> Option<Member> {
-    let (outer_id, object) = outermost(nodes, node_id);
-    let parent_id = nodes.parent_id(outer_id);
-    match nodes.kind(parent_id) {
-        AstKind::StaticMemberExpression(member) if member.object.span() == object => Some(Member {
-            id: parent_id,
-            span: member.span,
-            property: member.property.name.as_str().to_string(),
-        }),
-        AstKind::ComputedMemberExpression(member) if member.object.span() == object => {
-            match member.expression.get_inner_expression() {
-                Expression::StringLiteral(name) => Some(Member {
-                    id: parent_id,
-                    span: member.span,
-                    property: name.value.as_str().to_string(),
-                }),
-                _ => None,
+        let start = self.uses.len();
+        if let Some((feature, origin, span, node)) = root {
+            self.add(feature, origin, span, node);
+        }
+        let added_root = self.uses.len() > start;
+        for &(feature, ref member) in members {
+            if root.is_some_and(|(root, ..)| self.targets.implies(root, feature)) {
+                continue;
+            }
+            self.add(feature, Origin::Member, member.span, member.id);
+            if let Some((root, ..)) = root
+                && read
+                && added_root
+                && self.targets.implies(feature, root)
+            {
+                self.uses[start].member = Some(member.id);
             }
         }
-        _ => None,
     }
 }
 
-/// The properties that a destructuring takes from the expression `X`: `const { a, b: c } = X`,
-/// `({ a } = X)`, `function f({ a } = X) {}`, `[{ a } = X] = list`. A computed key names a member
-/// only when it is a literal, as in `X['a']`.
-fn destructured(nodes: &AstNodes<'_>, node_id: NodeId) -> Vec<Member> {
-    let (outer_id, span) = outermost(nodes, node_id);
-    let is_source = |init: &Expression<'_>| init.span() == span;
-    match nodes.parent_kind(outer_id) {
-        AstKind::VariableDeclarator(declarator) if declarator.init.as_ref().is_some_and(is_source) => {
-            pattern_members(&declarator.id)
-        }
-        AstKind::FormalParameter(parameter) if parameter.initializer.as_deref().is_some_and(is_source) => {
-            pattern_members(&parameter.pattern)
-        }
-        AstKind::AssignmentPattern(assignment) if is_source(&assignment.right) => pattern_members(&assignment.left),
-        AstKind::AssignmentExpression(assignment)
-            if assignment.operator == AssignmentOperator::Assign && is_source(&assignment.right) =>
-        {
-            target_members(&assignment.left)
-        }
-        AstKind::AssignmentTargetWithDefault(target) if is_source(&target.init) => target_members(&target.binding),
-        _ => Vec::new(),
+/// The destructured members whose feature `resolve` finds.
+fn resolve_members<'a>(
+    members: Vec<Member<'a>>,
+    mut resolve: impl FnMut(&str) -> Option<FeatureId>,
+) -> Vec<(FeatureId, Member<'a>)> {
+    members
+        .into_iter()
+        .filter_map(|member| Some((resolve(member.property)?, member)))
+        .collect()
+}
+
+/// The properties that a destructuring takes from the expression `X` at `outer` in the position
+/// `position`: `const { a, b: c } = X`, `({ a } = X)`, `function f({ a } = X) {}`, `[{ a } = X] = list`.
+/// A computed key names a member only when it is a literal, as in `X['a']`.
+fn destructured<'a>(nodes: &AstNodes<'a>, outer: NodeId, position: Slot) -> Vec<Member<'a>> {
+    if position != Slot::DestructuringSource {
+        return Vec::new();
+    }
+    match destructuring(nodes, outer) {
+        Some(Pattern::Binding(pattern)) => pattern_members(pattern),
+        Some(Pattern::Target(target)) => target_members(target),
+        None => Vec::new(),
     }
 }
 
 /// The properties of a declaration pattern `{ a, b: c }`.
-fn pattern_members(pattern: &BindingPattern<'_>) -> Vec<Member> {
+fn pattern_members<'a>(pattern: &BindingPattern<'a>) -> Vec<Member<'a>> {
     let BindingPattern::ObjectPattern(pattern) = pattern else {
         return Vec::new();
     };
@@ -224,14 +208,14 @@ fn pattern_members(pattern: &BindingPattern<'_>) -> Vec<Member> {
             Some(Member {
                 id: property.node_id(),
                 span: property.span,
-                property: property.key.static_name()?.into_owned(),
+                property: key_name(&property.key)?,
             })
         })
         .collect()
 }
 
 /// The properties of an assignment pattern `({ a, b: c } = X)`.
-fn target_members(target: &AssignmentTarget<'_>) -> Vec<Member> {
+fn target_members<'a>(target: &AssignmentTarget<'a>) -> Vec<Member<'a>> {
     let AssignmentTarget::ObjectAssignmentTarget(target) = target else {
         return Vec::new();
     };
@@ -239,21 +223,15 @@ fn target_members(target: &AssignmentTarget<'_>) -> Vec<Member> {
         .properties
         .iter()
         .filter_map(|property| {
-            let (id, span, name) = match property {
-                AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(property) => (
-                    property.node_id(),
-                    property.span,
-                    Cow::Borrowed(property.binding.name.as_str()),
-                ),
+            let (id, span, property) = match property {
+                AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(property) => {
+                    (property.node_id(), property.span, property.binding.name.as_str())
+                }
                 AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {
-                    (property.node_id(), property.span, property.name.static_name()?)
+                    (property.node_id(), property.span, key_name(&property.name)?)
                 }
             };
-            Some(Member {
-                id,
-                span,
-                property: name.into_owned(),
-            })
+            Some(Member { id, span, property })
         })
         .collect()
 }
@@ -271,7 +249,9 @@ fn member_feature_of(object: &str, property: &str) -> Option<FeatureId> {
 /// is `api.EventTarget.addEventListener`. The walk is breadth-first, so an own entry wins. Parents can
 /// be mixins without BCD entries, and two parents can share a parent, so each interface is visited once.
 fn interface_member(interface: &'static str, member: &str) -> Option<FeatureId> {
-    breadth_first(interface, |current| FeatureId::find(&format!("api.{current}.{member}")))
+    breadth_first(interface, |current| {
+        FeatureId::find_parts(&["api.", current, ".", member])
+    })
 }
 
 /// Visits `interface` and its parents breadth-first, each once, until `visit` returns a value.
@@ -354,40 +334,30 @@ impl GlobalFeatures {
 
 /// The member is a target that the code writes or deletes, not a value that it reads:
 /// `X.m = v`, `[X.m] = a`, `({ a: X.m = d } = o)`, `for (X.m of list)`, `delete X.m`.
-fn is_written_or_deleted(nodes: &AstNodes<'_>, member: &Member) -> bool {
-    let (mut outer_id, mut span) = outermost(nodes, member.id);
-    // `delete window?.structuredClone`: the optional chain ends at the member, and `delete` is outside it.
-    if matches!(nodes.parent_kind(outer_id), AstKind::ChainExpression(_)) {
-        (outer_id, span) = outermost(nodes, nodes.parent_id(outer_id));
-    }
-    match nodes.parent_kind(outer_id) {
-        AstKind::AssignmentExpression(assignment) => assignment.left.span() == span,
-        AstKind::ArrayAssignmentTarget(_) | AstKind::AssignmentTargetRest(_) => true,
-        AstKind::AssignmentTargetWithDefault(target) => target.binding.span() == span,
-        // The computed key of `{ [X.m]: a }` is a read.
-        AstKind::AssignmentTargetPropertyProperty(property) => property.binding.span() == span,
-        AstKind::ForInStatement(statement) => statement.left.span() == span,
-        AstKind::ForOfStatement(statement) => statement.left.span() == span,
-        AstKind::UnaryExpression(unary) => unary.operator == UnaryOperator::Delete,
-        _ => false,
-    }
+fn is_written_or_deleted(nodes: &AstNodes<'_>, member: NodeId) -> bool {
+    matches!(slot(nodes, outermost(nodes, member)), Slot::AssignTarget | Slot::Delete)
 }
 
-fn is_new_callee(nodes: &AstNodes<'_>, member: &Member) -> bool {
-    let (outer_id, span) = outermost(nodes, member.id);
-    matches!(nodes.parent_kind(outer_id), AstKind::NewExpression(e) if e.callee.span() == span)
+fn is_new_callee(nodes: &AstNodes<'_>, member: NodeId) -> bool {
+    slot(nodes, outermost(nodes, member)) == Slot::NewCallee
+}
+
+/// The feature of a path that a check names: `structuredClone`, `navigator.share`, `Intl.Segmenter`.
+/// The guards compare its absence mask with the use that the check protects.
+pub(crate) fn path_feature(path: &[&str]) -> Option<FeatureId> {
+    match path {
+        [name] => global_feature(name, false),
+        [object, property] => member_feature_of(object, property),
+        _ => None,
+    }
 }
 
 /// `Object.groupBy`, `Intl.Segmenter`, `BarcodeDetector.getSupportedFormats`.
 /// BCD marks static members of Web API interfaces with a `_static` suffix.
 fn member_feature(object: &str, member: &str) -> Option<FeatureId> {
-    [
-        format!("javascript.builtins.{object}.{member}"),
-        format!("api.{object}.{member}_static"),
-        format!("api.{object}.{member}"),
-    ]
-    .iter()
-    .find_map(|id| FeatureId::find(id))
+    FeatureId::find_parts(&["javascript.builtins.", object, ".", member])
+        .or_else(|| FeatureId::find_parts(&["api.", object, ".", member, "_static"]))
+        .or_else(|| FeatureId::find_parts(&["api.", object, ".", member]))
 }
 
 /// A bare global. For `new X()` the constructor entry `api.X.X` is more precise than the interface.
@@ -397,11 +367,11 @@ fn member_feature(object: &str, member: &str) -> Option<FeatureId> {
 /// lacks support in common targets. A data update that gives the mixin parents BCD rows adds bare
 /// names here; `the_parents_of_window_add_only_the_event_target_members` lists them.
 fn global_feature(name: &str, is_new: bool) -> Option<FeatureId> {
-    let constructor = is_new.then(|| format!("api.{name}.{name}"));
-    constructor
-        .into_iter()
-        .chain([format!("javascript.builtins.{name}"), format!("api.{name}")])
-        .find_map(|id| FeatureId::find(&id))
+    is_new
+        .then(|| FeatureId::find_parts(&["api.", name, ".", name]))
+        .flatten()
+        .or_else(|| FeatureId::find_parts(&["javascript.builtins.", name]))
+        .or_else(|| FeatureId::find_parts(&["api.", name]))
         .or_else(|| window_member(name))
 }
 
@@ -415,6 +385,8 @@ pub(crate) fn kind_of(feature: FeatureId) -> Kind {
 
 #[cfg(test)]
 mod tests {
+    use oxc_span::GetSpan;
+
     use super::*;
     use crate::check::with_semantic;
 
@@ -422,11 +394,21 @@ mod tests {
         detected_in(source, "a.js")
     }
 
+    /// Targets that lack every feature but the objects at the roots of the chains in these tests, as
+    /// common targets do. A missing root would hide the members that it lacks wherever they are missing.
+    fn targets() -> Targets {
+        let roots = ["navigator", "Object", "Intl", "document"].map(|name| path_feature(&[name]).unwrap());
+        Targets::missing_except(&roots)
+    }
+
     fn detected_in(source: &str, filename: &str) -> Vec<(&'static str, Vec<String>)> {
         with_semantic(source, filename, |semantic, _| {
-            detect(semantic, &Targets::missing_everything())
+            detect(semantic, &targets())
                 .into_iter()
-                .map(|usage| (usage.feature.as_str(), super::super::guards::use_keys(semantic, &usage)))
+                .map(|usage| {
+                    let key = super::super::guards::key_text(semantic, &usage);
+                    (usage.feature.as_str(), key.into_iter().collect())
+                })
                 .collect()
         })
         .unwrap()
@@ -457,6 +439,43 @@ mod tests {
                 ("api.Navigator.share", Origin::Member),
                 ("api.structuredClone", Origin::Global),
                 ("javascript.builtins.Object.groupBy", Origin::Member),
+            ]
+        );
+    }
+
+    #[test]
+    fn the_root_of_a_chain_is_a_use_of_its_own() {
+        let found = |source: &str, targets: &Targets| {
+            with_semantic(source, "a.js", |semantic, _| {
+                let mut uses: Vec<_> = detect(semantic, targets)
+                    .into_iter()
+                    .map(|usage| (usage.feature.as_str(), usage.origin))
+                    .collect();
+                uses.sort_by_key(|&(feature, _)| feature);
+                uses
+            })
+            .unwrap()
+        };
+        let common = Targets::resolve("Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115").unwrap();
+        // Every browser without `Navigation.currentEntry` lacks `navigation`, so the root reports the gap.
+        assert_eq!(
+            found("navigation.currentEntry;", &common),
+            [("api.Window.navigation", Origin::Global)]
+        );
+        assert_eq!(
+            found("window.navigation.currentEntry;", &common),
+            [("api.Window.navigation", Origin::Member)]
+        );
+        assert_eq!(
+            found("const { currentEntry } = navigation;", &common),
+            [("api.Window.navigation", Origin::Global)]
+        );
+        // Chrome 97 has `scheduler` but not `Scheduler.yield`, so both are uses.
+        assert_eq!(
+            found("scheduler.yield();", &common),
+            [
+                ("api.Scheduler.yield", Origin::Member),
+                ("api.scheduler", Origin::Global)
             ]
         );
     }
@@ -665,7 +684,7 @@ mod tests {
     #[test]
     fn destructuring_with_a_variable_computed_key_is_skipped() {
         // Without a known member, the destructuring reads only the global itself.
-        assert_eq!(features("const { [k]: h } = Object;"), ["javascript.builtins.Object"]);
+        assert_eq!(features("const { [k]: h } = Array;"), ["javascript.builtins.Array"]);
         assert!(features("let s; ({ [k]: s } = window);").is_empty());
     }
 
@@ -673,7 +692,7 @@ mod tests {
     fn the_node_of_a_destructured_member_is_the_property() {
         let source = "const { userActivation } = navigator;";
         let nodes = with_semantic(source, "a.js", |semantic, _| {
-            detect(semantic, &Targets::missing_everything())
+            detect(semantic, &targets())
                 .into_iter()
                 .map(|usage| {
                     let kind = semantic.nodes().kind(usage.node);
