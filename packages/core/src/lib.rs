@@ -43,7 +43,9 @@ pub struct GapOutput {
 #[napi(object)]
 pub struct FindingOutput {
     pub feature: String,
+    #[napi(ts_type = "'syntax' | 'builtin' | 'api'")]
     pub kind: String,
+    #[napi(ts_type = "'exact' | 'heuristic' | 'partial'")]
     pub confidence: String,
     pub start: PositionOutput,
     pub end: PositionOutput,
@@ -129,21 +131,28 @@ pub fn bcd_version() -> String {
     BCD_VERSION.to_string()
 }
 
+// The strings must match the `ts_type` unions of `FindingOutput`. A test below checks it.
+fn kind_str(kind: Kind) -> &'static str {
+    match kind {
+        Kind::Syntax => "syntax",
+        Kind::Builtin => "builtin",
+        Kind::Api => "api",
+    }
+}
+
+fn confidence_str(confidence: Confidence) -> &'static str {
+    match confidence {
+        Confidence::Exact => "exact",
+        Confidence::Heuristic => "heuristic",
+        Confidence::Partial => "partial",
+    }
+}
+
 fn finding(finding: Finding) -> FindingOutput {
     FindingOutput {
         feature: finding.feature.to_string(),
-        kind: match finding.kind {
-            Kind::Syntax => "syntax",
-            Kind::Builtin => "builtin",
-            Kind::Api => "api",
-        }
-        .into(),
-        confidence: match finding.confidence {
-            Confidence::Exact => "exact",
-            Confidence::Heuristic => "heuristic",
-            Confidence::Partial => "partial",
-        }
-        .into(),
+        kind: kind_str(finding.kind).into(),
+        confidence: confidence_str(finding.confidence).into(),
         start: PositionOutput {
             line: finding.start.line,
             column: finding.start.column,
@@ -162,5 +171,42 @@ fn gap(gap: Gap) -> GapOutput {
         target: format_version(gap.target),
         since: gap.since.map(format_version),
         note: gap.note.map(str::to_string),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // The `napi` attribute takes only a string literal, so the unions are read back from the source.
+    fn union_members(field: &str) -> Vec<String> {
+        let source = include_str!("lib.rs");
+        let marker = "#[napi(ts_type = \"";
+        let struct_start = source.find("pub struct FindingOutput").unwrap();
+        let body = &source[struct_start..];
+        let field_pos = body.find(&format!("pub {field}:")).unwrap();
+        let attr_pos = body[..field_pos].rfind(marker).unwrap() + marker.len();
+        let union = &body[attr_pos..attr_pos + body[attr_pos..].find('"').unwrap()];
+        union
+            .split('|')
+            .map(|m| m.trim().trim_matches('\'').to_string())
+            .collect()
+    }
+
+    fn sorted(mut v: Vec<String>) -> Vec<String> {
+        v.sort();
+        v
+    }
+
+    #[test]
+    fn kind_union_matches_the_variants() {
+        let variants = Kind::ALL.iter().map(|k| kind_str(*k).to_string()).collect();
+        assert_eq!(sorted(union_members("kind")), sorted(variants));
+    }
+
+    #[test]
+    fn confidence_union_matches_the_variants() {
+        let variants = Confidence::ALL.iter().map(|c| confidence_str(*c).to_string()).collect();
+        assert_eq!(sorted(union_members("confidence")), sorted(variants));
     }
 }

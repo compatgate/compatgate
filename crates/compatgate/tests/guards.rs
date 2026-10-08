@@ -249,6 +249,160 @@ fn a_member_read_in_the_left_operand_is_guarded_in_a_value_position() {
 }
 
 #[test]
+fn a_member_read_used_only_as_a_boolean_is_a_check() {
+    assert!(features("const ok = typeof navigator !== 'undefined' && navigator.share;").is_empty());
+    assert!(features("const ok = Boolean(window.navigator?.share);").is_empty());
+    assert!(features("const ok = !!navigator.share;").is_empty());
+    assert!(features("function f(a) { return a || navigator.share; }").is_empty());
+    assert!(features("const ok = navigator.share ? 1 : 0;").is_empty());
+    assert!(features("const ok = navigator.share !== undefined;").is_empty());
+    assert!(features("const ok = (navigator.share) ?? null;").is_empty());
+    // The call is protected by the left operand, as before.
+    assert!(features("navigator.share && navigator.share({ url });").is_empty());
+}
+
+#[test]
+fn the_last_expression_of_a_sequence_is_tested_as_the_sequence() {
+    // Coverage instrumentation wraps operands in sequences: `(cov().b[1][1]++, navigator.share)`.
+    assert!(features("if ((c++, navigator.share)) navigator.share(d);").is_empty());
+    assert!(features("const ok = typeof navigator !== 'undefined' && (c++, navigator.share);").is_empty());
+    assert!(features("const ok = Boolean((c++, window.navigator?.share));").is_empty());
+    assert!(features("function f() { if (!(c++, navigator.share)) return; navigator.share(d); }").is_empty());
+    // The output of swc-plugin-coverage-instrument 0.0.33 for a guarded call.
+    let instrumented = "function share(d) {
+    cov_12343553659005210970().f[0]++;
+    cov_12343553659005210970().s[0]++;
+    if ((cov_12343553659005210970().b[1][0]++, typeof navigator !== 'undefined') && (cov_12343553659005210970().b[1][1]++, navigator.share)) {
+        cov_12343553659005210970().b[0][0]++;
+        cov_12343553659005210970().s[1]++;
+        navigator.share(d);
+    } else {
+        cov_12343553659005210970().b[0][1]++;
+    }
+}";
+    assert!(features(instrumented).is_empty());
+}
+
+#[test]
+fn other_expressions_of_a_sequence_are_not_tested() {
+    // The value of the sequence is `c`: the read is a use, and it does not guard the call.
+    assert_eq!(
+        features("if ((navigator.share, c)) navigator.share(d);"),
+        ["api.Navigator.share"; 2]
+    );
+}
+
+#[test]
+fn a_call_to_the_global_boolean_is_tested_as_its_argument() {
+    assert!(features("if (Boolean(navigator.share)) navigator.share(d);").is_empty());
+    assert!(features("function f() { if (!Boolean(navigator.share)) return; navigator.share(d); }").is_empty());
+    // A local `Boolean` may return anything.
+    assert_eq!(
+        features("const Boolean = (x) => true; if (Boolean(navigator.share)) navigator.share(d);"),
+        ["api.Navigator.share"; 2]
+    );
+}
+
+#[test]
+fn a_member_read_whose_value_goes_further_is_a_use() {
+    let feature = "api.Navigator.share";
+    assert_eq!(features("const f = navigator.share;"), [feature]);
+    // `Boolean` reads `length` from the member, which throws when it is missing.
+    assert_eq!(features("Boolean(navigator.share.length);"), [feature]);
+    // A local `Boolean` may use the value in any way.
+    assert_eq!(
+        features("const Boolean = (x) => x; Boolean(navigator.share);"),
+        [feature]
+    );
+    assert_eq!(features("Boolean(...navigator.share);"), [feature]);
+    // A bare global throws `ReferenceError` when it is missing.
+    assert_eq!(features("!structuredClone;"), ["api.structuredClone"]);
+}
+
+#[test]
+fn a_logical_whose_value_is_called_or_dereferenced_is_a_use() {
+    // A missing member reaches the call through a right operand or through the left operand of `&&`.
+    let feature = ["api.Navigator.share"];
+    assert_eq!(features("(a || navigator.share)(x);"), feature);
+    assert_eq!(features("(a ?? navigator.share)(x);"), feature);
+    assert_eq!(features("(a && navigator.share)(x);"), feature);
+    assert_eq!(features("(navigator.share && a)(x);"), feature);
+    assert_eq!(features("new (a || navigator.share)(x);"), feature);
+    assert_eq!(features("(a || navigator.share).call(n, x);"), feature);
+    assert_eq!(features("(a || navigator.share).apply(n, []);"), feature);
+    assert_eq!(features("((b && navigator.share) && a)(x);"), feature);
+    assert_eq!(features("(a || navigator.share)`x`;"), feature);
+    assert_eq!(features("[...(a || navigator.share)];"), feature);
+    assert_eq!(features("if ((a || navigator.share)(x)) {}"), feature);
+}
+
+#[test]
+fn a_logical_that_replaces_a_missing_member_is_a_check() {
+    // The left operand of `||` and `??` gives way to the right one before the call or the member access.
+    assert!(features("(navigator.share || a)(x);").is_empty());
+    assert!(features("(navigator.share ?? fallback)(x);").is_empty());
+    assert!(features("(navigator.share || a).bind(n);").is_empty());
+    assert!(features("((b || navigator.share) || a)(x);").is_empty());
+    // An optional call does nothing with `undefined`.
+    assert!(features("(a || navigator.share)?.(x);").is_empty());
+    // The inner logical is the operand of `!`: its value is tested, not called.
+    assert!(features("(!(a || navigator.share) || b)(x);").is_empty());
+}
+
+#[test]
+fn a_logical_whose_value_is_destructured_extended_or_delegated_is_a_use() {
+    // Destructuring, `extends`, `yield*` and a call through a sequence throw on `undefined`.
+    let feature = ["api.Navigator.share"];
+    assert_eq!(features("({ x } = a || navigator.share);"), feature);
+    assert_eq!(features("[x] = a || navigator.share;"), feature);
+    assert_eq!(features("function g({ x } = a || navigator.share) {}"), feature);
+    assert_eq!(features("function g([x] = a || navigator.share) {}"), feature);
+    assert_eq!(features("const { y: { x } = a || navigator.share } = o;"), feature);
+    assert_eq!(features("({ y: { x } = a || navigator.share } = o);"), feature);
+    assert_eq!(features("class C extends (a || navigator.share) {}"), feature);
+    assert_eq!(features("function* g() { yield* (a || navigator.share); }"), feature);
+    assert_eq!(features("(0, a || navigator.share)(x);"), feature);
+    assert_eq!(features("f(...(a || navigator.share));"), feature);
+    assert_eq!(features("new F(...(a || navigator.share));"), feature);
+}
+
+#[test]
+fn a_logical_whose_value_is_stored_is_a_check() {
+    // These forms keep `undefined` without reading from it.
+    assert!(features("x = a || navigator.share;").is_empty());
+    assert!(features("function g(x = a || navigator.share) {}").is_empty());
+    assert!(features("const { y = a || navigator.share } = o;").is_empty());
+    assert!(features("({ y = a || navigator.share } = o);").is_empty());
+    assert!(features("o = { m: a || navigator.share };").is_empty());
+    assert!(features("function* g() { yield a || navigator.share; }").is_empty());
+    assert!(features("(a || navigator.share, 0)(x);").is_empty());
+    assert!(features("x = (0, a || navigator.share);").is_empty());
+    // Object spread skips `undefined`.
+    assert!(features("x = { ...(a || navigator.share) };").is_empty());
+}
+
+#[test]
+fn a_long_and_chain_that_is_called_is_checked_in_linear_time() {
+    // Every use climbs the whole chain unless the verdict of each logical is kept. Debug build, 40 000
+    // terms: 0.28 s with the kept verdicts, 23.7 s without them (0.41 s for 5000 terms, so a smaller
+    // chain does not catch the regression).
+    let terms = vec!["navigator.share"; 40_000];
+    let (findings, elapsed) = time_check(format!("({})(y);", terms.join(" &&\n")), "a.js");
+    // The first read is called when it is missing. The others run only after it is present.
+    assert_eq!(findings, 1);
+    assert!(elapsed < BUDGET, "{elapsed:?}");
+}
+
+#[test]
+fn a_long_or_chain_that_ends_with_a_member_read_is_checked_in_linear_time() {
+    let mut terms: Vec<String> = (0..5000).map(|i| format!("a{i}")).collect();
+    terms.push("navigator.share".to_string());
+    let (findings, elapsed) = time_check(format!("x = {};", terms.join(" ||\n")), "a.js");
+    assert_eq!(findings, 0);
+    assert!(elapsed < BUDGET, "{elapsed:?}");
+}
+
+#[test]
 fn checks_for_a_missing_feature_guard_the_code_after_an_early_exit() {
     assert!(features("function f() { if (typeof structuredClone > \"u\") return; structuredClone(1); }").is_empty());
     assert!(features("function f() { if (\"u\" < typeof structuredClone) return; structuredClone(1); }").is_empty());

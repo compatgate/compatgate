@@ -120,7 +120,7 @@ pub enum Support {
     /// Full support without a gap.
     Full,
     /// Full or partial support without a gap, and partial in some versions. The note is the BCD text
-    /// of the partial statement that covers the version, or of the latest partial statement before it.
+    /// of the partial statement that covers the version, or of the first partial statement after it.
     Partial(Option<&'static str>),
     /// A gap: some version from the given one on has no support.
     Missing,
@@ -150,12 +150,18 @@ fn support_from(since: u32, rows: &[RangeRow], target: u32) -> Support {
     if covered < since {
         return Support::Missing;
     }
-    let started = || rows.iter().rev().filter(|row| row.4 && row.2 <= target);
-    let note = started()
-        .find(|row| target < row.3)
-        .or_else(|| started().next())
-        .and_then(|row| (row.5 != UNSUPPORTED).then(|| NOTES[row.5 as usize]));
+    let note = note_row(rows, target).and_then(|row| (row.5 != UNSUPPORTED).then(|| NOTES[row.5 as usize]));
     Support::Partial(note)
+}
+
+/// The partial range whose note describes support from `target` on: the latest partial range that covers
+/// `target`, or else the first partial range after it. A partial range that ended before `target` does not
+/// describe any version from `target` on, so its note would mislead.
+fn note_row(rows: &[RangeRow], target: u32) -> Option<&RangeRow> {
+    rows.iter()
+        .rev()
+        .find(|row| row.4 && row.2 <= target && target < row.3)
+        .or_else(|| rows.iter().find(|row| row.4 && row.2 > target))
 }
 
 pub fn feature_ids() -> impl Iterator<Item = &'static str> {
@@ -334,8 +340,8 @@ mod tests {
         let at = |version: u32| support_from(30 << 16, &rows, version << 16);
         assert_eq!(at(9), Support::Missing);
         assert_eq!(at(10), Support::Partial(Some(NOTES[0])));
-        // Full support covers 22, so the note is the one of the latest partial range before it.
-        assert_eq!(at(22), Support::Partial(Some(NOTES[0])));
+        // Full support covers 22. The partial range before it has ended, so the note is the one of the next partial range.
+        assert_eq!(at(22), Support::Partial(Some(NOTES[1])));
         assert_eq!(at(27), Support::Partial(Some(NOTES[1])));
         assert_eq!(at(30), Support::Full);
     }
@@ -357,6 +363,21 @@ mod tests {
         assert_eq!(at(15), Support::Partial(Some(NOTES[1])));
         assert_eq!(at(25), Support::Partial(None));
         assert_eq!(at(11), Support::Partial(Some(NOTES[0])));
+    }
+
+    #[test]
+    fn full_support_at_the_target_takes_the_note_of_the_next_partial_range() {
+        // Full 10–20, partial 20–25 with note 0, partial 25–30 with note 1, full from 30.
+        let rows = [row(10, 20, false, U), row(20, 25, true, 0), row(25, 30, true, 1)];
+        assert_eq!(note_row(&rows, 15 << 16), Some(&rows[1]));
+        assert_eq!(note_row(&rows, 22 << 16), Some(&rows[1]));
+        assert_eq!(note_row(&rows, 27 << 16), Some(&rows[2]));
+        assert_eq!(
+            support_from(30 << 16, &rows, 15 << 16),
+            Support::Partial(Some(NOTES[0]))
+        );
+        // Only full support from the target on: there is no partial range to take a note from.
+        assert_eq!(note_row(&[row(10, 20, false, U)], 15 << 16), None);
     }
 
     #[test]

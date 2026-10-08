@@ -6,9 +6,11 @@ import {
   BROWSERS,
   UNSUPPORTED,
   browserSupport,
+  checkAccessors,
   collectFeatures,
   collectInstanceMembers,
   collectInterfaceParents,
+  collectLibMembers,
   collectSingletons,
   encodeVersion,
   noteText,
@@ -103,6 +105,19 @@ test('browserSupport sorts ranges and keeps the first statement of equal ranges'
     { added: V(25), removed: V(27), partial: true, note: 'Earlier.' },
     { added: V(25), removed: UNSUPPORTED, partial: true, note: null },
     { added: V(30), removed: UNSUPPORTED, partial: true, note: 'Later.' },
+  ]);
+});
+
+test('browserSupport keeps the statement with a note from two partial statements of one range', () => {
+  const support = browserSupport([
+    { version_added: '30', partial_implementation: true },
+    { version_added: '30', partial_implementation: true, notes: 'Has a note.' },
+    { version_added: '20', version_removed: '30', partial_implementation: true, notes: 'First note.' },
+    { version_added: '20', version_removed: '30', partial_implementation: true, notes: 'Second note.' },
+  ]);
+  assert.deepEqual(support.ranges, [
+    { added: V(20), removed: V(30), partial: true, note: 'First note.' },
+    { added: V(30), removed: UNSUPPORTED, partial: true, note: 'Has a note.' },
   ]);
 });
 
@@ -365,4 +380,152 @@ test('collectInterfaceParents rejects an interface header that does not end with
     () => collectInterfaceParents(declarations, new Set(['api.Document'])),
     /interface Document extends Node,/,
   );
+});
+
+test('collectInterfaceParents reads interfaces declared on one line', () => {
+  const declarations = [
+    'interface Empty {}',
+    'interface Child extends Parent {}',
+    'interface Generic<T extends Node> extends Base<T>, Mixin {}',
+  ].join('\n');
+  const ids = new Set(['api.Empty', 'api.Child', 'api.Generic']);
+  assert.deepEqual(collectInterfaceParents(declarations, ids), [
+    { name: 'Child', parents: ['Parent'] },
+    { name: 'Generic', parents: ['Base', 'Mixin'] },
+  ]);
+});
+
+test('collectLibMembers tells properties from methods in interfaces of the TypeScript libraries', () => {
+  const declarations = [
+    'interface Symbol {',
+    '    /** Returns a string. */',
+    '    toString(): string;',
+    '    readonly description: string | undefined;',
+    '}',
+    'interface ArrayBuffer {',
+    '    get maxByteLength(): number;',
+    '    slice<T>(begin?: number): ArrayBuffer;',
+    '    resize?(newByteLength?: number): void;',
+    '    [Symbol.toStringTag]: string;',
+    '}',
+    'interface WeakMap<K extends WeakKey, V> {}',
+    'declare global {',
+    '    interface IteratorObject<T> {',
+    '        map<U>(callbackfn: (value: T) => U): IteratorObject<U>;',
+    '    }',
+    '}',
+    'interface Symbol {',
+    '    description(): string;',
+    '}',
+  ].join('\n');
+  const members = collectLibMembers(declarations);
+  assert.deepEqual(Object.fromEntries([...members].map(([key, kinds]) => [key, [...kinds].sort()])), {
+    'Symbol.toString': ['method'],
+    'Symbol.description': ['method', 'property'],
+    'ArrayBuffer.maxByteLength': ['property'],
+    'ArrayBuffer.slice': ['method'],
+    'ArrayBuffer.resize': ['method'],
+    'IteratorObject.map': ['method'],
+  });
+});
+
+test('checkAccessors passes when ACCESSORS names exactly the members that TypeScript declares as properties', () => {
+  const compat = spec => ({ __compat: { spec_url: spec, support: {} } });
+  const data = {
+    javascript: {
+      builtins: {
+        Symbol: {
+          description: compat('https://tc39.es/#sec-symbol.prototype.description'),
+          toString: compat('https://tc39.es/#sec-symbol.prototype.tostring'),
+        },
+        ArrayBuffer: {
+          detached: compat('https://tc39.es/#sec-get-arraybuffer.prototype.detached'),
+        },
+        TypedArray: {
+          toSorted: compat('https://tc39.es/#sec-%typedarray%.prototype.tosorted'),
+        },
+        Iterator: {
+          map: compat('https://tc39.es/#sec-iterator.prototype.map'),
+        },
+        Date: {
+          getYear: compat('https://tc39.es/#sec-date.prototype.getyear'),
+        },
+      },
+    },
+  };
+  const declarations = [
+    'interface Symbol {',
+    '    toString(): string;',
+    '    readonly description: string | undefined;',
+    '}',
+    'interface ArrayBuffer {',
+    '    readonly detached: boolean;',
+    '}',
+    'interface Int8Array<TArrayBuffer> {',
+    '    toSorted(compareFn?: (a: number, b: number) => number): Int8Array<ArrayBuffer>;',
+    '}',
+    'interface IteratorObject<T> {',
+    '    map<U>(callbackfn: (value: T) => U): IteratorObject<U>;',
+    '}',
+  ].join('\n');
+  assert.doesNotThrow(() => checkAccessors(data, declarations, new Set(['javascript.builtins.Symbol.description'])));
+});
+
+test('checkAccessors rejects a property that ACCESSORS does not name', () => {
+  const data = {
+    javascript: {
+      builtins: {
+        Error: { message: { __compat: { spec_url: 'https://tc39.es/#sec-error.prototype.message', support: {} } } },
+      },
+    },
+  };
+  const declarations = ['interface Error {', '    message: string;', '}'].join('\n');
+  assert.throws(() => checkAccessors(data, declarations, new Set()), /javascript\.builtins\.Error\.message/);
+});
+
+test('checkAccessors rejects a member of ACCESSORS that TypeScript declares as a method or does not declare', () => {
+  const compat = spec => ({ __compat: { spec_url: spec, support: {} } });
+  const data = {
+    javascript: {
+      builtins: {
+        Symbol: { description: compat('https://tc39.es/#sec-symbol.prototype.description') },
+        Error: { message: compat('https://tc39.es/#sec-error.prototype.message') },
+      },
+    },
+  };
+  const declarations = ['interface Symbol {', '    description(): string;', '}'].join('\n');
+  const accessors = new Set(['javascript.builtins.Symbol.description', 'javascript.builtins.Error.message']);
+  assert.throws(
+    () => checkAccessors(data, declarations, accessors),
+    error => /Symbol\.description/.test(error.message) && /Error\.message/.test(error.message),
+  );
+  // A member that BCD does not have is an error too.
+  assert.throws(
+    () => checkAccessors(data, declarations, new Set(['javascript.builtins.Symbol.missing'])),
+    /javascript\.builtins\.Symbol\.missing/,
+  );
+});
+
+test('collectInterfaceParents reads declarations with CRLF line ends', () => {
+  const declarations = ['interface Document extends Node {', '}', 'interface Child extends Parent {}', ''].join('\r\n');
+  assert.deepEqual(collectInterfaceParents(declarations, new Set(['api.Document', 'api.Child'])), [
+    { name: 'Child', parents: ['Parent'] },
+    { name: 'Document', parents: ['Node'] },
+  ]);
+});
+
+test('collectLibMembers reads declarations with CRLF line ends', () => {
+  const declarations = [
+    'interface Symbol {',
+    '    toString(): string;',
+    '    readonly description: string | undefined;',
+    '}',
+    'interface WeakMap<K extends WeakKey, V> {}',
+    '',
+  ].join('\r\n');
+  const members = collectLibMembers(declarations);
+  assert.deepEqual(Object.fromEntries([...members].map(([key, kinds]) => [key, [...kinds]])), {
+    'Symbol.toString': ['method'],
+    'Symbol.description': ['property'],
+  });
 });

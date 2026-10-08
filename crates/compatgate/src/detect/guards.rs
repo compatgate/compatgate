@@ -3,6 +3,10 @@
 //! A use under a check of the same feature is not a finding. Syntax cannot be checked this way, so
 //! syntax uses have no keys.
 //!
+//! A test sees through what passes the value on unchanged: parentheses, the last expression of a
+//! sequence and a call of the global `Boolean`. Coverage instrumentation wraps tested operands in
+//! sequences, `(cov().b[1][1]++, navigator.share)`.
+//!
 //! A check names a global only when the root of its chain is not declared in the file: a local `Intl`
 //! or `window` is another object. The key `#name` is the exception. The methods detector finds a
 //! method by its name and does not know the object, so a check of `a.toSorted` guards `b.toSorted()`.
@@ -11,8 +15,8 @@ use std::collections::HashMap;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    BinaryExpression, BinaryOperator, ChainElement, Expression, IdentifierReference, LogicalExpression,
-    LogicalOperator, MemberExpression, Statement, UnaryOperator,
+    BinaryExpression, BinaryOperator, CallExpression, ChainElement, Expression, IdentifierReference, LogicalExpression,
+    LogicalOperator, MemberExpression, SequenceExpression, Statement, UnaryOperator,
 };
 use oxc_semantic::{AstNodes, NodeId, Semantic};
 use oxc_span::{GetSpan, Span};
@@ -31,6 +35,8 @@ pub struct Guards<'s, 'a> {
     tests: HashMap<(NodeId, bool), TestKeys>,
     /// For each `&&` or `||` chain: every key, with the indexes of the operands that check it.
     chains: Vec<HashMap<String, Vec<usize>>>,
+    /// For each logical expression: whether `undefined` as its value throws, as in `(a || X)(y)`.
+    throwing_logicals: HashMap<NodeId, bool>,
 }
 
 enum TestKeys {
@@ -50,6 +56,7 @@ impl<'s, 'a> Guards<'s, 'a> {
             early_exits: HashMap::new(),
             tests: HashMap::new(),
             chains: Vec::new(),
+            throwing_logicals: HashMap::new(),
         }
     }
 
@@ -69,8 +76,10 @@ impl<'s, 'a> Guards<'s, 'a> {
         let called = call.is_some();
         // Reading a member returns `undefined` when the feature is missing, so the read is the check itself.
         // A bare global throws `ReferenceError` instead, so reading it is a use.
-        let member_read = detectable && !called && is_member(nodes.kind(usage.node));
-        if member_read && is_optional_object(nodes, usage.node) {
+        // `(a || X)(y)` calls `undefined` when `X` is missing, so `X` is used and not tested.
+        let member_read =
+            detectable && !called && is_member(nodes.kind(usage.node)) && !self.missing_value_throws(usage.node);
+        if member_read && (is_optional_object(nodes, usage.node) || is_boolean_read(semantic, usage.node)) {
             return true;
         }
         let node_span = nodes.kind(usage.node).span();
@@ -79,6 +88,7 @@ impl<'s, 'a> Guards<'s, 'a> {
         // long `||` chains cubic.
         let mut tested = member_read;
         let mut crossed_function = false;
+        let mut child = node_span;
         for ancestor in nodes.ancestors(usage.node) {
             let kind = ancestor.kind();
             let guarded = match kind {
@@ -133,7 +143,8 @@ impl<'s, 'a> Guards<'s, 'a> {
             if guarded {
                 return true;
             }
-            tested = tested && passes_tested_value(kind);
+            tested = tested && passes_tested_value(kind, child);
+            child = kind.span();
         }
         false
     }
@@ -177,7 +188,7 @@ impl<'s, 'a> Guards<'s, 'a> {
 
     /// Whether `test` checks a key of `usage` when the value of `test` is `value`.
     fn checks(&mut self, test: &'a Expression<'a>, value: bool, usage: &Use) -> bool {
-        let (test, value) = without_not(test, value);
+        let (test, value) = without_not(self.semantic, test, value);
         let key = (test.node_id(), value);
         if !self.tests.contains_key(&key) {
             self.index(test, value);
@@ -198,14 +209,15 @@ impl<'s, 'a> Guards<'s, 'a> {
     /// every part of the outermost chain at once. A use in operand N of a chain asks for the keys of
     /// operands 0..N, so collecting them on each request made a long chain quadratic.
     fn index(&mut self, test: &'a Expression<'a>, value: bool) {
-        let nodes = self.semantic.nodes();
-        let mut root = join_of(test, value).map(|logical| (logical, value));
+        let semantic = self.semantic;
+        let nodes = semantic.nodes();
+        let mut root = join_of(semantic, test, value).map(|logical| (logical, value));
         let mut id = test.node_id();
         let mut current = value;
         loop {
             let parent = nodes.parent_id(id);
             match nodes.kind(parent) {
-                kind if is_wrapper(kind) => {}
+                kind if passes_value(semantic, kind, nodes.kind(id).span()) => {}
                 AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => current = !current,
                 AstKind::LogicalExpression(logical) if joins(logical.operator, current) => {
                     root = Some((logical, current));
@@ -252,8 +264,8 @@ impl<'s, 'a> Guards<'s, 'a> {
                     );
                 }
                 Step::Operand(expression, value) => {
-                    let (expression, value) = without_not(expression, value);
-                    if let Some(logical) = join_of(expression, value) {
+                    let (expression, value) = without_not(self.semantic, expression, value);
+                    if let Some(logical) = join_of(self.semantic, expression, value) {
                         steps.push(Step::Join(logical, value));
                         continue;
                     }
@@ -273,6 +285,45 @@ impl<'s, 'a> Guards<'s, 'a> {
             }
         }
         self.chains.push(operands);
+    }
+
+    /// Whether `undefined` in place of the member read `node` reaches a position that throws on it. The
+    /// value passes through wrappers and logical expressions, except the left operand of `||` and `??`:
+    /// the right operand replaces a missing member there. The verdict of each logical expression is kept,
+    /// so the uses of a long chain do not walk the chain again.
+    fn missing_value_throws(&mut self, node: NodeId) -> bool {
+        let nodes = self.semantic.nodes();
+        let mut id = node;
+        let mut logicals = Vec::new();
+        let throws = loop {
+            let parent = nodes.parent_id(id);
+            let span = nodes.kind(id).span();
+            match nodes.kind(parent) {
+                AstKind::LogicalExpression(logical) => {
+                    if logical.operator != LogicalOperator::And && logical.left.span() == span {
+                        break false;
+                    }
+                    if let Some(&throws) = self.throwing_logicals.get(&parent) {
+                        break throws;
+                    }
+                    logicals.push(parent);
+                }
+                // `(0, a || X)(y)` calls the last expression of the sequence.
+                AstKind::SequenceExpression(sequence) => {
+                    if sequence.expressions.last().is_none_or(|last| last.span() != span) {
+                        break false;
+                    }
+                }
+                AstKind::ChainExpression(_) => {}
+                kind if is_wrapper(kind) => {}
+                _ => break throws_on_undefined(nodes, parent, span),
+            }
+            id = parent;
+        };
+        for logical in logicals {
+            self.throwing_logicals.insert(logical, throws);
+        }
+        throws
     }
 
     /// `if (!X) return;` before the use, in the same statement list.
@@ -311,12 +362,13 @@ fn early_exit_keys(semantic: &Semantic<'_>, statements: &[Statement<'_>]) -> Has
     first_exits
 }
 
-/// Whether `kind` passes on the tested value from its child: `!X`, `A && X`, `(X)`, `X?.y`, `X != null`.
-/// A comparison reads the member and does not throw, whatever the other operand is.
+/// Whether `kind` passes on the tested value from its child with `span`: `!X`, `A && X`, `(X)`, `X?.y`,
+/// `X != null`, `(a, X)`. A comparison reads the member and does not throw, whatever the other operand is.
 /// A member read that the code dereferences, `X.y`, throws when `X` is missing, so it is not a check.
-fn passes_tested_value(kind: AstKind<'_>) -> bool {
+fn passes_tested_value(kind: AstKind<'_>, span: Span) -> bool {
     match kind {
         AstKind::ChainExpression(_) | AstKind::LogicalExpression(_) => true,
+        AstKind::SequenceExpression(sequence) => is_last(sequence, span),
         AstKind::UnaryExpression(unary) => unary.operator == UnaryOperator::LogicalNot,
         AstKind::BinaryExpression(binary) => is_equality(binary.operator),
         kind => is_wrapper(kind),
@@ -336,6 +388,54 @@ fn is_wrapper(kind: AstKind<'_>) -> bool {
     )
 }
 
+/// Whether `kind` has the value of its child with `span`: a wrapper, a sequence that ends with the child,
+/// or `Boolean(X)`, whose truth is the truth of `X`. The inverse of `tested_value`.
+fn passes_value(semantic: &Semantic<'_>, kind: AstKind<'_>, span: Span) -> bool {
+    match kind {
+        AstKind::SequenceExpression(sequence) => is_last(sequence, span),
+        AstKind::CallExpression(call) => {
+            boolean_argument(semantic, call).is_some_and(|argument| argument.span() == span)
+        }
+        kind => is_wrapper(kind),
+    }
+}
+
+/// The expression whose truth `test` has: `X` for `(X)`, `(a, X)` and `Boolean(X)`. The value of a
+/// sequence is its last expression, and the other expressions do not count.
+fn tested_value<'b, 'a>(semantic: &Semantic<'_>, mut test: &'b Expression<'a>) -> &'b Expression<'a> {
+    loop {
+        test = match test.get_inner_expression() {
+            Expression::SequenceExpression(sequence) => match sequence.expressions.last() {
+                Some(last) => last,
+                None => return test.get_inner_expression(),
+            },
+            Expression::CallExpression(call) => match boolean_argument(semantic, call) {
+                Some(argument) => argument,
+                None => return test.get_inner_expression(),
+            },
+            inner => return inner,
+        };
+    }
+}
+
+/// `X` in `Boolean(X)` with the global `Boolean` and one argument that is not a spread.
+fn boolean_argument<'b, 'a>(semantic: &Semantic<'_>, call: &'b CallExpression<'a>) -> Option<&'b Expression<'a>> {
+    let Expression::Identifier(callee) = call.callee.get_inner_expression() else {
+        return None;
+    };
+    if callee.name != "Boolean" || !is_global(semantic, callee) {
+        return None;
+    }
+    match call.arguments.as_slice() {
+        [argument] => argument.as_expression(),
+        _ => None,
+    }
+}
+
+fn is_last(sequence: &SequenceExpression<'_>, span: Span) -> bool {
+    sequence.expressions.last().is_some_and(|last| last.span() == span)
+}
+
 /// `X?.y` and `X?.m()`: optional chaining reads nothing from a missing `X`.
 fn is_optional_object(nodes: &AstNodes<'_>, node: NodeId) -> bool {
     let mut id = node;
@@ -346,6 +446,79 @@ fn is_optional_object(nodes: &AstNodes<'_>, node: NodeId) -> bool {
     match nodes.parent_kind(id) {
         AstKind::StaticMemberExpression(member) => member.optional && member.object.span() == span,
         AstKind::ComputedMemberExpression(member) => member.optional && member.object.span() == span,
+        _ => false,
+    }
+}
+
+/// A member read whose value serves only as a boolean: `!X`, `Boolean(X)`, an operand of `&&`, `||` or
+/// `??`, the test of `?:`, an operand of a comparison. A missing member reads as `undefined`, so such a
+/// read is a check. Only the parent counts: `Boolean(X.y)` reads from `X`, and `f(!X)` is still a check.
+/// The parent of `X` in `(a, X)` is the parent of the sequence.
+fn is_boolean_read(semantic: &Semantic<'_>, node: NodeId) -> bool {
+    let nodes = semantic.nodes();
+    let mut id = node;
+    // `a?.X` keeps the value, and `a?.X.y` does not end the chain at `X`.
+    loop {
+        let span = nodes.kind(id).span();
+        match nodes.parent_kind(id) {
+            AstKind::ChainExpression(_) => {}
+            AstKind::SequenceExpression(sequence) if is_last(sequence, span) => {}
+            kind if is_wrapper(kind) => {}
+            _ => break,
+        }
+        id = nodes.parent_id(id);
+    }
+    let span = nodes.kind(id).span();
+    match nodes.parent_kind(id) {
+        AstKind::UnaryExpression(unary) => unary.operator == UnaryOperator::LogicalNot,
+        AstKind::LogicalExpression(_) => true,
+        AstKind::ConditionalExpression(expression) => expression.test.span() == span,
+        AstKind::BinaryExpression(binary) => binary.operator.is_equality() || binary.operator.is_compare(),
+        // A spread argument has its own span, so `Boolean(...X)` does not match.
+        AstKind::CallExpression(call) => {
+            matches!(call.callee.get_inner_expression(), Expression::Identifier(callee) if callee.name == "Boolean" && is_global(semantic, callee))
+                && call.arguments.first().is_some_and(|argument| argument.span() == span)
+        }
+        _ => false,
+    }
+}
+
+/// Whether the child with `span` of `parent` throws when it is `undefined`: a callee, a tag, the object
+/// of a member, a spread into an array or arguments, the source of `for of`, `yield*`, `extends` and of
+/// a destructuring, the right operand of `in`. A spread into an object skips `undefined`.
+fn throws_on_undefined(nodes: &AstNodes<'_>, parent: NodeId, span: Span) -> bool {
+    match nodes.kind(parent) {
+        AstKind::CallExpression(call) => !call.optional && call.callee.span() == span,
+        AstKind::NewExpression(expression) => expression.callee.span() == span,
+        AstKind::TaggedTemplateExpression(expression) => expression.tag.span() == span,
+        AstKind::StaticMemberExpression(member) => !member.optional && member.object.span() == span,
+        AstKind::ComputedMemberExpression(member) => !member.optional && member.object.span() == span,
+        AstKind::PrivateFieldExpression(member) => !member.optional && member.object.span() == span,
+        AstKind::SpreadElement(_) => !matches!(nodes.parent_kind(parent), AstKind::ObjectExpression(_)),
+        AstKind::ForOfStatement(statement) => statement.right.span() == span,
+        AstKind::YieldExpression(expression) => expression.delegate,
+        AstKind::Class(class) => class
+            .heritage
+            .as_ref()
+            .is_some_and(|heritage| heritage.expression.span() == span),
+        AstKind::VariableDeclarator(declarator) => !declarator.id.is_binding_identifier(),
+        AstKind::AssignmentExpression(assignment) => {
+            assignment.right.span() == span && assignment.left.is_assignment_target_pattern()
+        }
+        AstKind::AssignmentTargetWithDefault(target) => {
+            target.init.span() == span && target.binding.is_assignment_target_pattern()
+        }
+        AstKind::AssignmentPattern(pattern) => pattern.right.span() == span && !pattern.left.is_binding_identifier(),
+        AstKind::FormalParameter(parameter) => {
+            parameter
+                .initializer
+                .as_ref()
+                .is_some_and(|initializer| initializer.span() == span)
+                && !parameter.pattern.is_binding_identifier()
+        }
+        AstKind::BinaryExpression(binary) => {
+            matches!(binary.operator, BinaryOperator::In | BinaryOperator::Instanceof) && binary.right.span() == span
+        }
         _ => false,
     }
 }
@@ -408,10 +581,14 @@ fn matches(usage: &Use, keys: &[String]) -> bool {
     usage.keys.iter().any(|key| keys.contains(key))
 }
 
-/// `!X` with the value `v` is `X` with the value `!v`.
-fn without_not<'b, 'a>(mut test: &'b Expression<'a>, mut value: bool) -> (&'b Expression<'a>, bool) {
+/// `!X` with the value `v` is `X` with the value `!v`. The result is a `tested_value`.
+fn without_not<'b, 'a>(
+    semantic: &Semantic<'_>,
+    mut test: &'b Expression<'a>,
+    mut value: bool,
+) -> (&'b Expression<'a>, bool) {
     loop {
-        match test.get_inner_expression() {
+        match tested_value(semantic, test) {
             Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
                 value = !value;
                 test = &unary.argument;
@@ -430,8 +607,12 @@ fn joins(operator: LogicalOperator, value: bool) -> bool {
     )
 }
 
-fn join_of<'b, 'a>(test: &'b Expression<'a>, value: bool) -> Option<&'b LogicalExpression<'a>> {
-    match test.get_inner_expression() {
+fn join_of<'b, 'a>(
+    semantic: &Semantic<'_>,
+    test: &'b Expression<'a>,
+    value: bool,
+) -> Option<&'b LogicalExpression<'a>> {
+    match tested_value(semantic, test) {
         Expression::LogicalExpression(logical) if joins(logical.operator, value) => Some(logical),
         _ => None,
     }
@@ -442,8 +623,8 @@ fn all_keys(semantic: &Semantic<'_>, test: &Expression<'_>, value: bool) -> Vec<
     let mut keys = Vec::new();
     let mut operands = vec![(test, value)];
     while let Some((operand, value)) = operands.pop() {
-        let (operand, value) = without_not(operand, value);
-        match join_of(operand, value) {
+        let (operand, value) = without_not(semantic, operand, value);
+        match join_of(semantic, operand, value) {
             Some(logical) => {
                 operands.push((&logical.right, value));
                 operands.push((&logical.left, value));
@@ -457,7 +638,7 @@ fn all_keys(semantic: &Semantic<'_>, test: &Expression<'_>, value: bool) -> Vec<
 /// Features that are present when `test` has the value `value`, for a test that is neither `!X` nor
 /// a chain that `joins`.
 fn own_keys(semantic: &Semantic<'_>, test: &Expression<'_>, value: bool) -> Vec<String> {
-    let binary = match test.get_inner_expression() {
+    let binary = match tested_value(semantic, test) {
         Expression::BinaryExpression(binary) => binary,
         other if value => return chain_keys(semantic, other),
         _ => return Vec::new(),

@@ -3,6 +3,8 @@
 //! that resolve to no declared binding count, so a local `structuredClone` is ignored.
 
 use std::borrow::Cow;
+use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
@@ -19,6 +21,7 @@ pub fn detect(semantic: &Semantic<'_>) -> Vec<Use> {
     let scoping = semantic.scoping();
     let nodes = semantic.nodes();
     let mut uses = Vec::new();
+    let mut globals = GlobalFeatures::default();
     for (name, references) in scoping.root_unresolved_references().iter() {
         let name = name.as_str();
         for &reference_id in references.iter() {
@@ -51,8 +54,17 @@ pub fn detect(semantic: &Semantic<'_>) -> Vec<Use> {
                             uses.push(usage);
                             continue;
                         }
+                    } else {
+                        // `const { share } = window.navigator` resolves like `= navigator`.
+                        let found = uses.len();
+                        for member in destructured(nodes, chain_or_self(nodes, first.id)) {
+                            uses.extend(member_use(&first.property, &member));
+                        }
+                        if uses.len() > found {
+                            continue;
+                        }
                     }
-                    uses.extend(global_member_use(&first, is_new_callee(nodes, &first)));
+                    uses.extend(global_member_use(&mut globals, &first, is_new_callee(nodes, &first)));
                     continue;
                 }
                 if let Some(usage) = member_use(name, &first) {
@@ -64,7 +76,7 @@ pub fn detect(semantic: &Semantic<'_>) -> Vec<Use> {
                 let found = uses.len();
                 for member in destructured(nodes, node_id) {
                     uses.extend(if is_alias {
-                        global_member_use(&member, false)
+                        global_member_use(&mut globals, &member, false)
                     } else {
                         member_use(name, &member)
                     });
@@ -83,7 +95,7 @@ pub fn detect(semantic: &Semantic<'_>) -> Vec<Use> {
                 continue;
             }
             let is_new = matches!(parent, AstKind::NewExpression(e) if e.callee.span() == outer_span);
-            if let Some(feature) = global_feature(name, is_new) {
+            if let Some(feature) = globals.get(name, is_new) {
                 uses.push(
                     Use::new(feature, kind_of(feature), identifier.span, node_id).with_keys(vec![name.to_string()]),
                 );
@@ -113,6 +125,17 @@ fn outermost(nodes: &AstNodes<'_>, node_id: NodeId) -> (NodeId, Span) {
         id = nodes.parent_id(id);
     }
     (id, nodes.kind(id).span())
+}
+
+/// The optional chain that ends at the node, as in `window?.navigator`, or the node itself.
+fn chain_or_self(nodes: &AstNodes<'_>, node_id: NodeId) -> NodeId {
+    let (outer_id, _) = outermost(nodes, node_id);
+    let parent_id = nodes.parent_id(outer_id);
+    if matches!(nodes.kind(parent_id), AstKind::ChainExpression(_)) {
+        parent_id
+    } else {
+        node_id
+    }
 }
 
 /// `X.member` or `X['member']` around the expression `X`, which may be wrapped.
@@ -219,8 +242,8 @@ fn member_use(object: &str, member: &Member) -> Option<Use> {
 }
 
 /// A member of the global object, `window.structuredClone`. Code checks it as the bare global.
-fn global_member_use(member: &Member, is_new: bool) -> Option<Use> {
-    let feature = global_feature(&member.property, is_new)?;
+fn global_member_use(globals: &mut GlobalFeatures, member: &Member, is_new: bool) -> Option<Use> {
+    let feature = globals.get(&member.property, is_new)?;
     Some(Use::new(feature, kind_of(feature), member.span, member.id).with_keys(vec![member.property.clone()]))
 }
 
@@ -228,12 +251,17 @@ fn global_member_use(member: &Member, is_new: bool) -> Option<Use> {
 /// is `api.EventTarget.addEventListener`. The walk is breadth-first, so an own entry wins. Parents can
 /// be mixins without BCD entries, and two parents can share a parent, so each interface is visited once.
 fn interface_member(interface: &'static str, member: &str) -> Option<FeatureId> {
+    breadth_first(interface, |current| FeatureId::find(&format!("api.{current}.{member}")))
+}
+
+/// Visits `interface` and its parents breadth-first, each once, until `visit` returns a value.
+fn breadth_first<T>(interface: &'static str, mut visit: impl FnMut(&'static str) -> Option<T>) -> Option<T> {
     let mut queue = vec![interface];
     let mut next = 0;
     while let Some(&current) = queue.get(next) {
         next += 1;
-        if let Some(feature) = FeatureId::find(&format!("api.{current}.{member}")) {
-            return Some(feature);
+        if let Some(found) = visit(current) {
+            return Some(found);
         }
         for &parent in interface_parents(current) {
             if !queue.contains(&parent) {
@@ -242,6 +270,66 @@ fn interface_member(interface: &'static str, member: &str) -> Option<FeatureId> 
         }
     }
     None
+}
+
+/// `Window` and its parents in the order of `interface_member`.
+static WINDOW_ANCESTRY: LazyLock<Vec<&'static str>> = LazyLock::new(|| {
+    let mut ancestry = Vec::new();
+    breadth_first::<()>("Window", |interface| {
+        ancestry.push(interface);
+        None
+    });
+    ancestry
+});
+
+/// The answers of `interface_member("Window", member)`, by member. Every unresolved name that is not a
+/// builtin asks for it, and the walk costs a lookup per parent. The entry of the interface that comes
+/// first in `WINDOW_ANCESTRY` wins, as in the walk.
+static WINDOW_MEMBERS: LazyLock<HashMap<&'static str, FeatureId>> = LazyLock::new(|| {
+    let mut members: HashMap<&'static str, (usize, FeatureId)> = HashMap::new();
+    for id in crate::data::feature_ids() {
+        let Some((interface, member)) = id.strip_prefix("api.").and_then(|rest| rest.split_once('.')) else {
+            continue;
+        };
+        let Some(rank) = WINDOW_ANCESTRY.iter().position(|&parent| parent == interface) else {
+            continue;
+        };
+        let Some(feature) = FeatureId::find(id) else {
+            continue;
+        };
+        let entry = members.entry(member).or_insert((rank, feature));
+        if rank < entry.0 {
+            *entry = (rank, feature);
+        }
+    }
+    members
+        .into_iter()
+        .map(|(member, (_, feature))| (member, feature))
+        .collect()
+});
+
+fn window_member(member: &str) -> Option<FeatureId> {
+    WINDOW_MEMBERS.get(member).copied()
+}
+
+/// The results of `global_feature` for one file. A file names the same globals many times, and each
+/// name that is not a builtin costs a lookup per parent of `Window`.
+#[derive(Default)]
+struct GlobalFeatures {
+    plain: HashMap<String, Option<FeatureId>>,
+    constructed: HashMap<String, Option<FeatureId>>,
+}
+
+impl GlobalFeatures {
+    fn get(&mut self, name: &str, is_new: bool) -> Option<FeatureId> {
+        let known = if is_new { &mut self.constructed } else { &mut self.plain };
+        if let Some(&feature) = known.get(name) {
+            return feature;
+        }
+        let feature = global_feature(name, is_new);
+        known.insert(name.to_string(), feature);
+        feature
+    }
 }
 
 /// The member is a target that the code writes or deletes, not a value that it reads:
@@ -283,16 +371,18 @@ fn member_feature(object: &str, member: &str) -> Option<FeatureId> {
 }
 
 /// A bare global. For `new X()` the constructor entry `api.X.X` is more precise than the interface.
+/// Members of the global object come last: `name` is `api.Window.name`, and `when` is inherited,
+/// `api.EventTarget.when`. With BCD 8.1.4 and @types/web 0.0.358 the parents add only the members of
+/// `EventTarget`: `addEventListener`, `removeEventListener`, `dispatchEvent` and `when`. Only `when`
+/// lacks support in common targets. A data update that gives the mixin parents BCD rows adds bare
+/// names here; `the_parents_of_window_add_only_the_event_target_members` lists them.
 fn global_feature(name: &str, is_new: bool) -> Option<FeatureId> {
     let constructor = is_new.then(|| format!("api.{name}.{name}"));
     constructor
         .into_iter()
-        .chain([
-            format!("javascript.builtins.{name}"),
-            format!("api.{name}"),
-            format!("api.Window.{name}"),
-        ])
+        .chain([format!("javascript.builtins.{name}"), format!("api.{name}")])
         .find_map(|id| FeatureId::find(&id))
+        .or_else(|| window_member(name))
 }
 
 pub(crate) fn kind_of(feature: FeatureId) -> Kind {
@@ -568,5 +658,115 @@ mod tests {
         // The own entry of the interface wins over the entry of a parent.
         assert_eq!(features("document.querySelector('a');"), ["api.Document.querySelector"]);
         assert_eq!(features("const { when } = document;"), ["api.EventTarget.when"]);
+    }
+
+    #[test]
+    fn members_of_the_global_object_resolve_through_parent_interfaces() {
+        assert_eq!(
+            detected("window.when('click');"),
+            [("api.EventTarget.when", vec!["when".to_string()])]
+        );
+        assert_eq!(
+            detected("when('click');"),
+            [("api.EventTarget.when", vec!["when".to_string()])]
+        );
+        let mut inherited =
+            features("self.addEventListener('a', f); globalThis.dispatchEvent(e); removeEventListener('a', f);");
+        inherited.sort_unstable();
+        assert_eq!(
+            inherited,
+            [
+                "api.EventTarget.addEventListener",
+                "api.EventTarget.dispatchEvent",
+                "api.EventTarget.removeEventListener"
+            ]
+        );
+        assert_eq!(features("const { when } = window;"), ["api.EventTarget.when"]);
+        // The own entry of `Window` and the builtins win over the entries of its parents.
+        assert_eq!(features("window.name; name;"), ["api.Window.name"; 2]);
+        assert_eq!(features("window.Array;"), ["javascript.builtins.Array"]);
+    }
+
+    #[test]
+    fn the_precomputed_members_of_window_match_the_walk() {
+        let members = crate::data::feature_ids()
+            .filter_map(|id| id.strip_prefix("api.")?.split_once('.').map(|(_, member)| member))
+            .chain(["noSuchThing", "", "when.x"]);
+        for member in members {
+            assert_eq!(window_member(member), interface_member("Window", member), "{member}");
+        }
+    }
+
+    #[test]
+    fn unknown_or_local_members_of_the_global_object_are_not_uses() {
+        assert!(features("window.noSuchThing(); noSuchThing();").is_empty());
+        assert!(features("const when = f; when('click');").is_empty());
+        assert!(features("const window = w; window.when('click');").is_empty());
+        assert!(features("window.when = f; when = f;").is_empty());
+    }
+
+    #[test]
+    fn destructuring_from_a_member_of_a_window_alias_uses_the_member() {
+        assert_eq!(
+            detected("const { share } = window.navigator;"),
+            [("api.Navigator.share", vec!["navigator.share".to_string()])]
+        );
+        assert_eq!(
+            detected("const { userActivation } = globalThis.navigator;"),
+            [(
+                "api.Navigator.userActivation",
+                vec!["navigator.userActivation".to_string()]
+            )]
+        );
+        assert_eq!(
+            detected("const { groupBy } = window.Object;"),
+            [("javascript.builtins.Object.groupBy", vec!["Object.groupBy".to_string()])]
+        );
+        assert_eq!(
+            features("let s; ({ share: s } = self.navigator);"),
+            ["api.Navigator.share"]
+        );
+        assert_eq!(
+            features("const { share } = window?.navigator;"),
+            ["api.Navigator.share"]
+        );
+        assert_eq!(
+            features("const { share } = (window.navigator);"),
+            ["api.Navigator.share"]
+        );
+    }
+
+    #[test]
+    fn destructuring_from_other_members_is_not_a_member_use() {
+        assert!(features("const { share } = foo.navigator;").is_empty());
+        assert!(features("const window = w; const { share } = window.navigator;").is_empty());
+        assert!(features("const { share } = window.noSuchThing;").is_empty());
+        // The source is `navigator.share`, not `navigator`: no member of it is read.
+        assert_eq!(
+            features("const { a } = window.navigator.share;"),
+            ["api.Navigator.share"]
+        );
+    }
+
+    #[test]
+    fn the_parents_of_window_add_only_the_event_target_members() {
+        // Every bare name that resolves to a member of a parent of `Window`, not to an own entry.
+        let mut inherited: Vec<&str> = crate::data::feature_ids()
+            .filter_map(|id| {
+                let member = id.strip_prefix("api.")?.split_once('.')?.1;
+                let feature = global_feature(member, false)?.as_str();
+                (feature == id && !member.contains('.') && !feature.starts_with("api.Window.")).then_some(feature)
+            })
+            .collect();
+        inherited.sort_unstable();
+        assert_eq!(
+            inherited,
+            [
+                "api.EventTarget.addEventListener",
+                "api.EventTarget.dispatchEvent",
+                "api.EventTarget.removeEventListener",
+                "api.EventTarget.when"
+            ]
+        );
     }
 }

@@ -4,7 +4,7 @@
 
 use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Argument, Expression, RegExpFlags, RegExpLiteral};
+use oxc_ast::ast::{Argument, ChainElement, Expression, RegExpFlags, RegExpLiteral};
 use oxc_regular_expression::ast::{
     CapturingGroup, Character, CharacterKind, IgnoreGroup, LookAroundAssertion, LookAroundAssertionKind,
     NamedReference, Pattern, UnicodePropertyEscape,
@@ -14,8 +14,8 @@ use oxc_regular_expression::{LiteralParser, Options};
 use oxc_semantic::{NodeId, Scoping, Semantic};
 use oxc_span::Span;
 
-use super::Use;
 use super::syntax::has_code_point_escape;
+use super::{Use, WINDOW_ALIASES};
 use crate::check::Kind;
 use crate::data::FeatureId;
 
@@ -187,17 +187,36 @@ fn literal_text<'a>(argument: &Argument<'a>, scoping: &Scoping) -> Option<&'a st
     }
 }
 
+/// `String.raw`, `(String?.raw)`, or `String.raw` through the global object: `globalThis.String.raw`.
 fn is_string_raw(tag: &Expression<'_>, scoping: &Scoping) -> bool {
-    let Expression::StaticMemberExpression(member) = tag.get_inner_expression() else {
+    let Some((object, "raw")) = static_member(tag) else {
         return false;
     };
-    let Expression::Identifier(object) = member.object.get_inner_expression() else {
-        return false;
+    let string = match static_member(object) {
+        Some((alias, "String")) => match alias.get_inner_expression() {
+            Expression::Identifier(alias) if WINDOW_ALIASES.contains(&alias.name.as_str()) => alias,
+            _ => return false,
+        },
+        Some(_) => return false,
+        None => match object.get_inner_expression() {
+            Expression::Identifier(string) if string.name.as_str() == "String" => string,
+            _ => return false,
+        },
     };
-    // A local `String` is not the builtin.
-    member.property.name.as_str() == "raw"
-        && object.name.as_str() == "String"
-        && scoping.get_reference(object.reference_id()).symbol_id().is_none()
+    // A local `String` or `window` is not the global.
+    scoping.get_reference(string.reference_id()).symbol_id().is_none()
+}
+
+/// The object and the property of `X.p` or `X?.p`, which may be wrapped.
+fn static_member<'b, 'a>(expression: &'b Expression<'a>) -> Option<(&'b Expression<'a>, &'b str)> {
+    match expression.get_inner_expression() {
+        Expression::StaticMemberExpression(member) => Some((&member.object, member.property.name.as_str())),
+        Expression::ChainExpression(chain) => match &chain.expression {
+            ChainElement::StaticMemberExpression(member) => Some((&member.object, member.property.name.as_str())),
+            _ => None,
+        },
+        _ => None,
+    }
 }
 
 /// The pattern text and its offset: spans of a parsed literal count from the start of the file,
@@ -286,6 +305,15 @@ impl<'a> Collector<'a> {
         let offset = offset.checked_sub(self.source.start)?;
         self.source.text.get(offset as usize..)
     }
+
+    /// Whether the name of `(?<name>` or `\k<name>` at the offset has `\u{` in the source. oxc does not
+    /// promise whether the AST name is the written or the decoded text, so the source tells.
+    fn written_name_has_code_point_escape(&self, offset: u32, prefix: &str) -> bool {
+        self.source_at(offset)
+            .and_then(|text| text.strip_prefix(prefix))
+            .and_then(|text| text.split_once('>'))
+            .is_some_and(|(written, _)| has_code_point_escape(written))
+    }
 }
 
 impl<'a> Visit<'a> for Collector<'a> {
@@ -309,21 +337,18 @@ impl<'a> Visit<'a> for Collector<'a> {
     fn visit_capturing_group(&mut self, it: &CapturingGroup<'a>) {
         if let Some(name) = &it.name {
             self.group_names.push(name.as_str());
-            // The AST keeps only the decoded name, so the source of `(?<name>` tells how it is written.
-            let written = self
-                .source_at(it.span.start)
-                .and_then(|text| text.strip_prefix("(?<"))
-                .and_then(|text| text.split_once('>'))
-                .map(|(written, _)| written);
-            if written.is_some_and(has_code_point_escape) {
+            if self.written_name_has_code_point_escape(it.span.start, "(?<") {
                 self.code_point_escape = true;
             }
         }
         walk::walk_capturing_group(self, it);
     }
 
-    fn visit_named_reference(&mut self, _it: &NamedReference<'a>) {
+    fn visit_named_reference(&mut self, it: &NamedReference<'a>) {
         self.named_reference = true;
+        if self.written_name_has_code_point_escape(it.span.start, "\\k<") {
+            self.code_point_escape = true;
+        }
     }
 
     fn visit_unicode_property_escape(&mut self, _it: &UnicodePropertyEscape<'a>) {
@@ -454,6 +479,61 @@ mod tests {
         assert!(detected(r"/(?<\u{61}>a)/u;").contains(&CODE_POINT_ESCAPE));
         assert!(detected(r"new RegExp('(?<\\u{61}>a)', 'u');").contains(&CODE_POINT_ESCAPE));
         assert!(!detected("/(?<a>a)/u;").contains(&CODE_POINT_ESCAPE));
+    }
+
+    /// Whether the named references of the pattern alone report a code point escape. oxc 0.152 matches
+    /// a reference to a group by the written name, so a pattern where only the reference has `\u{` does
+    /// not parse, and the group reports the escape too. The visit of the references alone tells them apart.
+    fn reference_has_code_point_escape(text: &str) -> bool {
+        struct References<'a>(Collector<'a>);
+        impl<'a> Visit<'a> for References<'a> {
+            fn visit_named_reference(&mut self, it: &NamedReference<'a>) {
+                self.0.visit_named_reference(it);
+            }
+        }
+        let allocator = Allocator::default();
+        let pattern = LiteralParser::new(&allocator, text, Some("u"), Options::default())
+            .parse()
+            .unwrap();
+        let mut references = References(Collector::new(Source { text, start: 0 }));
+        references.visit_pattern(&pattern);
+        assert!(references.0.named_reference, "{text}");
+        references.0.code_point_escape
+    }
+
+    #[test]
+    fn a_code_point_escape_in_a_named_reference_is_found() {
+        assert!(reference_has_code_point_escape(r"(?<\u{61}>x)\k<\u{61}>"));
+        assert!(reference_has_code_point_escape(r"(?<a\u{62}>x)\k<a\u{62}>"));
+        assert!(!reference_has_code_point_escape(r"(?<a>x)\k<a>"));
+        assert!(!reference_has_code_point_escape(r"(?<\u0061>x)\k<\u0061>"));
+        assert!(detected(r"/(?<\u{61}>x)\k<\u{61}>/u;").contains(&CODE_POINT_ESCAPE));
+        assert!(detected(r"new RegExp('(?<\\u{61}>x)\\k<\\u{61}>', 'u');").contains(&CODE_POINT_ESCAPE));
+        assert!(!detected(r"/(?<a>x)\k<a>/u;").contains(&CODE_POINT_ESCAPE));
+    }
+
+    #[test]
+    fn string_raw_through_an_optional_chain_or_the_global_object_is_a_literal_argument() {
+        let sources = [
+            r"new RegExp((String?.raw)`(?<=a)\d`);",
+            r"new RegExp(globalThis.String.raw`(?<=a)\d`);",
+            r"new RegExp(window.String.raw`(?<=a)\d`);",
+            r"new RegExp(self.String.raw`(?<=a)\d`);",
+            r"new RegExp((window?.String.raw)`(?<=a)\d`);",
+        ];
+        for source in sources {
+            assert!(detected(source).contains(&LOOKBEHIND), "{source}");
+        }
+        let ignored = [
+            "const globalThis = g; new RegExp(globalThis.String.raw`(?<=a)`);",
+            "const String = S; new RegExp((String?.raw)`(?<=a)`);",
+            "new RegExp(foo.String.raw`(?<=a)`);",
+            "new RegExp(window.String.cooked`(?<=a)`);",
+            "new RegExp(window.Strings.raw`(?<=a)`);",
+        ];
+        for source in ignored {
+            assert!(detected(source).is_empty(), "{source}");
+        }
     }
 
     #[test]

@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -78,9 +78,14 @@ export function browserSupport(statements, id) {
     if (added >= since) {
       continue;
     }
-    // The Rust table needs one row per range; the first statement of a range wins.
-    if (!ranges.some(range => range.added === added && range.removed === removed && range.partial === partial)) {
-      ranges.push({ added, removed, partial, note: partial ? noteText(statement.notes, id) : null });
+    const note = partial ? noteText(statement.notes, id) : null;
+    // The Rust table needs one row per range. The first statement with a note wins:
+    // a statement without a note must not hide the note of an equal statement.
+    const same = ranges.find(range => range.added === added && range.removed === removed && range.partial === partial);
+    if (!same) {
+      ranges.push({ added, removed, partial, note });
+    } else if (!same.note) {
+      same.note = note;
     }
   }
   ranges.sort((a, b) => a.added - b.added || a.removed - b.removed || Number(a.partial) - Number(b.partial));
@@ -146,8 +151,11 @@ const IDENTIFIER = /^[A-Za-z$][\w$]*$/;
 
 // Prototype members that are never called, although their spec anchors have no "get-" prefix:
 // `Symbol.prototype.description` has the anchor "sec-symbol.prototype.description".
-// The list comes from the lib.es*.d.ts files of TypeScript 7.0.2: there these members are properties
-// (`readonly description: string | undefined;`), not methods. Recheck it when BCD adds prototype members.
+// The source is the lib.es*.d.ts files of the `typescript` devDependency, pinned in the root package.json:
+// there these members are properties (`readonly description: string | undefined;`), not methods.
+// `checkAccessors` compares the list with those files on every run of the generator. It fails when a prototype
+// member of a builtin without a "get-" or "set-" anchor is a property there but is missing from the list,
+// and when a member of the list is not a property there or is not a prototype member in BCD.
 export const ACCESSORS = new Set([
   'javascript.builtins.Error.message',
   'javascript.builtins.Error.name',
@@ -159,8 +167,7 @@ export const ACCESSORS = new Set([
 // `dispose` of three.js. A finding for `app.use()` would be noise. The globals detector checks the constructors.
 const UNREPORTED_OBJECTS = new Set(['DisposableStack', 'AsyncDisposableStack']);
 
-export function collectInstanceMembers(data) {
-  const members = [];
+function* prototypeMembers(data) {
   for (const [object, node] of Object.entries(data.javascript.builtins)) {
     for (const [name, value] of Object.entries(node)) {
       if (name === '__compat' || name === object || !IDENTIFIER.test(name)) {
@@ -169,14 +176,20 @@ export function collectInstanceMembers(data) {
       // BCD does not mark prototype members, but their spec anchors do: "sec-array.prototype.tosorted".
       const specUrls = [].concat(value.__compat?.spec_url ?? []);
       if (specUrls.some(url => /\.prototype\./i.test(url))) {
-        // An accessor such as `ArrayBuffer.prototype.detached` is never called, so `x.detached()` is not it.
-        // It still makes the name ambiguous: a supported accessor of the same name hides the method.
         const accessor = specUrls.some(url => /#sec-(get|set)-/i.test(url));
-        const id = `javascript.builtins.${object}.${name}`;
-        const reportable = !accessor && !ACCESSORS.has(id) && !UNREPORTED_OBJECTS.has(object);
-        members.push({ name, id, reportable });
+        yield { object, name, id: `javascript.builtins.${object}.${name}`, accessor };
       }
     }
+  }
+}
+
+export function collectInstanceMembers(data) {
+  const members = [];
+  for (const { object, name, id, accessor } of prototypeMembers(data)) {
+    // An accessor such as `ArrayBuffer.prototype.detached` is never called, so `x.detached()` is not it.
+    // It still makes the name ambiguous: a supported accessor of the same name hides the method.
+    const reportable = !accessor && !ACCESSORS.has(id) && !UNREPORTED_OBJECTS.has(object);
+    members.push({ name, id, reportable });
   }
   for (const [iface, node] of Object.entries(data.api)) {
     for (const name of Object.keys(node)) {
@@ -188,6 +201,79 @@ export function collectInstanceMembers(data) {
     }
   }
   return members;
+}
+
+/**
+ * Members of the interfaces in TypeScript lib files, as a map from "Interface.member" to the kinds of its
+ * declarations: "method" or "property". A getter (`get size(): number;`) is a property.
+ * Interfaces inside `declare global` count too: lib.es2025.iterator.d.ts declares `IteratorObject` there.
+ */
+export function collectLibMembers(declarations) {
+  const members = new Map();
+  let block = null;
+  // A file with CRLF line ends would leave "\r" after "{" and break the checks of the header.
+  for (const line of declarations.split(/\r?\n/)) {
+    if (!block) {
+      const header = /^( *)interface (\w+)/.exec(line);
+      if (!header || line.endsWith('{}')) {
+        continue;
+      }
+      // A header that continues on the next line would hide the members of the interface from the check.
+      if (!line.endsWith('{')) {
+        throw new Error(`Interface header does not end with "{" on the same line: ${line}`);
+      }
+      block = { name: header[2], indent: `${header[1]}    `, end: `${header[1]}}` };
+      continue;
+    }
+    if (line.startsWith(block.end)) {
+      block = null;
+      continue;
+    }
+    // Deeper lines belong to a member type or a multi-line signature.
+    if (!line.startsWith(block.indent) || line[block.indent.length] === ' ') {
+      continue;
+    }
+    const match = /^(?:readonly )?(?:(get|set) )?([A-Za-z_$][\w$]*)\??\s*([(<:])/.exec(line.slice(block.indent.length));
+    if (!match) {
+      continue;
+    }
+    const kind = match[1] || match[3] === ':' ? 'property' : 'method';
+    const key = `${block.name}.${match[2]}`;
+    members.set(key, (members.get(key) ?? new Set()).add(kind));
+  }
+  return members;
+}
+
+// BCD objects without a TypeScript interface of the same name, and the interface that declares their members.
+const LIB_INTERFACES = { TypedArray: 'Int8Array', Iterator: 'IteratorObject' };
+
+/** Throws when `accessors` does not match the TypeScript lib files `declarations`. See `ACCESSORS`. */
+export function checkAccessors(data, declarations, accessors = ACCESSORS) {
+  const lib = collectLibMembers(declarations);
+  const problems = [];
+  const found = new Set();
+  for (const { object, name, id, accessor } of prototypeMembers(data)) {
+    if (accessor) {
+      continue;
+    }
+    const kinds = lib.get(`${LIB_INTERFACES[object] ?? object}.${name}`) ?? new Set();
+    if (accessors.has(id)) {
+      found.add(id);
+      if (kinds.has('method') || !kinds.has('property')) {
+        problems.push(`${id} is in ACCESSORS, but TypeScript does not declare it as a property only`);
+      }
+    } else if (kinds.has('property')) {
+      problems.push(`${id} is a property in TypeScript, but ACCESSORS does not name it`);
+    }
+  }
+  for (const id of accessors) {
+    if (!found.has(id)) {
+      problems.push(`${id} is in ACCESSORS, but BCD has no such prototype member without a "get-" or "set-" anchor`);
+    }
+  }
+  if (problems.length > 0) {
+    throw new Error(`ACCESSORS does not match the TypeScript lib files:\n${problems.join('\n')}`);
+  }
 }
 
 export function collectSingletons(declarations, featureIds) {
@@ -205,16 +291,24 @@ export function collectSingletons(declarations, featureIds) {
 export function collectInterfaceParents(declarations, featureIds) {
   const parents = new Map();
   // Only top-level declarations: interfaces inside `declare namespace` are indented.
-  for (const [header, name, rest] of declarations.matchAll(/^interface (\w+)(.*)$/gm)) {
+  // A file with CRLF line ends would leave "\r" after "{" and break the checks of the header.
+  for (const line of declarations.split(/\r?\n/)) {
+    const declaration = /^interface (\w+)(.*)$/.exec(line);
+    if (!declaration) {
+      continue;
+    }
+    const [header, name, rest] = declaration;
     // The parser reads one line. A header that continues on the next line would lose its parents.
-    if (!header.endsWith(' {')) {
+    // A one-line declaration ends with an empty body: `interface X extends Y {}`.
+    const body = [' {', ' {}'].find(end => header.endsWith(end));
+    if (!body) {
       throw new Error(`Interface header does not end with "{" on the same line: ${header}`);
     }
     if (!featureIds.has(`api.${name}`)) {
       continue;
     }
     // Drop type arguments and parameters, innermost first: `<T extends Element>`, `ReadonlyMap<string, X>`.
-    let clause = rest.slice(0, -' {'.length);
+    let clause = rest.slice(0, -body.length);
     while (/<[^<>]*>/.test(clause)) {
       clause = clause.replace(/<[^<>]*>/g, '');
     }
@@ -318,11 +412,24 @@ if (import.meta.main) {
   const output = fileURLToPath(new URL('../crates/compatgate/src/data/generated.rs', import.meta.url));
   const webTypes = readFileSync(require.resolve('@types/web/index.d.ts'), 'utf8');
   const featureIds = new Set(features.map(feature => feature.id));
-  for (const id of ACCESSORS) {
-    if (!featureIds.has(id)) {
-      throw new Error(`ACCESSORS names a feature that BCD does not have: ${id}`);
-    }
+  // TypeScript 7 keeps its lib files in the package for the platform, next to the compiler binary.
+  const platform = `${process.platform}-${process.arch}`;
+  let platformPackage;
+  try {
+    platformPackage = createRequire(require.resolve('typescript/package.json')).resolve(
+      `@typescript/typescript-${platform}/package.json`,
+    );
+  } catch (cause) {
+    throw new Error(
+      `TypeScript lib files not found for ${platform}: install typescript with its optional platform package`,
+      { cause },
+    );
   }
+  const libDirectory = join(dirname(platformPackage), 'lib');
+  const libFiles = readdirSync(libDirectory)
+    .filter(name => /^lib\.es[\w.]*\.d\.ts$/.test(name))
+    .sort();
+  checkAccessors(data, libFiles.map(name => readFileSync(join(libDirectory, name), 'utf8')).join('\n'));
   const text = renderRust(
     features,
     packageJson.version,

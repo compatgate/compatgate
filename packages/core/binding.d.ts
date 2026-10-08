@@ -39,8 +39,8 @@ export interface CheckResultOutput {
 
 export interface FindingOutput {
   feature: string
-  kind: string
-  confidence: string
+  kind: 'syntax' | 'builtin' | 'api'
+  confidence: 'exact' | 'heuristic' | 'partial'
   start: PositionOutput
   end: PositionOutput
   unsupported: Array<GapOutput>

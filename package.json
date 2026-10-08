@@ -20,7 +20,8 @@
     "@mdn/browser-compat-data": "8.1.4",
     "@types/web": "0.0.358",
     "oxfmt": "^0.72.0",
-    "oxlint": "^1.87.0"
+    "oxlint": "^1.87.0",
+    "typescript": "7.0.2"
   },
   "engines": {
     "node": ">=24"

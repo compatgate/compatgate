@@ -37,9 +37,10 @@ Pass `targets` or `allow` to skip the lookup.
   `class Q { take = 1 }`, accessors, `{ take() {} }`, `{ take: f }`, `obj.take = f`, `obj['take'] = f`)
   and calls on imported or required modules (`_.union()`) are skipped. A `require` result is skipped when
   `require` is the CommonJS global, a function parameter, a `declare`d `require`, or a variable that holds
-  `createRequire(...)` or `__webpack_require__`. Transpiled wrappers such as `__importDefault(require('x'))`
-  and `_interopRequireDefault(...)`, and `.default` of a module, are skipped too. When several methods share a name, the finding names the one
-  with the worst support.
+  `createRequire(...)`, `module.createRequire(...)` or `__webpack_require__`.
+  Transpiled wrappers such as `__importDefault(require('x'))`
+  and `_interopRequireDefault(...)`, and `.default` of a module, are skipped too.
+  When several methods share a name, the finding names the one with the worst support.
   Members of `DisposableStack` and `AsyncDisposableStack` are not checked as prototype methods:
   their names (`use`, `dispose`, `move`, `adopt`, `defer`) are also methods of Vue, express and three.js.
   Their constructors are still checked. Getters such as `description`, `detached` and `resizable`
@@ -62,19 +63,33 @@ try {
 
 Rules for checks:
 
-- A member read is a check only when it is the tested value itself: `if (navigator.userActivation)`.
+- In a test, a member read is a check: `if (navigator.userActivation)`.
   Reading something from it, as in `if (navigator.userActivation.isActive)`, is a finding.
 - Optional chaining on the member is a check: `navigator.userAgentData?.brands`.
   In `navigator.userAgentData.brands?.length` the optional access comes too late, so it is a finding.
   In a test, `X?.y` is a check too: `if (navigator?.userActivation)`.
-- In a test (`if`, `?:`, `&&`, `||`), a member compared with anything (`===`, `!==`, `==`, `!=`)
-  is read as a check. Outside a test, `const ok = window.X !== undefined` is a finding.
-- Of the comparisons with a value, only those that rule out `undefined` protect the code that follows:
-  `!= null`, `!= undefined`, `!== undefined` and `!== void 0`, in either order. A strict `!== null` does not:
-  `if (window.structuredClone !== null) structuredClone(1)` still reports the call,
-  because a missing member is `undefined`, not `null`.
+- A member read whose value serves only as a boolean is not a finding anywhere. These positions count:
+  the operand of `!` and of `Boolean(...)`, an operand of `&&`, `||` and `??`, the condition of `?:`,
+  and an operand of a comparison (`===`, `!==`, `==`, `!=`, `<`, `>`, `<=`, `>=`).
+  Examples: `!!navigator.share`, `Boolean(navigator.share)`, `const ok = window.X !== undefined`.
+  The right operand of `||` and `??` counts too, though it is the result value: `return a || navigator.share`.
+- A logical expression does not count when its value goes where `undefined` throws:
+  `(a || navigator.share)(x)` is a finding. Such places are a callee (also `(0, X)()`), `new`, a tag,
+  the object of a member, a spread into an array or arguments, `for of`, `yield*`, `extends`,
+  the source of a destructuring or its default, and the right operand of `in` and `instanceof`.
+  A missing member on the left of `||` or `??` is replaced by the right operand first,
+  so `(navigator.share || fallback)(x)` is not a finding. Neither is `(a || navigator.share)?.(x)`:
+  an optional call on `undefined` does nothing.
+- The previous rules decide whether the read itself is a finding. Whether a check protects the code
+  that follows is a separate question. Of the comparisons with a value, only those that rule out `undefined`
+  protect it: `!= null`, `!= undefined`, `!== undefined` and `!== void 0`, in either order.
+  A strict `!== null` does not: `if (window.structuredClone !== null) structuredClone(1)` still reports
+  the call, because a missing member is `undefined`, not `null`.
 - Other forms that protect: `'X' in obj`, truthiness, `typeof X !== 'undefined'`,
   `typeof X === 'function'` and `typeof X === 'object'`.
+- A check keeps its meaning in the last expression of a sequence and in a call of the global `Boolean`:
+  `if ((c++, navigator.share))` and `if (Boolean(navigator.share))` protect `navigator.share(d)`.
+  Coverage instrumentation wraps tested operands in such sequences. In `(navigator.share, c)` the value is `c`.
 - Method checks match by name on any object: `if (list.toSorted) other.toSorted()` is protected,
   because methods are found by name.
 - Reading a bare global such as `if (structuredClone)` is still a finding: it throws in browsers that lack it.

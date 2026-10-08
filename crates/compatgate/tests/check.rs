@@ -461,3 +461,22 @@ fn a_check_guards_destructuring_from_a_global() {
 fn a_member_of_a_parent_interface_is_found_for_a_singleton() {
     assert_eq!(features("document.when('click');", "a.js"), ["api.EventTarget.when"]);
 }
+
+#[test]
+fn a_member_of_a_parent_interface_is_found_for_the_global_object() {
+    assert_eq!(
+        features("window.when('click');\nwhen('click');\n", "a.js"),
+        ["api.EventTarget.when", "api.EventTarget.when"]
+    );
+    assert!(features("window.addEventListener('a', f); addEventListener('a', f);", "a.js").is_empty());
+    assert!(features("if (typeof when === 'function') { when('click'); }", "a.js").is_empty());
+}
+
+#[test]
+fn destructuring_from_a_member_of_a_window_alias_is_a_member_use() {
+    assert_eq!(
+        features("const { share } = window.navigator;", "a.js"),
+        ["api.Navigator.share"]
+    );
+    assert!(features("if (navigator.share) { const { share } = window.navigator; }", "a.js").is_empty());
+}

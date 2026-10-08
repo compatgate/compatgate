@@ -13,21 +13,40 @@ use crate::position::{LineIndex, Position};
 use crate::support::{Gap, Verdict, evaluate};
 use crate::targets::Targets;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Kind {
-    Syntax,
-    Builtin,
-    Api,
+/// Declares a fieldless enum together with `ALL`, so the list cannot fall behind the variants.
+macro_rules! variants {
+    ($(#[$meta:meta])* pub enum $name:ident { $($(#[$vmeta:meta])* $variant:ident),+ $(,)? }) => {
+        $(#[$meta])*
+        pub enum $name {
+            $($(#[$vmeta])* $variant),+
+        }
+
+        impl $name {
+            /// Every variant.
+            pub const ALL: &'static [$name] = &[$($name::$variant),+];
+        }
+    };
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Confidence {
-    /// The detector knows the feature is used.
-    Exact,
-    /// The detector guesses from a name: a method call on an object of unknown type.
-    Heuristic,
-    /// Some targets support the feature only partially. A heuristic use stays `Heuristic` in this case.
-    Partial,
+variants! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum Kind {
+        Syntax,
+        Builtin,
+        Api,
+    }
+}
+
+variants! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum Confidence {
+        /// The detector knows the feature is used.
+        Exact,
+        /// The detector guesses from a name: a method call on an object of unknown type.
+        Heuristic,
+        /// Some targets support the feature only partially. A heuristic use stays `Heuristic` in this case.
+        Partial,
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
