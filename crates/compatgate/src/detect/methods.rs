@@ -4,23 +4,20 @@
 //! - a name that the file declares as a member (`class Q { union() {} }`) is skipped;
 //! - a call on an imported module (`_.union()` of lodash, `R.take()` of Ramda) is skipped.
 
-use std::collections::HashMap;
+use std::collections::HashSet;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{AssignmentTarget, Expression, IdentifierReference, PropertyKey};
 use oxc_semantic::{Semantic, SymbolFlags};
 
-use super::Use;
+use super::{Origin, Use};
 use crate::check::{Confidence, Kind};
-use crate::data::{FeatureId, instance_members};
-use crate::support::{Verdict, evaluate};
+use crate::data::{FeatureId, instance_member_names, instance_members};
+use crate::support::{SupportTable, TargetSupport};
 use crate::targets::Targets;
 
-/// The feature of a finding and the other members with the same name.
-type Decision = Option<(FeatureId, Vec<FeatureId>)>;
-
-pub fn detect<'a>(semantic: &Semantic<'a>, targets: &Targets) -> Vec<Use> {
-    let mut decisions = declared_names(semantic);
+pub fn detect<'t>(semantic: &Semantic<'_>, targets: &'t Targets) -> Vec<Use<'t>> {
+    let mut declared = None;
     let mut uses = Vec::new();
     for node in semantic.nodes().iter() {
         let AstKind::CallExpression(call) = node.kind() else {
@@ -30,31 +27,89 @@ pub fn detect<'a>(semantic: &Semantic<'a>, targets: &Targets) -> Vec<Use> {
             continue;
         };
         let name = member.property.name.as_str();
-        // Most names are skipped by the decision, and the decision is cached, so it goes before the receiver.
-        let decision = decisions.entry(name).or_insert_with(|| decide(name, targets));
-        let Some((feature, alternatives)) = decision else {
+        // Most names have a supported member, so the decision goes first. It is a lookup in the targets.
+        let Some(decision) = targets.method(name) else {
             continue;
         };
+        // Few files call a candidate at all, so the declared names wait for the first candidate.
+        if declared.get_or_insert_with(|| declared_names(semantic)).contains(name) {
+            continue;
+        }
         if receiver_is_module(semantic, &member.object) {
             continue;
         }
         uses.push(Use {
-            alternatives: alternatives.clone(),
+            alternatives: decision.alternatives,
             confidence: Confidence::Heuristic,
-            keys: vec![format!("#{name}")],
-            ..Use::new(*feature, Kind::Builtin, member.property.span, node.id())
+            ..Use::new(
+                decision.feature,
+                Kind::Builtin,
+                Origin::Member,
+                member.property.span,
+                node.id(),
+            )
         });
     }
     uses
 }
 
+/// The finding for a call of a method name: the feature it names and the other members with the name.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Decision<'t> {
+    pub feature: FeatureId,
+    pub alternatives: &'t [FeatureId],
+}
+
+/// The decisions for every method name under one set of targets. Only names with a finding have an
+/// entry: a name that a supported member of any type also has (`.map()` of arrays) has none.
+#[derive(Clone, PartialEq, Eq)]
+pub struct MethodTable {
+    /// By name: the feature of the finding and the range of its alternatives in `alternatives`.
+    names: Box<[(&'static str, FeatureId, u32, u32)]>,
+    alternatives: Box<[FeatureId]>,
+}
+
+impl MethodTable {
+    pub fn new(table: &SupportTable) -> Self {
+        let mut names = Vec::new();
+        let mut alternatives = Vec::new();
+        for name in instance_member_names() {
+            let Some((feature, others)) = decide(name, table) else {
+                continue;
+            };
+            let start = alternatives.len() as u32;
+            alternatives.extend(others);
+            names.push((name, feature, start, alternatives.len() as u32));
+        }
+        Self {
+            names: names.into(),
+            alternatives: alternatives.into(),
+        }
+    }
+
+    pub fn get(&self, name: &str) -> Option<Decision<'_>> {
+        let index = self.names.binary_search_by(|&(known, ..)| known.cmp(name)).ok()?;
+        let (_, feature, start, end) = self.names[index];
+        Some(Decision {
+            feature,
+            alternatives: &self.alternatives[start as usize..end as usize],
+        })
+    }
+}
+
+impl std::fmt::Debug for MethodTable {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(formatter, "MethodTable {{ {} names with a finding }}", self.names.len())
+    }
+}
+
 /// Member names that the file declares: methods, fields and accessors of classes, keys of object literals,
 /// and targets of `obj.name = …` and `obj['name'] = …`. A call of such a name most likely calls the code
-/// of the file, so each name gets the decision to skip it. Ambient class members (`abstract take()`,
-/// `declare take`) count on purpose: they declare a member of the file's own class and do not augment
-/// builtins. Members of interfaces do not count.
-fn declared_names<'a>(semantic: &Semantic<'a>) -> HashMap<&'a str, Decision> {
-    let mut names = HashMap::new();
+/// of the file, so the detector skips it. Ambient class members (`abstract take()`, `declare take`) count
+/// on purpose: they declare a member of the file's own class and do not augment builtins. Members of
+/// interfaces do not count.
+fn declared_names<'a>(semantic: &Semantic<'a>) -> HashSet<&'a str> {
+    let mut names = HashSet::new();
     for node in semantic.nodes().iter() {
         let name = match node.kind() {
             AstKind::MethodDefinition(method) => key_name(&method.key),
@@ -72,7 +127,7 @@ fn declared_names<'a>(semantic: &Semantic<'a>) -> HashMap<&'a str, Decision> {
             _ => None,
         };
         if let Some(name) = name {
-            names.insert(name, None);
+            names.insert(name);
         }
     }
     names
@@ -87,33 +142,38 @@ fn key_name<'a>(key: &PropertyKey<'a>) -> Option<&'a str> {
     }
 }
 
-fn decide(name: &str, targets: &Targets) -> Decision {
+fn decide(name: &str, table: &SupportTable) -> Option<(FeatureId, Vec<FeatureId>)> {
     let mut candidates = Vec::new();
     // `instance_members` yields the members in the order of their ids: the data is sorted by name
     // and feature index, and the features are sorted by id. Tests in `data` check both orders.
     for (feature, reportable) in instance_members(name) {
-        let verdict = evaluate(feature, targets);
-        if verdict == Verdict::Supported {
+        let support = table.get(feature);
+        if support.is_supported() {
             return None;
         }
         if reportable {
-            candidates.push((feature, verdict));
+            candidates.push((feature, support));
         }
     }
-    choose(candidates)
+    choose(&candidates)
 }
 
-/// The call may be any of the candidates, so the finding names the one with the worst verdict:
-/// `Unsupported` before `Partial`. Ties go to the first candidate. The candidates come in the order of their ids.
-fn choose(candidates: Vec<(FeatureId, Verdict)>) -> Decision {
-    let severity = |verdict: &Verdict| match verdict {
-        Verdict::Supported => 0,
-        Verdict::Partial(_) => 1,
-        Verdict::Unsupported(_) => 2,
+/// The call may be any of the candidates, so the finding names the one with the worst support:
+/// missing in some target before partial. Ties go to the first candidate. The candidates come in the
+/// order of their ids.
+fn choose(candidates: &[(FeatureId, TargetSupport)]) -> Option<(FeatureId, Vec<FeatureId>)> {
+    let severity = |support: &TargetSupport| {
+        if !support.missing.is_empty() {
+            2
+        } else if !support.partial.is_empty() {
+            1
+        } else {
+            0
+        }
     };
     let mut worst = 0;
-    for (index, (_, verdict)) in candidates.iter().enumerate() {
-        if severity(verdict) > severity(&candidates[worst].1) {
+    for (index, (_, support)) in candidates.iter().enumerate() {
+        if severity(support) > severity(&candidates[worst].1) {
             worst = index;
         }
     }
@@ -214,35 +274,61 @@ fn holds_loader(init: &Expression<'_>) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::data::Browser;
+    use crate::support::BrowserSet;
 
     fn feature(id: &str) -> FeatureId {
         FeatureId::find(id).unwrap()
     }
 
     #[test]
-    fn the_finding_names_the_candidate_with_the_worst_verdict() {
+    fn the_finding_names_the_candidate_with_the_worst_support() {
         // In BCD 8.1.4 no method that a finding may name has partial support in any browser,
-        // so no name has candidates with different verdicts. The verdicts here are built by hand.
+        // so no name has candidates with different support. The support here is built by hand.
         let first = feature("javascript.builtins.Array.toSorted");
         let second = feature("javascript.builtins.TypedArray.toSorted");
-        let partial = || Verdict::Partial(Vec::new());
-        let unsupported = || Verdict::Unsupported(Vec::new());
+        let firefox: BrowserSet = [Browser::Firefox].into_iter().collect();
+        let partial = TargetSupport {
+            missing: BrowserSet::EMPTY,
+            partial: firefox,
+        };
+        let unsupported = TargetSupport {
+            missing: firefox,
+            partial: BrowserSet::EMPTY,
+        };
         assert_eq!(
-            choose(vec![(first, partial()), (second, unsupported())]),
+            choose(&[(first, partial), (second, unsupported)]),
             Some((second, vec![first]))
         );
         assert_eq!(
-            choose(vec![(first, unsupported()), (second, partial())]),
+            choose(&[(first, unsupported), (second, partial)]),
             Some((first, vec![second]))
         );
         assert_eq!(
-            choose(vec![(first, unsupported()), (second, unsupported())]),
+            choose(&[(first, unsupported), (second, unsupported)]),
             Some((first, vec![second]))
         );
         assert_eq!(
-            choose(vec![(first, partial()), (second, partial())]),
+            choose(&[(first, partial), (second, partial)]),
             Some((first, vec![second]))
         );
-        assert_eq!(choose(Vec::new()), None);
+        assert_eq!(choose(&[]), None);
+    }
+
+    #[test]
+    fn the_table_keeps_only_names_with_a_finding() {
+        let targets = Targets::resolve("Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115").unwrap();
+        let to_sorted = targets.method("toSorted").unwrap();
+        assert_eq!(to_sorted.feature.as_str(), "javascript.builtins.Array.toSorted");
+        assert!(
+            to_sorted
+                .alternatives
+                .iter()
+                .any(|alternative| alternative.as_str() == "javascript.builtins.TypedArray.toSorted"),
+            "{to_sorted:?}"
+        );
+        assert_eq!(targets.method("map"), None);
+        assert_eq!(targets.method("noSuchMember"), None);
+        assert_eq!(Targets::resolve("Chrome >= 120").unwrap().method("toSorted"), None);
     }
 }

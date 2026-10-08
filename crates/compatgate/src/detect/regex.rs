@@ -15,27 +15,28 @@ use oxc_semantic::{NodeId, Scoping, Semantic};
 use oxc_span::Span;
 
 use super::syntax::has_code_point_escape;
-use super::{Use, WINDOW_ALIASES};
+use super::{Origin, Use, WINDOW_ALIASES};
 use crate::check::Kind;
 use crate::data::FeatureId;
+use crate::targets::Targets;
 
-const LOOKBEHIND: &str = "javascript.regular_expressions.lookbehind_assertion";
-const MODIFIERS: &str = "javascript.regular_expressions.modifier";
-const NAMED_REFERENCE: &str = "javascript.regular_expressions.named_backreference";
-const NAMED_GROUP: &str = "javascript.regular_expressions.named_capturing_group";
-const DUPLICATE_NAMED_GROUPS: &str =
-    "javascript.regular_expressions.named_capturing_group.duplicate_named_capturing_groups";
-const PROPERTY_ESCAPE: &str = "javascript.regular_expressions.unicode_character_class_escape";
-const CODE_POINT_ESCAPE: &str = "javascript.regular_expressions.character_escape.unicode";
-const DOT_ALL: &str = "javascript.builtins.RegExp.dotAll";
-const HAS_INDICES: &str = "javascript.builtins.RegExp.hasIndices";
-const UNICODE_SETS: &str = "javascript.builtins.RegExp.unicodeSets";
-const STICKY: &str = "javascript.builtins.RegExp.sticky";
-const UNICODE: &str = "javascript.builtins.RegExp.unicode";
+const LOOKBEHIND: FeatureId = FeatureId::known("javascript.regular_expressions.lookbehind_assertion");
+const MODIFIERS: FeatureId = FeatureId::known("javascript.regular_expressions.modifier");
+const NAMED_REFERENCE: FeatureId = FeatureId::known("javascript.regular_expressions.named_backreference");
+const NAMED_GROUP: FeatureId = FeatureId::known("javascript.regular_expressions.named_capturing_group");
+const DUPLICATE_NAMED_GROUPS: FeatureId =
+    FeatureId::known("javascript.regular_expressions.named_capturing_group.duplicate_named_capturing_groups");
+const PROPERTY_ESCAPE: FeatureId = FeatureId::known("javascript.regular_expressions.unicode_character_class_escape");
+const CODE_POINT_ESCAPE: FeatureId = FeatureId::known("javascript.regular_expressions.character_escape.unicode");
+const DOT_ALL: FeatureId = FeatureId::known("javascript.builtins.RegExp.dotAll");
+const HAS_INDICES: FeatureId = FeatureId::known("javascript.builtins.RegExp.hasIndices");
+const UNICODE_SETS: FeatureId = FeatureId::known("javascript.builtins.RegExp.unicodeSets");
+const STICKY: FeatureId = FeatureId::known("javascript.builtins.RegExp.sticky");
+const UNICODE: FeatureId = FeatureId::known("javascript.builtins.RegExp.unicode");
 
 // Read by the completeness test of this detector.
 #[allow(dead_code)]
-pub const EMITTED: &[&str] = &[
+pub const EMITTED: &[FeatureId] = &[
     LOOKBEHIND,
     MODIFIERS,
     NAMED_REFERENCE,
@@ -81,13 +82,13 @@ impl Flags {
     }
 }
 
-pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator) -> Vec<Use> {
+pub fn detect<'a, 't>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets: &Targets) -> Vec<Use<'t>> {
     let scoping = semantic.scoping();
     let mut uses = Vec::new();
     for node in semantic.nodes().iter() {
         let (callee, arguments, span) = match node.kind() {
             AstKind::RegExpLiteral(literal) => {
-                report_literal(&mut uses, literal, node.id());
+                report_literal(&mut uses, targets, literal, node.id());
                 continue;
             }
             AstKind::NewExpression(expression) => (&expression.callee, &expression.arguments, expression.span),
@@ -118,7 +119,7 @@ pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator) -> Vec<Use>
             // `RegExp(/a/u)` keeps the flags, and the literal reports itself. New flags replace the
             // flags of the literal, so its source is parsed again with them.
             Some(Argument::RegExpLiteral(literal)) if flags_text.is_some() => {
-                report_literal(&mut known, literal, node.id());
+                report_literal(&mut known, targets, literal, node.id());
                 literal.regex.pattern.text.as_str()
             }
             Some(argument) => match literal_text(argument, scoping) {
@@ -137,14 +138,14 @@ pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator) -> Vec<Use>
             start: 0,
         };
         let mut found = Vec::new();
-        report(&mut found, Some(&pattern), source, flags, span, node.id());
+        report(&mut found, targets, Some(&pattern), source, flags, span, node.id());
         // A pattern in a string is parsed at run time, so a `try` can catch it. A literal is parsed with the file.
         uses.extend(
             found
                 .into_iter()
                 .filter(|usage| !known.iter().any(|old: &Use| old.feature == usage.feature))
                 .map(|usage| Use {
-                    catchable: true,
+                    origin: Origin::Call,
                     ..usage
                 }),
         );
@@ -152,7 +153,7 @@ pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator) -> Vec<Use>
     uses
 }
 
-fn report_literal(uses: &mut Vec<Use>, literal: &RegExpLiteral<'_>, node: NodeId) {
+fn report_literal(uses: &mut Vec<Use<'_>>, targets: &Targets, literal: &RegExpLiteral<'_>, node: NodeId) {
     // oxc parsed the pattern with spans in the file: the pattern starts after the `/`.
     let source = Source {
         text: literal.regex.pattern.text.as_str(),
@@ -160,6 +161,7 @@ fn report_literal(uses: &mut Vec<Use>, literal: &RegExpLiteral<'_>, node: NodeId
     };
     report(
         uses,
+        targets,
         literal.regex.pattern.pattern.as_deref(),
         source,
         Flags::from_literal(literal.regex.flags),
@@ -228,18 +230,17 @@ struct Source<'a> {
 }
 
 fn report<'a>(
-    uses: &mut Vec<Use>,
+    uses: &mut Vec<Use<'_>>,
+    targets: &Targets,
     pattern: Option<&Pattern<'a>>,
     source: Source<'a>,
     flags: Flags,
     span: Span,
     node: NodeId,
 ) {
-    let mut add = |key: &'static str| {
-        let feature = FeatureId::find(key);
-        debug_assert!(feature.is_some(), "{key} is not in the BCD data");
-        if let Some(feature) = feature {
-            uses.push(Use::new(feature, Kind::Syntax, span, node));
+    let mut add = |feature: FeatureId| {
+        if !targets.is_supported(feature) {
+            uses.push(Use::new(feature, Kind::Syntax, Origin::Parse, span, node));
         }
     };
     let flag_keys = [
@@ -372,17 +373,17 @@ mod tests {
     use super::*;
     use crate::check::with_semantic;
 
-    fn detected(source: &str) -> Vec<&'static str> {
+    fn detected(source: &str) -> Vec<FeatureId> {
         with_semantic(source, "a.js", |semantic, allocator| {
-            detect(semantic, allocator)
+            detect(semantic, allocator, &Targets::missing_everything())
                 .into_iter()
-                .map(|usage| usage.feature.as_str())
+                .map(|usage| usage.feature)
                 .collect()
         })
         .unwrap()
     }
 
-    const SAMPLES: &[(&str, &str)] = &[
+    const SAMPLES: &[(FeatureId, &str)] = &[
         (LOOKBEHIND, r"/(?<=\$)\d+/;"),
         (MODIFIERS, "/(?i:a)b/;"),
         (NAMED_REFERENCE, r"/(?<x>a)\k<x>/;"),
@@ -398,12 +399,28 @@ mod tests {
     ];
 
     #[test]
-    fn every_emitted_key_exists_in_bcd_and_has_a_sample_that_triggers_it() {
+    fn every_emitted_key_has_a_sample_that_triggers_it() {
         for key in EMITTED {
-            assert!(FeatureId::find(key).is_some(), "{key} is not in the BCD data");
             let (_, source) = SAMPLES.iter().find(|(sample, _)| sample == key).unwrap();
-            assert!(detected(source).contains(key), "{key} not detected in {source}");
+            assert!(
+                detected(source).contains(key),
+                "{} not detected in {source}",
+                key.as_str()
+            );
         }
+    }
+
+    #[test]
+    fn supported_regex_syntax_is_no_use() {
+        with_semantic(
+            r"/(?<=a)b/u; new RegExp('(?<x>a)', 's');",
+            "a.js",
+            |semantic, allocator| {
+                let targets = Targets::resolve("Chrome >= 97").unwrap();
+                assert!(detect(semantic, allocator, &targets).is_empty());
+            },
+        )
+        .unwrap();
     }
 
     #[test]
@@ -425,7 +442,7 @@ mod tests {
         let missing: Vec<&str> = crate::data::feature_ids()
             .filter(|key| key.starts_with("javascript.regular_expressions."))
             .filter(|key| {
-                !EMITTED.contains(key)
+                !EMITTED.iter().any(|emitted| emitted.as_str() == *key)
                     && super::super::syntax::untracked_reason(key).is_none()
                     && !super::super::syntax::ancient(key)
             })
@@ -465,7 +482,7 @@ mod tests {
         assert_eq!(detected("RegExp(/(?<=a)/, 'g');"), [LOOKBEHIND]);
         // Without `u`, the literal `\u{61}` is `u` repeated 61 times; the new flag makes it an escape.
         let mut found = detected(r"RegExp(/\u{61}/, 'u');");
-        found.sort_unstable();
+        found.sort_unstable_by_key(|feature| feature.as_str());
         assert_eq!(found, [UNICODE, CODE_POINT_ESCAPE]);
     }
 
@@ -553,9 +570,9 @@ mod tests {
     #[test]
     fn a_constructor_use_points_at_the_call() {
         with_semantic("new RegExp('(?<=a)');", "a.js", |semantic, allocator| {
-            let uses = detect(semantic, allocator);
+            let uses = detect(semantic, allocator, &Targets::missing_everything());
             assert_eq!(uses.len(), 1);
-            assert!(uses[0].catchable);
+            assert_eq!(uses[0].origin, Origin::Call);
             assert!(matches!(semantic.nodes().kind(uses[0].node), AstKind::NewExpression(_)));
         })
         .unwrap();

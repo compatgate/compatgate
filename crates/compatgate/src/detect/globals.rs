@@ -13,14 +13,18 @@ use oxc_ast::ast::{
 use oxc_semantic::{AstNodes, NodeId, Semantic};
 use oxc_span::{GetSpan, Span};
 
-use super::{Use, WINDOW_ALIASES};
+use super::{Origin, Use, WINDOW_ALIASES};
 use crate::check::Kind;
 use crate::data::{FeatureId, interface_parents, singleton_interface};
+use crate::targets::Targets;
 
-pub fn detect(semantic: &Semantic<'_>) -> Vec<Use> {
+pub fn detect<'t>(semantic: &Semantic<'_>, targets: &Targets) -> Vec<Use<'t>> {
     let scoping = semantic.scoping();
     let nodes = semantic.nodes();
-    let mut uses = Vec::new();
+    let mut uses = Uses {
+        uses: Vec::new(),
+        targets,
+    };
     let mut globals = GlobalFeatures::default();
     for (name, references) in scoping.root_unresolved_references().iter() {
         let name = name.as_str();
@@ -50,38 +54,47 @@ pub fn detect(semantic: &Semantic<'_>) -> Vec<Use> {
                         if is_written_or_deleted(nodes, &second) {
                             continue;
                         }
-                        if let Some(usage) = member_use(&first.property, &second) {
-                            uses.push(usage);
+                        if let Some(feature) = member_feature_of(&first.property, &second.property) {
+                            uses.add(feature, Origin::Member, second.span, second.id);
                             continue;
                         }
                     } else {
                         // `const { share } = window.navigator` resolves like `= navigator`.
-                        let found = uses.len();
+                        let mut resolved = false;
                         for member in destructured(nodes, chain_or_self(nodes, first.id)) {
-                            uses.extend(member_use(&first.property, &member));
+                            if let Some(feature) = member_feature_of(&first.property, &member.property) {
+                                uses.add(feature, Origin::Member, member.span, member.id);
+                                resolved = true;
+                            }
                         }
-                        if uses.len() > found {
+                        if resolved {
                             continue;
                         }
                     }
-                    uses.extend(global_member_use(&mut globals, &first, is_new_callee(nodes, &first)));
+                    if let Some(feature) = globals.get(&first.property, is_new_callee(nodes, &first)) {
+                        uses.add(feature, Origin::Member, first.span, first.id);
+                    }
                     continue;
                 }
-                if let Some(usage) = member_use(name, &first) {
-                    uses.push(usage);
+                if let Some(feature) = member_feature_of(name, &first.property) {
+                    uses.add(feature, Origin::Member, first.span, first.id);
                     continue;
                 }
             } else {
                 // `const { groupBy } = Object` reads `Object.groupBy`, as the member access does.
-                let found = uses.len();
+                let mut resolved = false;
                 for member in destructured(nodes, node_id) {
-                    uses.extend(if is_alias {
-                        global_member_use(&mut globals, &member, false)
+                    let feature = if is_alias {
+                        globals.get(&member.property, false)
                     } else {
-                        member_use(name, &member)
-                    });
+                        member_feature_of(name, &member.property)
+                    };
+                    if let Some(feature) = feature {
+                        uses.add(feature, Origin::Member, member.span, member.id);
+                        resolved = true;
+                    }
                 }
-                if uses.len() > found {
+                if resolved {
                     continue;
                 }
             }
@@ -96,13 +109,26 @@ pub fn detect(semantic: &Semantic<'_>) -> Vec<Use> {
             }
             let is_new = matches!(parent, AstKind::NewExpression(e) if e.callee.span() == outer_span);
             if let Some(feature) = globals.get(name, is_new) {
-                uses.push(
-                    Use::new(feature, kind_of(feature), identifier.span, node_id).with_keys(vec![name.to_string()]),
-                );
+                uses.add(feature, Origin::Global, identifier.span, node_id);
             }
         }
     }
-    uses
+    uses.uses
+}
+
+/// The uses of a file. A resolved feature that the targets support is no use, but it still stops
+/// the resolution: `Object.groupBy` is not a use of `Object` when the targets support `groupBy`.
+struct Uses<'t, 'r> {
+    uses: Vec<Use<'t>>,
+    targets: &'r Targets,
+}
+
+impl Uses<'_, '_> {
+    fn add(&mut self, feature: FeatureId, origin: Origin, span: Span, node: NodeId) {
+        if !self.targets.is_supported(feature) {
+            self.uses.push(Use::new(feature, kind_of(feature), origin, span, node));
+        }
+    }
 }
 
 struct Member {
@@ -232,19 +258,13 @@ fn target_members(target: &AssignmentTarget<'_>) -> Vec<Member> {
         .collect()
 }
 
-fn member_use(object: &str, member: &Member) -> Option<Use> {
-    let property = member.property.as_str();
-    let feature = match singleton_interface(object) {
+/// The feature of `object.property`: a member of the interface of a singleton such as `navigator`,
+/// or a static member such as `Object.groupBy`.
+fn member_feature_of(object: &str, property: &str) -> Option<FeatureId> {
+    match singleton_interface(object) {
         Some(interface) => interface_member(interface, property),
         None => member_feature(object, property),
-    }?;
-    Some(Use::new(feature, kind_of(feature), member.span, member.id).with_keys(vec![format!("{object}.{property}")]))
-}
-
-/// A member of the global object, `window.structuredClone`. Code checks it as the bare global.
-fn global_member_use(globals: &mut GlobalFeatures, member: &Member, is_new: bool) -> Option<Use> {
-    let feature = globals.get(&member.property, is_new)?;
-    Some(Use::new(feature, kind_of(feature), member.span, member.id).with_keys(vec![member.property.clone()]))
+    }
 }
 
 /// `api.{Interface}.{member}`, or the entry of the nearest parent interface: `document.addEventListener`
@@ -404,9 +424,9 @@ mod tests {
 
     fn detected_in(source: &str, filename: &str) -> Vec<(&'static str, Vec<String>)> {
         with_semantic(source, filename, |semantic, _| {
-            detect(semantic)
+            detect(semantic, &Targets::missing_everything())
                 .into_iter()
-                .map(|usage| (usage.feature.as_str(), usage.keys))
+                .map(|usage| (usage.feature.as_str(), super::super::guards::use_keys(semantic, &usage)))
                 .collect()
         })
         .unwrap()
@@ -414,6 +434,31 @@ mod tests {
 
     fn features(source: &str) -> Vec<&'static str> {
         detected(source).into_iter().map(|(feature, _)| feature).collect()
+    }
+
+    #[test]
+    fn a_global_that_the_targets_support_is_no_use() {
+        let source = "Object.groupBy(a, f); structuredClone(x); const { share } = window.navigator;";
+        let found = |query: &str| {
+            with_semantic(source, "a.js", |semantic, _| {
+                detect(semantic, &Targets::resolve(query).unwrap())
+                    .into_iter()
+                    .map(|usage| (usage.feature.as_str(), usage.origin))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap()
+        };
+        assert!(found("Chrome >= 128").is_empty());
+        let mut old = found("Chrome >= 80");
+        old.sort_by_key(|&(feature, _)| feature);
+        assert_eq!(
+            old,
+            [
+                ("api.Navigator.share", Origin::Member),
+                ("api.structuredClone", Origin::Global),
+                ("javascript.builtins.Object.groupBy", Origin::Member),
+            ]
+        );
     }
 
     #[test]
@@ -540,7 +585,7 @@ mod tests {
     #[test]
     fn a_constructor_through_a_window_alias_is_an_api_use() {
         let uses = with_semantic("new window.ResizeObserver(cb);", "a.js", |semantic, _| {
-            detect(semantic)
+            detect(semantic, &Targets::missing_everything())
                 .into_iter()
                 .map(|usage| (usage.feature.as_str(), usage.kind))
                 .collect::<Vec<_>>()
@@ -628,7 +673,7 @@ mod tests {
     fn the_node_of_a_destructured_member_is_the_property() {
         let source = "const { userActivation } = navigator;";
         let nodes = with_semantic(source, "a.js", |semantic, _| {
-            detect(semantic)
+            detect(semantic, &Targets::missing_everything())
                 .into_iter()
                 .map(|usage| {
                     let kind = semantic.nodes().kind(usage.node);

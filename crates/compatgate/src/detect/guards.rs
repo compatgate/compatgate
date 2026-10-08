@@ -21,7 +21,7 @@ use oxc_ast::ast::{
 use oxc_semantic::{AstNodes, NodeId, Semantic};
 use oxc_span::{GetSpan, Span};
 
-use super::{Use, WINDOW_ALIASES};
+use super::{Origin, Use, WINDOW_ALIASES};
 
 /// Finds the checks around uses. One instance serves all uses of a file, so the keys of early exits
 /// in a statement list and the keys of `&&` and `||` chains are collected once, not once per use.
@@ -37,6 +37,18 @@ pub struct Guards<'s, 'a> {
     chains: Vec<HashMap<String, Vec<usize>>>,
     /// For each logical expression: whether `undefined` as its value throws, as in `(a || X)(y)`.
     throwing_logicals: HashMap<NodeId, bool>,
+}
+
+/// What the current checks need to know about a use.
+// TODO(task 3): the model reads `Use::origin` and builds the key of a use only when a check needs it.
+struct Probe {
+    span: Span,
+    node: NodeId,
+    /// Names under which code can test for the feature: `Intl.Segmenter`, `structuredClone`,
+    /// `#toSorted` for a method of any object. Empty for syntax, which code cannot test for.
+    keys: Vec<String>,
+    /// The use fails at run time, so a `try` or an optional call can protect it. Parse-time syntax cannot be protected.
+    catchable: bool,
 }
 
 enum TestKeys {
@@ -60,7 +72,13 @@ impl<'s, 'a> Guards<'s, 'a> {
         }
     }
 
-    pub fn is_guarded(&mut self, usage: &Use) -> bool {
+    pub fn is_guarded(&mut self, usage: &Use<'_>) -> bool {
+        let usage = &Probe {
+            span: usage.span,
+            node: usage.node,
+            keys: use_keys(self.semantic, usage),
+            catchable: usage.origin != Origin::Parse,
+        };
         let detectable = !usage.keys.is_empty();
         // Nothing can check such a use, and the walk below costs a pass over its ancestors.
         if !detectable && !usage.catchable {
@@ -152,7 +170,7 @@ impl<'s, 'a> Guards<'s, 'a> {
 
     fn branch(
         &mut self,
-        usage: &Use,
+        usage: &Probe,
         tested: bool,
         test: &'a Expression<'a>,
         consequent: Span,
@@ -170,7 +188,7 @@ impl<'s, 'a> Guards<'s, 'a> {
         alternate.is_some_and(|alternate| within(alternate, usage.span)) && self.checks(test, false, usage)
     }
 
-    fn logical(&mut self, usage: &Use, tested: bool, expression: &'a LogicalExpression<'a>) -> bool {
+    fn logical(&mut self, usage: &Probe, tested: bool, expression: &'a LogicalExpression<'a>) -> bool {
         if usage.keys.is_empty() {
             return false;
         }
@@ -188,7 +206,7 @@ impl<'s, 'a> Guards<'s, 'a> {
     }
 
     /// Whether `test` checks a key of `usage` when the value of `test` is `value`.
-    fn checks(&mut self, test: &'a Expression<'a>, value: bool, usage: &Use) -> bool {
+    fn checks(&mut self, test: &'a Expression<'a>, value: bool, usage: &Probe) -> bool {
         let (test, value) = without_not(self.semantic, test, value);
         let key = (test.node_id(), value);
         if !self.tests.contains_key(&key) {
@@ -331,7 +349,7 @@ impl<'s, 'a> Guards<'s, 'a> {
     }
 
     /// `if (!X) return;` before the use, in the same statement list.
-    fn after_early_exit(&mut self, list: NodeId, statements: &[Statement<'_>], usage: &Use) -> bool {
+    fn after_early_exit(&mut self, list: NodeId, statements: &[Statement<'_>], usage: &Probe) -> bool {
         count!(guards);
         let position = statements.partition_point(|statement| statement.span().end <= usage.span.start);
         if !statements
@@ -535,7 +553,7 @@ fn throws_on_undefined(nodes: &AstNodes<'_>, parent: NodeId, span: Span) -> bool
 /// The call whose callee is the use, or the use itself when it is a call: `(optional, callee is a member)`.
 /// The callee may wrap the use: `(0, window.structuredClone)(x)`, `(window.structuredClone as F)(x)`
 /// and `(window?.structuredClone)(x)`.
-fn enclosing_call(nodes: &AstNodes<'_>, usage: &Use) -> Option<(bool, bool)> {
+fn enclosing_call(nodes: &AstNodes<'_>, usage: &Probe) -> Option<(bool, bool)> {
     let describe = |callee: &Expression<'_>, optional: bool| (optional, as_member(callee).is_some());
     match nodes.kind(usage.node) {
         AstKind::CallExpression(call) => return Some(describe(&call.callee, call.optional)),
@@ -587,7 +605,7 @@ fn exits(statement: &Statement<'_>) -> bool {
     }
 }
 
-fn matches(usage: &Use, keys: &[String]) -> bool {
+fn matches(usage: &Probe, keys: &[String]) -> bool {
     usage.keys.iter().any(|key| keys.contains(key))
 }
 
@@ -753,6 +771,82 @@ fn join(object: &str, property: &str) -> String {
     } else {
         format!("{object}.{property}")
     }
+}
+
+/// The names under which code can check the feature of `usage`: `Intl.Segmenter`, `structuredClone`,
+/// `#toSorted` for a method of any object. Empty for a use that code cannot check: syntax, and a pattern
+/// that `new RegExp` parses. The keys follow the node of the use, so only uses that reach the guards
+/// pay for the strings.
+// TODO(task 3): `path.rs` builds the key of a use and of a check the same way; this function goes then.
+pub(crate) fn use_keys(semantic: &Semantic<'_>, usage: &Use<'_>) -> Vec<String> {
+    let nodes = semantic.nodes();
+    let key = match (usage.origin, nodes.kind(usage.node)) {
+        (Origin::Parse | Origin::Call, _) => None,
+        (Origin::Global, AstKind::IdentifierReference(identifier)) => Some(identifier.name.as_str().to_string()),
+        // The methods detector points at the call: `a.toSorted()`.
+        (Origin::Member, AstKind::CallExpression(call)) => match call.callee.get_inner_expression() {
+            Expression::StaticMemberExpression(member) => Some(format!("#{}", member.property.name)),
+            _ => None,
+        },
+        (Origin::Member, AstKind::StaticMemberExpression(member)) => {
+            member_key(&member.object, member.property.name.as_str())
+        }
+        (Origin::Member, AstKind::ComputedMemberExpression(member)) => match member.expression.get_inner_expression() {
+            Expression::StringLiteral(name) => member_key(&member.object, name.value.as_str()),
+            _ => None,
+        },
+        (Origin::Member, AstKind::BindingProperty(property)) => property
+            .key
+            .static_name()
+            .and_then(|name| destructured_key(nodes, usage.node, &name)),
+        (Origin::Member, AstKind::AssignmentTargetPropertyIdentifier(property)) => {
+            destructured_key(nodes, usage.node, property.binding.name.as_str())
+        }
+        (Origin::Member, AstKind::AssignmentTargetPropertyProperty(property)) => property
+            .name
+            .static_name()
+            .and_then(|name| destructured_key(nodes, usage.node, &name)),
+        _ => None,
+    };
+    key.into_iter().collect()
+}
+
+/// The key of `object.property` as the globals detector names it: `window.X` is `X`, and
+/// `window.navigator.share` is `navigator.share`.
+fn member_key(object: &Expression<'_>, property: &str) -> Option<String> {
+    match object.get_inner_expression() {
+        Expression::Identifier(object) if WINDOW_ALIASES.contains(&object.name.as_str()) => Some(property.to_string()),
+        Expression::Identifier(object) => Some(format!("{}.{property}", object.name)),
+        Expression::ChainExpression(chain) => match &chain.expression {
+            ChainElement::StaticMemberExpression(member) => Some(format!("{}.{property}", member.property.name)),
+            ChainElement::ComputedMemberExpression(member) => match member.expression.get_inner_expression() {
+                Expression::StringLiteral(name) => Some(format!("{}.{property}", name.value)),
+                _ => None,
+            },
+            _ => None,
+        },
+        Expression::StaticMemberExpression(member) => Some(format!("{}.{property}", member.property.name)),
+        Expression::ComputedMemberExpression(member) => match member.expression.get_inner_expression() {
+            Expression::StringLiteral(name) => Some(format!("{}.{property}", name.value)),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+/// The key of a property that a destructuring takes from its source: `const { a } = X`, `({ a } = X)`,
+/// `function f({ a } = X) {}`, `[{ a } = X] = list`.
+fn destructured_key(nodes: &AstNodes<'_>, property: NodeId, name: &str) -> Option<String> {
+    let pattern = nodes.parent_id(property);
+    let source = match nodes.parent_kind(pattern) {
+        AstKind::VariableDeclarator(declarator) => declarator.init.as_ref()?,
+        AstKind::FormalParameter(parameter) => parameter.initializer.as_deref()?,
+        AstKind::AssignmentPattern(assignment) => &assignment.right,
+        AstKind::AssignmentExpression(assignment) => &assignment.right,
+        AstKind::AssignmentTargetWithDefault(target) => &target.init,
+        _ => return None,
+    };
+    member_key(source, name)
 }
 
 fn within(outer: Span, inner: Span) -> bool {

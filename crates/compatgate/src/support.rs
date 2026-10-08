@@ -3,6 +3,118 @@
 use crate::data::{Browser, FeatureId, Support, UNSUPPORTED};
 use crate::targets::Targets;
 
+/// A set of browsers, a bit per `Browser::index`. Under one set of targets, the bits of a mask
+/// are target browsers only.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub struct BrowserSet(u16);
+
+impl BrowserSet {
+    pub const EMPTY: Self = Self(0);
+
+    pub fn contains(self, browser: Browser) -> bool {
+        self.0 & bit(browser) != 0
+    }
+
+    pub fn insert(&mut self, browser: Browser) {
+        self.0 |= bit(browser);
+    }
+
+    pub fn is_empty(self) -> bool {
+        self.0 == 0
+    }
+
+    /// Every browser of `self` is in `other`.
+    pub fn is_subset(self, other: Self) -> bool {
+        self.0 & !other.0 == 0
+    }
+}
+
+impl FromIterator<Browser> for BrowserSet {
+    fn from_iter<I: IntoIterator<Item = Browser>>(browsers: I) -> Self {
+        let mut set = Self::EMPTY;
+        for browser in browsers {
+            set.insert(browser);
+        }
+        set
+    }
+}
+
+fn bit(browser: Browser) -> u16 {
+    1 << browser.index()
+}
+
+/// Support of one feature under the targets.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct TargetSupport {
+    /// The absence mask: target browsers that have a gap in support from their lowest target version on.
+    pub missing: BrowserSet,
+    /// Target browsers with only partial support from their lowest target version on.
+    pub partial: BrowserSet,
+}
+
+impl TargetSupport {
+    /// Every target browser supports the feature fully.
+    pub fn is_supported(self) -> bool {
+        self.missing.is_empty() && self.partial.is_empty()
+    }
+}
+
+/// `TargetSupport` of every feature, indexed by feature. One set of targets builds it once:
+/// detectors ask it for every use, and the data lookup costs a binary search per target browser.
+#[derive(Clone, PartialEq, Eq)]
+pub struct SupportTable {
+    features: Box<[TargetSupport]>,
+}
+
+impl SupportTable {
+    pub fn new(minimum: &[(Browser, u32)]) -> Self {
+        let features = FeatureId::all()
+            .map(|feature| {
+                let mut support = TargetSupport::default();
+                for &(browser, target) in minimum {
+                    match feature.support_from(browser, target) {
+                        Support::Full => {}
+                        Support::Partial(_) => support.partial.insert(browser),
+                        Support::Missing => support.missing.insert(browser),
+                    }
+                }
+                support
+            })
+            .collect();
+        Self { features }
+    }
+
+    /// A table in which every feature is missing in every browser. Detector tests use it to see
+    /// every use that a detector finds.
+    #[cfg(test)]
+    pub fn missing_everything() -> Self {
+        let all = Browser::ALL.into_iter().collect();
+        Self {
+            features: FeatureId::all()
+                .map(|_| TargetSupport {
+                    missing: all,
+                    partial: BrowserSet::EMPTY,
+                })
+                .collect(),
+        }
+    }
+
+    pub fn get(&self, feature: FeatureId) -> TargetSupport {
+        self.features[feature.index()]
+    }
+}
+
+impl std::fmt::Debug for SupportTable {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let unsupported = self.features.iter().filter(|support| !support.is_supported()).count();
+        write!(
+            formatter,
+            "SupportTable {{ {unsupported} of {} not supported }}",
+            self.features.len()
+        )
+    }
+}
+
 /// A target browser that lacks full support.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Gap {
@@ -24,32 +136,37 @@ pub enum Verdict {
     Unsupported(Vec<Gap>),
 }
 
+/// The verdict from the table of the targets. Only a feature that is not supported reads the data again,
+/// for the versions and the note of each gap.
 pub fn evaluate(feature: FeatureId, targets: &Targets) -> Verdict {
-    let mut unsupported = Vec::new();
-    let mut partial = Vec::new();
-    for &(browser, target) in targets.minimum() {
-        let support = feature.support_from(browser, target);
-        if support == Support::Full {
-            continue;
-        }
-        let full = feature.full_support(browser);
-        let gap = Gap {
-            browser,
-            target,
-            since: (full != UNSUPPORTED).then_some(full),
-            note: None,
-        };
-        match support {
-            Support::Partial(note) => partial.push(Gap { note, ..gap }),
-            _ => unsupported.push(gap),
-        }
+    let support = targets.support(feature);
+    if support.is_supported() {
+        return Verdict::Supported;
     }
-    if !unsupported.is_empty() {
-        Verdict::Unsupported(unsupported)
-    } else if !partial.is_empty() {
-        Verdict::Partial(partial)
+    let partial = support.missing.is_empty();
+    let browsers = if partial { support.partial } else { support.missing };
+    let gaps = targets
+        .minimum()
+        .iter()
+        .filter(|&&(browser, _)| browsers.contains(browser))
+        .map(|&(browser, target)| {
+            let full = feature.full_support(browser);
+            let note = match feature.support_from(browser, target) {
+                Support::Partial(note) if partial => note,
+                _ => None,
+            };
+            Gap {
+                browser,
+                target,
+                since: (full != UNSUPPORTED).then_some(full),
+                note,
+            }
+        })
+        .collect();
+    if partial {
+        Verdict::Partial(gaps)
     } else {
-        Verdict::Supported
+        Verdict::Unsupported(gaps)
     }
 }
 
@@ -67,6 +184,64 @@ mod tests {
     }
 
     const QUERY: &str = "Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115";
+
+    /// The verdict straight from the data, without the table: the algorithm before the table existed.
+    fn reference(feature: FeatureId, targets: &Targets) -> Verdict {
+        let mut unsupported = Vec::new();
+        let mut partial = Vec::new();
+        for &(browser, target) in targets.minimum() {
+            let full = feature.full_support(browser);
+            let gap = Gap {
+                browser,
+                target,
+                since: (full != UNSUPPORTED).then_some(full),
+                note: None,
+            };
+            match feature.support_from(browser, target) {
+                Support::Full => {}
+                Support::Partial(note) => partial.push(Gap { note, ..gap }),
+                Support::Missing => unsupported.push(gap),
+            }
+        }
+        if !unsupported.is_empty() {
+            Verdict::Unsupported(unsupported)
+        } else if !partial.is_empty() {
+            Verdict::Partial(partial)
+        } else {
+            Verdict::Supported
+        }
+    }
+
+    #[test]
+    fn the_table_of_the_targets_matches_the_data_for_every_feature() {
+        for query in [
+            QUERY,
+            "defaults",
+            "Chrome >= 40, Safari >= 9, Firefox >= 30, Samsung >= 4",
+        ] {
+            let targets = targets(query);
+            for id in crate::data::feature_ids() {
+                let feature = feature(id);
+                let expected = reference(feature, &targets);
+                assert_eq!(evaluate(feature, &targets), expected, "{query}: {id}");
+                let (mut missing, mut partial) = (BrowserSet::EMPTY, BrowserSet::EMPTY);
+                for &(browser, target) in targets.minimum() {
+                    match feature.support_from(browser, target) {
+                        Support::Full => {}
+                        Support::Partial(_) => partial.insert(browser),
+                        Support::Missing => missing.insert(browser),
+                    }
+                }
+                let support = targets.support(feature);
+                assert_eq!((support.missing, support.partial), (missing, partial), "{query}: {id}");
+                assert_eq!(
+                    targets.is_supported(feature),
+                    expected == Verdict::Supported,
+                    "{query}: {id}"
+                );
+            }
+        }
+    }
 
     #[test]
     fn feature_missing_in_one_browser_is_unsupported() {

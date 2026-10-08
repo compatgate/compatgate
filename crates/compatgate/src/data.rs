@@ -91,6 +91,31 @@ impl Browser {
 pub struct FeatureId(u32);
 
 impl FeatureId {
+    /// Every feature, in the order of the ids.
+    pub fn all() -> impl Iterator<Item = Self> {
+        (0..FEATURES.len() as u32).map(Self)
+    }
+
+    /// The position of the feature in the order of the ids. Tables of one entry per feature use it.
+    pub fn index(self) -> usize {
+        self.0 as usize
+    }
+
+    /// The feature with an id that the code names, found at compile time: use it in a `const` item.
+    /// An id that the data lacks fails the build, so a detector never looks up a key at run time.
+    pub const fn known(id: &str) -> Self {
+        let (mut low, mut high) = (0, FEATURES.len());
+        while low < high {
+            let middle = low + (high - low) / 2;
+            match compare(FEATURES[middle].0, id) {
+                std::cmp::Ordering::Less => low = middle + 1,
+                std::cmp::Ordering::Greater => high = middle,
+                std::cmp::Ordering::Equal => return Self(middle as u32),
+            }
+        }
+        panic!("the feature is not in the BCD data");
+    }
+
     pub fn find(id: &str) -> Option<Self> {
         FEATURES
             .binary_search_by(|(key, _)| (*key).cmp(id))
@@ -109,8 +134,35 @@ impl FeatureId {
 
     /// Support in `target` and every later version of `browser`.
     pub fn support_from(self, browser: Browser, target: u32) -> Support {
-        let rows = browser_rows(RANGES, self.0, browser.index() as u8);
-        support_from(self.full_support(browser), rows, target)
+        let since = self.full_support(browser);
+        // Most features are fully supported in a target, and the ranges cost a binary search.
+        if since <= target {
+            return Support::Full;
+        }
+        support_from(since, browser_rows(RANGES, self.0, browser.index() as u8), target)
+    }
+}
+
+/// `Ord` of `str` for a `const fn`: byte by byte, then by length.
+const fn compare(left: &str, right: &str) -> std::cmp::Ordering {
+    let (left, right) = (left.as_bytes(), right.as_bytes());
+    let mut index = 0;
+    while index < left.len() && index < right.len() {
+        if left[index] != right[index] {
+            return if left[index] < right[index] {
+                std::cmp::Ordering::Less
+            } else {
+                std::cmp::Ordering::Greater
+            };
+        }
+        index += 1;
+    }
+    if left.len() < right.len() {
+        std::cmp::Ordering::Less
+    } else if left.len() > right.len() {
+        std::cmp::Ordering::Greater
+    } else {
+        std::cmp::Ordering::Equal
     }
 }
 
@@ -177,6 +229,15 @@ pub fn instance_members(name: &str) -> impl Iterator<Item = (FeatureId, bool)> {
         .iter()
         .take_while(move |&&(member, _, _)| member == name)
         .map(|&(_, feature, reportable)| (FeatureId(feature), reportable))
+}
+
+/// Every name of `INSTANCE_MEMBERS`, once, in order.
+pub fn instance_member_names() -> impl Iterator<Item = &'static str> {
+    INSTANCE_MEMBERS
+        .iter()
+        .enumerate()
+        .filter(|&(index, &(name, _, _))| index == 0 || INSTANCE_MEMBERS[index - 1].0 != name)
+        .map(|(_, &(name, _, _))| name)
 }
 
 /// The Web API interface of a global singleton, for example `Navigator` for `navigator`.
@@ -246,6 +307,18 @@ mod tests {
         assert_eq!(feature.as_str(), "api.structuredClone");
         assert_eq!(feature.full_support(Browser::Chrome), encode_version("98").unwrap());
         assert_eq!(FeatureId::find("api.DoesNotExist"), None);
+    }
+
+    #[test]
+    fn finds_a_known_feature_at_compile_time() {
+        const CLONE: FeatureId = FeatureId::known("api.structuredClone");
+        assert_eq!(Some(CLONE), FeatureId::find("api.structuredClone"));
+        for id in feature_ids() {
+            assert_eq!(FeatureId::known(id).as_str(), id);
+        }
+        assert_eq!(compare("a.b", "a.bc"), std::cmp::Ordering::Less);
+        assert_eq!(compare("a.c", "a.bc"), std::cmp::Ordering::Greater);
+        assert_eq!(compare("a.b", "a.b"), std::cmp::Ordering::Equal);
     }
 
     #[test]

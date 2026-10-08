@@ -1,12 +1,19 @@
-//! Resolves a browserslist query into the lowest supported version of each browser.
+//! Resolves a browserslist query into the lowest supported version of each browser, and the support
+//! of every feature under those versions.
 
 use crate::Error;
-use crate::data::{Browser, encode_version};
+use crate::data::{Browser, FeatureId, encode_version};
+use crate::detect::methods::{Decision, MethodTable};
+use crate::support::{SupportTable, TargetSupport};
 
+/// Resolved targets with the support of every feature under them. Resolve them once per query:
+/// the table costs a data lookup per feature and target browser.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Targets {
     minimum: Vec<(Browser, u32)>,
     ignored: Vec<String>,
+    table: SupportTable,
+    methods: MethodTable,
 }
 
 impl Targets {
@@ -46,7 +53,27 @@ impl Targets {
         }
         minimum.sort();
         ignored.sort();
-        Ok(Self { minimum, ignored })
+        let table = SupportTable::new(&minimum);
+        let methods = MethodTable::new(&table);
+        Ok(Self {
+            minimum,
+            ignored,
+            table,
+            methods,
+        })
+    }
+
+    /// Targets under which every feature is missing in every browser, for detector tests.
+    #[cfg(test)]
+    pub(crate) fn missing_everything() -> Self {
+        let table = SupportTable::missing_everything();
+        let methods = MethodTable::new(&table);
+        Self {
+            minimum: Browser::ALL.iter().map(|&browser| (browser, 0)).collect(),
+            ignored: Vec::new(),
+            table,
+            methods,
+        }
     }
 
     pub fn minimum(&self) -> &[(Browser, u32)] {
@@ -56,6 +83,21 @@ impl Targets {
     /// Browsers of the query that have no compatibility data, for example `op_mini`.
     pub fn ignored(&self) -> &[String] {
         &self.ignored
+    }
+
+    /// The absence mask and the partial mask of the feature.
+    pub fn support(&self, feature: FeatureId) -> TargetSupport {
+        self.table.get(feature)
+    }
+
+    /// Every target browser supports the feature fully, so a use of it is no finding.
+    pub fn is_supported(&self, feature: FeatureId) -> bool {
+        self.table.get(feature).is_supported()
+    }
+
+    /// The finding for a call `.name()` on an object of unknown type, if the name has one.
+    pub(crate) fn method(&self, name: &str) -> Option<Decision<'_>> {
+        self.methods.get(name)
     }
 }
 

@@ -69,20 +69,20 @@ pub struct CheckOutput {
 pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList) -> Result<CheckOutput, Error> {
     let uses = with_semantic(source, filename, |semantic, allocator| {
         let ambient = syntax::ambient_nodes(semantic.nodes());
-        let mut uses = globals::detect(semantic);
-        uses.extend(syntax::detect(semantic, &ambient));
-        uses.extend(regex::detect(semantic, allocator));
+        // Detectors skip the features that the targets support, so every use is a candidate for a finding.
+        let mut uses = globals::detect(semantic, targets);
+        uses.extend(syntax::detect(semantic, &ambient, targets));
+        uses.extend(regex::detect(semantic, allocator, targets));
         uses.extend(methods::detect(semantic, targets));
-        // Most uses are supported, and support is cheaper to look up than a check in the code.
         let mut guards = Guards::new(semantic);
         uses.into_iter()
             // TypeScript declarations produce no JavaScript: `declare namespace N { const a = X; }` never runs.
             .filter(|usage| !ambient[usage.node.index()])
-            .filter_map(|usage| match evaluate(usage.feature, targets) {
-                Verdict::Supported => None,
-                verdict => Some((usage, verdict)),
+            .filter(|usage| !guards.is_guarded(usage))
+            .map(|usage| {
+                let verdict = evaluate(usage.feature, targets);
+                (usage, verdict)
             })
-            .filter(|(usage, _)| !guards.is_guarded(usage))
             .collect::<Vec<_>>()
     })?;
     let mut output = CheckOutput::default();
@@ -153,7 +153,7 @@ pub(crate) fn with_semantic<R>(
 
 fn record(
     output: &mut CheckOutput,
-    usage: Use,
+    usage: Use<'_>,
     verdict: Verdict,
     filename: &str,
     allow: &AllowList,
@@ -190,6 +190,7 @@ mod tests {
 
     use super::*;
     use crate::data::FeatureId;
+    use crate::detect::Origin;
 
     #[test]
     fn a_heuristic_use_with_partial_support_stays_heuristic() {
@@ -199,7 +200,7 @@ mod tests {
         let feature = FeatureId::find("api.BarcodeDetector").unwrap();
         let usage = Use {
             confidence: Confidence::Heuristic,
-            ..Use::new(feature, Kind::Builtin, Span::new(0, 1), NodeId::DUMMY)
+            ..Use::new(feature, Kind::Builtin, Origin::Member, Span::new(0, 1), NodeId::DUMMY)
         };
         let mut output = CheckOutput::default();
         let verdict = evaluate(feature, &targets);

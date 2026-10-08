@@ -11,89 +11,103 @@ use oxc_ast::ast::{
 use oxc_semantic::{AstNodes, NodeId, Semantic};
 use oxc_span::{GetSpan, Span};
 
-use super::Use;
+use super::{Origin, Use};
 use crate::check::Kind;
 use crate::data::FeatureId;
+use crate::targets::Targets;
 
 mod key {
-    pub const BINARY_LITERALS: &str = "javascript.grammar.binary_numeric_literals";
-    pub const NUMERIC_SEPARATORS: &str = "javascript.grammar.numeric_separators";
-    pub const OCTAL_LITERALS: &str = "javascript.grammar.octal_numeric_literals";
-    pub const TEMPLATE_LITERALS: &str = "javascript.grammar.template_literals";
-    pub const TEMPLATE_REVISION: &str = "javascript.grammar.template_literals.template_literal_revision";
-    pub const TRAILING_COMMAS: &str = "javascript.grammar.trailing_commas.trailing_commas_in_functions";
-    pub const UNICODE_POINT_ESCAPES: &str = "javascript.grammar.unicode_point_escapes";
-    pub const ASYNC_FUNCTION_EXPRESSION: &str = "javascript.operators.async_function";
-    pub const ASYNC_GENERATOR_EXPRESSION: &str = "javascript.operators.async_generator_function";
-    pub const AWAIT: &str = "javascript.operators.await";
-    pub const CLASS_EXPRESSION: &str = "javascript.operators.class";
-    pub const DECREMENT: &str = "javascript.operators.decrement";
-    pub const INCREMENT: &str = "javascript.operators.increment";
-    pub const DESTRUCTURING: &str = "javascript.operators.destructuring";
-    pub const DESTRUCTURING_COMPUTED: &str = "javascript.operators.destructuring.computed_property_names";
-    pub const REST_IN_ARRAYS: &str = "javascript.operators.destructuring.rest_in_arrays";
-    pub const REST_IN_OBJECTS: &str = "javascript.operators.destructuring.rest_in_objects";
-    pub const EXPONENTIATION: &str = "javascript.operators.exponentiation";
-    pub const EXPONENTIATION_ASSIGNMENT: &str = "javascript.operators.exponentiation_assignment";
-    pub const GENERATOR_EXPRESSION: &str = "javascript.operators.generator_function";
-    pub const LOGICAL_AND_ASSIGNMENT: &str = "javascript.operators.logical_and_assignment";
-    pub const LOGICAL_OR_ASSIGNMENT: &str = "javascript.operators.logical_or_assignment";
-    pub const NEW_TARGET: &str = "javascript.operators.new_target";
-    pub const NULLISH: &str = "javascript.operators.nullish_coalescing";
-    pub const NULLISH_ASSIGNMENT: &str = "javascript.operators.nullish_coalescing_assignment";
-    pub const COMPUTED_PROPERTIES: &str = "javascript.operators.object_initializer.computed_property_names";
-    pub const SHORTHAND_METHODS: &str = "javascript.operators.object_initializer.shorthand_method_names";
-    pub const SHORTHAND_PROPERTIES: &str = "javascript.operators.object_initializer.shorthand_property_names";
-    pub const OPTIONAL_CHAINING: &str = "javascript.operators.optional_chaining";
-    pub const SPREAD_IN_ARRAYS: &str = "javascript.operators.spread.spread_in_arrays";
-    pub const SPREAD_IN_CALLS: &str = "javascript.operators.spread.spread_in_function_calls";
-    pub const SPREAD_IN_OBJECTS: &str = "javascript.operators.spread.spread_in_object_literals";
-    pub const SUPER: &str = "javascript.operators.super";
-    pub const YIELD: &str = "javascript.operators.yield";
-    pub const YIELD_STAR: &str = "javascript.operators.yield_star";
-    pub const ASYNC_FUNCTION_DECLARATION: &str = "javascript.statements.async_function";
-    pub const ASYNC_GENERATOR_DECLARATION: &str = "javascript.statements.async_generator_function";
-    pub const AWAIT_USING: &str = "javascript.statements.await_using";
-    pub const CLASS_DECLARATION: &str = "javascript.statements.class";
-    pub const CONST: &str = "javascript.statements.const";
-    pub const DEBUGGER: &str = "javascript.statements.debugger";
-    pub const EMPTY: &str = "javascript.statements.empty";
-    pub const FOR_AWAIT_OF: &str = "javascript.statements.for_await_of";
-    pub const FOR_OF: &str = "javascript.statements.for_of";
-    pub const GENERATOR_DECLARATION: &str = "javascript.statements.generator_function";
-    pub const LET: &str = "javascript.statements.let";
-    pub const OPTIONAL_CATCH_BINDING: &str = "javascript.statements.try_catch.optional_catch_binding";
-    pub const USING: &str = "javascript.statements.using";
-    pub const CONSTRUCTOR: &str = "javascript.classes.constructor";
-    pub const EXTENDS: &str = "javascript.classes.extends";
-    pub const PRIVATE_FIELDS: &str = "javascript.classes.private_class_fields";
-    pub const PRIVATE_IN: &str = "javascript.classes.private_class_fields_in";
-    pub const PRIVATE_METHODS: &str = "javascript.classes.private_class_methods";
-    pub const PUBLIC_FIELDS: &str = "javascript.classes.public_class_fields";
-    pub const STATIC_MEMBERS: &str = "javascript.classes.static";
-    pub const STATIC_FIELDS: &str = "javascript.classes.static.class_fields";
-    pub const STATIC_BLOCKS: &str = "javascript.classes.static.initialization_blocks";
-    pub const ARROW_FUNCTIONS: &str = "javascript.functions.arrow_functions";
-    pub const BLOCK_LEVEL_FUNCTIONS: &str = "javascript.functions.block_level_functions";
-    pub const DEFAULT_PARAMETERS: &str = "javascript.functions.default_parameters";
-    pub const DESTRUCTURED_DEFAULTS: &str =
-        "javascript.functions.default_parameters.destructured_parameter_with_default_value_assignment";
-    pub const PARAMETERS_AFTER_DEFAULTS: &str =
-        "javascript.functions.default_parameters.parameters_without_defaults_after_default_parameters";
-    pub const GET_COMPUTED: &str = "javascript.functions.get.computed_property_names";
-    pub const SET_COMPUTED: &str = "javascript.functions.set.computed_property_names";
-    pub const METHOD_DEFINITIONS: &str = "javascript.functions.method_definitions";
-    pub const ASYNC_GENERATOR_METHODS: &str = "javascript.functions.method_definitions.async_generator_methods";
-    pub const ASYNC_METHODS: &str = "javascript.functions.method_definitions.async_methods";
-    pub const REST_PARAMETERS: &str = "javascript.functions.rest_parameters";
-    pub const REST_DESTRUCTURING: &str = "javascript.functions.rest_parameters.destructuring";
-    pub const BIGINT: &str = "javascript.builtins.BigInt";
+    use crate::data::FeatureId;
+
+    pub const BINARY_LITERALS: FeatureId = FeatureId::known("javascript.grammar.binary_numeric_literals");
+    pub const NUMERIC_SEPARATORS: FeatureId = FeatureId::known("javascript.grammar.numeric_separators");
+    pub const OCTAL_LITERALS: FeatureId = FeatureId::known("javascript.grammar.octal_numeric_literals");
+    pub const TEMPLATE_LITERALS: FeatureId = FeatureId::known("javascript.grammar.template_literals");
+    pub const TEMPLATE_REVISION: FeatureId =
+        FeatureId::known("javascript.grammar.template_literals.template_literal_revision");
+    pub const TRAILING_COMMAS: FeatureId =
+        FeatureId::known("javascript.grammar.trailing_commas.trailing_commas_in_functions");
+    pub const UNICODE_POINT_ESCAPES: FeatureId = FeatureId::known("javascript.grammar.unicode_point_escapes");
+    pub const ASYNC_FUNCTION_EXPRESSION: FeatureId = FeatureId::known("javascript.operators.async_function");
+    pub const ASYNC_GENERATOR_EXPRESSION: FeatureId = FeatureId::known("javascript.operators.async_generator_function");
+    pub const AWAIT: FeatureId = FeatureId::known("javascript.operators.await");
+    pub const CLASS_EXPRESSION: FeatureId = FeatureId::known("javascript.operators.class");
+    pub const DECREMENT: FeatureId = FeatureId::known("javascript.operators.decrement");
+    pub const INCREMENT: FeatureId = FeatureId::known("javascript.operators.increment");
+    pub const DESTRUCTURING: FeatureId = FeatureId::known("javascript.operators.destructuring");
+    pub const DESTRUCTURING_COMPUTED: FeatureId =
+        FeatureId::known("javascript.operators.destructuring.computed_property_names");
+    pub const REST_IN_ARRAYS: FeatureId = FeatureId::known("javascript.operators.destructuring.rest_in_arrays");
+    pub const REST_IN_OBJECTS: FeatureId = FeatureId::known("javascript.operators.destructuring.rest_in_objects");
+    pub const EXPONENTIATION: FeatureId = FeatureId::known("javascript.operators.exponentiation");
+    pub const EXPONENTIATION_ASSIGNMENT: FeatureId = FeatureId::known("javascript.operators.exponentiation_assignment");
+    pub const GENERATOR_EXPRESSION: FeatureId = FeatureId::known("javascript.operators.generator_function");
+    pub const LOGICAL_AND_ASSIGNMENT: FeatureId = FeatureId::known("javascript.operators.logical_and_assignment");
+    pub const LOGICAL_OR_ASSIGNMENT: FeatureId = FeatureId::known("javascript.operators.logical_or_assignment");
+    pub const NEW_TARGET: FeatureId = FeatureId::known("javascript.operators.new_target");
+    pub const NULLISH: FeatureId = FeatureId::known("javascript.operators.nullish_coalescing");
+    pub const NULLISH_ASSIGNMENT: FeatureId = FeatureId::known("javascript.operators.nullish_coalescing_assignment");
+    pub const COMPUTED_PROPERTIES: FeatureId =
+        FeatureId::known("javascript.operators.object_initializer.computed_property_names");
+    pub const SHORTHAND_METHODS: FeatureId =
+        FeatureId::known("javascript.operators.object_initializer.shorthand_method_names");
+    pub const SHORTHAND_PROPERTIES: FeatureId =
+        FeatureId::known("javascript.operators.object_initializer.shorthand_property_names");
+    pub const OPTIONAL_CHAINING: FeatureId = FeatureId::known("javascript.operators.optional_chaining");
+    pub const SPREAD_IN_ARRAYS: FeatureId = FeatureId::known("javascript.operators.spread.spread_in_arrays");
+    pub const SPREAD_IN_CALLS: FeatureId = FeatureId::known("javascript.operators.spread.spread_in_function_calls");
+    pub const SPREAD_IN_OBJECTS: FeatureId = FeatureId::known("javascript.operators.spread.spread_in_object_literals");
+    pub const SUPER: FeatureId = FeatureId::known("javascript.operators.super");
+    pub const YIELD: FeatureId = FeatureId::known("javascript.operators.yield");
+    pub const YIELD_STAR: FeatureId = FeatureId::known("javascript.operators.yield_star");
+    pub const ASYNC_FUNCTION_DECLARATION: FeatureId = FeatureId::known("javascript.statements.async_function");
+    pub const ASYNC_GENERATOR_DECLARATION: FeatureId =
+        FeatureId::known("javascript.statements.async_generator_function");
+    pub const AWAIT_USING: FeatureId = FeatureId::known("javascript.statements.await_using");
+    pub const CLASS_DECLARATION: FeatureId = FeatureId::known("javascript.statements.class");
+    pub const CONST: FeatureId = FeatureId::known("javascript.statements.const");
+    pub const DEBUGGER: FeatureId = FeatureId::known("javascript.statements.debugger");
+    pub const EMPTY: FeatureId = FeatureId::known("javascript.statements.empty");
+    pub const FOR_AWAIT_OF: FeatureId = FeatureId::known("javascript.statements.for_await_of");
+    pub const FOR_OF: FeatureId = FeatureId::known("javascript.statements.for_of");
+    pub const GENERATOR_DECLARATION: FeatureId = FeatureId::known("javascript.statements.generator_function");
+    pub const LET: FeatureId = FeatureId::known("javascript.statements.let");
+    pub const OPTIONAL_CATCH_BINDING: FeatureId =
+        FeatureId::known("javascript.statements.try_catch.optional_catch_binding");
+    pub const USING: FeatureId = FeatureId::known("javascript.statements.using");
+    pub const CONSTRUCTOR: FeatureId = FeatureId::known("javascript.classes.constructor");
+    pub const EXTENDS: FeatureId = FeatureId::known("javascript.classes.extends");
+    pub const PRIVATE_FIELDS: FeatureId = FeatureId::known("javascript.classes.private_class_fields");
+    pub const PRIVATE_IN: FeatureId = FeatureId::known("javascript.classes.private_class_fields_in");
+    pub const PRIVATE_METHODS: FeatureId = FeatureId::known("javascript.classes.private_class_methods");
+    pub const PUBLIC_FIELDS: FeatureId = FeatureId::known("javascript.classes.public_class_fields");
+    pub const STATIC_MEMBERS: FeatureId = FeatureId::known("javascript.classes.static");
+    pub const STATIC_FIELDS: FeatureId = FeatureId::known("javascript.classes.static.class_fields");
+    pub const STATIC_BLOCKS: FeatureId = FeatureId::known("javascript.classes.static.initialization_blocks");
+    pub const ARROW_FUNCTIONS: FeatureId = FeatureId::known("javascript.functions.arrow_functions");
+    pub const BLOCK_LEVEL_FUNCTIONS: FeatureId = FeatureId::known("javascript.functions.block_level_functions");
+    pub const DEFAULT_PARAMETERS: FeatureId = FeatureId::known("javascript.functions.default_parameters");
+    pub const DESTRUCTURED_DEFAULTS: FeatureId = FeatureId::known(
+        "javascript.functions.default_parameters.destructured_parameter_with_default_value_assignment",
+    );
+    pub const PARAMETERS_AFTER_DEFAULTS: FeatureId = FeatureId::known(
+        "javascript.functions.default_parameters.parameters_without_defaults_after_default_parameters",
+    );
+    pub const GET_COMPUTED: FeatureId = FeatureId::known("javascript.functions.get.computed_property_names");
+    pub const SET_COMPUTED: FeatureId = FeatureId::known("javascript.functions.set.computed_property_names");
+    pub const METHOD_DEFINITIONS: FeatureId = FeatureId::known("javascript.functions.method_definitions");
+    pub const ASYNC_GENERATOR_METHODS: FeatureId =
+        FeatureId::known("javascript.functions.method_definitions.async_generator_methods");
+    pub const ASYNC_METHODS: FeatureId = FeatureId::known("javascript.functions.method_definitions.async_methods");
+    pub const REST_PARAMETERS: FeatureId = FeatureId::known("javascript.functions.rest_parameters");
+    pub const REST_DESTRUCTURING: FeatureId = FeatureId::known("javascript.functions.rest_parameters.destructuring");
+    pub const BIGINT: FeatureId = FeatureId::known("javascript.builtins.BigInt");
 }
 
 /// Every key the detector can report. A test checks that each one has a sample that triggers it.
 // Read by the completeness tests of the syntax and regex detectors.
 #[allow(dead_code)]
-pub const EMITTED: &[&str] = &[
+pub const EMITTED: &[FeatureId] = &[
     key::BINARY_LITERALS,
     key::NUMERIC_SEPARATORS,
     key::OCTAL_LITERALS,
@@ -169,7 +183,7 @@ pub const EMITTED: &[&str] = &[
 /// Keys that describe the same syntax as an emitted key, or group several emitted keys.
 // Read by the completeness tests of the syntax and regex detectors.
 #[allow(dead_code)]
-pub const ALIASES: &[(&str, &str)] = &[
+pub const ALIASES: &[(&str, FeatureId)] = &[
     (
         "javascript.grammar.shorthand_object_literals",
         key::SHORTHAND_PROPERTIES,
@@ -251,7 +265,8 @@ pub(crate) fn ancient(key: &str) -> bool {
 }
 
 /// `ambient` comes from `ambient_nodes`. `check` computes it once per file for all detectors.
-pub fn detect(semantic: &Semantic<'_>, ambient: &[bool]) -> Vec<Use> {
+/// Syntax that the targets support is no use: most nodes of a modern file are such syntax.
+pub fn detect<'t>(semantic: &Semantic<'_>, ambient: &[bool], targets: &Targets) -> Vec<Use<'t>> {
     // Everything in a declaration file is ambient, `export` without `declare` included.
     if semantic.source_type().is_typescript_definition() {
         return Vec::new();
@@ -264,7 +279,7 @@ pub fn detect(semantic: &Semantic<'_>, ambient: &[bool]) -> Vec<Use> {
         if ambient[id.index()] {
             continue;
         }
-        let mut add = |key: &'static str, span: Span| push(&mut uses, key, Kind::Syntax, span, id);
+        let mut add = |feature: FeatureId, span: Span| push(&mut uses, targets, feature, Kind::Syntax, span, id);
         match node.kind() {
             AstKind::NumericLiteral(it) => {
                 let raw = it.raw.as_ref().map_or("", |raw| raw.as_str());
@@ -285,7 +300,7 @@ pub fn detect(semantic: &Semantic<'_>, ambient: &[bool]) -> Vec<Use> {
                     it.base == BigintBase::Octal,
                     it.span,
                 );
-                push(&mut uses, key::BIGINT, Kind::Builtin, it.span, id);
+                push(&mut uses, targets, key::BIGINT, Kind::Builtin, it.span, id);
             }
             AstKind::StringLiteral(it) => {
                 if it.raw.as_ref().is_some_and(|raw| has_code_point_escape(raw.as_str())) {
@@ -536,15 +551,14 @@ pub fn detect(semantic: &Semantic<'_>, ambient: &[bool]) -> Vec<Use> {
     uses
 }
 
-fn push(uses: &mut Vec<Use>, key: &'static str, kind: Kind, span: Span, node: NodeId) {
-    let feature = FeatureId::find(key);
-    debug_assert!(feature.is_some(), "{key} is not in the BCD data");
-    if let Some(feature) = feature {
-        uses.push(Use::new(feature, kind, span, node));
+/// `10n` is syntax too: a browser without `BigInt` does not parse the file, so its origin is `Parse`.
+fn push(uses: &mut Vec<Use<'_>>, targets: &Targets, feature: FeatureId, kind: Kind, span: Span, node: NodeId) {
+    if !targets.is_supported(feature) {
+        uses.push(Use::new(feature, kind, Origin::Parse, span, node));
     }
 }
 
-fn numeric(add: &mut impl FnMut(&'static str, Span), raw: &str, binary: bool, octal: bool, span: Span) {
+fn numeric(add: &mut impl FnMut(FeatureId, Span), raw: &str, binary: bool, octal: bool, span: Span) {
     if binary {
         add(key::BINARY_LITERALS, span);
     }
@@ -625,17 +639,21 @@ mod tests {
     use crate::check::with_semantic;
     use crate::data::feature_ids;
 
-    fn detected(source: &str, filename: &str) -> Vec<&'static str> {
+    fn detected(source: &str, filename: &str) -> Vec<FeatureId> {
         with_semantic(source, filename, |semantic, _| {
-            detect(semantic, &ambient_nodes(semantic.nodes()))
-                .into_iter()
-                .map(|usage| usage.feature.as_str())
-                .collect()
+            detect(
+                semantic,
+                &ambient_nodes(semantic.nodes()),
+                &Targets::missing_everything(),
+            )
+            .into_iter()
+            .map(|usage| usage.feature)
+            .collect()
         })
         .unwrap()
     }
 
-    const SAMPLES: &[(&str, &str)] = &[
+    const SAMPLES: &[(FeatureId, &str)] = &[
         (key::BINARY_LITERALS, "0b101;"),
         (key::NUMERIC_SEPARATORS, "1_000;"),
         (key::OCTAL_LITERALS, "0o17;"),
@@ -709,22 +727,56 @@ mod tests {
     ];
 
     #[test]
-    fn every_emitted_key_exists_in_bcd_and_has_a_sample_that_triggers_it() {
+    fn every_emitted_key_has_a_sample_that_triggers_it() {
         for key in EMITTED {
-            assert!(FeatureId::find(key).is_some(), "{key} is not in the BCD data");
             let (_, source) = SAMPLES
                 .iter()
                 .find(|(sample, _)| sample == key)
-                .unwrap_or_else(|| panic!("{key} has no sample"));
-            assert!(detected(source, "a.js").contains(key), "{key} not detected in {source}");
+                .unwrap_or_else(|| panic!("{} has no sample", key.as_str()));
+            assert!(
+                detected(source, "a.js").contains(key),
+                "{} not detected in {source}",
+                key.as_str()
+            );
         }
+    }
+
+    #[test]
+    fn supported_syntax_is_no_use() {
+        with_semantic("const a = 1; a ?? 2; class A { #x = 1; }", "a.js", |semantic, _| {
+            let targets = Targets::resolve("Chrome >= 97").unwrap();
+            assert!(detect(semantic, &ambient_nodes(semantic.nodes()), &targets).is_empty());
+            let targets = Targets::resolve("Chrome >= 70").unwrap();
+            let found: Vec<_> = detect(semantic, &ambient_nodes(semantic.nodes()), &targets)
+                .into_iter()
+                .map(|usage| usage.feature)
+                .collect();
+            assert_eq!(found, [key::NULLISH, key::PRIVATE_FIELDS]);
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn a_bigint_literal_is_a_parse_error_without_bigint() {
+        with_semantic("10n;", "a.js", |semantic, _| {
+            let uses = detect(
+                semantic,
+                &ambient_nodes(semantic.nodes()),
+                &Targets::missing_everything(),
+            );
+            let bigint = uses.iter().find(|usage| usage.feature == key::BIGINT).unwrap();
+            assert_eq!(bigint.origin, Origin::Parse);
+            assert_eq!(bigint.kind, Kind::Builtin);
+        })
+        .unwrap();
     }
 
     #[test]
     fn a_hashbang_is_not_tracked() {
         let hashbang = "javascript.grammar.hashbang_comments";
         assert!(untracked_reason(hashbang).is_some());
-        assert!(!detected("#!/usr/bin/env node\n1;", "a.js").contains(&hashbang));
+        let found = detected("#!/usr/bin/env node\n1;", "a.js");
+        assert!(found.iter().all(|feature| feature.as_str() != hashbang), "{found:?}");
     }
 
     #[test]
@@ -751,7 +803,7 @@ mod tests {
 
     #[test]
     fn ambient_and_type_only_code_is_not_a_syntax_use() {
-        let nothing: [&str; 0] = [];
+        let nothing: [FeatureId; 0] = [];
         for (source, file) in [
             (
                 "declare module 'x' { const c: string; class K { static s: number } }",
@@ -817,7 +869,11 @@ mod tests {
                 .spawn(move || {
                     with_semantic(&source, "a.js", |semantic, _| {
                         crate::counters::take();
-                        detect(semantic, &ambient_nodes(semantic.nodes()));
+                        detect(
+                            semantic,
+                            &ambient_nodes(semantic.nodes()),
+                            &Targets::missing_everything(),
+                        );
                         crate::counters::take()
                     })
                     .unwrap()
@@ -842,7 +898,7 @@ mod tests {
         let missing: Vec<&str> = feature_ids()
             .filter(|key| GROUPS.iter().any(|group| key.starts_with(group)))
             .filter(|key| {
-                !EMITTED.contains(key)
+                !EMITTED.iter().any(|emitted| emitted.as_str() == *key)
                     && !ALIASES.iter().any(|(alias, _)| alias == key)
                     && untracked_reason(key).is_none()
                     && !ancient(key)
