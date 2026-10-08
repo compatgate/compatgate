@@ -2,11 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  ACCESSORS,
   BROWSERS,
   UNSUPPORTED,
   browserSupport,
   collectFeatures,
   collectInstanceMembers,
+  collectInterfaceParents,
   collectSingletons,
   encodeVersion,
   noteText,
@@ -23,28 +25,90 @@ test('encodeVersion', () => {
   assert.equal(encodeVersion(null), UNSUPPORTED);
 });
 
-test('browserSupport ignores flags, prefixes, alternative names and removed entries', () => {
+const V = major => major << 16;
+
+test('browserSupport ignores flags, prefixes and alternative names', () => {
   const support = browserSupport([
     { version_added: '10', flags: [{ type: 'preference' }] },
     { version_added: '11', prefix: 'webkit' },
     { version_added: '12', alternative_name: 'oldName' },
-    { version_added: '13', version_removed: '14' },
+    { version_added: false },
+    { version_added: 'preview' },
     { version_added: '20' },
   ]);
-  assert.deepEqual(support, { full: 20 << 16, partial: UNSUPPORTED, note: null });
+  assert.deepEqual(support, { since: V(20), ranges: [] });
 });
 
-test('browserSupport keeps partial support apart from full support and keeps its note', () => {
+test('browserSupport keeps a removed statement as a range that ends at the removal', () => {
+  const support = browserSupport([
+    { version_added: '16' },
+    {
+      version_added: '14.1',
+      version_removed: '16',
+      partial_implementation: true,
+      notes: 'Parentheses in <code>initializers</code>.',
+    },
+    { version_added: '14', version_removed: '14.1', partial_implementation: true, notes: 'No static fields.' },
+  ]);
+  assert.deepEqual(support, {
+    since: V(16),
+    ranges: [
+      { added: V(14), removed: V(14) | (1 << 8), partial: true, note: 'No static fields.' },
+      { added: V(14) | (1 << 8), removed: V(16), partial: true, note: 'Parentheses in initializers.' },
+    ],
+  });
+});
+
+test('browserSupport keeps support that was removed and never added again', () => {
+  const support = browserSupport([{ version_added: '13', version_removed: '14' }]);
+  assert.deepEqual(support, {
+    since: UNSUPPORTED,
+    ranges: [{ added: V(13), removed: V(14), partial: false, note: null }],
+  });
+});
+
+test('browserSupport starts full support at the first full range that lasts without a gap', () => {
+  const support = browserSupport([
+    { version_added: '30' },
+    { version_added: '20', version_removed: '30' },
+    { version_added: '15', version_removed: '25' },
+    { version_added: '5', version_removed: '10' },
+  ]);
+  assert.deepEqual(support, {
+    since: V(15),
+    ranges: [{ added: V(5), removed: V(10), partial: false, note: null }],
+  });
+});
+
+test('browserSupport drops partial ranges that start once full support has begun', () => {
   const support = browserSupport([
     { version_added: '30' },
     { version_added: '25', partial_implementation: true, notes: 'Only on <code>macOS</code>.' },
+    { version_added: '35', partial_implementation: true, notes: 'Later.' },
   ]);
-  assert.deepEqual(support, { full: 30 << 16, partial: 25 << 16, note: 'Only on macOS.' });
+  assert.deepEqual(support, {
+    since: V(30),
+    ranges: [{ added: V(25), removed: UNSUPPORTED, partial: true, note: 'Only on macOS.' }],
+  });
 });
 
-test('browserSupport keeps an entry removed only in a preview build', () => {
+test('browserSupport sorts ranges and keeps the first statement of equal ranges', () => {
+  const support = browserSupport([
+    { version_added: '30', partial_implementation: true, notes: 'Later.' },
+    { version_added: '25', version_removed: '27', partial_implementation: true, notes: 'Earlier.' },
+    { version_added: '30', partial_implementation: true, notes: 'Same range, second statement.' },
+    { version_added: '25', partial_implementation: true },
+  ]);
+  assert.deepEqual(support.ranges, [
+    { added: V(25), removed: V(27), partial: true, note: 'Earlier.' },
+    { added: V(25), removed: UNSUPPORTED, partial: true, note: null },
+    { added: V(30), removed: UNSUPPORTED, partial: true, note: 'Later.' },
+  ]);
+});
+
+test('browserSupport ignores a removal in a preview build', () => {
   const support = browserSupport([{ version_added: '26.4', version_removed: 'preview' }]);
-  assert.equal(support.full, (26 << 16) | (4 << 8));
+  assert.deepEqual(support, { since: (26 << 16) | (4 << 8), ranges: [] });
 });
 
 test('collectFeatures walks only api and javascript and sorts ids', () => {
@@ -58,27 +122,61 @@ test('collectFeatures walks only api and javascript and sorts ids', () => {
     features.map(feature => feature.id),
     ['api.A', 'api.A.child', 'api.B', 'javascript.builtins.X'],
   );
-  assert.equal(features[0].full.length, BROWSERS.length);
-  assert.equal(features[0].full[0], 1 << 16);
+  assert.equal(features[0].since.length, BROWSERS.length);
+  assert.equal(features[0].since[0], 1 << 16);
+  assert.deepEqual(features[0].ranges[0], []);
 });
 
 test('renderRust writes all tables', () => {
-  const full = BROWSERS.map(() => UNSUPPORTED);
-  const partial = BROWSERS.map((_, index) => (index === 2 ? 5 << 16 : UNSUPPORTED));
-  const notes = BROWSERS.map((_, index) => (index === 2 ? 'Only on "macOS".' : null));
+  const since = BROWSERS.map(() => UNSUPPORTED);
+  const ranges = BROWSERS.map((_, index) =>
+    index === 2
+      ? [
+          { added: V(5), removed: V(6), partial: false, note: null },
+          { added: V(6), removed: UNSUPPORTED, partial: true, note: 'Only on "macOS".' },
+        ]
+      : [],
+  );
   const text = renderRust(
-    [{ id: 'api.A', full, partial, notes }],
+    [{ id: 'api.A', since, ranges }],
     '1.0.0',
     [{ name: 'm', id: 'api.A', reportable: false }],
     [{ name: 'a', type: 'A' }],
+    [{ name: 'A', parents: ['B', 'C'] }],
   );
   assert.match(text, /pub const BCD_VERSION: &str = "1\.0\.0";/);
   assert.match(text, /pub const BROWSER_KEYS: \[&str; 11\] = \["chrome", "chrome_android"/);
   assert.match(text, /\("api\.A", \[U, U, U, U, U, U, U, U, U, U, U\]\),/);
-  assert.match(text, /\(0, 2, 327680, 0\),/);
+  assert.match(
+    text,
+    /pub static RANGES: &\[\(u32, u8, u32, u32, bool, u32\)\] = &\[\n {4}\(0, 2, 327680, 393216, false, U\),\n {4}\(0, 2, 393216, U, true, 0\),\n\];/,
+  );
   assert.match(text, /pub static NOTES: &\[&str\] = &\[\n {4}"Only on \\"macOS\\"\.",/);
   assert.match(text, /\("m", 0, false\),/);
   assert.match(text, /\("a", "A"\),/);
+  assert.match(text, /pub static INTERFACE_PARENTS: &\[\(&str, &\[&str\]\)\] = &\[\n {4}\("A", &\["B", "C"\]\),/);
+});
+
+test('renderRust stores each note text once', () => {
+  const since = BROWSERS.map(() => UNSUPPORTED);
+  const range = note => ({ added: V(5), removed: UNSUPPORTED, partial: true, note });
+  const ranges = BROWSERS.map((_, index) => (index < 2 ? [range('Same.')] : []));
+  const other = BROWSERS.map((_, index) => (index === 0 ? [{ ...range('Other.'), added: V(7) }] : []));
+  const text = renderRust(
+    [
+      { id: 'api.A', since, ranges },
+      { id: 'api.B', since, ranges: other },
+    ],
+    '1.0.0',
+    [],
+    [],
+    [],
+  );
+  assert.match(
+    text,
+    /\(0, 0, 327680, U, true, 0\),\n {4}\(0, 1, 327680, U, true, 0\),\n {4}\(1, 0, 458752, U, true, 1\),/,
+  );
+  assert.match(text, /pub static NOTES: &\[&str\] = &\[\n {4}"Same\.",\n {4}"Other\.",\n\];/);
 });
 
 test('--check passes when the committed data matches the generator output', async () => {
@@ -90,8 +188,21 @@ test('--check passes when the committed data matches the generator output', asyn
 });
 
 test('noteText strips HTML and takes the first note', () => {
-  assert.equal(noteText(['See <a href="https://bugs/1">bug 1</a>.\n  More.', 'Second']), 'See bug 1. More.');
-  assert.equal(noteText(undefined), null);
+  assert.equal(noteText(['See <a href="https://bugs/1">bug 1</a>.\n  More.', 'Second'], 'api.A'), 'See bug 1. More.');
+  assert.equal(noteText(undefined, 'api.A'), null);
+});
+
+test('noteText decodes numeric entities and non-breaking spaces', () => {
+  assert.equal(
+    noteText('It&#39;s &#x27;on&#x27;&nbsp;by default: &lt;b&gt; &amp;&amp; &quot;x&quot;.', 'api.A'),
+    "It's 'on' by default: <b> && \"x\".",
+  );
+  // A decoded ampersand does not start another entity.
+  assert.equal(noteText('&amp;lt; and &#38;gt;', 'api.A'), '&lt; and &gt;');
+});
+
+test('noteText rejects an unknown named entity and names the feature', () => {
+  assert.throws(() => noteText('Wait&hellip;', 'api.A.b'), /&hellip;.*api\.A\.b.*Wait&hellip;/);
 });
 
 test('collectInstanceMembers keeps getters and setters of builtins but does not report them', () => {
@@ -145,6 +256,93 @@ test('collectInstanceMembers takes prototype members of builtins and members of 
   ]);
 });
 
+test('collectInstanceMembers does not report members that TypeScript declares as properties', () => {
+  const compat = spec => ({ __compat: { spec_url: spec, support: {} } });
+  const members = collectInstanceMembers({
+    javascript: {
+      builtins: {
+        Symbol: {
+          description: compat('https://tc39.es/#sec-symbol.prototype.description'),
+          toString: compat('https://tc39.es/#sec-symbol.prototype.tostring'),
+        },
+      },
+    },
+    api: {},
+  });
+  assert.ok(ACCESSORS.has('javascript.builtins.Symbol.description'));
+  assert.deepEqual(members, [
+    { name: 'description', id: 'javascript.builtins.Symbol.description', reportable: false },
+    { name: 'toString', id: 'javascript.builtins.Symbol.toString', reportable: true },
+  ]);
+});
+
+test('collectInstanceMembers does not report members of DisposableStack and AsyncDisposableStack', () => {
+  const compat = spec => ({ __compat: { spec_url: spec, support: {} } });
+  const members = collectInstanceMembers({
+    javascript: {
+      builtins: {
+        DisposableStack: {
+          DisposableStack: compat('https://tc39.es/#sec-disposablestack-constructor'),
+          dispose: compat('https://tc39.es/#sec-disposablestack.prototype.dispose'),
+          use: compat('https://tc39.es/#sec-disposablestack.prototype.use'),
+        },
+        AsyncDisposableStack: {
+          use: compat('https://tc39.es/#sec-asyncdisposablestack.prototype.use'),
+        },
+      },
+    },
+    api: {},
+  });
+  assert.deepEqual(members, [
+    { name: 'dispose', id: 'javascript.builtins.DisposableStack.dispose', reportable: false },
+    { name: 'use', id: 'javascript.builtins.DisposableStack.use', reportable: false },
+    { name: 'use', id: 'javascript.builtins.AsyncDisposableStack.use', reportable: false },
+  ]);
+});
+
+test('collectInterfaceParents reads extends clauses of interfaces with BCD data', () => {
+  const declarations = [
+    'interface Document extends Node, DocumentOrShadowRoot, ParentNode {',
+    '}',
+    'interface HTMLCollectionOf<T extends Element> extends HTMLCollectionBase {',
+    '}',
+    'interface HTMLCollectionOf<T extends Element> {',
+    '}',
+    'interface Worker extends EventTarget, AbstractWorker, MessageEventTarget<Worker> {',
+    '}',
+    'interface Worker extends EventTarget, Extra {',
+    '}',
+    'interface AudioParamMap extends ReadonlyMap<string, Map<string, AudioParam>> {',
+    '}',
+    'interface Node extends EventTarget {',
+    '}',
+    'interface ParentNode extends Node {',
+    '}',
+    'interface Text {',
+    '}',
+    'declare namespace WebAssembly {',
+    '    interface CompileError extends Error {',
+    '    }',
+    '}',
+  ].join('\n');
+  const ids = new Set([
+    'api.AudioParamMap',
+    'api.CompileError',
+    'api.Document',
+    'api.HTMLCollectionOf',
+    'api.Node',
+    'api.Text',
+    'api.Worker',
+  ]);
+  assert.deepEqual(collectInterfaceParents(declarations, ids), [
+    { name: 'AudioParamMap', parents: ['ReadonlyMap'] },
+    { name: 'Document', parents: ['Node', 'DocumentOrShadowRoot', 'ParentNode'] },
+    { name: 'HTMLCollectionOf', parents: ['HTMLCollectionBase'] },
+    { name: 'Node', parents: ['EventTarget'] },
+    { name: 'Worker', parents: ['EventTarget', 'AbstractWorker', 'MessageEventTarget', 'Extra'] },
+  ]);
+});
+
 test('collectSingletons maps global variables to interfaces with BCD data', () => {
   const declarations = [
     'declare var navigator: Navigator;',
@@ -159,4 +357,12 @@ test('collectSingletons maps global variables to interfaces with BCD data', () =
     { name: 'visualViewport', type: 'VisualViewport' },
     { name: 'window', type: 'Window' },
   ]);
+});
+
+test('collectInterfaceParents rejects an interface header that does not end with a brace', () => {
+  const declarations = ['interface Document extends Node,', '    ParentNode {', '}'].join('\n');
+  assert.throws(
+    () => collectInterfaceParents(declarations, new Set(['api.Document'])),
+    /interface Document extends Node,/,
+  );
 });

@@ -9,8 +9,12 @@ fn features(source: &str) -> Vec<&'static str> {
 }
 
 fn features_for(query: &str, source: &str) -> Vec<&'static str> {
+    features_in(query, source, "a.js")
+}
+
+fn features_in(query: &str, source: &str, filename: &str) -> Vec<&'static str> {
     let targets = Targets::resolve(query).unwrap();
-    check(source, "a.js", &targets, &AllowList::empty())
+    check(source, filename, &targets, &AllowList::empty())
         .unwrap()
         .findings
         .into_iter()
@@ -161,6 +165,21 @@ fn a_loose_comparison_with_null_is_a_check() {
 }
 
 #[test]
+fn an_optional_chain_compared_with_undefined_is_a_check() {
+    assert!(features("if (window?.structuredClone !== undefined) structuredClone(1);").is_empty());
+    assert!(features("if (navigator?.userActivation != null) navigator.userActivation.isActive;").is_empty());
+    assert!(features("function f() { if (window?.structuredClone == null) return; structuredClone(1); }").is_empty());
+}
+
+#[test]
+fn an_optional_chain_does_not_protect_code_outside_it() {
+    // The parentheses end the chain: `.length` reads from `undefined` and throws.
+    assert_eq!(features("(window?.structuredClone).length;"), ["api.structuredClone"]);
+    // The optional call checks `a`, not its argument.
+    assert_eq!(features("a?.(window.structuredClone(1));"), ["api.structuredClone"]);
+}
+
+#[test]
 fn a_strict_comparison_with_null_is_not_a_check() {
     // `undefined !== null`, so the call still runs in browsers without `structuredClone`.
     let targets = Targets::resolve(QUERY).unwrap();
@@ -175,10 +194,88 @@ fn a_strict_comparison_with_null_is_not_a_check() {
     );
 }
 
+#[test]
+fn optional_chaining_on_the_object_passes_the_tested_value() {
+    assert!(features("if (navigator?.userActivation) {}").is_empty());
+    assert!(features("if (!navigator?.userActivation) {} else { navigator.userActivation.isActive; }").is_empty());
+    assert!(features("navigator?.userActivation || y;").is_empty());
+    assert!(features("if (window?.structuredClone) structuredClone(1);").is_empty());
+}
+
+#[test]
+fn a_member_called_through_a_wrapper_is_a_call() {
+    assert!(features("try { (0, window.structuredClone)(1); } catch (e) {}").is_empty());
+    assert!(features("(0, window.structuredClone)?.(1);").is_empty());
+    assert!(
+        features_in(
+            QUERY,
+            "try { (window.structuredClone as any)(1); } catch (e) {}",
+            "a.ts"
+        )
+        .is_empty()
+    );
+    assert_eq!(features("(0, structuredClone)?.(1);"), ["api.structuredClone"]);
+}
+
+#[test]
+fn a_member_called_through_an_optional_chain_is_a_call() {
+    assert!(features("x = (window?.structuredClone)?.(1);").is_empty());
+    assert!(features("x = (0, window?.structuredClone)?.(1);").is_empty());
+    assert!(features("try { (window?.structuredClone)(1); } catch (e) {}").is_empty());
+    assert_eq!(
+        features("try { window?.structuredClone; } catch (e) {}"),
+        ["api.structuredClone"]
+    );
+}
+
+#[test]
+fn a_check_on_a_local_object_does_not_guard_the_global() {
+    assert_eq!(
+        features("const Intl = { Segmenter: 1 }; if ('Segmenter' in Intl) new globalThis.Intl.Segmenter();"),
+        ["javascript.builtins.Intl.Segmenter"]
+    );
+    assert_eq!(
+        features("const window = {}; if (window.structuredClone) structuredClone(1);"),
+        ["api.structuredClone"]
+    );
+    // A method key has no object, so a check on a local object still guards the method.
+    assert!(features("const list = []; if (list.toSorted) list.toSorted();").is_empty());
+}
+
+#[test]
+fn a_member_read_in_the_left_operand_is_guarded_in_a_value_position() {
+    // Reading a member returns `undefined` when the feature is missing; it does not throw.
+    assert!(features("const ua = navigator.userAgentData || null;").is_empty());
+}
+
+#[test]
+fn checks_for_a_missing_feature_guard_the_code_after_an_early_exit() {
+    assert!(features("function f() { if (typeof structuredClone > \"u\") return; structuredClone(1); }").is_empty());
+    assert!(features("function f() { if (\"u\" < typeof structuredClone) return; structuredClone(1); }").is_empty());
+    assert!(
+        features("function f() { if (window.structuredClone === undefined) return; structuredClone(1); }").is_empty()
+    );
+    assert!(features("function f() { if (window.structuredClone == null) return; structuredClone(1); }").is_empty());
+}
+
+#[test]
+fn a_shadowed_undefined_is_not_a_check() {
+    assert_eq!(
+        features("function f(undefined) { if (window.structuredClone !== undefined) structuredClone(1); }"),
+        ["api.structuredClone"]
+    );
+}
+
+#[test]
+fn typeof_of_a_call_is_a_use() {
+    assert_eq!(features("typeof structuredClone(x);"), ["api.structuredClone"]);
+}
+
 // Guard detection used to walk whole subtrees and whole statement lists for every use, so large
-// generated files in node_modules took minutes. These budgets are generous for a debug build; the
-// old code needed far longer, so a failure means the cost became super-linear again.
-const BUDGET: std::time::Duration = std::time::Duration::from_secs(2);
+// generated files in node_modules took minutes. The budget is generous for a debug build on a slow
+// machine: before the fix, the first two tests needed 42 s and 93 s. A failure means the cost became
+// super-linear again.
+const BUDGET: std::time::Duration = std::time::Duration::from_secs(10);
 
 fn time_check(source: String, filename: &'static str) -> (usize, std::time::Duration) {
     // oxc visits the AST recursively, and a debug build overflows the 2 MiB stack of a test thread
@@ -218,5 +315,16 @@ fn many_early_exits_are_checked_in_linear_time() {
     }
     let (findings, elapsed) = time_check(source, "a.cjs");
     assert_eq!(findings, 20_000);
+    assert!(elapsed < BUDGET, "{elapsed:?}");
+}
+
+// Debug build: the quadratic code needed 14.1 s for 9000 terms (11.2 s for 8000, 17.4 s for 10 000).
+// The linear guards needed 2.8 s, nearly all of it in the syntax detector, which walked the
+// ancestors of every node. Since that walk became one pass over the nodes, the test needs 0.05 s.
+#[test]
+fn a_long_and_chain_of_unsupported_reads_is_checked_in_linear_time() {
+    let terms = vec!["window.structuredClone"; 9000];
+    let (findings, elapsed) = time_check(format!("x = {};", terms.join(" &&\n")), "a.js");
+    assert_eq!(findings, 0);
     assert!(elapsed < BUDGET, "{elapsed:?}");
 }

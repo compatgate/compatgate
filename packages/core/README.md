@@ -28,12 +28,26 @@ Pass `targets` or `allow` to skip the lookup.
 - **Builtins and Web APIs** reached as globals: `structuredClone()`, `new Intl.Segmenter()`, `Object.groupBy()`
   and members of singletons such as `navigator.userActivation`. `window.X`, `self.X` and `globalThis.X` count
   as the global `X`, also through chains such as `window.navigator.userActivation`.
+  Destructuring from a global is a member use: `const { userActivation } = navigator`,
+  `const { groupBy } = Object`. Members of a singleton resolve through its parent interfaces:
+  `document.when()` is `api.EventTarget.when`. A local `window` or `Intl` that shadows the global
+  (for example a parameter of a UMD wrapper) is not the global.
 - **Prototype methods** by name, such as `.toSorted()`. These findings are heuristic: names that a supported
-  method also has (`.map()`) and calls on imported or required modules (`_.union()`), including transpiled
-  `require` wrappers, are skipped.
+  method also has (`.map()`), names that the file declares as members itself (`class Q { union() {} }`,
+  `class Q { take = 1 }`, accessors, `{ take() {} }`, `{ take: f }`, `obj.take = f`, `obj['take'] = f`)
+  and calls on imported or required modules (`_.union()`) are skipped. A `require` result is skipped when
+  `require` is the CommonJS global, a function parameter, a `declare`d `require`, or a variable that holds
+  `createRequire(...)` or `__webpack_require__`. Transpiled wrappers such as `__importDefault(require('x'))`
+  and `_interopRequireDefault(...)`, and `.default` of a module, are skipped too. When several methods share a name, the finding names the one
+  with the worst support.
+  Members of `DisposableStack` and `AsyncDisposableStack` are not checked as prototype methods:
+  their names (`use`, `dispose`, `move`, `adopt`, `defer`) are also methods of Vue, express and three.js.
+  Their constructors are still checked. Getters such as `description`, `detached` and `resizable`
+  are never treated as methods.
 
 Each finding has a confidence: `exact`, `heuristic` (a method found by name) or `partial`
-(some targets support the feature only in part; `unsupported[].note` explains the limit).
+(some targets support the feature only in part; `unsupported[].note` explains the limit). A heuristic
+finding stays `heuristic` under partial support and keeps the note.
 
 A use under a check of the same feature is not a finding:
 
@@ -52,14 +66,26 @@ Rules for checks:
   Reading something from it, as in `if (navigator.userActivation.isActive)`, is a finding.
 - Optional chaining on the member is a check: `navigator.userAgentData?.brands`.
   In `navigator.userAgentData.brands?.length` the optional access comes too late, so it is a finding.
-- A loose comparison with `null` is a check: `window.X != null`. A strict one, `window.X !== null`, is not:
-  a missing member is `undefined`, not `null`.
+  In a test, `X?.y` is a check too: `if (navigator?.userActivation)`.
+- In a test (`if`, `?:`, `&&`, `||`), a member compared with anything (`===`, `!==`, `==`, `!=`)
+  is read as a check. Outside a test, `const ok = window.X !== undefined` is a finding.
+- Of the comparisons with a value, only those that rule out `undefined` protect the code that follows:
+  `!= null`, `!= undefined`, `!== undefined` and `!== void 0`, in either order. A strict `!== null` does not:
+  `if (window.structuredClone !== null) structuredClone(1)` still reports the call,
+  because a missing member is `undefined`, not `null`.
+- Other forms that protect: `'X' in obj`, truthiness, `typeof X !== 'undefined'`,
+  `typeof X === 'function'` and `typeof X === 'object'`.
+- Method checks match by name on any object: `if (list.toSorted) other.toSorted()` is protected,
+  because methods are found by name.
 - Reading a bare global such as `if (structuredClone)` is still a finding: it throws in browsers that lack it.
 - Minified checks such as `typeof X<"u"` and `void 0 !== window.X` are recognized.
 - A `try` protects a call or a constructor only when it has a `catch` and the call runs inside the `try` block,
   not in a callback defined there.
 - Syntax is never protected by `try` or by an optional call.
+- Calls through wrappers, `(0, window.X)()` and `(window.X as any)()`, are calls.
+- A check on a shadowed local `window` or `Intl` does not protect uses of the global.
 - A write that defines a global (`structuredClone = function () {}`) is not a use.
+  Neither are a write through destructuring (`[window.X] = a`) and `delete window.X`.
 
 ## compatgate.jsonc
 

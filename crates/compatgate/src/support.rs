@@ -1,6 +1,6 @@
 //! Compares the support data of a feature with the targets.
 
-use crate::data::{Browser, FeatureId, UNSUPPORTED};
+use crate::data::{Browser, FeatureId, Support, UNSUPPORTED};
 use crate::targets::Targets;
 
 /// A target browser that lacks full support.
@@ -9,7 +9,7 @@ pub struct Gap {
     pub browser: Browser,
     /// The lowest version of the browser in the targets.
     pub target: u32,
-    /// The first version with full support, if any.
+    /// The first version from which full support lasts to the latest release, if any.
     pub since: Option<u32>,
     /// The BCD note for partial support, if the target has partial support and BCD explains it.
     pub note: Option<&'static str>,
@@ -18,7 +18,7 @@ pub struct Gap {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Verdict {
     Supported,
-    /// Every target has at least partial support, and some have only partial support.
+    /// Every target and its later versions have at least partial support, and some have only partial support.
     Partial(Vec<Gap>),
     /// Some targets have no support. Lists only those targets.
     Unsupported(Vec<Gap>),
@@ -28,23 +28,20 @@ pub fn evaluate(feature: FeatureId, targets: &Targets) -> Verdict {
     let mut unsupported = Vec::new();
     let mut partial = Vec::new();
     for &(browser, target) in targets.minimum() {
-        let full = feature.full_support(browser);
-        if full <= target {
+        let support = feature.support_from(browser, target);
+        if support == Support::Full {
             continue;
         }
+        let full = feature.full_support(browser);
         let gap = Gap {
             browser,
             target,
             since: (full != UNSUPPORTED).then_some(full),
             note: None,
         };
-        if feature.partial_support(browser) <= target {
-            partial.push(Gap {
-                note: feature.partial_note(browser),
-                ..gap
-            });
-        } else {
-            unsupported.push(gap);
+        match support {
+            Support::Partial(note) => partial.push(Gap { note, ..gap }),
+            _ => unsupported.push(gap),
         }
     }
     if !unsupported.is_empty() {
@@ -101,6 +98,44 @@ mod tests {
             evaluate(feature("javascript.builtins.Array.at"), &targets(QUERY)),
             Verdict::Supported
         );
+    }
+
+    #[test]
+    fn partial_gap_carries_the_note_for_the_target() {
+        let Verdict::Partial(gaps) = evaluate(feature("api.BarcodeDetector"), &targets("Chrome >= 97")) else {
+            panic!("expected Partial");
+        };
+        assert!(gaps[0].note.is_some_and(|note| note.contains("ChromeOS")), "{gaps:?}");
+    }
+
+    #[test]
+    fn partial_support_that_a_later_partial_statement_replaced_is_partial() {
+        // BCD: Chrome supports BarcodeDetector partially from 83 to 88, and partially again from 88.
+        let Verdict::Partial(gaps) = evaluate(feature("api.BarcodeDetector"), &targets("Chrome >= 85")) else {
+            panic!("expected Partial");
+        };
+        assert_eq!(gaps.len(), 1);
+        assert_eq!(gaps[0].since, None);
+        // The note comes from the statement that covers Chrome 85.
+        assert_eq!(gaps[0].note, Some("Supported on macOS only."));
+    }
+
+    #[test]
+    fn support_that_was_removed_and_never_added_again_is_unsupported() {
+        // BCD: Firefox supported BatteryManager from 43 to 52 and has not supported it since.
+        let verdict = evaluate(feature("api.BatteryManager"), &targets("Firefox >= 115"));
+        assert_eq!(
+            verdict,
+            Verdict::Unsupported(vec![Gap {
+                browser: Browser::Firefox,
+                target: encode_version("115").unwrap(),
+                since: None,
+                note: None,
+            }])
+        );
+        // BCD: Firefox supported `CompositionEvent.locale` from 9 to 143. Firefox 115 has it, later versions do not.
+        let verdict = evaluate(feature("api.CompositionEvent.locale"), &targets("Firefox >= 115"));
+        assert!(matches!(verdict, Verdict::Unsupported(_)), "{verdict:?}");
     }
 
     #[test]

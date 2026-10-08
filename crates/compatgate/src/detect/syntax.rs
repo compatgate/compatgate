@@ -199,16 +199,13 @@ pub const ALIASES: &[(&str, &str)] = &[
     ),
 ];
 
-// Read by the completeness tests of the syntax and regex detectors.
-#[allow(dead_code)]
 const MODULES: &str = "module syntax: a bundler replaces it with its own code before the code reaches the browser";
-// Read by the completeness tests of the syntax and regex detectors.
-#[allow(dead_code)]
 const BEHAVIOR: &str = "runtime behavior, not syntax: the code does not show it without type information";
 
 /// Why the detector does not report a syntax key. `None` means the key needs a detector or an alias.
-// Read by the completeness tests of the syntax and regex detectors.
-#[allow(dead_code)]
+// Only the completeness tests of the syntax and regex detectors call it. `MODULES` and `BEHAVIOR`
+// are read only here, so the expectation covers them too.
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn untracked_reason(key: &str) -> Option<&'static str> {
     const MODULE_PREFIXES: [&str; 5] = [
         "javascript.statements.import",
@@ -253,7 +250,8 @@ pub(crate) fn ancient(key: &str) -> bool {
     .all(|&(browser, version)| feature.full_support(browser) <= encode_version(version).unwrap())
 }
 
-pub fn detect(semantic: &Semantic<'_>) -> Vec<Use> {
+/// `ambient` comes from `ambient_nodes`. `check` computes it once per file for all detectors.
+pub fn detect(semantic: &Semantic<'_>, ambient: &[bool]) -> Vec<Use> {
     // Everything in a declaration file is ambient, `export` without `declare` included.
     if semantic.source_type().is_typescript_definition() {
         return Vec::new();
@@ -263,7 +261,7 @@ pub fn detect(semantic: &Semantic<'_>) -> Vec<Use> {
     let mut uses = Vec::new();
     for node in nodes.iter() {
         let id = node.id();
-        if is_ambient(nodes, id) {
+        if ambient[id.index()] {
             continue;
         }
         let mut add = |key: &'static str, span: Span| push(&mut uses, key, Kind::Syntax, span, id);
@@ -559,34 +557,47 @@ fn numeric(add: &mut impl FnMut(&'static str, Span), raw: &str, binary: bool, oc
     }
 }
 
+/// Marks the nodes that are ambient or lie inside an ambient node, indexed by node id.
+/// One pass in id order is enough: oxc numbers nodes as it creates them, parents first.
+/// A walk over the ancestors of every node costs O(depth²) on a long chain like `a + b + …`.
+pub(crate) fn ambient_nodes(nodes: &AstNodes<'_>) -> Vec<bool> {
+    let mut ambient = vec![false; nodes.len()];
+    for node in nodes.iter() {
+        let id = node.id();
+        // The root is its own parent.
+        let parent = nodes.parent_id(id);
+        debug_assert!(parent.index() < id.index() || id == NodeId::ROOT);
+        ambient[id.index()] = is_ambient(node.kind()) || ambient[parent.index()];
+    }
+    ambient
+}
+
 /// TypeScript declarations produce no JavaScript, so their syntax never reaches a browser.
-fn is_ambient(nodes: &AstNodes<'_>, id: NodeId) -> bool {
-    std::iter::once(nodes.kind(id))
-        .chain(nodes.ancestor_kinds(id))
-        .any(|kind| match kind {
-            AstKind::Class(class) => class.declare,
-            AstKind::Function(function) => {
-                function.declare || function.body.is_none() || function.r#type == FunctionType::TSDeclareFunction
-            }
-            AstKind::TSNamespaceDeclaration(module) => module.declare,
-            // Quoted module names are legal only in ambient modules.
-            AstKind::TSExternalModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_) => true,
-            // Type-level syntax: it is erased and never reaches a browser.
-            AstKind::TSTypeAnnotation(_)
-            | AstKind::TSTypeAliasDeclaration(_)
-            | AstKind::TSInterfaceDeclaration(_)
-            | AstKind::TSFunctionType(_)
-            | AstKind::TSMethodSignature(_)
-            | AstKind::TSCallSignatureDeclaration(_)
-            | AstKind::TSConstructSignatureDeclaration(_)
-            | AstKind::TSConstructorType(_) => true,
-            AstKind::VariableDeclaration(declaration) => declaration.declare,
-            _ => false,
-        })
+fn is_ambient(kind: AstKind<'_>) -> bool {
+    match kind {
+        AstKind::Class(class) => class.declare,
+        AstKind::Function(function) => {
+            function.declare || function.body.is_none() || function.r#type == FunctionType::TSDeclareFunction
+        }
+        AstKind::TSNamespaceDeclaration(module) => module.declare,
+        // Quoted module names are legal only in ambient modules.
+        AstKind::TSExternalModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_) => true,
+        // Type-level syntax: it is erased and never reaches a browser.
+        AstKind::TSTypeAnnotation(_)
+        | AstKind::TSTypeAliasDeclaration(_)
+        | AstKind::TSInterfaceDeclaration(_)
+        | AstKind::TSFunctionType(_)
+        | AstKind::TSMethodSignature(_)
+        | AstKind::TSCallSignatureDeclaration(_)
+        | AstKind::TSConstructSignatureDeclaration(_)
+        | AstKind::TSConstructorType(_) => true,
+        AstKind::VariableDeclaration(declaration) => declaration.declare,
+        _ => false,
+    }
 }
 
 /// True when `u{` follows an odd number of backslashes: `\u{1F600}` is an escape, `\\u{` is not.
-fn has_code_point_escape(raw: &str) -> bool {
+pub(super) fn has_code_point_escape(raw: &str) -> bool {
     raw.match_indices("u{")
         .any(|(index, _)| raw[..index].bytes().rev().take_while(|&byte| byte == b'\\').count() % 2 == 1)
 }
@@ -614,7 +625,7 @@ mod tests {
 
     fn detected(source: &str, filename: &str) -> Vec<&'static str> {
         with_semantic(source, filename, |semantic, _| {
-            detect(semantic)
+            detect(semantic, &ambient_nodes(semantic.nodes()))
                 .into_iter()
                 .map(|usage| usage.feature.as_str())
                 .collect()
@@ -770,6 +781,47 @@ mod tests {
         assert!(!detected("'\\\\u{1F600}';", "a.js").contains(&key::UNICODE_POINT_ESCAPES));
         assert!(!detected("`\\\\u{1F600}`;", "a.js").contains(&key::UNICODE_POINT_ESCAPES));
         assert!(detected("'\\u{1F600}';", "a.js").contains(&key::UNICODE_POINT_ESCAPES));
+    }
+
+    #[test]
+    fn assignment_patterns_and_methods_map_to_their_own_keys() {
+        assert!(detected("let a, b; [a, b] = [b, a];", "a.js").contains(&key::DESTRUCTURING));
+        let rest = detected("let r; ({ ...r } = o);", "a.js");
+        assert!(
+            rest.contains(&key::DESTRUCTURING) && rest.contains(&key::REST_IN_OBJECTS),
+            "{rest:?}"
+        );
+        assert!(!detected("017;", "a.js").contains(&key::OCTAL_LITERALS));
+        let method = detected("class A { async m() {} }", "a.js");
+        assert!(method.contains(&key::ASYNC_METHODS), "{method:?}");
+        assert!(!method.contains(&key::ASYNC_FUNCTION_EXPRESSION), "{method:?}");
+        assert!(!detected("f(x => x, y);", "a.js").contains(&key::TRAILING_COMMAS));
+    }
+
+    // The ambient check used to walk all ancestors of every node, so a deep expression cost
+    // O(depth²): a chain of 20 000 terms is 20 000 levels deep. Generated files in node_modules
+    // have such chains. Member reads add nodes per level: with plain `a` terms the quadratic code
+    // needed 6.5 s in a debug build and passed; with `a.b.c.d.e` it needs 33 s. The budget is
+    // generous for a debug build on a slow machine; a failure means the cost became super-linear again.
+    #[test]
+    fn a_deep_expression_is_checked_in_linear_time() {
+        let source = format!("x = {};", vec!["a.b.c.d.e"; 20_000].join(" + "));
+        // oxc builds and visits the AST recursively; a debug build needs more than the 2 MiB
+        // stack of a test thread for this depth.
+        let elapsed = std::thread::Builder::new()
+            .stack_size(64 << 20)
+            .spawn(move || {
+                with_semantic(&source, "a.js", |semantic, _| {
+                    let start = std::time::Instant::now();
+                    detect(semantic, &ambient_nodes(semantic.nodes()));
+                    start.elapsed()
+                })
+                .unwrap()
+            })
+            .unwrap()
+            .join()
+            .unwrap();
+        assert!(elapsed < std::time::Duration::from_secs(10), "{elapsed:?}");
     }
 
     #[test]

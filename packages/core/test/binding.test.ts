@@ -55,6 +55,7 @@ test('columns are UTF-16 units across the whole call', () => {
 
 test('partial findings carry the BCD note', () => {
   const result = binding.check('new BarcodeDetector();', { filename: 'a.js', targets: 'Chrome >= 97' });
+  assert.equal(result.findings.length, 1);
   const [finding] = result.findings;
   assert.equal(finding?.confidence, 'partial');
   assert.match(finding?.unsupported[0]?.note ?? '', /ChromeOS/);

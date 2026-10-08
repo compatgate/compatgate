@@ -26,7 +26,7 @@ pub enum Confidence {
     Exact,
     /// The detector guesses from a name: a method call on an object of unknown type.
     Heuristic,
-    /// Some targets support the feature only partially.
+    /// Some targets support the feature only partially. A heuristic use stays `Heuristic` in this case.
     Partial,
 }
 
@@ -49,13 +49,16 @@ pub struct CheckOutput {
 
 pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList) -> Result<CheckOutput, Error> {
     let uses = with_semantic(source, filename, |semantic, allocator| {
+        let ambient = syntax::ambient_nodes(semantic.nodes());
         let mut uses = globals::detect(semantic);
-        uses.extend(syntax::detect(semantic));
+        uses.extend(syntax::detect(semantic, &ambient));
         uses.extend(regex::detect(semantic, allocator));
         uses.extend(methods::detect(semantic, targets));
         // Most uses are supported, and support is cheaper to look up than a check in the code.
         let mut guards = Guards::new(semantic);
         uses.into_iter()
+            // TypeScript declarations produce no JavaScript: `declare namespace N { const a = X; }` never runs.
+            .filter(|usage| !ambient[usage.node.index()])
             .filter_map(|usage| match evaluate(usage.feature, targets) {
                 Verdict::Supported => None,
                 verdict => Some((usage, verdict)),
@@ -63,15 +66,24 @@ pub fn check(source: &str, filename: &str, targets: &Targets, allow: &AllowList)
             .filter(|(usage, _)| !guards.is_guarded(usage))
             .collect::<Vec<_>>()
     })?;
-    let lines = LineIndex::new(source);
     let mut output = CheckOutput::default();
-    for (usage, verdict) in uses {
-        record(&mut output, usage, verdict, filename, allow, &lines);
+    if !uses.is_empty() {
+        let lines = LineIndex::new(source);
+        for (usage, verdict) in uses {
+            record(&mut output, usage, verdict, filename, allow, &lines);
+        }
     }
-    // Detectors walk hash maps, so the order of their output is not stable.
-    output
-        .findings
-        .sort_by_key(|finding| (finding.start.line, finding.start.column));
+    // Detectors walk hash maps, so the order of their output is not stable. Several findings can start
+    // at one position, such as two flags of a regular expression; the feature and the end order them.
+    output.findings.sort_by_key(|finding| {
+        (
+            finding.start.line,
+            finding.start.column,
+            finding.feature,
+            finding.end.line,
+            finding.end.column,
+        )
+    });
     output.used_allow.sort_unstable();
     output.used_allow.dedup();
     Ok(output)
@@ -131,6 +143,8 @@ fn record(
     let (confidence, gaps) = match verdict {
         Verdict::Supported => return,
         Verdict::Unsupported(gaps) => (usage.confidence, gaps),
+        // A guessed use stays a guess: partial support of a feature that the code may not use is no fact.
+        Verdict::Partial(gaps) if usage.confidence == Confidence::Heuristic => (Confidence::Heuristic, gaps),
         Verdict::Partial(gaps) => (Confidence::Partial, gaps),
     };
     let allowed = std::iter::once(usage.feature)
@@ -148,4 +162,42 @@ fn record(
         end: lines.position(usage.span.end),
         gaps,
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_semantic::NodeId;
+    use oxc_span::Span;
+
+    use super::*;
+    use crate::data::FeatureId;
+
+    #[test]
+    fn a_heuristic_use_with_partial_support_stays_heuristic() {
+        // In BCD 8.1.4 no method that the methods detector reports has partial support,
+        // so the use is built by hand.
+        let targets = Targets::resolve("Chrome >= 97").unwrap();
+        let feature = FeatureId::find("api.BarcodeDetector").unwrap();
+        let usage = Use {
+            confidence: Confidence::Heuristic,
+            ..Use::new(feature, Kind::Builtin, Span::new(0, 1), NodeId::DUMMY)
+        };
+        let mut output = CheckOutput::default();
+        let verdict = evaluate(feature, &targets);
+        assert!(matches!(verdict, Verdict::Partial(_)), "{verdict:?}");
+        record(
+            &mut output,
+            usage,
+            verdict,
+            "a.js",
+            &AllowList::empty(),
+            &LineIndex::new("x"),
+        );
+        let finding = &output.findings[0];
+        assert_eq!(finding.confidence, Confidence::Heuristic);
+        assert!(
+            finding.gaps[0].note.is_some_and(|note| note.contains("ChromeOS")),
+            "{finding:?}"
+        );
+    }
 }

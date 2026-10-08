@@ -79,11 +79,39 @@ fn ignores_typescript_type_references() {
 }
 
 #[test]
+fn ignores_values_in_typescript_ambient_declarations() {
+    assert!(features("declare namespace N { const a = structuredClone; }", "a.ts").is_empty());
+    assert!(features("declare function f(a = structuredClone(1)): void;", "a.ts").is_empty());
+}
+
+#[test]
 fn reports_partial_support_with_partial_confidence() {
     let targets = Targets::resolve("Chrome >= 97").unwrap();
     let output = check("new BarcodeDetector();", "a.js", &targets, &AllowList::empty()).unwrap();
     assert_eq!(output.findings.len(), 1);
     assert_eq!(output.findings[0].confidence, Confidence::Partial);
+}
+
+#[test]
+fn support_that_a_later_release_replaced_is_partial() {
+    // BCD: Safari has partial class fields from 14.1 to 16 and full support from 16.
+    // The partial statement has a removal version, and the old generator dropped it.
+    let targets = Targets::resolve(QUERY).unwrap();
+    let output = check("class A { x = 1; }", "a.js", &targets, &AllowList::empty()).unwrap();
+    assert_eq!(output.findings.len(), 1, "{:?}", output.findings);
+    let finding = &output.findings[0];
+    assert_eq!(finding.feature, "javascript.classes.public_class_fields");
+    assert_eq!(finding.confidence, Confidence::Partial);
+    let safari = finding
+        .gaps
+        .iter()
+        .find(|gap| gap.browser == compatgate::data::Browser::Safari)
+        .expect("Safari 15.6 has partial support");
+    assert_eq!(safari.since, compatgate::data::encode_version("16"));
+    assert!(
+        safari.note.is_some_and(|note| note.contains("Parentheses")),
+        "{safari:?}"
+    );
 }
 
 #[test]
@@ -209,6 +237,15 @@ fn findings(source: &str, filename: &str) -> Vec<(&'static str, Confidence)> {
 }
 
 #[test]
+fn typeof_of_a_method_call_is_a_use() {
+    // `typeof` protects a read of the method, not a call of it.
+    assert_eq!(
+        findings("typeof [3, 1].toSorted();", "a.js"),
+        [("javascript.builtins.Array.toSorted", Confidence::Heuristic)]
+    );
+}
+
+#[test]
 fn a_unique_method_name_is_a_heuristic_finding() {
     assert_eq!(
         findings("[3, 1].toSorted();", "a.js"),
@@ -230,7 +267,10 @@ fn methods_of_imported_modules_are_skipped() {
     assert!(findings("import _ from 'lodash';\n_.union([1], [2]);\n", "a.js").is_empty());
     assert!(findings("import * as R from 'ramda';\nR.take(1, list);\n", "a.js").is_empty());
     assert!(findings("const R = require('ramda');\nR.take(1, list);\n", "a.js").is_empty());
-    assert_eq!(findings("R.take(1, list);", "a.js").len(), 1);
+    assert_eq!(
+        findings("R.take(1, list);", "a.js"),
+        [("javascript.builtins.Iterator.take", Confidence::Heuristic)]
+    );
 }
 
 #[test]
@@ -274,4 +314,150 @@ fn methods_of_required_or_imported_modules_in_transpiled_code_are_skipped() {
 #[test]
 fn a_single_argument_call_that_wraps_no_module_is_not_skipped() {
     assert_eq!(findings("const x = foo(bar);\nx.take(1);", "a.js").len(), 1);
+}
+
+#[test]
+fn methods_that_the_file_declares_are_not_checked() {
+    let declared = [
+        "class Q { union(o) { return o; } m() { return this.union(x); } }",
+        "class Q { union = o => o; }\nother.union(set);",
+        "const api = { take() {} }; api.take();",
+        "const api = { take: f, 'toSorted': g }; api.take(1); api.toSorted();",
+        "const take = f; const api = { take }; api.take(1);",
+        "api.take = function (n) { return n; };\napi.take(1);",
+        "api['take'] = function (n) { return n; };\napi.take(1);",
+        "class A { accessor take = 1; }\nx.take();",
+        "class A { accessor 'take' = 1; }\nx.take();",
+    ];
+    for source in declared {
+        // Safari 15.6 supports class fields only partially, so the syntax is a `Partial` finding.
+        // Only method findings count here.
+        let methods: Vec<_> = findings(source, "a.js")
+            .into_iter()
+            .filter(|&(_, confidence)| confidence == Confidence::Heuristic)
+            .collect();
+        assert_eq!(methods, [], "{source}");
+    }
+}
+
+#[test]
+fn a_local_function_named_require_is_not_a_module_loader() {
+    assert_eq!(
+        findings("const require = () => ({}); const R = require('x'); R.take(1);", "a.js"),
+        [("javascript.builtins.Iterator.take", Confidence::Heuristic)]
+    );
+    assert_eq!(
+        findings("function require() { return {}; }\nrequire('x').take(1);", "a.js"),
+        [("javascript.builtins.Iterator.take", Confidence::Heuristic)]
+    );
+}
+
+#[test]
+fn a_parameter_named_require_is_a_module_loader() {
+    // Browserify and AMD wrap a module in a function that receives `require`.
+    let skipped = [
+        "(function (require) { const R = require('ramda'); R.take(1); })(r);",
+        "define(['require'], require => { require('ramda').take(1); });",
+    ];
+    for source in skipped {
+        assert!(findings(source, "a.js").is_empty(), "{source}");
+    }
+}
+
+#[test]
+fn findings_at_one_position_are_sorted_by_feature() {
+    let targets = Targets::resolve("Chrome >= 40").unwrap();
+    let found: Vec<_> = check("/a/vy;", "a.js", &targets, &AllowList::empty())
+        .unwrap()
+        .findings
+        .into_iter()
+        .map(|finding| finding.feature)
+        .collect();
+    assert_eq!(
+        found,
+        [
+            "javascript.builtins.RegExp.sticky",
+            "javascript.builtins.RegExp.unicodeSets"
+        ]
+    );
+}
+
+#[test]
+fn an_ambient_declaration_of_require_is_the_module_loader() {
+    let skipped = [
+        "declare const require: any;\nconst R = require('ramda');\nR.take(1);",
+        "declare var require: any;\nconst R = require('ramda');\nR.take(1);",
+        "declare function require(id: string): any;\nconst R = require('ramda');\nR.take(1);",
+    ];
+    for source in skipped {
+        assert_eq!(findings(source, "a.ts"), [], "{source}");
+    }
+}
+
+#[test]
+fn a_require_made_by_create_require_or_webpack_is_the_module_loader() {
+    let skipped = [
+        "import { createRequire } from 'module';\nconst require = createRequire(import.meta.url);\nrequire('ramda').take(1);",
+        "import module from 'module';\nconst require = module.createRequire(import.meta.url);\nrequire('ramda').take(1);",
+        "var require = __webpack_require__;\nrequire(1).take(1);",
+    ];
+    for source in skipped {
+        assert_eq!(findings(source, "a.mjs"), [], "{source}");
+    }
+}
+
+#[test]
+fn writes_and_deletes_of_globals_are_not_uses() {
+    let sources = [
+        "[window.structuredClone] = a;",
+        "({ a: Object.groupBy } = o);",
+        "for (window.structuredClone of list) {}",
+        "delete window.structuredClone;",
+        "delete window?.structuredClone;",
+    ];
+    for source in sources {
+        assert_eq!(features(source, "a.js"), Vec::<&str>::new(), "{source}");
+    }
+}
+
+#[test]
+fn typeof_a_member_of_a_window_alias_is_a_check() {
+    assert!(features("typeof window.structuredClone;", "a.js").is_empty());
+}
+
+#[test]
+fn an_optional_member_of_a_window_alias_is_reported() {
+    assert_eq!(features("window?.structuredClone(1);", "a.js"), ["api.structuredClone"]);
+}
+
+#[test]
+fn destructuring_from_a_global_is_a_member_use() {
+    assert_eq!(
+        features(
+            "const { userActivation } = navigator;\nconst { groupBy } = Object;\nconst { structuredClone } = window;\n",
+            "a.js"
+        ),
+        [
+            "api.Navigator.userActivation",
+            "javascript.builtins.Object.groupBy",
+            "api.structuredClone"
+        ]
+    );
+}
+
+#[test]
+fn a_check_guards_destructuring_from_a_global() {
+    let guarded = [
+        "if (navigator.userActivation) { const { userActivation } = navigator; }",
+        "if (!Object.groupBy) throw new Error();\nconst { groupBy } = Object;",
+        "if (typeof structuredClone === 'function') { const { structuredClone } = window; }",
+    ];
+    for source in guarded {
+        assert_eq!(features(source, "a.js"), Vec::<&str>::new(), "{source}");
+    }
+}
+
+#[test]
+fn a_member_of_a_parent_interface_is_found_for_a_singleton() {
+    assert_eq!(features("document.when('click');", "a.js"), ["api.EventTarget.when"]);
 }

@@ -7,7 +7,12 @@
 mod generated;
 
 pub use generated::BCD_VERSION;
-use generated::{FEATURES, INSTANCE_MEMBERS, NOTES, PARTIAL, SINGLETONS};
+use generated::{FEATURES, INSTANCE_MEMBERS, INTERFACE_PARENTS, NOTES, RANGES, SINGLETONS};
+
+/// A row of `RANGES`: feature index, browser column, the range `[first version, version of removal)`,
+/// whether the support is partial, index into `NOTES` or `UNSUPPORTED`. A range without a removal
+/// ends at `UNSUPPORTED`. The rows of a browser start before the version from which full support lasts.
+type RangeRow = (u32, u8, u32, u32, bool, u32);
 
 /// Version value for "not supported". It is larger than any real version.
 pub const UNSUPPORTED: u32 = u32::MAX;
@@ -97,29 +102,60 @@ impl FeatureId {
         FEATURES[self.0 as usize].0
     }
 
-    /// First version with full support, or `UNSUPPORTED`.
+    /// First version from which full support lasts to the latest release, or `UNSUPPORTED`.
     pub fn full_support(self, browser: Browser) -> u32 {
         FEATURES[self.0 as usize].1[browser.index()]
     }
 
-    /// First version with partial support, or `UNSUPPORTED`.
-    pub fn partial_support(self, browser: Browser) -> u32 {
-        self.partial_entry(browser).map_or(UNSUPPORTED, |entry| entry.2)
+    /// Support in `target` and every later version of `browser`.
+    pub fn support_from(self, browser: Browser, target: u32) -> Support {
+        let rows = browser_rows(RANGES, self.0, browser.index() as u8);
+        support_from(self.full_support(browser), rows, target)
     }
+}
 
-    /// The BCD note that explains partial support in `browser`, if any.
-    pub fn partial_note(self, browser: Browser) -> Option<&'static str> {
-        let note = self.partial_entry(browser)?.3;
-        (note != UNSUPPORTED).then(|| NOTES[note as usize])
-    }
+/// Support of a feature in a version of a browser and every later version.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Support {
+    /// Full support without a gap.
+    Full,
+    /// Full or partial support without a gap, and partial in some versions. The note is the BCD text
+    /// of the partial statement that covers the version, or of the latest partial statement before it.
+    Partial(Option<&'static str>),
+    /// A gap: some version from the given one on has no support.
+    Missing,
+}
 
-    fn partial_entry(self, browser: Browser) -> Option<&'static (u32, u8, u32, u32)> {
-        let key = (self.0, browser.index() as u8);
-        PARTIAL
-            .binary_search_by(|&(feature, column, _, _)| (feature, column).cmp(&key))
-            .ok()
-            .map(|index| &PARTIAL[index])
+/// The rows of one feature and browser. The table is sorted by feature, browser and range.
+fn browser_rows(table: &[RangeRow], feature: u32, column: u8) -> &[RangeRow] {
+    let key = (feature, column);
+    let start = table.partition_point(|row| (row.0, row.1) < key);
+    let end = start + table[start..].partition_point(|row| (row.0, row.1) == key);
+    &table[start..end]
+}
+
+/// `since` is the first version of full support that lasts; `rows` are sorted by their first version.
+fn support_from(since: u32, rows: &[RangeRow], target: u32) -> Support {
+    if since <= target {
+        return Support::Full;
     }
+    // Versions from `target` up to `covered` have full or partial support.
+    let mut covered = target;
+    for row in rows {
+        if row.2 > covered {
+            break;
+        }
+        covered = covered.max(row.3);
+    }
+    if covered < since {
+        return Support::Missing;
+    }
+    let started = || rows.iter().rev().filter(|row| row.4 && row.2 <= target);
+    let note = started()
+        .find(|row| target < row.3)
+        .or_else(|| started().next())
+        .and_then(|row| (row.5 != UNSUPPORTED).then(|| NOTES[row.5 as usize]));
+    Support::Partial(note)
 }
 
 pub fn feature_ids() -> impl Iterator<Item = &'static str> {
@@ -127,7 +163,8 @@ pub fn feature_ids() -> impl Iterator<Item = &'static str> {
 }
 
 /// Instance members with this name, with a flag that tells whether a finding may name the member.
-/// JavaScript builtins can be findings; Web API members only make a name ambiguous.
+/// Methods of JavaScript builtins can be findings. Other members only make a name ambiguous:
+/// Web API members, accessors, and methods of `DisposableStack` and `AsyncDisposableStack`.
 pub fn instance_members(name: &str) -> impl Iterator<Item = (FeatureId, bool)> {
     let start = INSTANCE_MEMBERS.partition_point(|&(member, _, _)| member < name);
     INSTANCE_MEMBERS[start..]
@@ -142,6 +179,14 @@ pub fn singleton_interface(name: &str) -> Option<&'static str> {
         .binary_search_by(|&(singleton, _)| singleton.cmp(name))
         .ok()
         .map(|index| SINGLETONS[index].1)
+}
+
+/// Direct parents of a Web API interface from its `extends` clauses in @types/web, for example `Node`
+/// for `Document`. Parents can be mixins without BCD data, such as `GlobalEventHandlers`.
+pub fn interface_parents(name: &str) -> &'static [&'static str] {
+    INTERFACE_PARENTS
+        .binary_search_by(|&(interface, _)| interface.cmp(name))
+        .map_or(&[], |index| INTERFACE_PARENTS[index].1)
 }
 
 /// Encodes `major.minor.patch` as `major << 16 | minor << 8 | patch`.
@@ -200,8 +245,14 @@ mod tests {
     #[test]
     fn reads_partial_support() {
         let feature = FeatureId::find("api.BarcodeDetector").expect("feature exists");
-        assert_ne!(feature.partial_support(Browser::Chrome), UNSUPPORTED);
-        assert_eq!(feature.partial_support(Browser::Firefox), UNSUPPORTED);
+        assert!(matches!(
+            feature.support_from(Browser::Chrome, encode_version("97").unwrap()),
+            Support::Partial(_)
+        ));
+        assert_eq!(
+            feature.support_from(Browser::Firefox, encode_version("1").unwrap()),
+            Support::Missing
+        );
     }
 
     #[test]
@@ -225,8 +276,140 @@ mod tests {
     #[test]
     fn reads_the_note_of_partial_support() {
         let feature = FeatureId::find("api.BarcodeDetector").unwrap();
-        assert!(feature.partial_note(Browser::Chrome).unwrap().contains("ChromeOS"));
-        assert_eq!(feature.partial_note(Browser::Firefox), None);
+        let note = |version| match feature.support_from(Browser::Chrome, encode_version(version).unwrap()) {
+            Support::Partial(note) => note,
+            other => panic!("Chrome {version}: {other:?}"),
+        };
+        assert!(note("97").unwrap().contains("ChromeOS"));
+        // BCD: partial support from 83 to 88 with its own note, then partial support from 88.
+        assert_eq!(note("87"), Some("Supported on macOS only."));
+        assert_eq!(
+            feature.support_from(Browser::Chrome, encode_version("82").unwrap()),
+            Support::Missing
+        );
+        assert_eq!(
+            feature.support_from(Browser::Firefox, UNSUPPORTED - 1),
+            Support::Missing
+        );
+    }
+
+    const fn row(added: u32, removed: u32, partial: bool, note: u32) -> RangeRow {
+        (
+            7,
+            0,
+            added << 16,
+            if removed == UNSUPPORTED { removed } else { removed << 16 },
+            partial,
+            note,
+        )
+    }
+
+    const U: u32 = UNSUPPORTED;
+
+    #[test]
+    fn finds_the_rows_of_a_feature_and_browser() {
+        let table: &[RangeRow] = &[
+            (3, 0, 1 << 16, U, true, 0),
+            row(10, 20, true, 0),
+            row(20, U, true, 1),
+            (7, 1, 5 << 16, U, true, 2),
+            (8, 0, 1 << 16, U, true, 3),
+        ];
+        assert_eq!(browser_rows(table, 7, 0), &table[1..3]);
+        assert_eq!(browser_rows(table, 7, 2), &[]);
+        assert_eq!(browser_rows(table, 5, 0), &[]);
+    }
+
+    #[test]
+    fn full_support_that_lasts_from_the_target_is_full() {
+        assert_eq!(support_from(30 << 16, &[], 30 << 16), Support::Full);
+        assert_eq!(support_from(30 << 16, &[], 29 << 16), Support::Missing);
+        assert_eq!(support_from(U, &[], 29 << 16), Support::Missing);
+    }
+
+    #[test]
+    fn ranges_without_a_gap_up_to_full_support_are_partial() {
+        // Partial 10–20 with note 0, full 20–25, partial 25–30 with note 1, full from 30.
+        let rows = [row(10, 20, true, 0), row(20, 25, false, U), row(25, 30, true, 1)];
+        let at = |version: u32| support_from(30 << 16, &rows, version << 16);
+        assert_eq!(at(9), Support::Missing);
+        assert_eq!(at(10), Support::Partial(Some(NOTES[0])));
+        // Full support covers 22, so the note is the one of the latest partial range before it.
+        assert_eq!(at(22), Support::Partial(Some(NOTES[0])));
+        assert_eq!(at(27), Support::Partial(Some(NOTES[1])));
+        assert_eq!(at(30), Support::Full);
+    }
+
+    #[test]
+    fn a_gap_before_full_support_is_missing() {
+        let rows = [row(10, 20, true, 0), row(21, U, true, 1)];
+        assert_eq!(support_from(U, &rows, 15 << 16), Support::Missing);
+        assert_eq!(support_from(U, &rows, 21 << 16), Support::Partial(Some(NOTES[1])));
+        // Support that was removed and never added again.
+        assert_eq!(support_from(U, &[row(10, 20, false, U)], 15 << 16), Support::Missing);
+    }
+
+    #[test]
+    fn the_note_comes_from_the_partial_range_that_covers_the_target() {
+        // Two partial ranges overlap at 15: the later one covers it. At 25 only the first one does.
+        let rows = [row(10, 30, true, 0), row(12, 20, true, 1), row(20, 30, true, U)];
+        let at = |version: u32| support_from(30 << 16, &rows, version << 16);
+        assert_eq!(at(15), Support::Partial(Some(NOTES[1])));
+        assert_eq!(at(25), Support::Partial(None));
+        assert_eq!(at(11), Support::Partial(Some(NOTES[0])));
+    }
+
+    #[test]
+    fn notes_are_stored_once() {
+        let unique: std::collections::HashSet<_> = NOTES.iter().collect();
+        assert_eq!(unique.len(), NOTES.len());
+    }
+
+    #[test]
+    fn does_not_report_accessors_without_get_in_the_spec_anchor() {
+        let description: Vec<_> = instance_members("description")
+            .map(|(feature, reportable)| (feature.as_str(), reportable))
+            .collect();
+        assert!(
+            description.contains(&("javascript.builtins.Symbol.description", false)),
+            "{description:?}"
+        );
+    }
+
+    #[test]
+    fn does_not_report_members_of_disposable_stacks() {
+        for name in ["use", "dispose", "adopt", "defer", "move", "disposeAsync"] {
+            let members: Vec<_> = instance_members(name)
+                .map(|(feature, reportable)| (feature.as_str(), reportable))
+                .collect();
+            assert!(
+                members.iter().any(|(id, _)| id.contains("DisposableStack.")),
+                "{name}: {members:?}"
+            );
+            assert!(
+                members.iter().all(|&(_, reportable)| !reportable),
+                "{name}: {members:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn reads_interface_parents() {
+        assert!(interface_parents("Document").contains(&"Node"));
+        assert!(interface_parents("HTMLElement").contains(&"Element"));
+        // @types/web 0.0.358 declares Navigator with mixins such as NavigatorID.
+        assert!(interface_parents("Navigator").contains(&"NavigatorID"));
+        assert_eq!(interface_parents("EventTarget"), &[] as &[&str]);
+        assert_eq!(interface_parents("NoSuchInterface"), &[] as &[&str]);
+    }
+
+    #[test]
+    fn interface_parents_are_sorted_for_binary_search() {
+        assert!(
+            generated::INTERFACE_PARENTS
+                .windows(2)
+                .all(|pair| pair[0].0 < pair[1].0)
+        );
     }
 
     #[test]
@@ -267,11 +450,16 @@ mod tests {
     }
 
     #[test]
-    fn partial_support_is_sorted_for_binary_search() {
-        assert!(
-            generated::PARTIAL
-                .windows(2)
-                .all(|pair| (pair[0].0, pair[0].1) < (pair[1].0, pair[1].1))
-        );
+    fn ranges_are_sorted_for_binary_search() {
+        let key = |row: &RangeRow| (row.0, row.1, row.2, row.3, row.4);
+        assert!(generated::RANGES.windows(2).all(|pair| key(&pair[0]) < key(&pair[1])));
+    }
+
+    #[test]
+    fn ranges_start_before_lasting_full_support() {
+        for row in generated::RANGES {
+            assert!(row.2 < row.3, "{row:?}");
+            assert!(row.2 < FEATURES[row.0 as usize].1[row.1 as usize], "{row:?}");
+        }
     }
 }

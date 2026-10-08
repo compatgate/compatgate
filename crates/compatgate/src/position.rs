@@ -12,6 +12,20 @@ pub struct LineIndex<'a> {
     source: &'a str,
     /// Byte offset of the first character of each line.
     line_starts: Vec<u32>,
+    /// Checkpoints for lines that hold non-ASCII text, so a column costs at most `CHECKPOINT_STEP` bytes to count.
+    checkpoints: Vec<Checkpoint>,
+    /// Line `n` owns `checkpoints[checkpoint_starts[n]..checkpoint_starts[n + 1]]`. The range is empty for ASCII lines.
+    checkpoint_starts: Vec<u32>,
+}
+
+/// Distance in bytes between two checkpoints.
+const CHECKPOINT_STEP: usize = 1024;
+
+#[derive(Clone, Copy)]
+struct Checkpoint {
+    byte: u32,
+    /// UTF-16 units between the line start and `byte`.
+    column: u32,
 }
 
 impl<'a> LineIndex<'a> {
@@ -37,17 +51,63 @@ impl<'a> LineIndex<'a> {
             }
             index += 1;
         }
-        Self { source, line_starts }
+        let (checkpoints, checkpoint_starts) = Self::build_checkpoints(source, &line_starts);
+        Self {
+            source,
+            line_starts,
+            checkpoints,
+            checkpoint_starts,
+        }
+    }
+
+    /// One pass over the source. A line gets checkpoints only if it has a non-ASCII byte.
+    fn build_checkpoints(source: &str, line_starts: &[u32]) -> (Vec<Checkpoint>, Vec<u32>) {
+        let mut checkpoints = Vec::new();
+        let mut per_line = Vec::with_capacity(line_starts.len());
+        for (line, &start) in line_starts.iter().enumerate() {
+            let mut start = start as usize;
+            // ESLint removes the byte order mark before it counts columns, so it is not a column here either.
+            if line == 0 && source.starts_with('\u{FEFF}') {
+                start = '\u{FEFF}'.len_utf8();
+            }
+            let end = line_starts.get(line + 1).map_or(source.len(), |&next| next as usize);
+            per_line.push(checkpoints.len() as u32);
+            if source.as_bytes()[start..end].is_ascii() {
+                continue;
+            }
+            let mut column = 0u32;
+            let mut next_mark = 0usize;
+            for (offset, ch) in source[start..end].char_indices() {
+                if offset >= next_mark {
+                    checkpoints.push(Checkpoint {
+                        byte: (start + offset) as u32,
+                        column,
+                    });
+                    next_mark = offset + CHECKPOINT_STEP;
+                }
+                column += ch.len_utf16() as u32;
+            }
+        }
+        per_line.push(checkpoints.len() as u32);
+        (checkpoints, per_line)
     }
 
     pub fn position(&self, offset: u32) -> Position {
         let line = self.line_starts.partition_point(|&start| start <= offset) - 1;
-        let mut start = self.line_starts[line] as usize;
-        // ESLint removes the byte order mark before it counts columns, so it is not a column here either.
+        let mut start = self.line_starts[line];
         if line == 0 && self.source.starts_with('\u{FEFF}') {
-            start = start.max('\u{FEFF}'.len_utf8()).min(offset as usize);
+            start = start.max('\u{FEFF}'.len_utf8() as u32).min(offset);
         }
-        let column = self.source[start..offset as usize].encode_utf16().count() as u32;
+        let (first, end) = (self.checkpoint_starts[line], self.checkpoint_starts[line + 1]);
+        let column = match first < end {
+            true if offset > start => {
+                let marks = &self.checkpoints[first as usize..end as usize];
+                // The first checkpoint sits at the line start, past the BOM, and `offset > start` here.
+                let mark = marks[marks.partition_point(|mark| mark.byte <= offset).max(1) - 1];
+                mark.column + self.source[mark.byte as usize..offset as usize].encode_utf16().count() as u32
+            }
+            _ => offset - start,
+        };
         Position {
             line: line as u32 + 1,
             column,
@@ -93,5 +153,70 @@ mod tests {
     fn byte_order_mark_is_not_a_column() {
         assert_eq!(at("\u{FEFF}ab", "b"), Position { line: 1, column: 1 });
         assert_eq!(at("\u{FEFF}a\nb", "b"), Position { line: 2, column: 0 });
+        assert_eq!(at("\u{FEFF}привет x", "x"), Position { line: 1, column: 7 });
+    }
+
+    fn naive(source: &str, offset: usize) -> Position {
+        let before = &source[..offset];
+        let mut line = 1;
+        let mut start = 0;
+        let bytes = before.as_bytes();
+        let mut i = 0;
+        while i < bytes.len() {
+            match bytes[i] {
+                b'\n' => {
+                    line += 1;
+                    start = i + 1;
+                }
+                b'\r' => {
+                    if bytes.get(i + 1) == Some(&b'\n') {
+                        i += 1;
+                    }
+                    line += 1;
+                    start = i + 1;
+                }
+                _ => {}
+            }
+            i += 1;
+        }
+        Position {
+            line,
+            column: source[start..offset].encode_utf16().count() as u32,
+        }
+    }
+
+    fn check_equivalence(source: &str) {
+        let index = LineIndex::new(source);
+        let boundaries: Vec<usize> = (0..=source.len()).filter(|&i| source.is_char_boundary(i)).collect();
+        for k in 0..100 {
+            let offset = boundaries[(boundaries.len() - 1) * k / 99];
+            assert_eq!(index.position(offset as u32), naive(source, offset), "offset {offset}");
+        }
+    }
+
+    #[test]
+    fn long_ascii_line_matches_naive_count() {
+        check_equivalence(&"abcdefgh".repeat(131_072));
+    }
+
+    #[test]
+    fn long_mixed_line_matches_naive_count() {
+        check_equivalence(&"привет😀x".repeat(70_000));
+    }
+
+    #[test]
+    fn many_positions_in_one_long_line_are_fast() {
+        // About 2.55 MB on one line.
+        let source = "привет😀x".repeat(150_000);
+        let index = LineIndex::new(&source);
+        let boundaries: Vec<usize> = (0..=source.len()).filter(|&i| source.is_char_boundary(i)).collect();
+        let started = std::time::Instant::now();
+        let mut checksum = 0u64;
+        for k in 0..100_000 {
+            let offset = boundaries[(boundaries.len() - 1) * k / 99_999];
+            checksum += u64::from(index.position(offset as u32).column);
+        }
+        assert!(checksum > 0);
+        assert!(started.elapsed().as_secs() < 10, "took {:?}", started.elapsed());
     }
 }

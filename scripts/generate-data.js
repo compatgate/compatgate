@@ -41,41 +41,76 @@ export function encodeVersion(value) {
   return ((major << 16) | (minor << 8) | patch) >>> 0;
 }
 
-export function browserSupport(statements) {
-  let full = UNSUPPORTED;
-  let partial = UNSUPPORTED;
-  let note = null;
+/**
+ * The support of one browser as ranges of versions. `since` is the first version from which full support
+ * lasts to the latest release, or `UNSUPPORTED`. `ranges` holds the statements that start before `since`:
+ * partial support and full support that a later release removed. A statement is the range
+ * `[added, removed)`; without a removal it lasts to the latest release, and `removed` is `UNSUPPORTED`.
+ */
+export function browserSupport(statements, id) {
+  const usable = [];
   for (const statement of [].concat(statements ?? [])) {
-    // "preview" removal takes the feature out of a preview build only; stable releases still have it.
-    const removed = statement.version_removed && statement.version_removed !== 'preview';
     // Support behind a flag, a prefix or an old name is not available to ordinary code.
-    if (statement.flags || statement.prefix || statement.alternative_name || removed) {
+    if (statement.flags || statement.prefix || statement.alternative_name) {
       continue;
     }
-    const version = encodeVersion(statement.version_added);
-    if (statement.partial_implementation) {
-      if (version < partial) {
-        partial = version;
-        note = noteText(statement.notes);
-      }
-    } else {
-      full = Math.min(full, version);
+    const added = encodeVersion(statement.version_added);
+    // "preview" removal takes the feature out of a preview build only; stable releases still have it.
+    const removed =
+      statement.version_removed && statement.version_removed !== 'preview'
+        ? encodeVersion(statement.version_removed)
+        : UNSUPPORTED;
+    if (added === UNSUPPORTED || added >= removed) {
+      continue;
+    }
+    usable.push({ added, removed, partial: Boolean(statement.partial_implementation), statement });
+  }
+  // Full ranges that overlap or touch form one span. The span that reaches the latest release starts at `since`.
+  let since = UNSUPPORTED;
+  const full = usable.filter(range => !range.partial).sort((a, b) => b.removed - a.removed || a.added - b.added);
+  for (const range of full) {
+    if (range.removed >= since && range.added < since) {
+      since = range.added;
     }
   }
-  return { full, partial, note };
+  const ranges = [];
+  for (const { added, removed, partial, statement } of usable) {
+    if (added >= since) {
+      continue;
+    }
+    // The Rust table needs one row per range; the first statement of a range wins.
+    if (!ranges.some(range => range.added === added && range.removed === removed && range.partial === partial)) {
+      ranges.push({ added, removed, partial, note: partial ? noteText(statement.notes, id) : null });
+    }
+  }
+  ranges.sort((a, b) => a.added - b.added || a.removed - b.removed || Number(a.partial) - Number(b.partial));
+  return { since, ranges };
 }
 
-export function noteText(notes) {
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', nbsp: ' ' };
+
+export function noteText(notes, id) {
   const [first] = [].concat(notes ?? []);
   if (typeof first !== 'string') {
     return null;
   }
-  return first
-    .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, '&')
+  const text = first.replace(/<[^>]+>/g, '');
+  // One pass decodes every entity, so a decoded "&" never starts another entity.
+  // A non-breaking space becomes a plain space: Rust would need a \u escape for it.
+  return text
+    .replace(/&(?:#(\d+)|#x([\da-f]+)|(\w+));/gi, (entity, decimal, hex, name) => {
+      if (name !== undefined) {
+        if (!Object.hasOwn(ENTITIES, name)) {
+          throw new Error(`Unknown HTML entity ${entity} in a note of ${id}: ${first}`);
+        }
+        return ENTITIES[name];
+      }
+      const codePoint = decimal !== undefined ? Number(decimal) : parseInt(hex, 16);
+      if (codePoint > 0x10ffff) {
+        throw new Error(`Invalid HTML entity ${entity} in a note of ${id}: ${first}`);
+      }
+      return String.fromCodePoint(codePoint);
+    })
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -85,12 +120,11 @@ export function collectFeatures(data) {
   const walk = (node, path) => {
     for (const [key, value] of Object.entries(node)) {
       if (key === '__compat') {
-        const support = BROWSERS.map(([bcdKey]) => browserSupport(value.support?.[bcdKey]));
+        const support = BROWSERS.map(([bcdKey]) => browserSupport(value.support?.[bcdKey], path));
         features.push({
           id: path,
-          full: support.map(s => s.full),
-          partial: support.map(s => s.partial),
-          notes: support.map(s => s.note),
+          since: support.map(s => s.since),
+          ranges: support.map(s => s.ranges),
         });
       } else if (value && typeof value === 'object') {
         walk(value, path ? `${path}.${key}` : key);
@@ -110,6 +144,21 @@ export function collectFeatures(data) {
 
 const IDENTIFIER = /^[A-Za-z$][\w$]*$/;
 
+// Prototype members that are never called, although their spec anchors have no "get-" prefix:
+// `Symbol.prototype.description` has the anchor "sec-symbol.prototype.description".
+// The list comes from the lib.es*.d.ts files of TypeScript 7.0.2: there these members are properties
+// (`readonly description: string | undefined;`), not methods. Recheck it when BCD adds prototype members.
+export const ACCESSORS = new Set([
+  'javascript.builtins.Error.message',
+  'javascript.builtins.Error.name',
+  'javascript.builtins.Object.constructor',
+  'javascript.builtins.Symbol.description',
+]);
+
+// Methods of these objects share names with methods of frameworks: `use` of Vue and express,
+// `dispose` of three.js. A finding for `app.use()` would be noise. The globals detector checks the constructors.
+const UNREPORTED_OBJECTS = new Set(['DisposableStack', 'AsyncDisposableStack']);
+
 export function collectInstanceMembers(data) {
   const members = [];
   for (const [object, node] of Object.entries(data.javascript.builtins)) {
@@ -123,7 +172,9 @@ export function collectInstanceMembers(data) {
         // An accessor such as `ArrayBuffer.prototype.detached` is never called, so `x.detached()` is not it.
         // It still makes the name ambiguous: a supported accessor of the same name hides the method.
         const accessor = specUrls.some(url => /#sec-(get|set)-/i.test(url));
-        members.push({ name, id: `javascript.builtins.${object}.${name}`, reportable: !accessor });
+        const id = `javascript.builtins.${object}.${name}`;
+        const reportable = !accessor && !ACCESSORS.has(id) && !UNREPORTED_OBJECTS.has(object);
+        members.push({ name, id, reportable });
       }
     }
   }
@@ -151,7 +202,41 @@ export function collectSingletons(declarations, featureIds) {
   return singletons.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }
 
-export function renderRust(features, bcdVersion, members, singletons) {
+export function collectInterfaceParents(declarations, featureIds) {
+  const parents = new Map();
+  // Only top-level declarations: interfaces inside `declare namespace` are indented.
+  for (const [header, name, rest] of declarations.matchAll(/^interface (\w+)(.*)$/gm)) {
+    // The parser reads one line. A header that continues on the next line would lose its parents.
+    if (!header.endsWith(' {')) {
+      throw new Error(`Interface header does not end with "{" on the same line: ${header}`);
+    }
+    if (!featureIds.has(`api.${name}`)) {
+      continue;
+    }
+    // Drop type arguments and parameters, innermost first: `<T extends Element>`, `ReadonlyMap<string, X>`.
+    let clause = rest.slice(0, -' {'.length);
+    while (/<[^<>]*>/.test(clause)) {
+      clause = clause.replace(/<[^<>]*>/g, '');
+    }
+    const match = /^\s*extends (.+)$/.exec(clause);
+    if (!match) {
+      continue;
+    }
+    // TypeScript merges repeated declarations of an interface, and so does this table.
+    const list = parents.get(name) ?? [];
+    for (const parent of match[1].split(',').map(part => part.trim())) {
+      if (!list.includes(parent)) {
+        list.push(parent);
+      }
+    }
+    parents.set(name, list);
+  }
+  return [...parents]
+    .map(([name, list]) => ({ name, parents: list }))
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+}
+
+export function renderRust(features, bcdVersion, members, singletons, interfaceParents) {
   const value = version => (version === UNSUPPORTED ? 'U' : String(version));
   const literal = text => {
     const json = JSON.stringify(text);
@@ -175,21 +260,28 @@ export function renderRust(features, bcdVersion, members, singletons) {
     `pub static FEATURES: &[(&str, [u32; ${BROWSERS.length}])] = &[`,
   ];
   for (const feature of features) {
-    lines.push(`    (${literal(feature.id)}, [${feature.full.map(value).join(', ')}]),`);
+    lines.push(`    (${literal(feature.id)}, [${feature.since.map(value).join(', ')}]),`);
   }
-  const notes = [];
-  lines.push('];', '', 'pub static PARTIAL: &[(u32, u8, u32, u32)] = &[');
+  const notes = new Map();
+  lines.push(
+    '];',
+    '',
+    '// Feature index, browser column, first version, version of removal, partial, index into `NOTES`.',
+    'pub static RANGES: &[(u32, u8, u32, u32, bool, u32)] = &[',
+  );
   features.forEach((feature, featureIndex) => {
-    feature.partial.forEach((version, browserIndex) => {
-      if (version !== UNSUPPORTED) {
-        const note = feature.notes?.[browserIndex];
-        const noteIndex = note ? notes.push(note) - 1 : 'U';
-        lines.push(`    (${featureIndex}, ${browserIndex}, ${version}, ${noteIndex}),`);
+    feature.ranges.forEach((ranges, browserIndex) => {
+      for (const { added, removed, partial, note } of ranges) {
+        if (note && !notes.has(note)) {
+          notes.set(note, notes.size);
+        }
+        const noteIndex = note ? notes.get(note) : 'U';
+        lines.push(`    (${featureIndex}, ${browserIndex}, ${added}, ${value(removed)}, ${partial}, ${noteIndex}),`);
       }
     });
   });
   lines.push('];', '', 'pub static NOTES: &[&str] = &[');
-  for (const note of notes) {
+  for (const note of notes.keys()) {
     lines.push(`    ${literal(note)},`);
   }
   const index = new Map(features.map((feature, featureIndex) => [feature.id, featureIndex]));
@@ -204,6 +296,10 @@ export function renderRust(features, bcdVersion, members, singletons) {
   lines.push('];', '', 'pub static SINGLETONS: &[(&str, &str)] = &[');
   for (const singleton of singletons) {
     lines.push(`    (${literal(singleton.name)}, ${literal(singleton.type)}),`);
+  }
+  lines.push('];', '', 'pub static INTERFACE_PARENTS: &[(&str, &[&str])] = &[');
+  for (const { name, parents } of interfaceParents) {
+    lines.push(`    (${literal(name)}, &[${parents.map(literal).join(', ')}]),`);
   }
   lines.push('];', '');
   return lines.join('\n');
@@ -222,11 +318,17 @@ if (import.meta.main) {
   const output = fileURLToPath(new URL('../crates/compatgate/src/data/generated.rs', import.meta.url));
   const webTypes = readFileSync(require.resolve('@types/web/index.d.ts'), 'utf8');
   const featureIds = new Set(features.map(feature => feature.id));
+  for (const id of ACCESSORS) {
+    if (!featureIds.has(id)) {
+      throw new Error(`ACCESSORS names a feature that BCD does not have: ${id}`);
+    }
+  }
   const text = renderRust(
     features,
     packageJson.version,
     collectInstanceMembers(data),
     collectSingletons(webTypes, featureIds),
+    collectInterfaceParents(webTypes, featureIds),
   );
   if (process.argv.includes('--check')) {
     // CI uses this mode: a BCD update or a generator change without regeneration must fail.
