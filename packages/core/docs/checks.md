@@ -34,6 +34,9 @@ Each finding has a confidence: `exact`, `heuristic` (a method found by name) or 
 (some targets support the feature only in part; `unsupported[].note` explains the limit). A heuristic
 finding stays `heuristic` under partial support and keeps the note.
 
+Support is checked in every released version of a browser from its lowest target version on.
+A removal in a beta, nightly or planned release does not count until that release is out.
+
 ## Guards
 
 A use under a check of the same feature is not a finding:

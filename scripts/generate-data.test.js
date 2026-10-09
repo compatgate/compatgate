@@ -126,6 +126,35 @@ test('browserSupport ignores a removal in a preview build', () => {
   assert.deepEqual(support, { since: (26 << 16) | (4 << 8), ranges: [] });
 });
 
+test('browserSupport ignores a removal in a release that is not out yet', () => {
+  const statements = [{ version_added: '112', version_removed: '137' }];
+  assert.deepEqual(browserSupport(statements, 'api.X', new Set(['137', '138'])), { since: 112 << 16, ranges: [] });
+  assert.deepEqual(browserSupport(statements, 'api.X', new Set(['138'])), {
+    since: UNSUPPORTED,
+    ranges: [{ added: 112 << 16, removed: 137 << 16, partial: false, note: null }],
+  });
+});
+
+test('collectFeatures treats beta, nightly and planned releases as not out yet', () => {
+  const releases = {
+    136: { status: 'current' },
+    137: { status: 'beta' },
+    138: { status: 'nightly' },
+    139: { status: 'planned' },
+  };
+  const removedIn = version => ({ support: { opera: { version_added: '112', version_removed: version } } });
+  const features = collectFeatures({
+    browsers: { opera: { releases } },
+    api: { Beta: { __compat: removedIn('137') }, Current: { __compat: removedIn('136') } },
+    javascript: {},
+  });
+  const opera = BROWSERS.findIndex(([key]) => key === 'opera');
+  assert.equal(features[0].id, 'api.Beta');
+  assert.equal(features[0].since[opera], 112 << 16);
+  assert.equal(features[1].id, 'api.Current');
+  assert.equal(features[1].since[opera], UNSUPPORTED);
+});
+
 test('collectFeatures walks only api and javascript and sorts ids', () => {
   const compat = { support: { chrome: { version_added: '1' } } };
   const features = collectFeatures({

@@ -46,8 +46,9 @@ export function encodeVersion(value) {
  * lasts to the latest release, or `UNSUPPORTED`. `ranges` holds the statements that start before `since`:
  * partial support and full support that a later release removed. A statement is the range
  * `[added, removed)`; without a removal it lasts to the latest release, and `removed` is `UNSUPPORTED`.
+ * `unreleased` holds the BCD version strings of releases that are not out yet: a removal there is no removal.
  */
-export function browserSupport(statements, id) {
+export function browserSupport(statements, id, unreleased = new Set()) {
   const usable = [];
   for (const statement of [].concat(statements ?? [])) {
     // Support behind a flag, a prefix or an old name is not available to ordinary code.
@@ -55,9 +56,10 @@ export function browserSupport(statements, id) {
       continue;
     }
     const added = encodeVersion(statement.version_added);
-    // "preview" removal takes the feature out of a preview build only; stable releases still have it.
+    // A removal in a preview build or in a release that is not out yet takes the feature out of no
+    // stable release: every released version still has it.
     const removed =
-      statement.version_removed && statement.version_removed !== 'preview'
+      statement.version_removed && statement.version_removed !== 'preview' && !unreleased.has(statement.version_removed)
         ? encodeVersion(statement.version_removed)
         : UNSUPPORTED;
     if (added === UNSUPPORTED || added >= removed) {
@@ -120,12 +122,30 @@ export function noteText(notes, id) {
     .trim();
 }
 
+// BCD release statuses of versions that are not out yet. "current", "retired" and "esr" are out.
+const UNRELEASED_STATUSES = new Set(['beta', 'nightly', 'planned']);
+
+/** The versions of each browser in `BROWSERS` order that BCD lists as not out yet. */
+function unreleasedVersions(browsers) {
+  return BROWSERS.map(
+    ([bcdKey]) =>
+      new Set(
+        Object.entries(browsers?.[bcdKey]?.releases ?? {})
+          .filter(([, release]) => UNRELEASED_STATUSES.has(release.status))
+          .map(([version]) => version),
+      ),
+  );
+}
+
 export function collectFeatures(data) {
   const features = [];
+  const unreleased = unreleasedVersions(data.browsers);
   const walk = (node, path) => {
     for (const [key, value] of Object.entries(node)) {
       if (key === '__compat') {
-        const support = BROWSERS.map(([bcdKey]) => browserSupport(value.support?.[bcdKey], path));
+        const support = BROWSERS.map(([bcdKey], index) =>
+          browserSupport(value.support?.[bcdKey], path, unreleased[index]),
+        );
         features.push({
           id: path,
           since: support.map(s => s.since),
