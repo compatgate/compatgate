@@ -62,12 +62,15 @@ Three tables decide it.
    | made optional                 | `a \|\| X`, `a && X`, `X && a`, `a ?? X`, `c ? X : a`, `X?.y`, `X?.()`                                                                           | as at the parent, optional                       |
    | dropped or tested             | `X;`, `(X, a)`, `X \|\| a`, `X ?? a`, `!X`, `typeof X`, `X === a`, `X instanceof F`, `Boolean(X)`, `if (X)`, `{ ...X }`, `for (k in X)`          | no finding                                       |
    | used where `undefined` throws | `X.y`, `X()`, `new X`, `` X`…` ``, `'p' in X`, `a instanceof X`, `[...X]`, `f(...X)`, `for (a of X)`, `yield* X`, `extends X`, `const { a } = X` | a finding, unless a check or a `try` protects it |
-   | stored or passed              | `y = X`, `const y = X`, `f(X)`, `return X`, `{ a: X }`, `` `${X}` ``                                                                             | a finding, unless a check protects it            |
+   | stored or passed              | `o.y = X`, `f(X)`, `return X`, `{ a: X }`, `` `${X}` ``                                                                                          | a finding, unless a check protects it            |
+   | held by an alias `y`          | `const y = X`, `const { p: y } = X` for `X.p`, `var y; y = X`                                                                                    | as at every read of `y`                          |
 
    `y = X` both passes the value on and stores it, and the worse result counts: `y = navigator.share;` is a
-   finding, `(y = a || navigator.share)(d)` too. The init and the update of `for (X; ; X)` are dropped like
-   `X;`. A default value replaces a missing property, as `??` does: `const { share = f } = navigator` is no
-   finding, `const { share } = navigator` is.
+   finding when `y` is no alias, `(y = a || navigator.share)(d)` too. An alias passes the raw value on to its
+   reads: `const s = navigator.share; s(d)` is a finding, `const s = navigator.share; if (s) s(d)` is not.
+   The init and the update of `for (X; ; X)` are dropped like `X;`. A default value replaces a missing
+   property, as `??` does: `const { share = f } = navigator; g(share)` is no finding,
+   `const { share } = navigator; g(share)` is.
 
 2. Where a check holds:
 
@@ -90,6 +93,7 @@ Three tables decide it.
    | `typeof X === 'undefined'`, `X == null`, `X === undefined`                                                                 | nothing                                | `X`                          |
    | `'p' in X`                                                                                                                 | `X.p`                                  | nothing                      |
    | `!T`, `(a, T)`, `Boolean(T)`, `y = T`                                                                                      | as `T`; `!` swaps true and false       |                              |
+   | `y`, an alias of `X`                                                                                                       | as `X`                                 |                              |
    | `A && B`, `A \|\| B`                                                                                                       | both, what both prove                  | what both prove, both        |
    | `c ? A : B`                                                                                                                | what both `c && A` and `!c && B` prove | the same with `A`, `B` false |
    | `void 0`, `undefined`, `null`, `false`, `0`, `""`                                                                          | everything                             | nothing                      |
@@ -111,7 +115,23 @@ Three tables decide it.
 - A `try` with a `catch` protects whatever throws in its block in the same function, not in a callback
   or in the initializer of an instance field defined there: those run after the `try`.
 - A value that passed `||`, `&&`, `??`, `?:` or `?.` is no finding where it escapes: `const f = a || navigator.share`
-  is not a finding, `const f = navigator.share` is.
+  is not a finding, `const f = navigator.share; g(f)` is. The checker does not follow such a value into an
+  alias: a check of the alias would not prove the use present.
+- An alias is a variable that holds the value of one expression wherever it holds a value: a `const`, a `let`
+  or `var` with an initializer and no writes, and a `let` or `var` without an initializer that the code writes
+  once with `y = X`. Downleveled optional chains write such a temporary variable:
+  `null == (t = navigator.share) ? void 0 : t.call(navigator, d)` is protected. Before its write the variable
+  is `undefined`, and a check of it is false there. A variable with another write, a parameter, a loop variable
+  of `for … of` and `for … in`, and an exported variable are no aliases. An alias without reads is no finding.
+  A check of an alias of an alias proves its expression at any depth. A use is followed into aliases of
+  aliases to a depth of 16; deeper, its value escapes, and the use is a finding.
+- Some code writes a variable without naming it, and such a variable is no alias either:
+  - a top-level `var` or `let` of a script: the scripts of a page share their top-level names. A top-level
+    `const` stays an alias, since nothing writes it. The checker cannot tell a script of a page from CommonJS,
+    whose top level is private, so CommonJS loses these aliases too;
+  - a `var` or `let` that a direct `eval` sees;
+  - a `var` of a function that declares a function of the same name in a block, in sloppy code;
+  - a variable that the code reads in the body of a `with`: the name may be a property of the object.
 - Syntax is never protected: a file with it does not parse.
 - A check on a shadowed local `window` or `Intl` does not protect uses of the global.
 - A write that defines a global (`structuredClone = function () {}`) is not a use.

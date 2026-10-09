@@ -1,7 +1,6 @@
 // Probes of the guard rules from the review of 9366fb2. Each expectation holds the result of the flow
 // model: a test of a condition is a safe position, a branch of `?:` and the value of an assignment pass
-// the value on, and facts follow the control flow. `// model:` marks the probes whose planned result
-// waits for `const` aliases, which the model does not follow yet.
+// the value on, facts follow the control flow, and a `const` alias carries the value of a use.
 
 // A branch of `?:` passes the value on, and the call throws.
 (c ? a || navigator.share : b)(d); //~ api.Navigator.share exact
@@ -33,10 +32,10 @@ function p1() { if (navigator.share) {} else return; navigator.share(d); } //~ n
 function p2() { if (!navigator.share) { return } else { x(); } navigator.share(d); } //~ none
 // Both branches exit.
 function p3() { if (!navigator.share) { if (a) return; else return; } navigator.share(d); } //~ none
-// model: none. `s` is a `const` alias of `navigator.share`.
-{ const s = navigator.share; if (s) s(d); } //~ api.Navigator.share exact
-// model: none. `share` is a `const` alias of `navigator.share`.
-{ const { share } = navigator; if (share) share(d); } //~ api.Navigator.share exact
+// `s` is a `const` alias of `navigator.share`.
+{ const s = navigator.share; if (s) s(d); } //~ none
+// `share` is a `const` alias of `navigator.share`.
+{ const { share } = navigator; if (share) share(d); } //~ none
 // The value is dropped.
 navigator.share; //~ none
 // The value is dropped, and nothing throws for the `try` to catch.
@@ -44,7 +43,7 @@ try { navigator.share; } catch {} //~ none
 
 // Where the value goes. The model keeps these results: a raw value that escapes is a use, a value that
 // passed `||`, `&&`, `??` or `?:` is not.
-{ const f1 = navigator.share; } //~ api.Navigator.share exact
+{ const f1 = navigator.share; g(f1); } //~ api.Navigator.share exact
 { const f2 = a || navigator.share; } //~ none
 function r1() { return navigator.share; } //~ api.Navigator.share exact
 function r2() { return a || navigator.share; } //~ none

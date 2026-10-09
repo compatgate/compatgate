@@ -55,9 +55,6 @@ while (navigator.share) { navigator.share(d); } //~ @8 api.Navigator.share exact
 and adds one to a line with findings that has none.
 Review the diff before you commit it.
 
-`// model:` above a snippet gives the result that the flow model of guards expects, when it differs from
-the current one. Only the two probes of `const` aliases in `guards/probes.js` use it.
-
 ## Rules for snippets
 
 - Snippets of one file share the scope and the file-wide state. A snippet that declares a name sits in

@@ -84,15 +84,6 @@ pub fn path<'a>(semantic: &Semantic<'_>, expression: &Expression<'a>) -> Option<
     Some(segments)
 }
 
-/// The path of `object.name`: `["Intl", "Segmenter"]` for `Intl` and `Segmenter`, `["share"]` for
-/// `window` and `share`.
-pub fn member_path<'a>(semantic: &Semantic<'_>, object: &Expression<'a>, name: &'a str) -> Option<Vec<&'a str>> {
-    let mut segments = path(semantic, object)?;
-    segments.push(name);
-    drop_aliases(&mut segments);
-    Some(segments)
-}
-
 /// Drops the leading aliases of the global object, but keeps the last segment.
 fn drop_aliases(segments: &mut Vec<&str>) {
     let aliases = segments

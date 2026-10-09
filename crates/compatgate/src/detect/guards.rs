@@ -5,9 +5,11 @@
 //!   global throws `ReferenceError` when it is read, except under `typeof`. A member reads as
 //!   `undefined`, and each parent passes it on, drops it, throws on it, or lets it escape into a name,
 //!   an argument or a return value. A value that passed `||`, `&&`, `??`, `?:` or `?.` is optional: the
-//!   code expects that it may be missing, so its escape is no finding.
+//!   code expects that it may be missing, so its escape is no finding. A raw value that escapes into an
+//!   alias goes on from every read of the alias (see `alias`).
 //! - The facts: the features that a check proves present at the use. The branches of `if`, `?:`, `&&`,
-//!   `||` and of loops, and the statements before the use that exit early, check features.
+//!   `||` and of loops, and the statements before the use that exit early, check features. A check of an
+//!   alias checks its expression.
 //!
 //! A use that throws is no finding under a fact that covers it or inside a `try` with a `catch` in the
 //! same function. A raw value that escapes is no finding under a fact that covers it. A fact covers a
@@ -25,11 +27,12 @@ use oxc_ast::ast::{
     AssignmentOperator, AssignmentTargetMaybeDefault, BinaryExpression, BinaryOperator, BindingPattern, Expression,
     LogicalExpression, LogicalOperator, Statement, UnaryOperator,
 };
-use oxc_semantic::{NodeId, Semantic};
+use oxc_semantic::{NodeId, Semantic, SymbolId};
 use oxc_span::GetSpan;
 
+use super::alias::{Alias, Aliases};
 use super::globals::path_feature;
-use super::path::{as_member, is_global, member_path, path, property};
+use super::path::{WINDOW_ALIASES, as_member, is_global, property};
 use super::slot::{Slot, SpreadInto, is_boolean, is_boolean_argument, outermost, slot};
 use super::{Key, Origin, Use};
 use crate::data::FeatureId;
@@ -179,9 +182,114 @@ enum Step {
     Up(Flow),
     /// To the parent with the same flow, and an escape of the value into the target of an assignment.
     Fork,
+    /// To the parent with the same flow, and the raw value into an alias that the assignment writes.
+    ForkInto(SymbolId),
     /// To the optional chain around the parent, with `Flow::Optional`.
     Chain,
+    /// The raw value goes into the alias that the declaration declares.
+    Into(SymbolId),
     Done(Outcome),
+}
+
+/// What a step of the flow does with the value besides passing it on.
+#[derive(Clone, Copy)]
+enum Store {
+    None,
+    /// The value escapes into the target of an assignment.
+    Escape,
+    /// The raw value goes into an alias.
+    Alias(SymbolId),
+}
+
+/// The aliases that a raw value goes into, as a list. The flows of the nodes below an alias share the
+/// list above it, so a chain of `a = b = … = X` costs one entry per alias.
+struct Stored {
+    alias: SymbolId,
+    next: Option<Rc<Stored>>,
+}
+
+/// The end of the flow of a value: the outcome where it ends, and the aliases that the raw value goes
+/// into on the way. The flow goes on from every read of each alias.
+type End = (Outcome, Option<Rc<Stored>>);
+
+/// How deep the guards follow a use into aliases of aliases. Each level is a recursion through
+/// `is_followed` and `flow`, so the limit keeps the stack small. Code has one or two levels: a `const` of
+/// a `const`, the temporary variable of a downleveled `?.`. The answers are kept by alias, so the limit
+/// costs no work per use. Deeper, the value escapes, and the use is a finding. The facts of a check
+/// resolve aliases at any depth without recursion (`resolve_alias`).
+const ALIAS_DEPTH: usize = 16;
+
+/// The names of members that a check through an alias proves, nearest to the alias first. A check of an
+/// alias asks the facts of its expression each time, and the limit keeps that constant.
+const ALIAS_NAMES: usize = 4;
+
+/// What a check of an expression proves present: the head of its path and the names of its members.
+#[derive(Clone, Default)]
+struct Resolved<'a> {
+    /// `None` when the root is not a global reference or a key is not static.
+    head: Option<Head<'a>>,
+    /// The names of the members on the way, from the end of the expression to its root.
+    names: Vec<&'a str>,
+}
+
+/// The first two segments of a path without the leading aliases of the global object. The key of a use
+/// has one or two segments, so a longer prefix covers none.
+#[derive(Clone)]
+struct Head<'a> {
+    segments: Vec<&'a str>,
+    /// The path is only aliases of the global object, such as `window.self`; `segments` holds the last.
+    aliases: bool,
+}
+
+impl<'a> Head<'a> {
+    fn global(name: &'a str) -> Self {
+        Self {
+            segments: vec![name],
+            aliases: WINDOW_ALIASES.contains(&name),
+        }
+    }
+
+    /// The head of the path with the segments `more` after it, in order.
+    fn extend(&self, more: &[&'a str]) -> Self {
+        if more.is_empty() {
+            return self.clone();
+        }
+        if self.aliases {
+            // The leading aliases of `more` are dropped too, but the last segment stays.
+            let skip = more
+                .iter()
+                .take_while(|segment| WINDOW_ALIASES.contains(segment))
+                .count()
+                .min(more.len() - 1);
+            let rest = &more[skip..];
+            return Self {
+                segments: rest.iter().take(2).copied().collect(),
+                aliases: rest.len() == 1 && WINDOW_ALIASES.contains(&rest[0]),
+            };
+        }
+        let mut segments = self.segments.clone();
+        segments.extend(more.iter().take(2 - segments.len()));
+        Self {
+            segments,
+            aliases: false,
+        }
+    }
+}
+
+/// An expression walked from its end to its root.
+struct Walk<'a> {
+    /// The segments from the end to the root.
+    segments: Vec<&'a str>,
+    names: Vec<&'a str>,
+    /// Every key on the way is static.
+    complete: bool,
+}
+
+/// The root of a walk.
+enum Root<'a> {
+    Global(&'a str),
+    Alias(SymbolId),
+    Other,
 }
 
 /// Answers for the uses of one file. The answers are kept by node, so uses with common ancestors share
@@ -191,6 +299,15 @@ pub struct Guards<'s, 'a> {
     targets: &'s Targets,
     /// The outcome of the flow from a node with a flow.
     flows: HashMap<(NodeId, Flow), Outcome>,
+    /// The aliases that the raw value goes into on the flow from a node with a flow, when there are any.
+    stores: HashMap<(NodeId, Flow), Rc<Stored>>,
+    aliases: Aliases<'s, 'a>,
+    /// Whether every read of an alias is guarded, by alias and subject. `None` is a use without a key.
+    followed: HashMap<(SymbolId, Option<usize>), bool>,
+    /// The aliases of aliases that the current question follows.
+    depth: usize,
+    /// What a check of the expression of an alias proves, by the node of the expression.
+    resolved: HashMap<NodeId, Rc<Resolved<'a>>>,
     /// Interned keys and the features that they name.
     facts: HashMap<Key<'a>, Fact>,
     fact_features: Vec<Option<FeatureId>>,
@@ -231,6 +348,11 @@ impl<'s, 'a> Guards<'s, 'a> {
             semantic,
             targets,
             flows: HashMap::new(),
+            stores: HashMap::new(),
+            aliases: Aliases::new(semantic),
+            followed: HashMap::new(),
+            depth: 0,
+            resolved: HashMap::new(),
             facts: HashMap::new(),
             fact_features: Vec::new(),
             subjects: Vec::new(),
@@ -247,40 +369,95 @@ impl<'s, 'a> Guards<'s, 'a> {
     }
 
     pub fn is_guarded(&mut self, usage: &Use<'a>) -> bool {
-        match self.outcome(usage) {
-            None => false,
-            Some(Outcome::Safe | Outcome::Escapes(Flow::Optional)) => true,
-            Some(Outcome::Escapes(Flow::Raw)) => self.is_covered(usage),
-            Some(Outcome::Throws) => self.is_covered(usage) || self.is_caught(usage.node),
+        let Some((outcome, stores)) = self.outcome(usage) else {
+            return false;
+        };
+        if matches!(outcome, Outcome::Safe | Outcome::Escapes(Flow::Optional)) && stores.is_none() {
+            return true;
+        }
+        let subject = self.subject(usage.key.clone(), usage.feature);
+        self.decide(usage.node, outcome, subject) && self.are_followed(stores, subject)
+    }
+
+    /// Whether every read of every alias in the list is guarded for the subject.
+    fn are_followed(&mut self, stores: Option<Rc<Stored>>, subject: Option<usize>) -> bool {
+        let mut next = stores;
+        while let Some(stored) = next {
+            count!(guards);
+            if !self.is_followed(stored.alias, subject) {
+                return false;
+            }
+            next = stored.next.clone();
+        }
+        true
+    }
+
+    /// Whether the end of a flow at `node` is guarded for the subject.
+    fn decide(&mut self, node: NodeId, outcome: Outcome, subject: Option<usize>) -> bool {
+        match outcome {
+            Outcome::Safe | Outcome::Escapes(Flow::Optional) => true,
+            Outcome::Escapes(Flow::Raw) => subject.is_some_and(|subject| self.is_covered(node, subject)),
+            Outcome::Throws => subject.is_some_and(|subject| self.is_covered(node, subject)) || self.is_caught(node),
         }
     }
 
     /// `None` for syntax: the file does not parse, so nothing protects it.
-    fn outcome(&mut self, usage: &Use<'_>) -> Option<Outcome> {
+    fn outcome(&mut self, usage: &Use<'_>) -> Option<End> {
         let nodes = self.semantic.nodes();
         Some(match usage.origin {
             Origin::Parse => return None,
-            Origin::Call => Outcome::Throws,
-            Origin::Global if slot(nodes, outermost(nodes, usage.node)) == Slot::Typeof => Outcome::Safe,
-            Origin::Global => Outcome::Throws,
+            Origin::Call => (Outcome::Throws, None),
+            Origin::Global if slot(nodes, outermost(nodes, usage.node)) == Slot::Typeof => (Outcome::Safe, None),
+            Origin::Global => (Outcome::Throws, None),
             Origin::Member | Origin::Method => match nodes.kind(usage.node) {
                 AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_) => self.flow(usage.node),
                 // A default value replaces a missing property, as `??` does.
-                kind if has_default(kind) => Outcome::Safe,
-                // A destructured property is bound to a name, and the value goes on from there.
-                _ => Outcome::Escapes(Flow::Raw),
+                kind if has_default(kind) => (Outcome::Safe, None),
+                // A destructured property is bound to a name, and the value goes on from the reads of an alias.
+                AstKind::BindingProperty(property) if let Some(alias) = self.aliases.bound_by(&property.value) => {
+                    (Outcome::Safe, Some(Rc::new(Stored { alias, next: None })))
+                }
+                _ => (Outcome::Escapes(Flow::Raw), None),
             },
         })
     }
 
-    /// Table 1: the climb from the member read `start` to the end of its flow.
-    fn flow(&mut self, start: NodeId) -> Outcome {
+    /// Whether every read of the alias is guarded for the subject: the raw value of a use goes on from each.
+    fn is_followed(&mut self, alias: SymbolId, subject: Option<usize>) -> bool {
+        if let Some(&known) = self.followed.get(&(alias, subject)) {
+            return known;
+        }
+        if self.depth >= ALIAS_DEPTH {
+            return false;
+        }
+        // An alias that holds itself, `t = t`, holds no other value.
+        self.followed.insert((alias, subject), true);
+        self.depth += 1;
+        let mut guarded = true;
+        for read in self.aliases.reads(alias) {
+            count!(guards);
+            let (outcome, stores) = self.flow(read);
+            guarded = self.decide(read, outcome, subject) && self.are_followed(stores, subject);
+            if !guarded {
+                break;
+            }
+        }
+        self.depth -= 1;
+        self.followed.insert((alias, subject), guarded);
+        guarded
+    }
+
+    /// Table 1: the climb from the node `start`, a member read or a read of an alias, to the end of its
+    /// flow.
+    fn flow(&mut self, start: NodeId) -> End {
         let semantic = self.semantic;
         let nodes = semantic.nodes();
         let mut visited = Vec::new();
         let (mut id, mut flow) = (start, Flow::Raw);
+        let mut stores = None;
         let mut outcome = loop {
             if let Some(&known) = self.flows.get(&(id, flow)) {
+                stores = self.stores.get(&(id, flow)).cloned();
                 break known;
             }
             count!(climb);
@@ -290,7 +467,10 @@ impl<'s, 'a> Guards<'s, 'a> {
                 | Slot::LogicalRight(_)
                 | Slot::CondConsequent
                 | Slot::CondAlternate => Step::Up(Flow::Optional),
-                Slot::AssignValue => Step::Fork,
+                Slot::AssignValue => match flow {
+                    Flow::Raw => self.aliases.stored_into(id).map_or(Step::Fork, Step::ForkInto),
+                    Flow::Optional => Step::Fork,
+                },
                 Slot::Object { optional: true } | Slot::Callee { optional: true } => Step::Chain,
                 Slot::Object { .. }
                 | Slot::Callee { .. }
@@ -327,17 +507,29 @@ impl<'s, 'a> Guards<'s, 'a> {
                 | Slot::Yield { delegate: false }
                 | Slot::IfConsequent
                 | Slot::IfAlternate
-                | Slot::LoopBody
-                | Slot::Other => Step::Done(Outcome::Escapes(flow)),
+                | Slot::LoopBody => Step::Done(Outcome::Escapes(flow)),
+                Slot::Other => match flow {
+                    Flow::Raw => self
+                        .aliases
+                        .stored_into(id)
+                        .map_or(Step::Done(Outcome::Escapes(flow)), Step::Into),
+                    Flow::Optional => Step::Done(Outcome::Escapes(flow)),
+                },
             };
-            visited.push((id, flow, matches!(step, Step::Fork)));
+            let store = match step {
+                Step::Fork => Store::Escape,
+                Step::ForkInto(alias) | Step::Into(alias) => Store::Alias(alias),
+                _ => Store::None,
+            };
+            visited.push((id, flow, store));
             match step {
                 Step::Done(outcome) => break outcome,
+                Step::Into(_) => break Outcome::Safe,
                 Step::Up(next) => {
                     id = nodes.parent_id(id);
                     flow = next;
                 }
-                Step::Fork => id = nodes.parent_id(id),
+                Step::Fork | Step::ForkInto(_) => id = nodes.parent_id(id),
                 Step::Chain => {
                     id = nodes.parent_id(id);
                     while !matches!(nodes.kind(id), AstKind::ChainExpression(_)) {
@@ -348,13 +540,21 @@ impl<'s, 'a> Guards<'s, 'a> {
                 }
             }
         };
-        for (id, flow, fork) in visited.into_iter().rev() {
-            if fork {
-                outcome = outcome.max(Outcome::Escapes(flow));
+        for (id, flow, store) in visited.into_iter().rev() {
+            match store {
+                Store::None => {}
+                Store::Escape => outcome = outcome.max(Outcome::Escapes(flow)),
+                Store::Alias(alias) => {
+                    count!(guards);
+                    stores = Some(Rc::new(Stored { alias, next: stores }));
+                }
             }
             self.flows.insert((id, flow), outcome);
+            if let Some(stores) = &stores {
+                self.stores.insert((id, flow), stores.clone());
+            }
         }
-        outcome
+        (outcome, stores)
     }
 
     /// A `try` with a `catch` around the node in the same function: it catches what the node throws.
@@ -417,20 +617,20 @@ impl<'s, 'a> Guards<'s, 'a> {
         answer
     }
 
-    fn is_covered(&mut self, usage: &Use<'a>) -> bool {
-        let Some(key) = &usage.key else {
-            return false;
-        };
-        let fact = self.intern(key.clone());
+    /// The subject of a use: its key and its feature. `None` for a use without a key, which no check covers.
+    fn subject(&mut self, key: Option<Key<'a>>, feature: FeatureId) -> Option<usize> {
+        let fact = self.intern(key?);
         let next = self.subjects.len();
-        let subject = *self.subject_ids.entry((fact, usage.feature)).or_insert(next);
+        let subject = *self.subject_ids.entry((fact, feature)).or_insert(next);
         if subject == next {
-            self.subjects.push(Subject {
-                fact,
-                feature: usage.feature,
-            });
+            self.subjects.push(Subject { fact, feature });
         }
-        self.climb(usage.node, subject, |guards, parent, child, subject| {
+        Some(subject)
+    }
+
+    /// Whether the facts at `node` cover the subject.
+    fn is_covered(&mut self, node: NodeId, subject: usize) -> bool {
+        self.climb(node, subject, |guards, parent, child, subject| {
             guards.facts_of(parent, child, subject).then_some(true)
         })
     }
@@ -741,36 +941,135 @@ impl<'s, 'a> Guards<'s, 'a> {
     /// A present path has present prefixes: where `navigator.share?.call` is present, `navigator.share`
     /// and `navigator` are too. So the facts hold the prefixes of the path and the name of every member.
     fn present(&mut self, value: &'a Expression<'a>, name: Option<&'a str>) -> Facts {
-        let semantic = self.semantic;
-        let path = match name {
-            Some(name) => member_path(semantic, value, name),
-            None => path(semantic, value),
-        }
-        .unwrap_or_default();
+        let resolved = self.resolve(value, name);
         let mut set = FactSet::default();
-        // The key of a use has one or two segments, so a longer prefix covers none, and copying every
-        // prefix of a long path would cost its square.
-        let ends = (1..=path.len().min(2)).chain((path.len() > 2).then_some(path.len()));
-        for end in ends {
-            count!(guards);
-            let fact = self.intern(Key::Path(path[..end].to_vec()));
+        // A head has at most two segments.
+        for end in 1..=resolved.head.as_ref().map_or(0, |head| head.segments.len()) {
+            let segments = &resolved.head.as_ref().expect("a head with segments").segments;
+            let fact = self.intern(Key::Path(segments[..end].to_vec()));
             set.facts.push(fact);
             set.features.extend(self.fact_features[fact as usize]);
         }
-        set.facts.extend(name.map(|name| self.intern(Key::Method(name))));
-        let mut current = value;
-        while let Some(member) = as_member(current) {
-            count!(guards);
-            if let Some(method) = property(member) {
-                set.facts.push(self.intern(Key::Method(method)));
-            }
-            current = member.object();
+        for name in resolved.names {
+            set.facts.push(self.intern(Key::Method(name)));
         }
         set.facts.sort_unstable();
         set.facts.dedup();
         set.features.sort_unstable_by_key(|feature| feature.index());
         set.features.dedup();
         Facts::Set(Rc::new(set))
+    }
+
+    /// What a check of `value`, or of `value.name` with `name`, proves present. The value of an assignment
+    /// `(y = X)` is `X`, and an alias has the value of its expression.
+    fn resolve(&mut self, value: &'a Expression<'a>, name: Option<&'a str>) -> Resolved<'a> {
+        let (mut walk, root) = self.walk(value, name);
+        let base = match root {
+            Root::Global(name) => Rc::new(Resolved {
+                head: Some(Head::global(name)),
+                names: Vec::new(),
+            }),
+            Root::Other => Rc::default(),
+            Root::Alias(alias) => match self.aliases.get(alias) {
+                Some(Alias::Value(value)) => self.resolve_alias(value),
+                Some(Alias::Member(object, member)) => {
+                    walk.segments.push(member);
+                    walk.names.push(member);
+                    self.resolve_alias(object)
+                }
+                None => Rc::default(),
+            },
+        };
+        combine(&base, walk)
+    }
+
+    /// What a check of the expression of an alias proves, kept by its node: every check of the alias asks
+    /// it. An alias of an alias resolves its own expression first, without recursion, so a long chain
+    /// of aliases costs its length once.
+    fn resolve_alias(&mut self, value: &'a Expression<'a>) -> Rc<Resolved<'a>> {
+        let mut pending = Vec::new();
+        let mut current = value;
+        let mut base = loop {
+            let id = current.node_id();
+            if let Some(known) = self.resolved.get(&id) {
+                break known.clone();
+            }
+            // An alias that holds itself, `t = t`, resolves to nothing.
+            self.resolved.insert(id, Rc::default());
+            let (mut walk, root) = self.walk(current, None);
+            let next = match root {
+                Root::Global(name) => Err(Resolved {
+                    head: Some(Head::global(name)),
+                    names: Vec::new(),
+                }),
+                Root::Other => Err(Resolved::default()),
+                Root::Alias(alias) => match self.aliases.get(alias) {
+                    Some(Alias::Value(value)) => Ok(value),
+                    Some(Alias::Member(object, member)) => {
+                        walk.segments.push(member);
+                        walk.names.push(member);
+                        Ok(object)
+                    }
+                    None => Err(Resolved::default()),
+                },
+            };
+            pending.push((id, walk));
+            match next {
+                Ok(value) => current = value,
+                Err(resolved) => break Rc::new(resolved),
+            }
+        };
+        while let Some((id, walk)) = pending.pop() {
+            let mut resolved = combine(&base, walk);
+            resolved.names.truncate(ALIAS_NAMES);
+            base = Rc::new(resolved);
+            self.resolved.insert(id, base.clone());
+        }
+        base
+    }
+
+    /// Walks `value`, or `value.name` with `name`, from its end to its root: a global reference, an alias
+    /// or another expression. The value of an assignment `(y = X)` is `X`.
+    fn walk(&mut self, value: &'a Expression<'a>, name: Option<&'a str>) -> (Walk<'a>, Root<'a>) {
+        let semantic = self.semantic;
+        let mut walk = Walk {
+            segments: name.into_iter().collect(),
+            names: name.into_iter().collect(),
+            complete: true,
+        };
+        let mut current = value;
+        let root = loop {
+            count!(guards);
+            match current.get_inner_expression() {
+                Expression::Identifier(identifier) if is_global(semantic, identifier) => {
+                    break Root::Global(identifier.name.as_str());
+                }
+                Expression::Identifier(identifier) => {
+                    let symbol = semantic.scoping().get_reference(identifier.reference_id()).symbol_id();
+                    break match symbol.filter(|&symbol| self.aliases.get(symbol).is_some()) {
+                        Some(symbol) => Root::Alias(symbol),
+                        None => Root::Other,
+                    };
+                }
+                Expression::AssignmentExpression(assignment) if assignment.operator == AssignmentOperator::Assign => {
+                    current = &assignment.right;
+                }
+                _ => {
+                    let Some(member) = as_member(current) else {
+                        break Root::Other;
+                    };
+                    match property(member) {
+                        Some(member) => {
+                            walk.segments.push(member);
+                            walk.names.push(member);
+                        }
+                        None => walk.complete = false,
+                    }
+                    current = member.object();
+                }
+            }
+        };
+        (walk, root)
     }
 
     /// The facts as a list: every fact holds, the facts, and the features that they name. The range of
@@ -922,6 +1221,21 @@ impl<'s, 'a> Guards<'s, 'a> {
         self.implying.insert((index, feature), Implying::Found(implying));
         answer
     }
+}
+
+/// What a check of the walked expression proves, with `base` for its root.
+fn combine<'a>(base: &Resolved<'a>, walk: Walk<'a>) -> Resolved<'a> {
+    count!(guards, base.names.len());
+    let head = match &base.head {
+        Some(head) if walk.complete => {
+            let segments: Vec<&'a str> = walk.segments.iter().rev().copied().collect();
+            Some(head.extend(&segments))
+        }
+        _ => None,
+    };
+    let mut names = walk.names;
+    names.extend(base.names.iter().copied());
+    Resolved { head, names }
 }
 
 /// `Targets::implies` with the versions of the checked feature kept by the file.

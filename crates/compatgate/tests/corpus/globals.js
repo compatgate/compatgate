@@ -28,18 +28,18 @@ window?.structuredClone(1); //~ api.structuredClone exact
 
 // destructuring_from_a_global_is_a_member_use
 {
-  const { userActivation } = navigator; //~ api.Navigator.userActivation exact
-  const { groupBy } = Object; //~ javascript.builtins.Object.groupBy exact
-  const { structuredClone } = window; //~ api.structuredClone exact
+  const { userActivation } = navigator; g(userActivation); //~ api.Navigator.userActivation exact
+  const { groupBy } = Object; g(groupBy); //~ javascript.builtins.Object.groupBy exact
+  const { structuredClone } = window; g(structuredClone); //~ api.structuredClone exact
 }
 
 // a_check_guards_destructuring_from_a_global
-if (navigator.userActivation) { const { userActivation } = navigator; } //~ none
+if (navigator.userActivation) { const { userActivation } = navigator; g(userActivation); } //~ none
 function g0() {
   if (!Object.groupBy) throw new Error(); //~ none
-  const { groupBy } = Object; //~ none
+  const { groupBy } = Object; g(groupBy); //~ none
 }
-if (typeof structuredClone === 'function') { const { structuredClone } = window; } //~ none
+if (typeof structuredClone === 'function') { const { structuredClone } = window; g(structuredClone); } //~ none
 
 // a_member_of_a_parent_interface_is_found_for_a_singleton
 document.when('click'); //~ api.EventTarget.when exact
@@ -51,5 +51,5 @@ window.addEventListener('a', f); addEventListener('a', f); //~ none
 if (typeof when === 'function') { when('click'); } //~ none
 
 // destructuring_from_a_member_of_a_window_alias_is_a_member_use
-{ const { share } = window.navigator; } //~ api.Navigator.share exact
-if (navigator.share) { const { share } = window.navigator; } //~ none
+{ const { share } = window.navigator; g(share); } //~ api.Navigator.share exact
+if (navigator.share) { const { share } = window.navigator; g(share); } //~ none

@@ -13,7 +13,8 @@ const QUERY: &str = "Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115";
 /// The input sizes of every test: the second is four times the first.
 const SIZES: [usize; 2] = [1000, 4000];
 
-/// The most expensive shape, a long chain of member reads, takes 7 climb steps per term.
+/// The most expensive shape, a long `&&` chain that is called, takes 11 guard steps per term, and the
+/// others take 4 to 9. A quadratic regression takes hundreds per term already at the smaller size.
 const STEPS_PER_TERM: usize = 16;
 
 /// Checks `source` and returns the number of findings and the steps it took.
@@ -304,5 +305,110 @@ fn many_distinct_uses_before_many_early_exits_on_features_are_checked_in_linear_
         assert_eq!(findings, uses);
         assert_linear(terms + uses, steps.climb, "climb");
         assert_linear(terms + uses, steps.guards, "guards");
+    }
+}
+
+/// An input shape: the statements per term and the source of term `i`.
+type Shape = (usize, fn(usize) -> String);
+
+#[test]
+fn many_aliases_with_reads_are_checked_in_linear_time() {
+    // Every use goes on from each read of its alias, and every check of an alias resolves its value. A
+    // term is a block of several statements, so the bound counts statements.
+    let shapes: [Shape; 4] = [
+        (3, |i| {
+            format!("{{ const s{i} = navigator.share; if (s{i}) s{i}(d); s{i}(e); }}\n")
+        }),
+        (3, |i| {
+            format!("{{ const s{i} = window.navigator.share; if (s{i}) s{i}(d); s{i}(e); }}\n")
+        }),
+        (4, |i| {
+            format!("{{ const s{i} = navigator.share; if (s{i}) s{i}(d); if (s{i}) s{i}(f); s{i}(e); }}\n")
+        }),
+        (4, |i| {
+            format!("{{ const s{i} = navigator.share; const t{i} = s{i}; if (t{i}) t{i}(d); t{i}(e); }}\n")
+        }),
+    ];
+    for (statements, shape) in shapes {
+        for terms in SIZES {
+            let source: String = (0..terms).map(shape).collect();
+            let (findings, steps) = run(source, "a.js");
+            assert_eq!(findings, terms);
+            assert_linear(statements * terms, steps.climb, "climb");
+            assert_linear(statements * terms, steps.guards, "guards");
+        }
+    }
+}
+
+#[test]
+fn many_reads_of_one_alias_are_checked_in_linear_time() {
+    for terms in SIZES {
+        let reads: String = (0..terms).map(|i| format!("if (s) s(d{i});\n")).collect();
+        let source = format!("{{ const s = navigator.share;\n{reads}}}\n");
+        let (findings, steps) = run(source, "a.js");
+        assert_eq!(findings, 0);
+        assert_linear(terms, steps.climb, "climb");
+        assert_linear(terms, steps.guards, "guards");
+    }
+}
+
+#[test]
+fn many_downleveled_optional_calls_are_checked_in_linear_time() {
+    for terms in SIZES {
+        let source: String = (0..terms)
+            .map(|i| format!("function f{i}(d) {{ var t; return null == (t = navigator.share) ? void 0 : t.call(navigator, d); }}\n"))
+            .collect();
+        let (findings, steps) = run(source, "a.js");
+        assert_eq!(findings, 0);
+        assert_linear(terms, steps.climb, "climb");
+        assert_linear(terms, steps.guards, "guards");
+    }
+}
+
+#[test]
+fn a_long_chain_of_aliases_is_checked_in_linear_time() {
+    // The guards follow a use into aliases of aliases only to a fixed depth, so the use is a finding at
+    // the end of a longer chain. The check of the last alias would resolve to the use at any depth.
+    for terms in SIZES {
+        let mut source = String::from("{ const a0 = navigator.share;\n");
+        for i in 1..terms {
+            source.push_str(&format!("const a{i} = a{};\n", i - 1));
+        }
+        source.push_str(&format!("if (a{0}) a{0}(d); }}\n", terms - 1));
+        let (findings, steps) = run(source, "a.js");
+        assert_eq!(findings, 1);
+        assert_linear(terms, steps.climb, "climb");
+        assert_linear(terms, steps.guards, "guards");
+    }
+}
+
+#[test]
+fn many_checks_of_an_alias_of_a_long_path_are_checked_in_linear_time() {
+    // Every check of the alias resolves the path of its expression. Walking the expression again for each
+    // check was quadratic.
+    for terms in SIZES {
+        let checks: String = (0..terms).map(|i| format!("if (s) navigator.share(d{i});\n")).collect();
+        let source = format!("{{ const s = {}navigator.share;\n{checks}}}\n", "window.".repeat(terms));
+        let (findings, steps) = run(source, "a.js");
+        assert_eq!(findings, 0);
+        assert_linear(terms, steps.climb, "climb");
+        assert_linear(terms, steps.guards, "guards");
+    }
+}
+
+#[test]
+fn a_long_chain_of_assignments_to_aliases_is_checked_in_linear_time() {
+    // The value goes into every alias of the chain. Copying the list of aliases at each one was quadratic.
+    for terms in SIZES {
+        let names: Vec<String> = (0..terms).map(|i| format!("a{i}")).collect();
+        let source = format!(
+            "function f() {{ var {};\n{} = navigator.share; }}\n",
+            names.join(", "),
+            names.join(" =\n")
+        );
+        let (findings, steps) = run(source, "a.js");
+        assert_eq!(findings, 0);
+        assert_linear(terms, steps.climb, "climb");
+        assert_linear(terms, steps.guards, "guards");
     }
 }

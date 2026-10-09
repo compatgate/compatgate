@@ -90,7 +90,7 @@ if (Boolean(navigator.share)) navigator.share(d); //~ none
 { const Boolean = (x) => true; if (Boolean(navigator.share)) navigator.share(d); } //~ @44 api.Navigator.share exact; @62 api.Navigator.share exact
 
 // a_member_read_whose_value_goes_further_is_a_use
-{ const f = navigator.share; } //~ api.Navigator.share exact
+{ const f = navigator.share; g(f); } //~ api.Navigator.share exact
 // `Boolean` reads `length` from the member, which throws when it is missing.
 Boolean(navigator.share.length); //~ api.Navigator.share exact
 // A local `Boolean` may use the value in any way.

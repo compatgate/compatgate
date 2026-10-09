@@ -216,6 +216,8 @@ Caveats:
   A member read such as `navigator.share` reads as `undefined`, and its parents decide what follows.
 - Syntax is never protected: a file with it does not parse.
 - A `try` with a `catch` protects whatever throws in its block in the same function, not in a callback.
+- A `const` and a variable written once hold the value of their expression: `const s = navigator.share; if (s) s(d)`
+  is protected, and so is the temporary variable of a downleveled `?.`.
 - A write that defines a global (`structuredClone = function () {}`) is not a use.
 - Members of `DisposableStack` and `AsyncDisposableStack` are not checked as prototype methods:
   their names (`use`, `dispose`, `move`, `adopt`, `defer`) are also methods of Vue, express and three.js.

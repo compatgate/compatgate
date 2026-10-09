@@ -61,7 +61,7 @@ if (window.scheduler) scheduler.yield(); //~ api.Scheduler.yield exact
 // The member is no finding here, so the root reports itself.
 typeof scheduler.yield; //~ api.scheduler exact
 // A destructuring reads the root once for all its members, so the root stays.
-{ const { yield: y } = scheduler; } //~ api.Scheduler.yield exact; api.scheduler exact
+{ const { yield: y } = scheduler; g(y); } //~ api.Scheduler.yield exact; api.scheduler exact
 // Where `scheduler.yield` is present, `scheduler` is present too.
 if (scheduler.yield) scheduler.yield(); //~ api.scheduler exact
 
@@ -91,7 +91,7 @@ if (Object.groupBy) Promise.withResolvers(); //~ javascript.builtins.Promise.wit
 { let share; ({ share = f } = navigator); } //~ none
 { let s; ({ share: s = f } = navigator); } //~ none
 // Without a default the name holds `undefined`, and a default of another property does not help.
-{ const { share, canShare = f } = navigator; } //~ api.Navigator.share exact
+{ const { share, canShare = f } = navigator; g(share); } //~ api.Navigator.share exact
 { let s; ({ share: s } = navigator); } //~ api.Navigator.share exact
 
 // the_init_and_the_update_of_a_for_loop_are_dropped
@@ -99,7 +99,7 @@ for (navigator.share; ; ) break; //~ none
 for (; ; navigator.share) break; //~ none
 // The value is read further, or it is stored.
 for (navigator.share.length; ; ) break; //~ api.Navigator.share exact
-for (let s = navigator.share; ; ) break; //~ api.Navigator.share exact
+for (let s = navigator.share; ; ) { g(s); break; } //~ api.Navigator.share exact
 
 // a_checked_path_proves_its_prefixes: where `navigator.share.call` is present, `navigator.share` is too.
 if (navigator.share?.call) navigator.share(d); //~ none

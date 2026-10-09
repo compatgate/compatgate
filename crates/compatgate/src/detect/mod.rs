@@ -1,6 +1,7 @@
 //! Detectors turn the AST and scope data into feature uses. Each detector is independent;
 //! `guards` then removes the uses that the code protects with a feature check.
 
+pub mod alias;
 pub mod globals;
 pub mod guards;
 pub mod methods;
