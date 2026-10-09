@@ -194,9 +194,11 @@ with its own code, such as `StringExpected`.
 - **Builtins and Web APIs** reached as globals: `structuredClone()`, `new Intl.Segmenter()`, `Object.groupBy()`
   and members of singletons such as `navigator.userActivation`. `window.X`, `self.X` and `globalThis.X`
   count as the global `X`.
-- **Prototype methods** by name, such as `.toSorted()`. These findings are heuristic: the checker cannot
-  know the type of the object, so it skips names that a supported method also has, names that the file
-  declares itself and calls on imported modules.
+- **Prototype methods** by name, such as `.toSorted()`, `['toSorted']()` and `.toSorted.call(…)`. These
+  findings are heuristic: the checker cannot know the type of the object, so it skips names that a
+  supported method also has, names that the file declares itself and calls on imported modules. A name
+  that another module declares still gives a finding. On a literal receiver, such as `[3, 1].toSorted()`
+  or `new Set().union(b)`, the type is known and the finding is exact.
 
 A use under a check of the same feature is not a finding: a use is no finding when the code drops
 its value or when a check protects it.

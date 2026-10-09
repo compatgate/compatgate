@@ -18,6 +18,8 @@ pub struct Steps {
     pub ambient: usize,
     /// Position lookups and the bytes they count from a checkpoint.
     pub positions: usize,
+    /// Nodes that the methods detector visits to find whether the code calls a read of a method.
+    pub methods: usize,
 }
 
 thread_local! {
@@ -27,6 +29,7 @@ thread_local! {
             guards: 0,
             ambient: 0,
             positions: 0,
+            methods: 0,
         })
     };
 }

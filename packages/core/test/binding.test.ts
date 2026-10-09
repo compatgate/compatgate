@@ -79,9 +79,17 @@ test('partial findings carry the BCD note', () => {
 });
 
 test('a prototype method is a heuristic finding', () => {
-  const result = check('[3, 1].toSorted();', 'a.js');
+  const result = check('list.toSorted();', 'a.js');
   assert.deepEqual(
     result.findings.map(finding => [finding.feature, finding.confidence]),
     [['javascript.builtins.Array.toSorted', 'heuristic']],
+  );
+});
+
+test('a prototype method of a literal is an exact finding', () => {
+  const result = check('[3, 1].toSorted();', 'a.js');
+  assert.deepEqual(
+    result.findings.map(finding => [finding.feature, finding.confidence, finding.alternatives]),
+    [['javascript.builtins.Array.toSorted', 'exact', []]],
   );
 });

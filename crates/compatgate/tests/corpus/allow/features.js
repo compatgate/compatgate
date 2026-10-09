@@ -4,3 +4,5 @@
 structuredClone(v); //~ none
 list.toSorted(); //~ none
 navigator.share(d); //~ api.Navigator.share exact
+// The type of a literal receiver is known, so an entry for another type does not suppress its finding.
+[3, 1].toSorted(); //~ javascript.builtins.Array.toSorted exact

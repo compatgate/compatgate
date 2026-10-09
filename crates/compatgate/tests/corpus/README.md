@@ -33,7 +33,7 @@ A comment `//~` at the end of a line lists the findings that start on that line:
 ```js
 navigator.share(d); //~ api.Navigator.share exact
 if (navigator.share) navigator.share(d); //~ none
-[3, 1].toSorted(); new Intl.Segmenter(); //~ javascript.builtins.Array.toSorted heuristic; javascript.builtins.Intl.Segmenter exact
+arr.toSorted(); new Intl.Segmenter(); //~ javascript.builtins.Array.toSorted heuristic; javascript.builtins.Intl.Segmenter exact
 while (navigator.share) { navigator.share(d); } //~ @8 api.Navigator.share exact; @27 api.Navigator.share exact
 ```
 

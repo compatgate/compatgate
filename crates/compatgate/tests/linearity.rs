@@ -412,3 +412,29 @@ fn a_long_chain_of_assignments_to_aliases_is_checked_in_linear_time() {
         assert_linear(terms, steps.guards, "guards");
     }
 }
+
+#[test]
+fn many_method_reads_into_aliases_are_checked_in_linear_time() {
+    // The methods detector follows a read of a method into its alias to find a call of it.
+    for terms in SIZES {
+        let source: String = (0..terms)
+            .map(|i| format!("{{ const f{i} = a{i}.take; f{i}; (0, f{i}); g(f{i}); f{i}.call(a); }}\n"))
+            .collect();
+        let (findings, steps) = run(source, "a.js");
+        assert_eq!(findings, terms);
+        assert_linear(terms, steps.methods, "methods");
+    }
+}
+
+#[test]
+fn many_reads_of_one_method_alias_are_checked_in_linear_time() {
+    for terms in SIZES {
+        let source = format!(
+            "{{ const f = a.take;\n{}\n}}",
+            vec!["g(f), (0, f).x;"; terms].join("\n")
+        );
+        let (findings, steps) = run(source, "a.js");
+        assert_eq!(findings, 0);
+        assert_linear(terms, steps.methods, "methods");
+    }
+}

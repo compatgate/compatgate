@@ -16,14 +16,31 @@ The [README](../README.md) has the short version.
   `const { groupBy } = Object`. Members of a singleton resolve through its parent interfaces:
   `document.when()` is `api.EventTarget.when`. A local `window` or `Intl` that shadows the global
   (for example a parameter of a UMD wrapper) is not the global.
-- **Prototype methods** by name, such as `.toSorted()`. These findings are heuristic: names that a supported
+- **Prototype methods** by name, such as `.toSorted()`. A method is read as `arr.toSorted` or
+  `arr['toSorted']`, and the guards follow the value of the read like the value of any member.
+  The receiver of a literal has a known type: `[]`, `new Set()`, `new Map()`, a string, a template,
+  a regular expression, a number, a BigInt and a boolean. Its finding names the method of that type and is exact:
+  `[3, 1].toSorted()` reports `javascript.builtins.Array.toSorted`, and `'abc'.toSorted()` reports nothing.
+  Names that the file declares do not skip it.
+- For another receiver the findings are heuristic. A read is a use only when the code calls its value:
+  `arr.toSorted()`, `arr.toSorted.call(x)`, `arr.toSorted.apply(x, [])`, `(0, arr.toSorted)()` and
+  `const f = arr.toSorted; f(x)` are uses, while `if (arr.toSorted)` and `for (c of compilation.chunks)`
+  are not: many objects have data properties with method names. A destructured method,
+  `const { toSorted } = arr`, is not a use either. Other call shapes are not followed:
+  `(c ? x.m : y.m)()`, `(x.m || f)()`, `x.m.bind(o)()`, `new x.m()`, ``x.m`…` ``, and a variable that is
+  no alias, such as one written twice. Names that a supported
   method also has (`.map()`), names that the file declares as members itself (`class Q { union() {} }`,
   `class Q { take = 1 }`, accessors, `{ take() {} }`, `{ take: f }`, `obj.take = f`, `obj['take'] = f`)
   and calls on imported or required modules (`_.union()`) are skipped. A `require` result is skipped when
   `require` is the CommonJS global, a function parameter, a `declare`d `require`, or a variable that holds
   `createRequire(...)`, `module.createRequire(...)` or `__webpack_require__`.
+  Minified webpack calls `__webpack_require__` by the third parameter of the module function, `n(96540)`
+  or `n("./src/a.js")`, so a call of the third parameter of a function with one integer or string literal
+  is a module too.
   Transpiled wrappers such as `__importDefault(require('x'))`
-  and `_interopRequireDefault(...)`, and `.default` of a module, are skipped too.
+  and `_interopRequireDefault(...)`, `(0, m)`, and `.default` of a module, are skipped too.
+  A name declared in another module still gives a finding: `valids.toArray()` calls a class of a
+  neighbouring file, and the checker sees one file at a time.
   When several methods share a name, the finding names the one with the worst support.
   Members of `DisposableStack` and `AsyncDisposableStack` are not checked as prototype methods:
   their names (`use`, `dispose`, `move`, `adopt`, `defer`) are also methods of Vue, express and three.js.
@@ -104,7 +121,7 @@ Three tables decide it.
 
    Minified forms such as `typeof X<"u"` and `void 0 !== window.X` count. A check of a path proves its
    prefixes too: where `navigator.share?.call` is present, `navigator.share` is. A check proves `X` for uses of
-   `X`, and `a.m` for calls `b.m()` of a method found by name. It also proves a use that every target
+   `X`, and `a.m` for uses `b.m()` of a method found by name. It also proves a use that every target
    version without full support of the use lacks `X` in: `if (window.navigation) navigation.navigate('/')`.
    The root of a chain is a use of its own: `navigation.currentEntry` reports `api.Window.navigation`,
    and the member only where the root does not cover its gap. When the member covers the gap of the root

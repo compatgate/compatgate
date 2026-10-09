@@ -229,7 +229,7 @@ fn allowing_another_method_with_the_same_name_suppresses_the_finding() {
         ..AllowEntry::default()
     }])
     .unwrap();
-    let output = check("[3, 1].toSorted();", "a.js", &targets, &allow).unwrap();
+    let output = check("list.toSorted();", "a.js", &targets, &allow).unwrap();
     assert!(output.findings.is_empty());
     assert_eq!(output.used_allow, [0]);
 }
