@@ -52,9 +52,12 @@ fn corpus() {
                     );
                 }
                 if bless {
-                    let blessed = file.blessed(&source);
-                    if blessed != source {
-                        std::fs::write(path, blessed).unwrap();
+                    match file.blessed(&source) {
+                        Ok(blessed) if blessed != source => std::fs::write(path, blessed).unwrap(),
+                        Ok(_) => {}
+                        Err(error) => {
+                            let _ = write!(errors, "\n{name}: {error}");
+                        }
                     }
                 }
             }
@@ -86,6 +89,8 @@ fn collect(directory: &Path, files: &mut Vec<PathBuf>) {
 }
 
 struct File {
+    /// The filename that `check` gets: its extension decides how the file parses.
+    filename: String,
     lines: Vec<Line>,
 }
 
@@ -95,6 +100,8 @@ struct Line {
     number: u32,
     /// The code before the expectation.
     code: String,
+    /// The byte offset of the expectation in the line.
+    marker: Option<usize>,
     /// The expectation as written, normalized. `None` when the line has no `//~`.
     expected: Option<String>,
     /// The findings in the same form.
@@ -109,20 +116,36 @@ impl Line {
 
 impl File {
     /// The source with every expectation replaced by the findings of its line. A line with findings
-    /// and no expectation gets one.
-    fn blessed(&self, source: &str) -> String {
+    /// and no expectation gets one. An error when a new expectation would not be a comment: the line
+    /// ends inside a template literal, a block comment or JSX text.
+    fn blessed(&self, source: &str) -> Result<String, String> {
         let mut lines: Vec<(String, &str)> = split_lines(source)
             .into_iter()
             .map(|(text, end)| (text.to_string(), end))
             .collect();
         for line in &self.lines {
             let text = &mut lines[line.number as usize - 1].0;
-            *text = match find_marker(text) {
+            *text = match line.marker {
                 Some(start) => format!("{}{EXPECT} {}", &text[..start], line.found),
                 None => format!("{} {EXPECT} {}", text.trim_end(), line.found),
             };
         }
-        lines.into_iter().map(|(text, end)| text + end).collect()
+        let blessed: String = lines.into_iter().map(|(text, end)| text + end).collect();
+        // Only the parser knows where a line ends inside a literal, so the result is parsed again.
+        let markers = parse(&self.filename, &blessed).markers;
+        let lost: Vec<String> = self
+            .lines
+            .iter()
+            .filter(|line| !markers.contains_key(&line.number))
+            .map(|line| line.number.to_string())
+            .collect();
+        match lost.is_empty() {
+            true => Ok(blessed),
+            false => Err(format!(
+                "cannot add `{EXPECT}` to line {}: the line ends inside a literal or a comment",
+                lost.join(", ")
+            )),
+        }
     }
 }
 
@@ -235,7 +258,7 @@ fn run(name: &str, source: &str) -> Result<File, String> {
         filename,
         allow,
     } = header(name, &source_lines)?;
-    let errors = syntax_errors(&filename, source);
+    let Parsed { errors, markers } = parse(&filename, source);
     if !errors.is_empty() {
         return Err(format!("the file is not a valid program: {}", errors.join("; ")));
     }
@@ -253,7 +276,8 @@ fn run(name: &str, source: &str) -> Result<File, String> {
         let number = index as u32 + 1;
         let findings = by_line.remove(&number);
         let found = render(findings.as_deref().unwrap_or_default());
-        let (code, expected) = match find_marker(text) {
+        let marker = markers.get(&number).copied();
+        let (code, expected) = match marker {
             Some(start) => {
                 let expected = normalize(&text[start + EXPECT.len()..])
                     .map_err(|error| format!("line {number}: {error}: {}", text.trim()))?;
@@ -266,6 +290,7 @@ fn run(name: &str, source: &str) -> Result<File, String> {
         lines.push(Line {
             number,
             code: code.to_string(),
+            marker,
             expected,
             found,
         });
@@ -273,15 +298,7 @@ fn run(name: &str, source: &str) -> Result<File, String> {
     if let Some(number) = by_line.keys().next() {
         return Err(format!("a finding on line {number}, past the end of the file"));
     }
-    Ok(File { lines })
-}
-
-/// The start of the expectation: the last `//~` at the line start or after whitespace. `//~` inside
-/// a string or quoted in a comment follows other characters, as in `'//~'`.
-fn find_marker(text: &str) -> Option<usize> {
-    text.rmatch_indices(EXPECT)
-        .map(|(start, _)| start)
-        .find(|&start| text[..start].chars().next_back().is_none_or(char::is_whitespace))
+    Ok(File { filename, lines })
 }
 
 /// The expectation in the form of `render`: items separated by `; `, words by one space.
@@ -344,12 +361,22 @@ fn render(findings: &[&Finding]) -> String {
     items.join("; ")
 }
 
-/// Errors that a stricter parser would report: a name declared twice, for example. Snippets share
-/// a file, so a file must stay a valid program for other tools that read the corpus.
-fn syntax_errors(name: &str, source: &str) -> Vec<String> {
+struct Parsed {
+    /// Errors that a stricter parser would report: a name declared twice, for example. Snippets share
+    /// a file, so a file must stay a valid program for other tools that read the corpus.
+    errors: Vec<String>,
+    /// The expectations: line comments that start with `//~`, as the line number and the byte offset
+    /// in the line. `//~` in a string, in a template literal or inside another comment is no expectation.
+    markers: BTreeMap<u32, usize>,
+}
+
+fn parse(name: &str, source: &str) -> Parsed {
     let name = name.rsplit('/').next().unwrap_or(name);
     let Ok(source_type) = SourceType::from_path(name.to_lowercase()) else {
-        return vec![format!("unknown extension of {name}")];
+        return Parsed {
+            errors: vec![format!("unknown extension of {name}")],
+            markers: BTreeMap::new(),
+        };
     };
     let allocator = Allocator::default();
     // `check` parses JSX in plain JavaScript files too.
@@ -366,22 +393,44 @@ fn syntax_errors(name: &str, source: &str) -> Vec<String> {
     let semantic = SemanticBuilder::new()
         .with_check_syntax_error(true)
         .build(&parsed.program);
-    parsed
+    let errors = parsed
         .diagnostics
         .errors()
         .chain(semantic.diagnostics.errors())
         .map(|error| error.message.to_string())
-        .collect()
+        .collect();
+    let starts: Vec<usize> = split_lines(source)
+        .iter()
+        .map(|(text, _)| text.as_ptr() as usize - source.as_ptr() as usize)
+        .collect();
+    let markers = parsed
+        .program
+        .comments
+        .iter()
+        .filter(|comment| comment.is_line() && source[comment.span.start as usize..].starts_with(EXPECT))
+        .map(|comment| {
+            let start = comment.span.start as usize;
+            let line = starts.partition_point(|&line_start| line_start <= start);
+            (line as u32, start - starts[line - 1])
+        })
+        .collect();
+    Parsed { errors, markers }
 }
 
 #[test]
-fn the_expectation_is_the_last_marker_after_whitespace() {
-    assert_eq!(find_marker("x; //~ none"), Some(3));
-    assert_eq!(find_marker("f('//~ a'); //~ none"), Some(12));
-    assert_eq!(find_marker("//~ none"), Some(0));
-    // A marker inside a string or quoted in prose follows other characters.
-    assert_eq!(find_marker("f('//~');"), None);
-    assert_eq!(find_marker("// Each `//~` holds the result."), None);
+fn an_expectation_is_a_line_comment_that_starts_with_the_marker() {
+    let source = "x; //~ none\nf(' //~ a'); //~ none\n//~ none\nf('//~');\n// Each `//~` holds it.\n/* //~ none */ y;\n`\n//~ none\n`;\n";
+    let markers: Vec<(u32, usize)> = parse("a.js", source).markers.into_iter().collect();
+    assert_eq!(markers, [(1, 3), (2, 13), (3, 0)]);
+}
+
+#[test]
+fn bless_does_not_put_an_expectation_inside_a_literal() {
+    let source = "const s = `${structuredClone(1)}\n`;\n";
+    let file = run("a.js", source).unwrap();
+    assert_eq!(file.lines[0].expected, None);
+    let error = file.blessed(source).unwrap_err();
+    assert!(error.contains("line 1"), "{error}");
 }
 
 #[test]
@@ -393,7 +442,7 @@ fn a_finding_on_a_line_without_a_marker_is_a_difference() {
     assert_eq!((line.number, line.expected.as_deref()), (2, None));
     assert_eq!(line.found, "api.structuredClone exact");
     assert_eq!(
-        file.blessed(source),
+        file.blessed(source).unwrap(),
         "x;\nstructuredClone(1); //~ api.structuredClone exact\n"
     );
 }
@@ -412,7 +461,7 @@ fn lines_split_as_check_counts_them() {
     let numbers: Vec<u32> = file.lines.iter().map(|line| line.number).collect();
     assert_eq!(numbers, [2, 4]);
     assert_eq!(
-        file.blessed(source),
+        file.blessed(source).unwrap(),
         "x;\r\nstructuredClone(1); //~ api.structuredClone exact\u{2028}y;\rstructuredClone(2); //~ api.structuredClone exact\n"
     );
 }
@@ -426,4 +475,11 @@ fn the_header_sets_the_filename_and_the_allow_entries() {
         .err()
         .unwrap();
     assert!(error.contains("unknown field `file`"), "{error}");
+}
+
+#[test]
+fn a_marker_in_a_string_after_whitespace_is_no_marker() {
+    let file = run("a.js", "structuredClone(' //~ none');\n").unwrap();
+    assert_eq!(file.lines.len(), 1);
+    assert_eq!(file.lines[0].expected, None);
 }

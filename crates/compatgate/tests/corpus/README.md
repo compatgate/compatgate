@@ -48,11 +48,13 @@ while (navigator.share) { navigator.share(d); } //~ @8 api.Navigator.share exact
   the same code as the start, and `tests/check.rs` checks the end of a finding.
 - A finding on a line without `//~` fails the run too, so every line with findings carries `//~`.
   A line without findings may leave it out.
-- The expectation starts at the last `//~` that begins the line or follows whitespace. `'//~'` in a string
-  does not count.
+- An expectation is a line comment that starts with `//~`. `//~` in a string, a template literal, JSX text
+  or inside another comment does not count.
 
 `BLESS=1 cargo test -p compatgate --test corpus` rewrites every `//~` comment with the current findings
-and adds one to a line with findings that has none.
+and adds one to a line with findings that has none. It fails instead of adding one where the line ends
+inside a template literal, a block comment or JSX text: move the code so that the finding starts on
+another line.
 Review the diff before you commit it.
 
 ## Rules for snippets
