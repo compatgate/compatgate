@@ -135,6 +135,11 @@ test('browserSupport ignores a removal in a release that is not out yet', () => 
   });
 });
 
+test('browserSupport ignores a removal in a release that is not out yet with a ranged version', () => {
+  const statements = [{ version_added: '112', version_removed: '≤137' }];
+  assert.deepEqual(browserSupport(statements, 'api.X', new Set(['137'])), { since: 112 << 16, ranges: [] });
+});
+
 test('collectFeatures treats beta, nightly and planned releases as not out yet', () => {
   const releases = {
     136: { status: 'current' },

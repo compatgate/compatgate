@@ -11,7 +11,7 @@
 }]);
 
 // a_call_that_is_not_a_minified_webpack_require_is_not_skipped: another parameter, a local function,
-// two arguments, a fraction, another argument.
+// two arguments, a fraction, another argument, a name destructured from the third parameter.
 function f(cb) { const x = cb(1); x.toSorted(); } //~ javascript.builtins.Array.toSorted heuristic
 items.forEach(fn => fn(0).toArray()); //~ javascript.builtins.Iterator.toArray heuristic
 function f2(get) { const x = get('a'); x.toArray(); } //~ javascript.builtins.Iterator.toArray heuristic
@@ -19,3 +19,4 @@ function g() { const h = (k) => k; const x = h(1); x.toArray(); } //~ javascript
 function k(e, t, n) { const x = n(1, 2); x.toArray(); } //~ javascript.builtins.Iterator.toArray heuristic
 function m(e, t, n) { const x = n(1.5); x.toArray(); } //~ javascript.builtins.Iterator.toArray heuristic
 function p(e, t, n) { const x = n(id); x.toArray(); } //~ javascript.builtins.Iterator.toArray heuristic
+function q(e, t, { x: n }) { const x = n(5); x.toArray(); } //~ javascript.builtins.Iterator.toArray heuristic

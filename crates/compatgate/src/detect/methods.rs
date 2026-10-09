@@ -8,7 +8,8 @@
 //!
 //! For another receiver the type is unknown, so the findings are heuristic. Such a read is a use only
 //! when the code calls its value: `arr.toSorted()`, `arr.toSorted?.()`, `(0, arr.toSorted)()`,
-//! `arr.toSorted.call(…)`, `arr.toSorted.apply(…)`, or a call of an alias `const f = arr.toSorted; f()`.
+//! `arr.toSorted.call(…)`, `arr.toSorted.apply(…)`, `arr.toSorted.bind(o)`, or a call of an alias
+//! `const f = arr.toSorted; f()`.
 //! Many objects have data properties with method names, `compilation.chunks` of webpack and
 //! `options.windows` of picomatch, and a read that is never called is most likely one of them.
 //! Three more rules keep the noise down:
@@ -23,7 +24,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Expression, IdentifierReference};
+use oxc_ast::ast::{BindingPattern, Expression, IdentifierReference};
 use oxc_semantic::{NodeId, Semantic, SymbolFlags};
 use oxc_span::Span;
 
@@ -99,10 +100,10 @@ fn member_read<'a>(kind: AstKind<'a>) -> Option<(&'a Expression<'a>, &'a str, Sp
 }
 
 /// Whether the code calls the value of the member read at `node`: `x.m()`, `x.m?.()`, `(0, x.m)()`,
-/// `x.m.call(…)`, `x.m.apply(…)`, or a read of an alias that holds it, `const f = x.m; f()`.
-/// A walk climbs only through wrappers, the last expression of a sequence and one `.call` or `.apply`,
-/// and an alias holds the value of one expression, so different reads walk different nodes, and the
-/// walks of a file stay linear.
+/// `(y = x.m)()`, `x.m.call(…)`, `x.m.apply(…)`, `x.m.bind(o)`, or a read of an alias that holds it,
+/// `const f = x.m; f()`. A walk climbs only through wrappers, the last expression of a sequence, the
+/// value of an assignment and one `.call`, `.apply` or `.bind`, and an alias holds the value of one
+/// expression, so different reads walk different nodes, and the walks of a file stay linear.
 fn is_called<'a>(semantic: &Semantic<'a>, aliases: &mut Aliases<'_, 'a>, node: NodeId) -> bool {
     let nodes = semantic.nodes();
     let mut pending = vec![node];
@@ -115,21 +116,26 @@ fn is_called<'a>(semantic: &Semantic<'a>, aliases: &mut Aliases<'_, 'a>, node: N
             match position {
                 Slot::Wrapper | Slot::SeqLast => id = nodes.parent_id(id),
                 Slot::Callee { .. } => return true,
-                // `x.m.call(…)` and `x.m.apply(…)` call `x.m`.
+                // `x.m.call(…)` and `x.m.apply(…)` call `x.m`. `x.m.bind(o)` binds only a function, so it
+                // throws where `x.m` is missing, as a call does.
                 Slot::Object { .. } if !through_call => match member_at(nodes, id, position) {
-                    Some(member) if matches!(member.property, "call" | "apply") => {
+                    Some(member) if matches!(member.property, "call" | "apply" | "bind") => {
                         through_call = true;
                         id = member.id;
                     }
                     _ => break,
                 },
+                // `y = X` stores the value and passes it on, as the guards follow it: `(g = x.m)()`.
                 Slot::AssignValue | Slot::Other => {
                     if let Some(alias) = aliases.stored_into(id)
                         && followed.insert(alias)
                     {
                         pending.extend(aliases.reads(alias));
                     }
-                    break;
+                    if position != Slot::AssignValue {
+                        break;
+                    }
+                    id = nodes.parent_id(id);
                 }
                 _ => break,
             }
@@ -392,7 +398,10 @@ fn is_minified_require(semantic: &Semantic<'_>, callee: &IdentifierReference<'_>
     else {
         return false;
     };
-    list.items.get(2).is_some_and(|third| third.span == parameter.span)
+    // A name destructured from the third parameter, `(e, t, { x: n })`, is no loader: webpack passes the
+    // loader itself.
+    matches!(parameter.pattern, BindingPattern::BindingIdentifier(_))
+        && list.items.get(2).is_some_and(|third| third.span == parameter.span)
 }
 
 /// `require` loads modules when it is the global of CommonJS, its TypeScript declaration

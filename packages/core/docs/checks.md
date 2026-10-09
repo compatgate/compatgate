@@ -23,11 +23,11 @@ The [README](../README.md) has the short version.
   `[3, 1].toSorted()` reports `javascript.builtins.Array.toSorted`, and `'abc'.toSorted()` reports nothing.
   Names that the file declares do not skip it.
 - For another receiver the findings are heuristic. A read is a use only when the code calls its value:
-  `arr.toSorted()`, `arr.toSorted.call(x)`, `arr.toSorted.apply(x, [])`, `(0, arr.toSorted)()` and
-  `const f = arr.toSorted; f(x)` are uses, while `if (arr.toSorted)` and `for (c of compilation.chunks)`
-  are not: many objects have data properties with method names. A destructured method,
-  `const { toSorted } = arr`, is not a use either. Other call shapes are not followed:
-  `(c ? x.m : y.m)()`, `(x.m || f)()`, `x.m.bind(o)()`, `new x.m()`, ``x.m`…` ``, and a variable that is
+  `arr.toSorted()`, `arr.toSorted.call(x)`, `arr.toSorted.apply(x, [])`, `arr.toSorted.bind(x)`,
+  `(0, arr.toSorted)()` and `const f = arr.toSorted; f(x)` are uses, while `if (arr.toSorted)` and
+  `for (c of compilation.chunks)` are not: many objects have data properties with method names. A destructured
+  method, `const { toSorted } = arr`, is not a use either. Other call shapes are not followed:
+  `(c ? x.m : y.m)()`, `(x.m || f)()`, `new x.m()`, ``x.m`…` ``, and a variable that is
   no alias, such as one written twice. Names that a supported
   method also has (`.map()`), names that the file declares as members itself (`class Q { union() {} }`,
   `class Q { take = 1 }`, accessors, `{ take() {} }`, `{ take: f }`, `obj.take = f`, `obj['take'] = f`)

@@ -63,11 +63,15 @@ arr[name](); arr[`toSorted`](); //~ none
 if (arr['toSorted']) arr['toSorted'](); //~ none
 if (arr.toSorted) arr['toSorted'](); //~ none
 
-// call_and_apply_of_a_method_are_uses
+// call_apply_and_bind_of_a_method_are_uses: `.bind` binds only a function, so it throws where the
+// method is missing.
 arr.toSorted.call(other); //~ javascript.builtins.Array.toSorted heuristic
 arr.toSorted.apply(other, []); //~ javascript.builtins.Array.toSorted heuristic
 arr['toSorted'].call(other); //~ javascript.builtins.Array.toSorted heuristic
+arr.toSorted.bind(other); //~ javascript.builtins.Array.toSorted heuristic
+arr.toSorted.bind(other)(); //~ javascript.builtins.Array.toSorted heuristic
 if (arr.toSorted) arr.toSorted.call(other); //~ none
+if (arr.toSorted) arr.toSorted.bind(other); //~ none
 arr.toSorted?.call(other); //~ none
 
 // a_method_called_through_a_sequence_is_a_use
@@ -83,6 +87,12 @@ arr.toSorted?.call(other); //~ none
 { let f; f = arr.toSorted; f.apply(arr, []); } //~ javascript.builtins.Array.toSorted heuristic
 { let f = arr.toSorted; f = g; f(); } //~ none
 
+// a_method_read_through_an_assignment_is_a_use_where_the_value_goes_on: an assignment stores the value
+// and passes it on, as the guards follow it.
+{ let g; (g = arr.toSorted)(); } //~ javascript.builtins.Array.toSorted heuristic
+(function () { let g; var h = (g = arr.toSorted); h(); })(); //~ javascript.builtins.Array.toSorted heuristic
+(G = arr.toSorted)(); //~ javascript.builtins.Array.toSorted heuristic
+
 // a_method_read_that_is_never_called_is_no_heuristic_use: many objects have data properties with
 // method names, such as `compilation.chunks` of webpack and `options.windows` of picomatch.
 for (const chunk of compilation.chunks) {} compilation.chunks.delete(c); c.chunks[0]; //~ none
@@ -90,7 +100,7 @@ f(options.windows); list.then(arr.toSorted); { const w = options.windows; f(w); 
 f([3, 1].toSorted); //~ javascript.builtins.Array.toSorted exact
 
 // a_call_shape_that_the_detector_does_not_follow_is_no_heuristic_use
-(c ? arr.toSorted : other.toSorted)(); (arr.toSorted || f)(); arr.toSorted.bind(o)(); //~ none
+(c ? arr.toSorted : other.toSorted)(); (arr.toSorted || f)(); //~ none
 new arr.toSorted(); arr.toSorted`x`; //~ none
 
 // a_destructured_method_is_no_use: without a type a name in a pattern tells even less than a call.

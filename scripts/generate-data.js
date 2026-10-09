@@ -57,9 +57,10 @@ export function browserSupport(statements, id, unreleased = new Set()) {
     }
     const added = encodeVersion(statement.version_added);
     // A removal in a preview build or in a release that is not out yet takes the feature out of no
-    // stable release: every released version still has it.
+    // stable release: every released version still has it. The release keys have no `≤` of a ranged version.
+    const removedIn = typeof statement.version_removed === 'string' ? statement.version_removed.replace(/^≤/, '') : '';
     const removed =
-      statement.version_removed && statement.version_removed !== 'preview' && !unreleased.has(statement.version_removed)
+      statement.version_removed && statement.version_removed !== 'preview' && !unreleased.has(removedIn)
         ? encodeVersion(statement.version_removed)
         : UNSUPPORTED;
     if (added === UNSUPPORTED || added >= removed) {

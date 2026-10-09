@@ -24,8 +24,8 @@ use std::rc::Rc;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    AssignmentOperator, AssignmentTargetMaybeDefault, BinaryExpression, BinaryOperator, BindingPattern, Expression,
-    LogicalExpression, LogicalOperator, Statement, UnaryOperator,
+    AssignmentOperator, AssignmentTarget, AssignmentTargetMaybeDefault, BinaryExpression, BinaryOperator,
+    BindingPattern, Expression, LogicalExpression, LogicalOperator, Statement, UnaryOperator,
 };
 use oxc_semantic::{NodeId, Semantic, SymbolId};
 use oxc_span::GetSpan;
@@ -1029,7 +1029,7 @@ impl<'s, 'a> Guards<'s, 'a> {
     }
 
     /// Walks `value`, or `value.name` with `name`, from its end to its root: a global reference, an alias
-    /// or another expression. The value of an assignment `(y = X)` is `X`.
+    /// or another expression. The value of an assignment `(y = X)` is `X`, or the alias `y` when `y` is one.
     fn walk(&mut self, value: &'a Expression<'a>, name: Option<&'a str>) -> (Walk<'a>, Root<'a>) {
         let semantic = self.semantic;
         let mut walk = Walk {
@@ -1052,6 +1052,15 @@ impl<'s, 'a> Guards<'s, 'a> {
                     };
                 }
                 Expression::AssignmentExpression(assignment) if assignment.operator == AssignmentOperator::Assign => {
+                    // The value of `(y = X)` is the value of the alias `y`. Its expression is `X`, and
+                    // `resolve_alias` keeps what `X` proves by node: a walk through `X` at each alias of
+                    // `a = b = … = X` would cost the length of the chain at every alias.
+                    if let AssignmentTarget::AssignmentTargetIdentifier(target) = &assignment.left
+                        && let Some(symbol) = semantic.scoping().get_reference(target.reference_id()).symbol_id()
+                        && self.aliases.get(symbol).is_some()
+                    {
+                        break Root::Alias(symbol);
+                    }
                     current = &assignment.right;
                 }
                 _ => {

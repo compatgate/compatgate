@@ -398,11 +398,13 @@ fn many_checks_of_an_alias_of_a_long_path_are_checked_in_linear_time() {
 
 #[test]
 fn a_long_chain_of_assignments_to_aliases_is_checked_in_linear_time() {
-    // The value goes into every alias of the chain. Copying the list of aliases at each one was quadratic.
+    // The value goes into every alias of the chain. Copying the list of aliases at each one was quadratic,
+    // and so was a check of each alias that walked the rest of the chain to its root.
     for terms in SIZES {
         let names: Vec<String> = (0..terms).map(|i| format!("a{i}")).collect();
+        let checks: String = names.iter().map(|name| format!("if ({name}) {name}(d);\n")).collect();
         let source = format!(
-            "function f() {{ var {};\n{} = navigator.share; }}\n",
+            "function f() {{ var {};\n{} = navigator.share;\n{checks}}}\n",
             names.join(", "),
             names.join(" =\n")
         );
