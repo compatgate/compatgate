@@ -1,0 +1,24 @@
+{
+  "name": "conformance",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Checks that the linter and bundler adapters give the findings of the core.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test \"test/**/*.test.ts\""
+  },
+  "devDependencies": {
+    "@compatgate/bundler": "workspace:^",
+    "@compatgate/core": "workspace:^",
+    "@compatgate/eslint": "workspace:^",
+    "@rspack/core": "catalog:",
+    "@types/node": "catalog:",
+    "@typescript-eslint/parser": "^8.71.1",
+    "eslint": "catalog:",
+    "oxc-parser": "^0.153.0",
+    "oxlint": "catalog:",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vite": "catalog:"
+  }
+}

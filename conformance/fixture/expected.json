@@ -1,0 +1,137 @@
+[
+  {
+    "module": "node_modules/pkg-a/node_modules/pkg-b/index.js",
+    "line": 4,
+    "column": 37,
+    "feature": "javascript.builtins.Array.fromAsync",
+    "confidence": "exact"
+  },
+  {
+    "module": "node_modules/pkg-a/node_modules/pkg-b/index.js",
+    "line": 7,
+    "column": 60,
+    "feature": "api.DecompressionStream.DecompressionStream",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/allow.js",
+    "line": 7,
+    "column": 35,
+    "feature": "javascript.builtins.Array.fromAsync",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/allow.js",
+    "line": 10,
+    "column": 58,
+    "feature": "api.CompressionStream.CompressionStream",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/ambiguous.js",
+    "line": 6,
+    "column": 36,
+    "feature": "javascript.builtins.Array.toSorted",
+    "confidence": "heuristic"
+  },
+  {
+    "module": "src/guards.js",
+    "line": 61,
+    "column": 1,
+    "feature": "api.structuredClone",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/guards.js",
+    "line": 62,
+    "column": 45,
+    "feature": "javascript.builtins.Intl.Segmenter",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/guards.js",
+    "line": 63,
+    "column": 13,
+    "feature": "api.Navigator.share",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/guards.js",
+    "line": 65,
+    "column": 10,
+    "feature": "api.Navigator.share",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/guards.js",
+    "line": 68,
+    "column": 18,
+    "feature": "api.Navigator.share",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/probe.js",
+    "line": 6,
+    "column": 23,
+    "feature": "javascript.regular_expressions.lookbehind_assertion",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/probe.js",
+    "line": 7,
+    "column": 40,
+    "feature": "javascript.builtins.RegExp.unicodeSets",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/probe.js",
+    "line": 8,
+    "column": 30,
+    "feature": "javascript.builtins.Intl.Segmenter",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/probe.js",
+    "line": 9,
+    "column": 21,
+    "feature": "api.structuredClone",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/probe.js",
+    "line": 10,
+    "column": 23,
+    "feature": "javascript.builtins.Object.groupBy",
+    "confidence": "exact"
+  },
+  {
+    "module": "src/probe.js",
+    "line": 11,
+    "column": 36,
+    "feature": "javascript.builtins.Array.toSorted",
+    "confidence": "heuristic"
+  },
+  {
+    "module": "src/probe.js",
+    "line": 17,
+    "column": 3,
+    "feature": "javascript.classes.public_class_fields",
+    "confidence": "partial",
+    "messageIncludes": ["only partially supported in Safari 15.6", "bug 236843"]
+  },
+  {
+    "module": "src/probe.js",
+    "line": 19,
+    "column": 3,
+    "feature": "javascript.classes.static.initialization_blocks",
+    "confidence": "exact",
+    "messageIncludes": ["Safari 15.6 (since 16.4)"]
+  },
+  {
+    "module": "src/types.ts",
+    "line": 19,
+    "column": 55,
+    "feature": "api.structuredClone",
+    "confidence": "exact"
+  }
+]

@@ -2,3 +2,6 @@ target/
 node_modules/
 packages/*/dist/
 packages/core/*.node
+# The fixture of the conformance suite has packages of its own.
+!/conformance/fixture/node_modules/
+!/conformance/fixture/node_modules/**/node_modules/

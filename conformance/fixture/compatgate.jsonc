@@ -1,0 +1,14 @@
+{
+  // A base list from a package, as a company shares one.
+  "extends": ["compat-base"],
+  "allow": [
+    // A feature id: allowed in every file.
+    "javascript.builtins.Promise.withResolvers",
+    // Allowed in the files of the package `pkg-a` only, not in the package `pkg-b` nested in it.
+    { "feature": "javascript.builtins.Array.fromAsync", "packages": ["pkg-a"] },
+    // Allowed in the files that the globs match, relative to this config.
+    { "feature": "api.CompressionStream.CompressionStream", "files": ["src/legacy/**"] },
+    // Both fields: the files of `pkg-b` that the globs match.
+    { "feature": "api.DecompressionStream.DecompressionStream", "packages": ["pkg-b"], "files": ["**/dist/**"] },
+  ],
+}

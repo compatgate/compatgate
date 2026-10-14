@@ -1,0 +1,7 @@
+{
+  "target": "safari15.6",
+  "lowered": [
+    { "module": "src/probe.js", "line": 17, "column": 3, "feature": "javascript.classes.public_class_fields" },
+    { "module": "src/probe.js", "line": 19, "column": 3, "feature": "javascript.classes.static.initialization_blocks" }
+  ]
+}

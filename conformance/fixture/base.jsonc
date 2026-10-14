@@ -1,0 +1,4 @@
+{
+  // The base list that the tool passes in the `extends` option, such as the features of its polyfills.
+  "allow": ["api.EyeDropper.EyeDropper"],
+}
