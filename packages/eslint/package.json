@@ -1,0 +1,53 @@
+{
+  "name": "@compatgate/eslint",
+  "version": "0.0.0",
+  "description": "ESLint and oxlint rules that find JavaScript syntax and APIs that your browserslist targets do not support.",
+  "keywords": [
+    "browserslist",
+    "compatibility",
+    "eslint",
+    "eslintplugin",
+    "oxlint"
+  ],
+  "files": [
+    "dist",
+    "!dist/*.tsbuildinfo",
+    "docs"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build:js": "tsc -p tsconfig.json",
+    "build": "pnpm run build:js",
+    "build:debug": "pnpm run build:js",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "test": "node --test \"test/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@compatgate/core": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@typescript-eslint/parser": "^8.71.1",
+    "eslint": "catalog:",
+    "oxlint": "catalog:",
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
+  },
+  "peerDependencies": {
+    "eslint": "^9 || ^10"
+  },
+  "peerDependenciesMeta": {
+    "eslint": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}
