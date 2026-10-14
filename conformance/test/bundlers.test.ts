@@ -218,7 +218,65 @@ test('Vite that lowers the syntax gives the findings that the lowering keeps', a
   compare(`Vite with the target ${expectedLowered.target}`, findingsOf('Vite', warnings), kept);
 });
 
-function buildRspack(): Promise<Stats> {
+// The own entries of the oracle of the report of unused entries, inline, as the `allow` option takes them. They
+// replace compatgate.jsonc: the first four are its entries, the others give the report something to name.
+const ORACLE_ALLOW: NonNullable<CompatgateBundlerOptions['allow']> = [
+  'javascript.builtins.Promise.withResolvers',
+  { feature: 'javascript.builtins.Array.fromAsync', packages: ['pkg-a'] },
+  { feature: 'api.CompressionStream.CompressionStream', files: ['src/legacy/**'] },
+  { feature: 'api.DecompressionStream.DecompressionStream', packages: ['pkg-b'], files: ['**/dist/**'] },
+  // Syntax: Vite lowers it for safari15.6, rspack with SWC for esnext keeps it.
+  'javascript.classes.static.initialization_blocks',
+  // An API: the lowering keeps it.
+  'javascript.builtins.Intl.Segmenter',
+  // Used by no module.
+  'api.Serial',
+];
+
+const UNUSED = /allow entries that suppressed no finding/;
+
+/** The findings of a build and the indexes of the `allow` option that its report of unused entries names. */
+function reportOf(tool: string, messages: readonly string[]): { findings: string[]; unused: number[] } {
+  const texts = messages.map(text => stripVTControlCharacters(text));
+  const unused = texts
+    .filter(text => UNUSED.test(text))
+    .flatMap(text => [...text.matchAll(/compatgate\.allow\[(\d+)\]/g)].map(match => Number(match[1])));
+  const findings = findingsOf(
+    tool,
+    texts.filter(text => !UNUSED.test(text)),
+  ).map(item => `${place(item)} ${item.confidence}`);
+  return { findings: findings.sort(), unused: unused.sort((a, b) => a - b) };
+}
+
+/**
+ * The definition of the report: an entry is needed when the build without it reports a finding that the build with
+ * it does not. The report may miss an entry, but it never names a needed one. In this fixture it misses none.
+ */
+async function checkReport(tool: string, build: (allow: typeof ORACLE_ALLOW) => Promise<string[]>): Promise<void> {
+  const full = reportOf(tool, await build(ORACLE_ALLOW));
+  const notNeeded: number[] = [];
+  for (let index = 0; index < ORACLE_ALLOW.length; index += 1) {
+    const without = reportOf(tool, await build(ORACLE_ALLOW.filter((_, other) => other !== index)));
+    const added = without.findings.filter(item => !full.findings.includes(item));
+    if (added.length === 0) {
+      notNeeded.push(index);
+    }
+  }
+  assert.deepEqual(full.unused, notNeeded, `${tool}: the report of unused entries against the builds without each`);
+}
+
+test('the report of unused entries of rspack names exactly the entries that no finding needs', async () => {
+  await checkReport('rspack', async allow => {
+    const json = (await buildRspack({ ...OPTIONS, allow })).toJson({ all: false, errors: true, warnings: true });
+    return [...(json.errors ?? []), ...(json.warnings ?? [])].map(item => item.message);
+  });
+});
+
+test('the report of unused entries of Vite that lowers names exactly the entries that no finding needs', async () => {
+  await checkReport('Vite', async allow => (await buildVite(expectedLowered.target, { ...OPTIONS, allow })).warnings);
+});
+
+function buildRspack(options: CompatgateBundlerOptions = OPTIONS): Promise<Stats> {
   const swc = (syntax: 'ecmascript' | 'typescript') => ({
     loader: 'builtin:swc-loader',
     options: { jsc: { parser: { syntax }, target: 'esnext' } },
@@ -238,7 +296,7 @@ function buildRspack(): Promise<Stats> {
         { test: /\.js$/, use: swc('ecmascript') },
       ],
     },
-    plugins: [compatgateRspack(OPTIONS)],
+    plugins: [compatgateRspack(options)],
   };
   const compiler = rspack(config);
   return new Promise((resolve, reject) => {
@@ -248,7 +306,7 @@ function buildRspack(): Promise<Stats> {
   });
 }
 
-async function buildVite(target: string) {
+async function buildVite(target: string, options: CompatgateBundlerOptions = OPTIONS) {
   const warnings: string[] = [];
   const transformed = new Set<string>();
   // Records the modules of the fixture that reach the transforms. Virtual modules, such as the runtime of
@@ -269,7 +327,7 @@ async function buildVite(target: string) {
     cacheDir: join(output, `vite-cache-${target}`),
     logLevel: 'warn',
     customLogger: logger(warnings),
-    plugins: [record, compatgateVite(OPTIONS)],
+    plugins: [record, compatgateVite(options)],
     build: {
       write: false,
       target,

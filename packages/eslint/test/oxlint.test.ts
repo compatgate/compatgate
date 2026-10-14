@@ -1,7 +1,7 @@
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { extname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -229,7 +229,7 @@ test('a broken config is one message of the exact rule in each file in oxlint; o
   const config = { ...oxlintConfig({}), rules: { ...oxlintConfig({}).rules, 'no-debugger': 'error' } };
   const { status, findings } = oxlintRun(config, ['broken']);
   assert.notEqual(status, 0);
-  const broken = `exact ${join(realpathSync(root), 'broken/compatgate.jsonc')}: CloseBracketExpected at offset 12`;
+  const broken = `exact ${join('broken', 'compatgate.jsonc')}: CloseBracketExpected at offset 12`;
   assert.deepEqual(
     findings.map(finding => finding.replace(/ eslint\(no-debugger\) .*$/, ' no-debugger')).sort(),
     [`broken/a.js:1:1-1:1 ${broken}`, 'broken/a.js:1:1-1:10 no-debugger', `broken/b.js:1:1-1:1 ${broken}`].sort(),

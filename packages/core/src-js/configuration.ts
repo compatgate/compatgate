@@ -19,6 +19,7 @@ import { describeAllowIssue, describeFinding, type DescribeFindingOptions } from
 import { ConfigError } from './errors.ts';
 import { fileState } from './file-state.ts';
 import { configLookupDirectory } from './lookup.ts';
+import { displayPaths } from './paths.ts';
 import { readConfigurationOptions, type SharedOptions } from './options.ts';
 import { TARGETS_FILES, TargetsConfigError, clearTargetsCache, resolveBrowsers, resolveTargetsIn } from './targets.ts';
 import type { AllowIssue, CheckResult, Checker, CoreAllowIssue, CoreChecker, Finding } from './types.ts';
@@ -252,6 +253,11 @@ function resolveConfiguration(filename: string, options: ResolverOptions, snapsh
     if (!watchedErrors.has(error as object)) {
       directory ??= configLookupDirectory(filename, resolve(options.baseDir ?? process.cwd()));
       watchFailure(error, options, directory);
+    }
+    // The messages of the core name the configs of the project relative to its root; `path`, `directory`, `watch`
+    // and `missing` stay absolute for a watcher. Every error is new, so the text changes once.
+    if (error instanceof ConfigError) {
+      error.message = displayPaths(error.message, resolve(options.baseDir ?? process.cwd()));
     }
     throw error;
   }

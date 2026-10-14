@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs, { mkdtempSync, mkdirSync, realpathSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { isAbsolute, join, sep } from 'node:path';
 
 import browserslist from 'browserslist';
 
@@ -502,7 +502,8 @@ test('a config error names the files to watch for its fix', () => {
     () => resolveConfiguration(join(root, 'targets/a.ts'), { baseDir: root, allow: [] }),
     (error: unknown) => {
       assert.ok(error instanceof TargetsConfigError);
-      assert.ok(error.message.startsWith(`${join(root, 'targets/.browserslistrc')}: Chrom >= 97: `), error.message);
+      // The message names the config relative to the project root, `watch` names it by its absolute path.
+      assert.ok(error.message.startsWith(`${join('targets', '.browserslistrc')}: Chrom >= 97: `), error.message);
       assert.deepEqual(error.watch, [join(root, 'targets/.browserslistrc')]);
       return true;
     },
@@ -649,6 +650,56 @@ test('readConfigurationOptions checks the shared options and names the place', (
   assert.throws(
     () => createResolver({ allow: 'api.a' as never, where: 'compatgate' }),
     /^OptionsError: compatgate\.allow: expected an array/,
+  );
+});
+
+test('a config error names the configs inside the project root relative to it, and keeps absolute fields', () => {
+  const cases: Record<string, Record<string, string>> = {
+    'a syntax error of compatgate.jsonc': { 'compatgate.jsonc': '{ "allow": [ }' },
+    'an unknown key': { 'compatgate.jsonc': '{ "alow": [] }' },
+    'a missing file of extends': { 'compatgate.jsonc': '{ "extends": "./configs/missing.jsonc" }' },
+    'a circular extends': {
+      'compatgate.jsonc': '{ "extends": "./configs/a.jsonc" }',
+      'configs/a.jsonc': '{ "extends": "./b.jsonc" }',
+      'configs/b.jsonc': '{ "extends": "./a.jsonc" }',
+    },
+    'an invalid query of .browserslistrc': { 'src/.browserslistrc': 'unknown_browser 1\n' },
+    'two browserslist configs in one directory': {
+      'src/.browserslistrc': 'Chrome >= 97\n',
+      'src/package.json': '{ "browserslist": ["Chrome >= 97"] }',
+    },
+  };
+  for (const [name, files] of Object.entries(cases)) {
+    const root = project(files);
+    assert.throws(
+      () => createResolver({ baseDir: root, defaultTargets: TARGETS }).resolve(join(root, 'src/a.ts')),
+      (error: unknown) => {
+        assert.ok(error instanceof ConfigError, name);
+        assert.ok(!error.message.includes(`${root}${sep}`), `${name}: ${error.message}`);
+        const fields = error as { path?: string; directory?: string };
+        for (const field of [fields.path, fields.directory]) {
+          assert.ok(field === undefined || isAbsolute(field), `${name}: ${field}`);
+        }
+        assert.ok(
+          [...error.watch, ...error.missing].every(path => isAbsolute(path)),
+          name,
+        );
+        return true;
+      },
+      name,
+    );
+  }
+  // The `extends` option names its file too.
+  const root = project({});
+  assert.throws(
+    () => createResolver({ baseDir: root, targets: TARGETS, extends: ['./nope.jsonc'] }).resolve(join(root, 'a.ts')),
+    /^AllowConfigError: "extends" option points to a missing file: nope\.jsonc$/,
+  );
+  // A config outside the project root keeps its absolute path.
+  const outer = project({ 'compatgate.jsonc': '{ "alow": [] }' });
+  assert.throws(
+    () => createResolver({ baseDir: join(outer, 'app'), targets: TARGETS }).resolve(join(outer, 'app/a.ts')),
+    (error: unknown) => error instanceof AllowConfigError && error.message.startsWith(join(outer, 'compatgate.jsonc')),
   );
 });
 

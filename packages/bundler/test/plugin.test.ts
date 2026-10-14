@@ -722,6 +722,26 @@ describe('the lowering of the bundler', () => {
     assert.deepEqual(await usedEntries(async () => ({ code: 'const a = 1;\n' })), []);
   });
 
+  test('an entry of an API stays used when the lowered code lacks the API', async t => {
+    // The lowering decides only about syntax: the findings of an API come from the checked code, and so does the
+    // need of its entry. The static block starts the lowering; the lowered code has neither the block nor the API.
+    const code = 'class A {\n  static {}\n}\nnew Intl.Segmenter();\n';
+    const { usedEntries } = await run(
+      t,
+      async () => ({ code: 'const a = 1;\n' }),
+      ['javascript.builtins.Intl.Segmenter'],
+      code,
+    );
+    assert.deepEqual(usedEntries, [0]);
+  });
+
+  test('an entry of syntax and of an API is used by its API when the lowering removes the syntax', async t => {
+    const code = 'class A {\n  static {}\n}\nconst b = /(?<=c)d/;\nnew Intl.Segmenter();\n';
+    const allow = [LOOKBEHIND, 'javascript.builtins.Intl.Segmenter'];
+    const lowered = { code: 'const b = 1;\nnew Intl.Segmenter();\n' };
+    assert.deepEqual((await run(t, async () => lowered, allow, code)).usedEntries, [1]);
+  });
+
   test('an entry that suppressed the only syntax of a module starts the lowering', async t => {
     // No syntax finding is reported: the entry suppresses both assertions, `Intl.Segmenter` is an API.
     let lowered = 0;

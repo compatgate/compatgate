@@ -62,9 +62,15 @@ export async function checkModule(
     });
     if (lowered) {
       findings = lowered.findings;
-      // An entry counts as used when the code that goes into the bundle needs it. An entry for syntax that the
-      // bundler lowers is not used then. The helpers of the lowering use no entry that the module did not use.
-      const needed = new Set(lowered.used);
+      // An entry is used when the plugin would report a finding without it, and the findings follow one rule: those
+      // of syntax come from the lowered code, the others from the checked code. So the lowered code decides only
+      // about syntax. The intersection with `used` keeps out an entry that only a helper of the lowering needs.
+      const loweredSyntax = new Set(lowered.syntaxUsed);
+      const needed = new Set(
+        result.suppressed
+          .filter(item => item.kind !== 'syntax' || loweredSyntax.has(item.index))
+          .map(item => item.index),
+      );
       used = used.filter(index => needed.has(index));
     }
   }
@@ -101,7 +107,7 @@ async function checkLowered(
   findings: readonly Finding[],
   lower: Lower,
   missingEngine: (error: LoweringEngineError) => void,
-): Promise<{ findings: Finding[]; used: number[] } | null> {
+): Promise<{ findings: Finding[]; syntaxUsed: number[] } | null> {
   let lowered: LoweredCode | null;
   try {
     lowered = await lower(code, file);
@@ -142,7 +148,7 @@ async function checkLowered(
       }
       return keeps(finding);
     }),
-    used: usedEntries(result),
+    syntaxUsed: result.suppressed.filter(item => item.kind === 'syntax').map(item => item.index),
   };
 }
 

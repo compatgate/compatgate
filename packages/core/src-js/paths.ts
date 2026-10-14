@@ -7,11 +7,17 @@ export function isInside(directory: string, path: string): boolean {
   return rest === '' || (rest !== '..' && !rest.startsWith(`..${sep}`) && !isAbsolute(rest));
 }
 
-/** The path in messages: relative to `baseDir` when it lies below it, the absolute path otherwise. */
-export function displayPath(path: string, baseDir: string | undefined): string {
+/**
+ * The paths in a message: a path below `baseDir` relative to it, any other path as it is. One rule for every message
+ * of the core: the advice of a finding, the problems of the entries and the errors of the configs. The text may hold
+ * several paths, such as the chain of a circular `extends`, and the text of browserslist.
+ */
+export function displayPaths(text: string, baseDir: string | undefined): string {
   if (baseDir === undefined) {
-    return path;
+    return text;
   }
-  const name = relative(baseDir, path);
-  return name !== '' && isInside(baseDir, path) ? name : path;
+  // Only a path that starts at `baseDir`: `/p/a.ts` for `/p`, not `/q/p/a.ts` or `/pq/a.ts`. The root itself stays,
+  // as an empty name would say nothing.
+  const prefix = `${baseDir.endsWith(sep) ? baseDir : baseDir + sep}`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp(`(?<![\\w.\\-/\\\\])${prefix}(?=[^\\s])`, 'g'), '');
 }

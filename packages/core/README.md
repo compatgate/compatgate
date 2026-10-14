@@ -341,6 +341,10 @@ cause:
 | `COMPATGATE_OPTIONS`  | `OptionsError`       | An option of a wrong type.                                   |
 | `COMPATGATE_INTERNAL` | `Error`              | A bug in compatgate. Please report it with the checked file. |
 
+The message names a config inside `baseDir` by its path relative to `baseDir`, as the messages of findings and
+entries do: `compatgate.jsonc: unknown key "alow"`. A config outside `baseDir` keeps its absolute path. The fields of
+an error keep absolute paths.
+
 An `AllowConfigError` has `path`: the config file to fix. It is the file with the error, a file of `extends`
 included, or the config whose `extends` names a missing file. It is `undefined` for inline entries, for the
 `extends` option and for an invalid glob. A `TargetsConfigError` has `directory` when browserslist names the

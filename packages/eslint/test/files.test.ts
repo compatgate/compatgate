@@ -297,7 +297,8 @@ test('a broken config is one message of the exact rule in each file; other rules
         result.messages.map(({ ruleId, line, column, message }) => `${ruleId} ${line}:${column} ${message}`),
       ]),
     );
-  const broken = `compatgate/exact 1:1 ${join(root, 'compatgate.jsonc')}: CloseBracketExpected at offset 12`;
+  // The cwd of the linter is the project root: the message names the config relative to it.
+  const broken = 'compatgate/exact 1:1 compatgate.jsonc: CloseBracketExpected at offset 12';
   assert.deepEqual(await lint(), {
     'src/a.js': [broken, "no-debugger 1:1 Unexpected 'debugger' statement."],
     'src/b.js': [broken],

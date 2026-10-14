@@ -1,7 +1,5 @@
-import { isAbsolute } from 'node:path';
-
 import { ALLOW_FILE, type AllowEntry } from './allow.ts';
-import { displayPath } from './paths.ts';
+import { displayPaths } from './paths.ts';
 import type { CoreAllowIssue, CoreFinding, Gap } from './types.ts';
 
 // The names of the BCD browsers that the core knows, from `browsers.*.name` of BCD. An id that is missing
@@ -51,7 +49,7 @@ export function describeFinding(finding: CoreFinding, options: DescribeFindingOp
     );
   }
   const { allowIn = ALLOW_FILE } = options;
-  sentences.push(advice(finding, partial, isAbsolute(allowIn) ? displayPath(allowIn, options.baseDir) : allowIn));
+  sentences.push(advice(finding, partial, displayPaths(allowIn, options.baseDir)));
   return sentences.join(' ');
 }
 
@@ -109,7 +107,7 @@ export function describeAllowIssue(
   const { source } = entry;
   const place =
     'file' in source
-      ? `${displayPath(source.file, options.baseDir)}, allow[${source.index}]`
+      ? `${displayPaths(source.file, options.baseDir)}, allow[${source.index}]`
       : `${source.options}.allow[${source.index}]`;
   if (issue.kind === 'native-in-targets') {
     const advice = entry.origin === 'inherited' ? 'The entry has no effect.' : 'Remove the entry.';

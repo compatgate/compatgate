@@ -411,7 +411,8 @@ test('resolveAllow takes a path in extends, absolute or relative to baseDir', ()
     () => resolveAllow(filename, { extends: ['./missing.jsonc'], baseDir: root }),
     (error: unknown) => {
       assert.ok(error instanceof AllowConfigError);
-      assert.equal(error.message, `"extends" option points to a missing file: ${join(root, 'missing.jsonc')}`);
+      assert.equal(error.message, '"extends" option points to a missing file: missing.jsonc');
+      assert.equal(error.path, undefined);
       return true;
     },
   );

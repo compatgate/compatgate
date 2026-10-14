@@ -59,7 +59,8 @@ When the lowering of a module fails, its findings stay too: the bundler reports 
 
 ## Allow entries and the lowering
 
-An `allow` entry counts as used when the lowered code still needs it: an entry for syntax that the bundler
-lowers is not used. The plugin takes the indexes of the entries from the `suppressed` list of the check of the
-module and keeps those that the check of the lowered code also gives. The helpers of the lowering use no entry
-that the module did not use.
+An `allow` entry counts as used when the plugin would report a finding without it. The findings follow one rule:
+a syntax finding comes from the lowered code, every other finding from the module. The entries follow the same
+rule. An entry that suppressed a finding of an API or a builtin in the module is used. An entry that suppressed
+syntax is used only when the check of the lowered code needs it too: an entry for syntax that the bundler lowers
+is not used. An entry that only a helper of the lowering needs is not used either: the module did not use it.
