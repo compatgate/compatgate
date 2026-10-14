@@ -2,6 +2,8 @@
 //! Covers literals and `new RegExp('…')` or `RegExp('…')` with arguments that are string literals,
 //! templates without expressions, or a regex literal with new flags.
 
+use std::collections::HashSet;
+
 use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{Argument, Expression, RegExpFlags, RegExpLiteral};
@@ -12,10 +14,10 @@ use oxc_regular_expression::ast::{
 use oxc_regular_expression::visit::{Visit, walk};
 use oxc_regular_expression::{LiteralParser, Options};
 use oxc_semantic::{NodeId, Semantic};
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use super::path::{is_global, path};
-use super::syntax::has_code_point_escape;
+use super::syntax::code_point_escape;
 use super::{Origin, Use};
 use crate::check::Kind;
 use crate::data::FeatureId;
@@ -84,11 +86,12 @@ impl Flags {
 }
 
 pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets: &Targets) -> Vec<Use<'a>> {
+    let source = semantic.source_text();
     let mut uses = Vec::new();
     for node in semantic.nodes().iter() {
         let (callee, arguments, span) = match node.kind() {
             AstKind::RegExpLiteral(literal) => {
-                report_literal(&mut uses, targets, literal, node.id());
+                report_literal(&mut uses, targets, literal, source, node.id());
                 continue;
             }
             AstKind::NewExpression(expression) => (&expression.callee, &expression.arguments, expression.span),
@@ -106,7 +109,8 @@ pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets: &T
         if !is_global(semantic, identifier) {
             continue;
         }
-        let flags_text = match arguments.get(1) {
+        let flags_argument = arguments.get(1);
+        let flags_text = match flags_argument {
             None => None,
             Some(argument) => match literal_text(argument, semantic) {
                 Some(text) => Some(text),
@@ -115,30 +119,57 @@ pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets: &T
         };
         // Features that the literal argument reports itself. The call must not repeat them.
         let mut known = Vec::new();
-        let pattern_text = match arguments.first() {
+        let Some(pattern_argument) = arguments.first() else {
+            continue;
+        };
+        let (pattern_text, pattern_start) = match pattern_argument {
             // `RegExp(/a/u)` keeps the flags, and the literal reports itself. New flags replace the
             // flags of the literal, so its source is parsed again with them.
-            Some(Argument::RegExpLiteral(literal)) if flags_text.is_some() => {
-                report_literal(&mut known, targets, literal, node.id());
-                literal.regex.pattern.text.as_str()
+            Argument::RegExpLiteral(literal) if flags_text.is_some() => {
+                report_literal(&mut known, targets, literal, source, node.id());
+                (literal.regex.pattern.text.as_str(), Some(literal.span.start + 1))
             }
-            Some(argument) => match literal_text(argument, semantic) {
-                Some(text) => text,
+            argument => match literal_text(argument, semantic) {
+                Some(text) => (text, written_at(argument, text, source)),
                 None => continue,
             },
-            None => continue,
         };
         // An invalid pattern throws at run time; that is a bug of the code, not a compatibility finding.
         let Ok(pattern) = LiteralParser::new(allocator, pattern_text, flags_text, Options::default()).parse() else {
             continue;
         };
-        let flags = flags_text.map(Flags::from_text).unwrap_or_default();
-        let source = Source {
+        let flags = WrittenFlags {
+            flags: flags_text.map(Flags::from_text).unwrap_or_default(),
+            text: flags_text.unwrap_or_default(),
+            place: match (flags_argument, flags_text) {
+                (Some(argument), Some(text)) => Place {
+                    node: argument.span(),
+                    start: written_at(argument, text, source),
+                },
+                _ => Place {
+                    node: span,
+                    start: None,
+                },
+            },
+        };
+        let pattern_source = Source {
             text: pattern_text,
             start: 0,
         };
+        let pattern_place = Place {
+            node: pattern_argument.span(),
+            start: pattern_start,
+        };
         let mut found = Vec::new();
-        report(&mut found, targets, Some(&pattern), source, flags, span, node.id());
+        report(
+            &mut found,
+            targets,
+            Some(&pattern),
+            pattern_source,
+            pattern_place,
+            flags,
+            node.id(),
+        );
         // A pattern in a string is parsed at run time, so a `try` can catch it. A literal is parsed with the file.
         uses.extend(
             found
@@ -153,19 +184,35 @@ pub fn detect<'a>(semantic: &Semantic<'a>, allocator: &'a Allocator, targets: &T
     uses
 }
 
-fn report_literal(uses: &mut Vec<Use<'_>>, targets: &Targets, literal: &RegExpLiteral<'_>, node: NodeId) {
+fn report_literal(uses: &mut Vec<Use<'_>>, targets: &Targets, literal: &RegExpLiteral<'_>, source: &str, node: NodeId) {
     // oxc parsed the pattern with spans in the file: the pattern starts after the `/`.
-    let source = Source {
+    let pattern = Source {
         text: literal.regex.pattern.text.as_str(),
         start: literal.span.start + 1,
+    };
+    let place = Place {
+        node: literal.span,
+        start: Some(0),
+    };
+    // The flags end the literal, one letter each.
+    let flags_start = literal.span.end - literal.regex.flags.bits().count_ones();
+    let flags = WrittenFlags {
+        flags: Flags::from_literal(literal.regex.flags),
+        text: source
+            .get(flags_start as usize..literal.span.end as usize)
+            .unwrap_or_default(),
+        place: Place {
+            node: literal.span,
+            start: Some(flags_start),
+        },
     };
     report(
         uses,
         targets,
         literal.regex.pattern.pattern.as_deref(),
-        source,
-        Flags::from_literal(literal.regex.flags),
-        literal.span,
+        pattern,
+        place,
+        flags,
         node,
     );
 }
@@ -203,30 +250,80 @@ struct Source<'a> {
     start: u32,
 }
 
+/// Where a range of the parsed text lies in the file. `start` is the file offset of the parser offset 0
+/// when the file holds the text as written; otherwise the range of a feature is the whole `node`: a string
+/// with escapes, such as `'\\d'`, has another text than its value.
+#[derive(Clone, Copy)]
+struct Place {
+    node: Span,
+    start: Option<u32>,
+}
+
+impl Place {
+    fn range(self, span: Span) -> Span {
+        match self.start {
+            Some(start) => Span::new(start + span.start, start + span.end),
+            None => self.node,
+        }
+    }
+}
+
+/// The flags, their text as the parser read it, and where the text is.
+#[derive(Clone, Copy)]
+struct WrittenFlags<'a> {
+    flags: Flags,
+    text: &'a str,
+    place: Place,
+}
+
+/// The file offset of the value of a literal argument when the file holds the value as written: a string
+/// or a template without escapes, or `String.raw`, whose value is its raw text.
+fn written_at(argument: &Argument<'_>, value: &str, source: &str) -> Option<u32> {
+    let (start, end) = match argument {
+        Argument::StringLiteral(it) => (it.span.start + 1, it.span.end - 1),
+        Argument::TemplateLiteral(it) => {
+            let quasi = it.quasis.first()?;
+            (quasi.span.start, quasi.span.end)
+        }
+        Argument::TaggedTemplateExpression(it) => {
+            let quasi = it.quasi.quasis.first()?;
+            (quasi.span.start, quasi.span.end)
+        }
+        _ => return None,
+    };
+    // Both ends must match: the value of `'\\\\'` is `\\`, the first two characters of its text.
+    (end as usize == start as usize + value.len() && source.get(start as usize..end as usize) == Some(value))
+        .then_some(start)
+}
+
 fn report<'a>(
     uses: &mut Vec<Use<'_>>,
     targets: &Targets,
     pattern: Option<&Pattern<'a>>,
     source: Source<'a>,
-    flags: Flags,
-    span: Span,
+    place: Place,
+    written: WrittenFlags<'_>,
     node: NodeId,
 ) {
-    let mut add = |feature: FeatureId| {
+    let flags = written.flags;
+    let mut add = |feature: FeatureId, span: Span| {
         if !targets.is_supported(feature) {
             uses.push(Use::new(feature, Kind::Syntax, Origin::Parse, span, node));
         }
     };
     let flag_keys = [
-        (flags.dot_all, DOT_ALL),
-        (flags.has_indices, HAS_INDICES),
-        (flags.unicode_sets, UNICODE_SETS),
-        (flags.sticky, STICKY),
-        (flags.unicode, UNICODE),
+        (flags.dot_all, DOT_ALL, 's'),
+        (flags.has_indices, HAS_INDICES, 'd'),
+        (flags.unicode_sets, UNICODE_SETS, 'v'),
+        (flags.sticky, STICKY, 'y'),
+        (flags.unicode, UNICODE, 'u'),
     ];
-    for (set, key) in flag_keys {
+    for (set, key, letter) in flag_keys {
         if set {
-            add(key);
+            let span = written.text.find(letter).map_or(written.place.node, |index| {
+                written.place.range(Span::sized(index as u32, 1))
+            });
+            add(key, span);
         }
     }
     let Some(pattern) = pattern else {
@@ -234,43 +331,51 @@ fn report<'a>(
     };
     let mut collector = Collector::new(source);
     collector.visit_pattern(pattern);
-    collector.group_names.sort_unstable();
-    let duplicates = collector.group_names.windows(2).any(|pair| pair[0] == pair[1]);
     for (found, key) in [
         (collector.lookbehind, LOOKBEHIND),
         (collector.modifiers, MODIFIERS),
         (collector.named_reference, NAMED_REFERENCE),
-        (!collector.group_names.is_empty(), NAMED_GROUP),
-        (duplicates, DUPLICATE_NAMED_GROUPS),
+        (collector.named_group, NAMED_GROUP),
+        (collector.duplicate_group, DUPLICATE_NAMED_GROUPS),
         (collector.property_escape, PROPERTY_ESCAPE),
         (collector.code_point_escape, CODE_POINT_ESCAPE),
     ] {
-        if found {
-            add(key);
+        if let Some(span) = found {
+            add(key, place.range(span));
         }
     }
 }
 
+/// The first token of each feature in the pattern, in the offsets of the parser.
 struct Collector<'a> {
     source: Source<'a>,
-    lookbehind: bool,
-    modifiers: bool,
-    named_reference: bool,
-    property_escape: bool,
-    code_point_escape: bool,
-    group_names: Vec<&'a str>,
+    lookbehind: Option<Span>,
+    modifiers: Option<Span>,
+    named_reference: Option<Span>,
+    named_group: Option<Span>,
+    duplicate_group: Option<Span>,
+    property_escape: Option<Span>,
+    code_point_escape: Option<Span>,
+    group_names: HashSet<&'a str>,
+}
+
+/// Keeps the first range: the visit goes in the order of the source.
+fn first(slot: &mut Option<Span>, span: Span) {
+    slot.get_or_insert(span);
 }
 
 impl<'a> Collector<'a> {
     fn new(source: Source<'a>) -> Self {
         Self {
             source,
-            lookbehind: false,
-            modifiers: false,
-            named_reference: false,
-            property_escape: false,
-            code_point_escape: false,
-            group_names: Vec::new(),
+            lookbehind: None,
+            modifiers: None,
+            named_reference: None,
+            named_group: None,
+            duplicate_group: None,
+            property_escape: None,
+            code_point_escape: None,
+            group_names: HashSet::new(),
         }
     }
 
@@ -281,13 +386,20 @@ impl<'a> Collector<'a> {
         self.source.text.get(offset as usize..)
     }
 
-    /// Whether the name of `(?<name>` or `\k<name>` at the offset has `\u{` in the source. oxc does not
-    /// promise whether the AST name is the written or the decoded text, so the source tells.
-    fn written_name_has_code_point_escape(&self, offset: u32, prefix: &str) -> bool {
-        self.source_at(offset)
-            .and_then(|text| text.strip_prefix(prefix))
-            .and_then(|text| text.split_once('>'))
-            .is_some_and(|(written, _)| has_code_point_escape(written))
+    /// The start of a group up to and including `last`: `(?<name>` or `(?i-m:`. The whole group when the
+    /// source does not show it.
+    fn head(&self, span: Span, last: char) -> Span {
+        self.source_at(span.start)
+            .and_then(|text| text.get(..(span.end - span.start) as usize)?.find(last))
+            .map_or(span, |index| Span::sized(span.start, index as u32 + 1))
+    }
+
+    /// The first `\u{…}` in the name of `(?<name>` or `\k<name>` at the offset. oxc does not promise whether
+    /// the AST name is the written or the decoded text, so the source tells.
+    fn written_name_code_point_escape(&self, offset: u32, prefix: &str) -> Option<Span> {
+        let text = self.source_at(offset)?.strip_prefix(prefix)?;
+        let (written, _) = text.split_once('>')?;
+        code_point_escape(written, offset + prefix.len() as u32)
     }
 }
 
@@ -297,37 +409,50 @@ impl<'a> Visit<'a> for Collector<'a> {
             it.kind,
             LookAroundAssertionKind::Lookbehind | LookAroundAssertionKind::NegativeLookbehind
         ) {
-            self.lookbehind = true;
+            // `(?<=` or `(?<!`.
+            let span = match self
+                .source_at(it.span.start)
+                .is_some_and(|text| text.starts_with("(?<"))
+            {
+                true => Span::sized(it.span.start, 4),
+                false => it.span,
+            };
+            first(&mut self.lookbehind, span);
         }
         walk::walk_lookaround_assertion(self, it);
     }
 
     fn visit_ignore_group(&mut self, it: &IgnoreGroup<'a>) {
         if it.modifiers.is_some() {
-            self.modifiers = true;
+            let head = self.head(it.span, ':');
+            first(&mut self.modifiers, head);
         }
         walk::walk_ignore_group(self, it);
     }
 
     fn visit_capturing_group(&mut self, it: &CapturingGroup<'a>) {
         if let Some(name) = &it.name {
-            self.group_names.push(name.as_str());
-            if self.written_name_has_code_point_escape(it.span.start, "(?<") {
-                self.code_point_escape = true;
+            let head = self.head(it.span, '>');
+            first(&mut self.named_group, head);
+            if !self.group_names.insert(name.as_str()) {
+                first(&mut self.duplicate_group, head);
+            }
+            if let Some(escape) = self.written_name_code_point_escape(it.span.start, "(?<") {
+                first(&mut self.code_point_escape, escape);
             }
         }
         walk::walk_capturing_group(self, it);
     }
 
     fn visit_named_reference(&mut self, it: &NamedReference<'a>) {
-        self.named_reference = true;
-        if self.written_name_has_code_point_escape(it.span.start, "\\k<") {
-            self.code_point_escape = true;
+        first(&mut self.named_reference, it.span);
+        if let Some(escape) = self.written_name_code_point_escape(it.span.start, "\\k<") {
+            first(&mut self.code_point_escape, escape);
         }
     }
 
-    fn visit_unicode_property_escape(&mut self, _it: &UnicodePropertyEscape<'a>) {
-        self.property_escape = true;
+    fn visit_unicode_property_escape(&mut self, it: &UnicodePropertyEscape<'a>) {
+        first(&mut self.property_escape, it.span);
     }
 
     fn visit_character(&mut self, it: &Character) {
@@ -337,7 +462,7 @@ impl<'a> Visit<'a> for Collector<'a> {
                 .source_at(it.span.start)
                 .is_some_and(|text| text.starts_with("\\u{"))
         {
-            self.code_point_escape = true;
+            first(&mut self.code_point_escape, it.span);
         }
     }
 }
@@ -357,30 +482,117 @@ mod tests {
         .unwrap()
     }
 
-    const SAMPLES: &[(FeatureId, &str)] = &[
-        (LOOKBEHIND, r"/(?<=\$)\d+/;"),
-        (MODIFIERS, "/(?i:a)b/;"),
-        (NAMED_REFERENCE, r"/(?<x>a)\k<x>/;"),
-        (NAMED_GROUP, "/(?<x>a)/;"),
-        (DUPLICATE_NAMED_GROUPS, "/(?<x>a)|(?<x>b)/;"),
-        (PROPERTY_ESCAPE, r"/\p{L}/u;"),
-        (CODE_POINT_ESCAPE, r"/\u{1F600}/u;"),
-        (DOT_ALL, "/a.b/s;"),
-        (HAS_INDICES, "/a/d;"),
-        (UNICODE_SETS, "/[a--b]/v;"),
-        (STICKY, "/a/y;"),
-        (UNICODE, "/a/u;"),
+    /// A sample of each key and the text of its range: the token of the feature, not the whole literal.
+    const SAMPLES: &[(FeatureId, &str, &str)] = &[
+        (LOOKBEHIND, r"/(?<=\$)\d+/;", "(?<="),
+        (MODIFIERS, "/(?i:a)b/;", "(?i:"),
+        (NAMED_REFERENCE, r"/(?<x>a)\k<x>/;", r"\k<x>"),
+        (NAMED_GROUP, "/(?<x>a)/;", "(?<x>"),
+        (DUPLICATE_NAMED_GROUPS, "/(?<x>a)|(?<x>b)/;", "(?<x>"),
+        (PROPERTY_ESCAPE, r"/\p{L}/u;", r"\p{L}"),
+        (CODE_POINT_ESCAPE, r"/\u{1F600}/u;", r"\u{1F600}"),
+        (DOT_ALL, "/a.b/s;", "s"),
+        (HAS_INDICES, "/a/d;", "d"),
+        (UNICODE_SETS, "/[a--b]/v;", "v"),
+        (STICKY, "/a/y;", "y"),
+        (UNICODE, "/a/u;", "u"),
     ];
 
     #[test]
     fn every_emitted_key_has_a_sample_that_triggers_it() {
         for key in EMITTED {
-            let (_, source) = SAMPLES.iter().find(|(sample, _)| sample == key).unwrap();
+            let (_, source, _) = SAMPLES.iter().find(|(sample, _, _)| sample == key).unwrap();
             assert!(
                 detected(source).contains(key),
                 "{} not detected in {source}",
                 key.as_str()
             );
+        }
+    }
+
+    /// The features of the source with the text and the start of their ranges.
+    fn ranges(source: &str) -> Vec<(FeatureId, String, u32)> {
+        with_semantic(source, "a.js", |semantic, allocator| {
+            detect(semantic, allocator, &Targets::missing_everything())
+                .into_iter()
+                .map(|usage| {
+                    let text = source[usage.span.start as usize..usage.span.end as usize].to_string();
+                    (usage.feature, text, usage.span.start)
+                })
+                .collect()
+        })
+        .unwrap()
+    }
+
+    fn range_of(source: &str, feature: FeatureId) -> (String, u32) {
+        let found = ranges(source);
+        let mut matching = found.iter().filter(|(key, _, _)| *key == feature);
+        let (_, text, start) = matching
+            .next()
+            .unwrap_or_else(|| panic!("{} not detected in {source}: {found:?}", feature.as_str()));
+        assert!(
+            matching.next().is_none(),
+            "{} detected twice in {source}",
+            feature.as_str()
+        );
+        (text.clone(), *start)
+    }
+
+    #[test]
+    fn a_range_covers_the_token_of_the_feature() {
+        for (key, source, text) in SAMPLES {
+            assert_eq!(range_of(source, *key).0, *text, "{} in {source}", key.as_str());
+        }
+    }
+
+    #[test]
+    fn a_range_in_a_literal_is_the_token_of_the_feature() {
+        let cases: &[(FeatureId, &str, &str)] = &[
+            (LOOKBEHIND, "/a(?<!b)/;", "(?<!"),
+            (MODIFIERS, "/(?i-m:a)/;", "(?i-m:"),
+            (NAMED_GROUP, r"/(?<\u{61}>a)/u;", r"(?<\u{61}>"),
+            (CODE_POINT_ESCAPE, r"/(?<\u{61}>a)/u;", r"\u{61}"),
+            (CODE_POINT_ESCAPE, r"/(?<a>x)\k<\u{61}>|(?<\u{61}>y)/u;", r"\u{61}"),
+            (HAS_INDICES, "/a/dgimsuy;", "d"),
+            (DOT_ALL, "/a/dgimsuy;", "s"),
+            (UNICODE, "/a/dgimsuy;", "u"),
+            (STICKY, "/a/dgimsuy;", "y"),
+            // Non-ASCII text before the token: offsets stay on character boundaries.
+            (LOOKBEHIND, "/Мяу(?<=б)/u;", "(?<="),
+            (UNICODE, "/Мяу(?<=б)/u;", "u"),
+        ];
+        for (key, source, text) in cases {
+            assert_eq!(range_of(source, *key).0, *text, "{} in {source}", key.as_str());
+        }
+        // The second group with the name is the duplicate.
+        assert_eq!(range_of("/(?<x>a)|(?<x>b)/;", DUPLICATE_NAMED_GROUPS).1, 9);
+        // The first use of a feature in the pattern gives the range.
+        assert_eq!(range_of(r"/\p{L}\p{N}/u;", PROPERTY_ESCAPE), (r"\p{L}".to_string(), 1));
+    }
+
+    #[test]
+    fn a_range_in_a_call_is_the_token_when_the_argument_is_written_as_its_value() {
+        let cases: &[(FeatureId, &str, &str)] = &[
+            (LOOKBEHIND, "new RegExp('(?<=a)b', 'v');", "(?<="),
+            (UNICODE_SETS, "new RegExp('(?<=a)b', 'v');", "v"),
+            (LOOKBEHIND, "new RegExp(`(?<=a)`);", "(?<="),
+            (UNICODE_SETS, "new RegExp('a', `v`);", "v"),
+            (LOOKBEHIND, r"new RegExp(String.raw`\d(?<=a)`, 'y');", "(?<="),
+            (STICKY, r"new RegExp(String.raw`\d(?<=a)`, 'y');", "y"),
+            (DOT_ALL, r"RegExp('a\\u{2}', 'su');", "s"),
+            (UNICODE, r"RegExp('a\\u{2}', 'su');", "u"),
+            // The new flags parse the source of the literal again; its pattern is in the file as written.
+            (CODE_POINT_ESCAPE, r"RegExp(/\u{61}/, 'u');", r"\u{61}"),
+            (UNICODE_SETS, "RegExp(/a/, 'v');", "v"),
+            // An escape in the string: the value differs from the written text, so the range is the argument.
+            (CODE_POINT_ESCAPE, r"RegExp('a\\u{2}', 'su');", r"'a\\u{2}'"),
+            (NAMED_GROUP, r#"RegExp("(?<a>x)\x41", "d");"#, r#""(?<a>x)\x41""#),
+            (HAS_INDICES, r#"RegExp("(?<a>x)\x41", "d");"#, "d"),
+            (UNICODE_SETS, r#"RegExp('a', "\u0076");"#, r#""\u0076""#),
+            (LOOKBEHIND, "RegExp('Мяу(?<=б)', 'u');", "(?<="),
+        ];
+        for (key, source, text) in cases {
+            assert_eq!(range_of(source, *key).0, *text, "{} in {source}", key.as_str());
         }
     }
 
@@ -488,8 +700,8 @@ mod tests {
             .unwrap();
         let mut references = References(Collector::new(Source { text, start: 0 }));
         references.visit_pattern(&pattern);
-        assert!(references.0.named_reference, "{text}");
-        references.0.code_point_escape
+        assert!(references.0.named_reference.is_some(), "{text}");
+        references.0.code_point_escape.is_some()
     }
 
     #[test]

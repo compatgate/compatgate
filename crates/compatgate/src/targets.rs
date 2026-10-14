@@ -1,10 +1,14 @@
-//! Resolves a browserslist query into the lowest supported version of each browser, and the support
-//! of every feature under those versions.
+//! Turns the browsers of a browserslist query into the lowest supported version of each browser, and
+//! the support of every feature under those versions.
 
 use crate::Error;
 use crate::data::{Browser, FeatureId, encode_version};
 use crate::detect::methods::{Decision, MethodTable};
 use crate::support::{SupportTable, TargetSupport};
+
+/// browserslist names that BCD has no data for by design, so they give no warning: Opera Mini, UC Browser
+/// and QQ Browser for Android, KaiOS. The README of the core lists them.
+const NO_DATA_BY_DEFINITION: [&str; 4] = ["and_qq", "and_uc", "kaios", "op_mini"];
 
 /// Resolved targets with the support of every feature under them. Resolve them once per query:
 /// the table costs a data lookup per feature and target browser.
@@ -17,30 +21,37 @@ pub struct Targets {
 }
 
 impl Targets {
-    pub fn resolve(query: &str) -> Result<Self, Error> {
-        if has_extends(query) {
-            // browserslist-rs resolves `extends` by running `node` in the current directory of the process.
-            // That finds the wrong package or none, and on wasm32 it returns nothing without an error.
-            // The JavaScript layer expands `extends` relative to the checked file instead.
-            return Err(Error::Targets(format!(
-                "{query}: \"extends\" must be expanded before the query reaches the core"
-            )));
+    /// Takes the browsers in the form that the `browserslist` npm package returns: `chrome 120`,
+    /// `safari 15.6-15.8`. Resolve the query in JavaScript: there the package finds the config, expands
+    /// `extends` relative to the checked file and has the newest data.
+    pub fn from_browserslist(browsers: &[&str]) -> Result<Self, Error> {
+        if browsers.is_empty() {
+            return Err(Error::Targets("the list of browsers is empty".to_string()));
         }
-        let distribs = browserslist::resolve([query], &browserslist::Opts::default())
-            .map_err(|error| Error::Targets(format!("{query}: {error}")))?;
+        Self::build(browsers, || browsers.join(", "))
+    }
+
+    /// `name` gives the selection in the error of a selection without data.
+    fn build(browsers: &[&str], name: impl FnOnce() -> String) -> Result<Self, Error> {
         let mut minimum: Vec<(Browser, u32)> = Vec::new();
         let mut ignored: Vec<String> = Vec::new();
-        for distrib in &distribs {
-            let Some(browser) = Browser::from_browserslist(distrib.name()) else {
-                if !ignored.iter().any(|name| name == distrib.name()) {
-                    ignored.push(distrib.name().to_string());
+        for entry in browsers {
+            let invalid = || Error::Targets(format!("\"{entry}\" is not a browser and version of browserslist"));
+            let Some((name, version)) = entry.split_once(' ').filter(|(name, _)| !name.is_empty()) else {
+                return Err(invalid());
+            };
+            let Some(browser) = Browser::from_browserslist(name) else {
+                if !NO_DATA_BY_DEFINITION.contains(&name) && !ignored.iter().any(|known| known == name) {
+                    ignored.push(name.to_string());
                 }
                 continue;
             };
             // Safari Technology Preview ("TP") is newer than any release, so it never lowers the minimum.
-            let Some(version) = encode_version(distrib.version()) else {
+            if version == "TP" {
                 continue;
-            };
+            }
+            // Another version that does not parse is a bug of the caller: skipped, it would drop the browser.
+            let version = encode_version(version).ok_or_else(invalid)?;
             match minimum.iter_mut().find(|(known, _)| *known == browser) {
                 Some((_, lowest)) => *lowest = (*lowest).min(version),
                 None => minimum.push((browser, version)),
@@ -48,7 +59,8 @@ impl Targets {
         }
         if minimum.is_empty() {
             return Err(Error::Targets(format!(
-                "{query}: selects no browser with compatibility data"
+                "{}: selects no browser with compatibility data",
+                name()
             )));
         }
         minimum.sort();
@@ -61,6 +73,21 @@ impl Targets {
             table,
             methods,
         })
+    }
+
+    /// Resolves the query with the browserslist-rs crate, for a caller without Node. Its data is older
+    /// than the data of the npm package, and it resolves `extends` by running `node` in the current
+    /// directory of the process.
+    #[cfg(feature = "browserslist")]
+    pub fn resolve(query: &str) -> Result<Self, Error> {
+        let distribs = browserslist::resolve([query], &browserslist::Opts::default())
+            .map_err(|error| Error::Targets(format!("{query}: {error}")))?;
+        let browsers: Vec<String> = distribs
+            .iter()
+            .map(|distrib| format!("{} {}", distrib.name(), distrib.version()))
+            .collect();
+        let browsers: Vec<&str> = browsers.iter().map(String::as_str).collect();
+        Self::build(&browsers, || query.to_string())
     }
 
     /// Targets under which every feature is missing in every browser, for detector tests.
@@ -105,7 +132,7 @@ impl Targets {
     /// support included. Then code that runs only where `check` is present finds `usage` fully supported.
     /// The masks of the table are not enough: a browser can lack `check` only in its lowest target version
     /// and `usage` in many more.
-    pub fn implies(&self, check: FeatureId, usage: FeatureId) -> bool {
+    pub(crate) fn implies(&self, check: FeatureId, usage: FeatureId) -> bool {
         let first = || self.first_supports(check);
         self.implies_by(check, usage, first)
     }
@@ -146,16 +173,6 @@ impl Targets {
     }
 }
 
-fn has_extends(query: &str) -> bool {
-    let query = query.to_ascii_lowercase();
-    query
-        .split(',')
-        .flat_map(|part| part.split(" or "))
-        .flat_map(|part| part.split(" and "))
-        .map(str::trim)
-        .any(|term| term == "extends" || term.starts_with("extends "))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -168,8 +185,17 @@ mod tests {
     }
 
     #[test]
-    fn resolves_lowest_version_per_browser() {
-        let targets = Targets::resolve(QUERY).unwrap();
+    fn takes_the_lowest_version_of_each_browser_from_a_list() {
+        let targets = Targets::from_browserslist(&[
+            "chrome 120",
+            "chrome 97",
+            "firefox 115",
+            "safari TP",
+            "safari 15.6-15.8",
+            "ios_saf 18.5-18.7",
+            "ios_saf 15.5",
+        ])
+        .unwrap();
         assert_eq!(
             targets.minimum(),
             &[
@@ -183,10 +209,71 @@ mod tests {
     }
 
     #[test]
-    fn reports_browsers_without_bcd_data() {
-        let targets = Targets::resolve("Chrome >= 97, op_mini all").unwrap();
+    fn reports_browsers_without_bcd_data_unless_bcd_lacks_them_by_definition() {
+        let targets = Targets::from_browserslist(&[
+            "chrome 97",
+            "op_mini all",
+            "and_uc 15.5",
+            "and_qq 14.9",
+            "kaios 3.0-3.1",
+            "ie 11",
+            "ie 10",
+            "baidu 13.52",
+        ])
+        .unwrap();
         assert_eq!(targets.minimum(), &[(Browser::Chrome, version("97"))]);
-        assert_eq!(targets.ignored(), &["op_mini".to_string()]);
+        assert_eq!(targets.ignored(), &["baidu".to_string(), "ie".to_string()]);
+    }
+
+    #[test]
+    fn rejects_a_list_without_browsers_with_data_and_names_it() {
+        let error = Targets::from_browserslist(&["op_mini all", "ie 11"]).unwrap_err();
+        assert_eq!(
+            error,
+            Error::Targets("op_mini all, ie 11: selects no browser with compatibility data".to_string())
+        );
+    }
+
+    #[test]
+    fn rejects_an_empty_list() {
+        let error = Targets::from_browserslist(&[]).unwrap_err();
+        assert_eq!(error, Error::Targets("the list of browsers is empty".to_string()));
+    }
+
+    #[test]
+    fn rejects_an_entry_that_is_no_browser_and_version() {
+        for entry in [
+            "chrome",
+            "chrome ",
+            "chrome foo",
+            "chrome 97 x",
+            "firefox all",
+            " chrome 97",
+            "safari tp",
+        ] {
+            let error = Targets::from_browserslist(&["chrome 97", entry]).unwrap_err();
+            assert_eq!(
+                error,
+                Error::Targets(format!("\"{entry}\" is not a browser and version of browserslist")),
+                "{entry}"
+            );
+        }
+    }
+
+    #[test]
+    fn resolves_a_query_with_the_browserslist_feature() {
+        let targets = Targets::resolve(QUERY).unwrap();
+        assert_eq!(
+            targets.minimum(),
+            &[
+                (Browser::Chrome, version("97")),
+                (Browser::Firefox, version("115")),
+                (Browser::Safari, version("15.6")),
+                (Browser::SafariIos, version("15.5")),
+            ]
+        );
+        let targets = Targets::resolve("Chrome >= 97, op_mini all, ie 11").unwrap();
+        assert_eq!(targets.ignored(), &["ie".to_string()]);
     }
 
     #[test]
@@ -196,20 +283,10 @@ mod tests {
             matches!(&error, Error::Targets(text) if text.contains("Chrom >= 97")),
             "{error}"
         );
-    }
-
-    #[test]
-    fn rejects_extends_because_the_caller_must_expand_it() {
-        for query in [
-            "extends browserslist-config-foo",
-            "Chrome >= 97, extends foo",
-            "Chrome >= 97 or Extends foo",
-        ] {
-            let error = Targets::resolve(query).unwrap_err();
-            assert!(
-                matches!(&error, Error::Targets(text) if text.contains("extends")),
-                "{query}: {error}"
-            );
-        }
+        let error = Targets::resolve("op_mini all").unwrap_err();
+        assert!(
+            matches!(&error, Error::Targets(text) if text.starts_with("op_mini all: ")),
+            "{error}"
+        );
     }
 }

@@ -4,7 +4,7 @@
 use compatgate::allow::{AllowEntry, AllowList};
 use compatgate::position::Position;
 use compatgate::targets::Targets;
-use compatgate::{Confidence, Error, Kind, ParseError, check, is_checkable};
+use compatgate::{Confidence, Error, Kind, ParseError, check, check_as, is_checkable};
 
 const QUERY: &str = "Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115";
 
@@ -89,7 +89,30 @@ fn allow_entry_suppresses_the_finding_and_is_reported_as_used() {
     .unwrap();
     let output = check("structuredClone(1); structuredClone(2);", "a.js", &targets, &allow).unwrap();
     assert!(output.findings.is_empty());
-    assert_eq!(output.used_allow, [1]);
+    assert_eq!(output.suppressed, [(1, Kind::Api)]);
+}
+
+#[test]
+fn suppressed_lists_each_entry_with_the_kinds_of_the_findings_it_suppressed() {
+    let targets = Targets::resolve(QUERY).unwrap();
+    let entry = |feature: &str| AllowEntry {
+        feature: feature.into(),
+        ..AllowEntry::default()
+    };
+    let allow = AllowList::new(&[
+        entry("javascript.regular_expressions.lookbehind_assertion"),
+        entry("api.ResizeObserver"),
+        entry("api.structuredClone"),
+        entry("javascript.builtins.Intl.Segmenter"),
+    ])
+    .unwrap();
+    let source = "structuredClone(/(?<=a)b/);\nnew Intl.Segmenter();\nstructuredClone(/(?<=c)d/);\n";
+    let output = check(source, "a.js", &targets, &allow).unwrap();
+    assert!(output.findings.is_empty());
+    assert_eq!(
+        output.suppressed,
+        [(0, Kind::Syntax), (2, Kind::Api), (3, Kind::Builtin)]
+    );
 }
 
 #[test]
@@ -149,6 +172,42 @@ fn an_unknown_extension_is_an_unsupported_file() {
             "the message does not repeat the filename: {message}"
         );
     }
+}
+
+#[test]
+fn the_parser_name_selects_the_parser_and_the_filename_matches_allow() {
+    let targets = Targets::resolve(QUERY).unwrap();
+    let allow = AllowList::new(&[AllowEntry {
+        feature: "api.structuredClone".into(),
+        files: vec!["src/*.vue".into()],
+        base_dir: "/p".into(),
+        ..AllowEntry::default()
+    }])
+    .unwrap();
+    let typed = "const n: number = structuredClone(1);";
+    let output = check_as(typed, "/p/src/App.vue", "/p/src/App.vue.ts", &targets, &allow).unwrap();
+    assert_eq!(output.findings, []);
+    assert_eq!(output.suppressed, [(0, Kind::Api)]);
+    // The parser name decides the language: JavaScript does not parse a type annotation.
+    let error = check_as(typed, "/p/src/App.vue", "/p/src/App.vue.js", &targets, &allow).unwrap_err();
+    assert!(matches!(error, Error::Parse(_)), "{error:?}");
+    // The parser name does not match `files`.
+    let output = check_as(
+        "structuredClone(1);",
+        "/p/lib/App.vue",
+        "/p/src/App.vue.js",
+        &targets,
+        &allow,
+    )
+    .unwrap();
+    assert_eq!(output.findings.len(), 1);
+}
+
+#[test]
+fn a_parser_name_without_a_parser_is_an_unsupported_file() {
+    let targets = Targets::resolve(QUERY).unwrap();
+    let error = check_as("x;", "/p/a.js", "/p/a.css", &targets, &AllowList::empty()).unwrap_err();
+    assert!(matches!(error, Error::UnsupportedFile(_)), "{error:?}");
 }
 
 #[test]
@@ -231,13 +290,14 @@ fn allowing_another_method_with_the_same_name_suppresses_the_finding() {
     .unwrap();
     let output = check("list.toSorted();", "a.js", &targets, &allow).unwrap();
     assert!(output.findings.is_empty());
-    assert_eq!(output.used_allow, [0]);
+    assert_eq!(output.suppressed, [(0, Kind::Builtin)]);
 }
 
 #[test]
 fn findings_at_one_position_are_sorted_by_feature() {
-    let targets = Targets::resolve("Chrome >= 40").unwrap();
-    let found: Vec<_> = check("/a/vy;", "a.js", &targets, &AllowList::empty())
+    let targets = Targets::resolve("Chrome >= 30").unwrap();
+    // The syntax detector reports the shorthand method first; both findings cover the key `m`.
+    let found: Vec<_> = check("({ m() {} });", "a.js", &targets, &AllowList::empty())
         .unwrap()
         .findings
         .into_iter()
@@ -246,8 +306,8 @@ fn findings_at_one_position_are_sorted_by_feature() {
     assert_eq!(
         found,
         [
-            "javascript.builtins.RegExp.sticky",
-            "javascript.builtins.RegExp.unicodeSets"
+            "javascript.functions.method_definitions",
+            "javascript.operators.object_initializer.shorthand_method_names"
         ]
     );
 }

@@ -4,9 +4,9 @@
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    AssignmentOperator, BigintBase, BinaryOperator, BindingPattern, ClassType, FunctionType, LogicalOperator,
-    MethodDefinitionKind, MethodDefinitionType, NumberBase, PropertyDefinitionType, PropertyKey, PropertyKind,
-    UpdateOperator, VariableDeclarationKind,
+    AssignmentOperator, BigintBase, BinaryOperator, BindingPattern, ChainElement, ChainExpression, ClassType,
+    Decorator, Expression, Function, FunctionType, LogicalOperator, MethodDefinitionKind, MethodDefinitionType,
+    NumberBase, PropertyDefinitionType, PropertyKey, PropertyKind, UpdateOperator, VariableDeclarationKind,
 };
 use oxc_semantic::{AstNodes, NodeId, Semantic};
 use oxc_span::{GetSpan, Span};
@@ -267,6 +267,8 @@ pub(crate) fn ancient(key: &str) -> bool {
 
 /// `ambient` comes from `ambient_nodes`. `check` computes it once per file for all detectors.
 /// Syntax that the targets support is no use: most nodes of a modern file are such syntax.
+/// The range of a use is the token of the feature, not the whole node: `docs/syntax-ranges.md` of the
+/// core package lists the token of each key.
 pub fn detect<'a>(semantic: &Semantic<'a>, ambient: &[bool], targets: &Targets) -> Vec<Use<'a>> {
     // Everything in a declaration file is ambient, `export` without `declare` included.
     if semantic.source_type().is_typescript_definition() {
@@ -303,81 +305,116 @@ pub fn detect<'a>(semantic: &Semantic<'a>, ambient: &[bool], targets: &Targets) 
                 );
                 push(&mut uses, targets, key::BIGINT, Kind::Builtin, it.span, id);
             }
+            // The raw text of a string literal starts at its span, quote included.
             AstKind::StringLiteral(it) => {
-                if it.raw.as_ref().is_some_and(|raw| has_code_point_escape(raw.as_str())) {
-                    add(key::UNICODE_POINT_ESCAPES, it.span);
+                if let Some(escape) = it
+                    .raw
+                    .as_ref()
+                    .and_then(|raw| code_point_escape(raw.as_str(), it.span.start))
+                {
+                    add(key::UNICODE_POINT_ESCAPES, escape);
                 }
             }
+            // The span of a template element is its raw text, without the backticks and `${`.
             AstKind::TemplateElement(it) => {
-                if has_code_point_escape(it.value.raw.as_str()) {
-                    add(key::UNICODE_POINT_ESCAPES, it.span);
+                if let Some(escape) = code_point_escape(it.value.raw.as_str(), it.span.start) {
+                    add(key::UNICODE_POINT_ESCAPES, escape);
                 }
             }
-            AstKind::TemplateLiteral(it) => add(key::TEMPLATE_LITERALS, it.span),
+            AstKind::TemplateLiteral(it) => add(key::TEMPLATE_LITERALS, prefix(source, it.span, "`")),
             AstKind::TaggedTemplateExpression(it) => {
-                if it.quasi.quasis.iter().any(|quasi| quasi.value.cooked.is_none()) {
-                    add(key::TEMPLATE_REVISION, it.span);
+                if let Some(quasi) = it.quasi.quasis.iter().find(|quasi| quasi.value.cooked.is_none()) {
+                    add(key::TEMPLATE_REVISION, quasi.span);
                 }
             }
-            AstKind::ObjectProperty(it) => match it.kind {
-                PropertyKind::Init => {
-                    if it.shorthand {
-                        add(key::SHORTHAND_PROPERTIES, it.span);
+            AstKind::ObjectProperty(it) => {
+                let key = || member_key(source, it.span.start, &it.key, it.computed);
+                match it.kind {
+                    PropertyKind::Init => {
+                        if it.shorthand {
+                            add(key::SHORTHAND_PROPERTIES, it.key.span());
+                        }
+                        if it.method {
+                            add(key::SHORTHAND_METHODS, key());
+                            add(key::METHOD_DEFINITIONS, key());
+                        }
+                        if it.computed {
+                            add(key::COMPUTED_PROPERTIES, key());
+                        }
                     }
-                    if it.method {
-                        add(key::SHORTHAND_METHODS, it.span);
-                        add(key::METHOD_DEFINITIONS, it.span);
-                    }
-                    if it.computed {
-                        add(key::COMPUTED_PROPERTIES, it.span);
-                    }
+                    PropertyKind::Get if it.computed => add(key::GET_COMPUTED, key()),
+                    PropertyKind::Set if it.computed => add(key::SET_COMPUTED, key()),
+                    _ => {}
                 }
-                PropertyKind::Get if it.computed => add(key::GET_COMPUTED, it.span),
-                PropertyKind::Set if it.computed => add(key::SET_COMPUTED, it.span),
-                _ => {}
-            },
-            AstKind::SpreadElement(it) => match spread_into(nodes, id) {
-                Some(SpreadInto::Array) => add(key::SPREAD_IN_ARRAYS, it.span),
-                Some(SpreadInto::Object) => add(key::SPREAD_IN_OBJECTS, it.span),
-                Some(SpreadInto::Call) => add(key::SPREAD_IN_CALLS, it.span),
-                None => {}
-            },
+            }
+            AstKind::SpreadElement(it) => {
+                let span = prefix(source, it.span, "...");
+                match spread_into(nodes, id) {
+                    Some(SpreadInto::Array) => add(key::SPREAD_IN_ARRAYS, span),
+                    Some(SpreadInto::Object) => add(key::SPREAD_IN_OBJECTS, span),
+                    Some(SpreadInto::Call) => add(key::SPREAD_IN_CALLS, span),
+                    None => {}
+                }
+            }
             AstKind::CallExpression(it) => {
-                if it
+                if let Some(comma) = it
                     .arguments
                     .last()
-                    .is_some_and(|last| trailing_comma(source, last.span().end))
+                    .and_then(|last| trailing_comma(source, last.span().end))
                 {
-                    add(key::TRAILING_COMMAS, it.span);
+                    add(key::TRAILING_COMMAS, comma);
                 }
             }
             AstKind::NewExpression(it) => {
-                if it
+                if let Some(comma) = it
                     .arguments
                     .last()
-                    .is_some_and(|last| trailing_comma(source, last.span().end))
+                    .and_then(|last| trailing_comma(source, last.span().end))
                 {
-                    add(key::TRAILING_COMMAS, it.span);
+                    add(key::TRAILING_COMMAS, comma);
                 }
             }
             AstKind::ArrowFunctionExpression(it) => {
-                add(key::ARROW_FUNCTIONS, it.span);
+                let parameters_end = it
+                    .return_type
+                    .as_ref()
+                    .map_or(it.params.span.end, |types| types.span.end);
+                add(
+                    key::ARROW_FUNCTIONS,
+                    token_at(source, parameters_end, "=>").unwrap_or(it.span),
+                );
                 if it.r#async {
-                    add(key::ASYNC_FUNCTION_EXPRESSION, it.span);
+                    add(key::ASYNC_FUNCTION_EXPRESSION, prefix(source, it.span, "async"));
                 }
             }
             AstKind::Function(it) => {
                 let parent = nodes.parent_kind(id);
-                let is_method = matches!(parent, AstKind::MethodDefinition(_))
-                    || matches!(parent, AstKind::ObjectProperty(property) if property.method || property.kind != PropertyKind::Init);
-                let span = it.span;
-                if is_method {
-                    match (it.r#async, it.generator) {
-                        (true, true) => add(key::ASYNC_GENERATOR_METHODS, span),
-                        (true, false) => add(key::ASYNC_METHODS, span),
-                        _ => {}
+                // The span of a method value starts at its parameters; the modifiers belong to the member.
+                let member = match parent {
+                    AstKind::MethodDefinition(method) => {
+                        Some((after_decorators(method.span, &method.decorators), method.key.span()))
                     }
-                } else if it.r#type == FunctionType::FunctionDeclaration {
+                    AstKind::ObjectProperty(property) if property.method || property.kind != PropertyKind::Init => {
+                        Some((property.span.start, property.key.span()))
+                    }
+                    _ => None,
+                };
+                if let Some((start, key)) = member {
+                    if it.r#async {
+                        let span = async_head(source, start, key.start, it.generator).unwrap_or(it.span);
+                        add(
+                            if it.generator {
+                                key::ASYNC_GENERATOR_METHODS
+                            } else {
+                                key::ASYNC_METHODS
+                            },
+                            span,
+                        );
+                    }
+                    continue;
+                }
+                let span = function_head(source, it).unwrap_or(it.span);
+                if it.r#type == FunctionType::FunctionDeclaration {
                     match (it.r#async, it.generator) {
                         (true, true) => add(key::ASYNC_GENERATOR_DECLARATION, span),
                         (true, false) => add(key::ASYNC_FUNCTION_DECLARATION, span),
@@ -401,21 +438,27 @@ pub fn detect<'a>(semantic: &Semantic<'a>, ambient: &[bool], targets: &Targets) 
                 for parameter in &it.items {
                     if parameter.initializer.is_some() {
                         seen_default = true;
-                        add(key::DEFAULT_PARAMETERS, parameter.span);
+                        let pattern_end = parameter
+                            .type_annotation
+                            .as_ref()
+                            .map_or(parameter.pattern.span().end, |types| types.span.end);
+                        let equals = token_at(source, pattern_end, "=").unwrap_or(parameter.span);
+                        add(key::DEFAULT_PARAMETERS, equals);
                         if matches!(
                             parameter.pattern,
                             BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
                         ) {
-                            add(key::DESTRUCTURED_DEFAULTS, parameter.span);
+                            add(key::DESTRUCTURED_DEFAULTS, equals);
                         }
                     } else if seen_default {
-                        add(key::PARAMETERS_AFTER_DEFAULTS, parameter.span);
+                        add(key::PARAMETERS_AFTER_DEFAULTS, first_token(source, &parameter.pattern));
                     }
                 }
                 if let Some(rest) = &it.rest {
-                    add(key::REST_PARAMETERS, rest.span);
+                    let dots = prefix(source, rest.rest.span, "...");
+                    add(key::REST_PARAMETERS, dots);
                     if !matches!(rest.rest.argument, BindingPattern::BindingIdentifier(_)) {
-                        add(key::REST_DESTRUCTURING, rest.span);
+                        add(key::REST_DESTRUCTURING, dots);
                     }
                 }
                 let last_end = it
@@ -423,23 +466,48 @@ pub fn detect<'a>(semantic: &Semantic<'a>, ambient: &[bool], targets: &Targets) 
                     .as_ref()
                     .map(|rest| rest.span.end)
                     .or_else(|| it.items.last().map(|item| item.span.end));
-                if last_end.is_some_and(|end| trailing_comma(source, end)) {
-                    add(key::TRAILING_COMMAS, it.span);
+                if let Some(comma) = last_end.and_then(|end| trailing_comma(source, end)) {
+                    add(key::TRAILING_COMMAS, comma);
                 }
             }
-            AstKind::AwaitExpression(it) => add(key::AWAIT, it.span),
-            AstKind::YieldExpression(it) => add(if it.delegate { key::YIELD_STAR } else { key::YIELD }, it.span),
+            AstKind::AwaitExpression(it) => add(key::AWAIT, prefix(source, it.span, "await")),
+            AstKind::YieldExpression(it) => {
+                if it.delegate {
+                    let star =
+                        token_at(source, it.span.start, "yield").and_then(|keyword| token_at(source, keyword.end, "*"));
+                    add(
+                        key::YIELD_STAR,
+                        star.map_or(it.span, |star| Span::new(it.span.start, star.end)),
+                    );
+                } else {
+                    add(key::YIELD, prefix(source, it.span, "yield"));
+                }
+            }
             AstKind::Class(it) => {
+                let class_keyword = keyword(
+                    source,
+                    after_decorators(it.span, &it.decorators),
+                    it.body.span.start,
+                    "class",
+                );
                 add(
                     if it.r#type == ClassType::ClassDeclaration {
                         key::CLASS_DECLARATION
                     } else {
                         key::CLASS_EXPRESSION
                     },
-                    it.span,
+                    class_keyword.unwrap_or(it.span),
                 );
-                if it.heritage.is_some() {
-                    add(key::EXTENDS, it.span);
+                if let Some(heritage) = &it.heritage {
+                    // `extends` follows the name and the type parameters, which may hold `extends` too.
+                    let start = it
+                        .type_parameters
+                        .as_ref()
+                        .map(|parameters| parameters.span.end)
+                        .or_else(|| it.id.as_ref().map(|name| name.span.end))
+                        .or_else(|| class_keyword.map(|keyword| keyword.end));
+                    let extends = start.and_then(|start| token_at(source, start, "extends"));
+                    add(key::EXTENDS, extends.unwrap_or(heritage.expression.span()));
                 }
             }
             AstKind::MethodDefinition(it) => {
@@ -447,104 +515,170 @@ pub fn detect<'a>(semantic: &Semantic<'a>, ambient: &[bool], targets: &Targets) 
                 if it.r#type == MethodDefinitionType::TSAbstractMethodDefinition || it.value.body.is_none() {
                     continue;
                 }
+                let start = after_decorators(it.span, &it.decorators);
+                let key = || member_key(source, start, &it.key, it.computed);
                 match it.kind {
-                    MethodDefinitionKind::Constructor => add(key::CONSTRUCTOR, it.span),
-                    MethodDefinitionKind::Method => add(key::METHOD_DEFINITIONS, it.span),
-                    MethodDefinitionKind::Get if it.computed => add(key::GET_COMPUTED, it.span),
-                    MethodDefinitionKind::Set if it.computed => add(key::SET_COMPUTED, it.span),
+                    MethodDefinitionKind::Constructor => add(key::CONSTRUCTOR, key()),
+                    MethodDefinitionKind::Method => add(key::METHOD_DEFINITIONS, key()),
+                    MethodDefinitionKind::Get if it.computed => add(key::GET_COMPUTED, key()),
+                    MethodDefinitionKind::Set if it.computed => add(key::SET_COMPUTED, key()),
                     _ => {}
                 }
                 if it.r#static {
-                    add(key::STATIC_MEMBERS, it.span);
+                    add(
+                        key::STATIC_MEMBERS,
+                        keyword(source, start, it.key.span().start, "static").unwrap_or(it.span),
+                    );
                 }
                 if matches!(it.key, PropertyKey::PrivateIdentifier(_)) {
-                    add(key::PRIVATE_METHODS, it.span);
+                    add(key::PRIVATE_METHODS, it.key.span());
                 }
             }
             AstKind::PropertyDefinition(it) => {
                 if it.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition || it.declare {
                     continue;
                 }
+                let start = after_decorators(it.span, &it.decorators);
                 if matches!(it.key, PropertyKey::PrivateIdentifier(_)) {
-                    add(key::PRIVATE_FIELDS, it.span);
+                    add(key::PRIVATE_FIELDS, it.key.span());
                 } else if it.r#static {
-                    add(key::STATIC_FIELDS, it.span);
+                    add(
+                        key::STATIC_FIELDS,
+                        keyword(source, start, it.key.span().start, "static").unwrap_or(it.span),
+                    );
                 } else {
-                    add(key::PUBLIC_FIELDS, it.span);
+                    add(key::PUBLIC_FIELDS, member_key(source, start, &it.key, it.computed));
                 }
             }
-            AstKind::PrivateInExpression(it) => add(key::PRIVATE_IN, it.span),
-            AstKind::StaticBlock(it) => add(key::STATIC_BLOCKS, it.span),
+            AstKind::PrivateInExpression(it) => {
+                let span = token_at(source, it.left.span.end, "in")
+                    .map_or(it.span, |keyword| Span::new(it.left.span.start, keyword.end));
+                add(key::PRIVATE_IN, span);
+            }
+            AstKind::StaticBlock(it) => add(key::STATIC_BLOCKS, prefix(source, it.span, "static")),
             AstKind::Super(it) => add(key::SUPER, it.span),
             AstKind::NewTarget(it) => add(key::NEW_TARGET, it.span),
-            AstKind::ChainExpression(it) => add(key::OPTIONAL_CHAINING, it.span),
+            AstKind::ChainExpression(it) => {
+                add(key::OPTIONAL_CHAINING, optional_chain(source, it).unwrap_or(it.span));
+            }
             AstKind::LogicalExpression(it) => {
                 if it.operator == LogicalOperator::Coalesce {
-                    add(key::NULLISH, it.span);
+                    add(
+                        key::NULLISH,
+                        operator_after(source, it.left.span(), "??").unwrap_or(it.span),
+                    );
                 }
             }
-            AstKind::AssignmentExpression(it) => match it.operator {
-                AssignmentOperator::LogicalAnd => add(key::LOGICAL_AND_ASSIGNMENT, it.span),
-                AssignmentOperator::LogicalOr => add(key::LOGICAL_OR_ASSIGNMENT, it.span),
-                AssignmentOperator::LogicalNullish => add(key::NULLISH_ASSIGNMENT, it.span),
-                AssignmentOperator::Exponential => add(key::EXPONENTIATION_ASSIGNMENT, it.span),
-                _ => {}
-            },
+            AstKind::AssignmentExpression(it) => {
+                let feature = match it.operator {
+                    AssignmentOperator::LogicalAnd => key::LOGICAL_AND_ASSIGNMENT,
+                    AssignmentOperator::LogicalOr => key::LOGICAL_OR_ASSIGNMENT,
+                    AssignmentOperator::LogicalNullish => key::NULLISH_ASSIGNMENT,
+                    AssignmentOperator::Exponential => key::EXPONENTIATION_ASSIGNMENT,
+                    _ => continue,
+                };
+                let operator = operator_after(source, it.left.span(), it.operator.as_str());
+                add(feature, operator.unwrap_or(it.span));
+            }
             AstKind::BinaryExpression(it) => {
                 if it.operator == BinaryOperator::Exponential {
-                    add(key::EXPONENTIATION, it.span);
+                    add(
+                        key::EXPONENTIATION,
+                        operator_after(source, it.left.span(), "**").unwrap_or(it.span),
+                    );
                 }
             }
-            AstKind::UpdateExpression(it) => add(
-                if it.operator == UpdateOperator::Increment {
-                    key::INCREMENT
-                } else {
-                    key::DECREMENT
-                },
-                it.span,
-            ),
+            AstKind::UpdateExpression(it) => {
+                // The operator is the first or the last two characters of the node.
+                let operator = match it.prefix {
+                    true => Span::sized(it.span.start, 2),
+                    false => Span::new(it.span.end.saturating_sub(2), it.span.end),
+                };
+                let text = source.get(operator.start as usize..operator.end as usize);
+                let operator = match text {
+                    Some("++" | "--") => operator,
+                    _ => it.span,
+                };
+                add(
+                    if it.operator == UpdateOperator::Increment {
+                        key::INCREMENT
+                    } else {
+                        key::DECREMENT
+                    },
+                    operator,
+                );
+            }
             AstKind::VariableDeclaration(it) => match it.kind {
-                VariableDeclarationKind::Let => add(key::LET, it.span),
-                VariableDeclarationKind::Const => add(key::CONST, it.span),
-                VariableDeclarationKind::Using => add(key::USING, it.span),
-                VariableDeclarationKind::AwaitUsing => add(key::AWAIT_USING, it.span),
+                VariableDeclarationKind::Let => add(key::LET, prefix(source, it.span, "let")),
+                VariableDeclarationKind::Const => add(key::CONST, prefix(source, it.span, "const")),
+                VariableDeclarationKind::Using => add(key::USING, prefix(source, it.span, "using")),
+                VariableDeclarationKind::AwaitUsing => {
+                    let using = token_at(source, it.span.start, "await")
+                        .and_then(|keyword| token_at(source, keyword.end, "using"));
+                    add(
+                        key::AWAIT_USING,
+                        using.map_or(it.span, |using| Span::new(it.span.start, using.end)),
+                    );
+                }
                 VariableDeclarationKind::Var => {}
             },
-            AstKind::ForOfStatement(it) => add(if it.r#await { key::FOR_AWAIT_OF } else { key::FOR_OF }, it.span),
-            AstKind::CatchClause(it) => {
-                if it.param.is_none() {
-                    add(key::OPTIONAL_CATCH_BINDING, it.span);
+            AstKind::ForOfStatement(it) => {
+                if it.r#await {
+                    let wait = token_at(source, it.span.start, "for")
+                        .and_then(|keyword| token_at(source, keyword.end, "await"));
+                    add(
+                        key::FOR_AWAIT_OF,
+                        wait.map_or(it.span, |wait| Span::new(it.span.start, wait.end)),
+                    );
+                } else {
+                    add(
+                        key::FOR_OF,
+                        operator_after(source, it.left.span(), "of").unwrap_or(it.span),
+                    );
                 }
             }
-            AstKind::DebuggerStatement(it) => add(key::DEBUGGER, it.span),
+            AstKind::CatchClause(it) => {
+                if it.param.is_none() {
+                    add(key::OPTIONAL_CATCH_BINDING, prefix(source, it.span, "catch"));
+                }
+            }
+            AstKind::DebuggerStatement(it) => add(key::DEBUGGER, prefix(source, it.span, "debugger")),
             AstKind::EmptyStatement(it) => add(key::EMPTY, it.span),
             AstKind::ObjectPattern(it) => {
-                add(key::DESTRUCTURING, it.span);
-                if it.rest.is_some() {
-                    add(key::REST_IN_OBJECTS, it.span);
+                add(key::DESTRUCTURING, prefix(source, it.span, "{"));
+                if let Some(rest) = &it.rest {
+                    add(key::REST_IN_OBJECTS, prefix(source, rest.span, "..."));
                 }
             }
             AstKind::ArrayPattern(it) => {
-                add(key::DESTRUCTURING, it.span);
-                if it.rest.is_some() {
-                    add(key::REST_IN_ARRAYS, it.span);
+                add(key::DESTRUCTURING, prefix(source, it.span, "["));
+                if let Some(rest) = &it.rest {
+                    add(key::REST_IN_ARRAYS, prefix(source, rest.span, "..."));
                 }
             }
             AstKind::ObjectAssignmentTarget(it) => {
-                add(key::DESTRUCTURING, it.span);
-                if it.rest.is_some() {
-                    add(key::REST_IN_OBJECTS, it.span);
+                add(key::DESTRUCTURING, prefix(source, it.span, "{"));
+                if let Some(rest) = &it.rest {
+                    add(key::REST_IN_OBJECTS, prefix(source, rest.span, "..."));
                 }
             }
             AstKind::ArrayAssignmentTarget(it) => {
-                add(key::DESTRUCTURING, it.span);
-                if it.rest.is_some() {
-                    add(key::REST_IN_ARRAYS, it.span);
+                add(key::DESTRUCTURING, prefix(source, it.span, "["));
+                if let Some(rest) = &it.rest {
+                    add(key::REST_IN_ARRAYS, prefix(source, rest.span, "..."));
                 }
             }
-            AstKind::BindingProperty(it) if it.computed => add(key::DESTRUCTURING_COMPUTED, it.span),
+            AstKind::BindingProperty(it) if it.computed => {
+                add(
+                    key::DESTRUCTURING_COMPUTED,
+                    computed_key(source, it.span.start, it.key.span()),
+                );
+            }
             AstKind::AssignmentTargetPropertyProperty(it) if it.computed => {
-                add(key::DESTRUCTURING_COMPUTED, it.span);
+                add(
+                    key::DESTRUCTURING_COMPUTED,
+                    computed_key(source, it.span.start, it.name.span()),
+                );
             }
             _ => {}
         }
@@ -613,25 +747,209 @@ fn is_ambient(kind: AstKind<'_>) -> bool {
     }
 }
 
-/// True when `u{` follows an odd number of backslashes: `\u{1F600}` is an escape, `\\u{` is not.
-pub(super) fn has_code_point_escape(raw: &str) -> bool {
-    raw.match_indices("u{")
-        .any(|(index, _)| raw[..index].bytes().rev().take_while(|&byte| byte == b'\\').count() % 2 == 1)
+/// The first `\u{…}` escape of raw text that starts at the offset `start`. An escape is `u{` after an odd
+/// number of backslashes: `\u{1F600}` is an escape, `\\u{` is not.
+pub(super) fn code_point_escape(raw: &str, start: u32) -> Option<Span> {
+    let (index, _) = raw
+        .match_indices("u{")
+        .find(|(index, _)| raw[..*index].bytes().rev().take_while(|&byte| byte == b'\\').count() % 2 == 1)?;
+    let end = raw[index..].find('}').map_or(raw.len(), |close| index + close + 1);
+    // The escape starts at its backslash, one byte before `u`.
+    Some(Span::new(start + index as u32 - 1, start + end as u32))
 }
 
-/// The AST does not keep trailing commas. The next character that is not whitespace or a comment tells.
-fn trailing_comma(source: &str, offset: u32) -> bool {
+/// The trailing comma after the last item that ends at `offset`, if any. The AST does not keep trailing
+/// commas.
+fn trailing_comma(source: &str, offset: u32) -> Option<Span> {
+    token_at(source, offset, ",")
+}
+
+// oxc keeps the spans of nodes, not of keywords and operators. The helpers below find the token of a
+// feature in the source from the boundaries of nodes. A helper gives `None` when the token is not where
+// the grammar puts it; the caller then reports the whole node. Every token they look for is ASCII, so a
+// range never splits a character.
+
+/// The offset of the next token at or after `offset`: whitespace and comments skipped.
+fn next_token(source: &str, offset: u32) -> u32 {
     let mut rest = &source[offset as usize..];
     loop {
-        rest = rest.trim_start();
+        // U+FEFF is whitespace in JavaScript, but not in Rust.
+        rest = rest.trim_start_matches(|char: char| char.is_whitespace() || char == '\u{FEFF}');
         if let Some(after) = rest.strip_prefix("//") {
-            rest = after.split_once('\n').map_or("", |(_, tail)| tail);
+            let end = after.find(['\n', '\r', '\u{2028}', '\u{2029}']).unwrap_or(after.len());
+            rest = &after[end..];
         } else if let Some(after) = rest.strip_prefix("/*") {
             rest = after.split_once("*/").map_or("", |(_, tail)| tail);
         } else {
-            return rest.starts_with(',');
+            return (source.len() - rest.len()) as u32;
         }
     }
+}
+
+/// `token` when it is the next token at or after `offset`.
+fn token_at(source: &str, offset: u32, token: &str) -> Option<Span> {
+    let start = next_token(source, offset);
+    source[start as usize..]
+        .starts_with(token)
+        .then(|| Span::sized(start, token.len() as u32))
+}
+
+/// The operator after the left operand. oxc leaves the parentheses around an assignment target out of
+/// its span, `(a) ??= b`, so the closing parentheses are skipped too.
+fn operator_after(source: &str, left: Span, operator: &str) -> Option<Span> {
+    let mut start = next_token(source, left.end);
+    while source.as_bytes().get(start as usize) == Some(&b')') {
+        start = next_token(source, start + 1);
+    }
+    source[start as usize..]
+        .starts_with(operator)
+        .then(|| Span::sized(start, operator.len() as u32))
+}
+
+/// The first characters of a node that always starts with `token`, such as `static {` or `...rest`. The
+/// whole node if it does not.
+fn prefix(source: &str, span: Span, token: &str) -> Span {
+    match source[span.start as usize..].starts_with(token) {
+        true => Span::sized(span.start, token.len() as u32),
+        false => span,
+    }
+}
+
+/// The word `word` among the tokens from `start` to `end`: a modifier before the key of a member, or
+/// `class` after `abstract`. A modifier never hides in a string, so the scan needs words and comments only.
+fn keyword(source: &str, start: u32, end: u32, word: &str) -> Option<Span> {
+    let mut offset = start;
+    loop {
+        offset = next_token(source, offset);
+        if offset >= end {
+            return None;
+        }
+        let rest = &source[offset as usize..end as usize];
+        let length = rest
+            .find(|char: char| !(char.is_alphanumeric() || char == '_' || char == '$'))
+            .unwrap_or(rest.len());
+        if length == 0 {
+            // `*`, `[`, `#` or another punctuator.
+            offset += rest.chars().next().map_or(1, char::len_utf8) as u32;
+        } else if &rest[..length] == word {
+            return Some(Span::sized(offset, length as u32));
+        } else {
+            offset += length as u32;
+        }
+    }
+}
+
+/// The start of a class or a member after its decorators: they hold any tokens, `@d([1])`.
+fn after_decorators(span: Span, decorators: &[Decorator<'_>]) -> u32 {
+    decorators.last().map_or(span.start, |decorator| decorator.span.end)
+}
+
+/// The key of a member that starts at `start`, with the brackets of a computed key.
+fn member_key(source: &str, start: u32, key: &PropertyKey<'_>, computed: bool) -> Span {
+    match computed {
+        true => computed_key(source, start, key.span()),
+        false => key.span(),
+    }
+}
+
+/// `[k]`: the brackets of a computed key are no part of the key node. The open bracket is the last
+/// `[` token between the start of the member and the key; modifiers such as `static async *` come first.
+fn computed_key(source: &str, start: u32, key: Span) -> Span {
+    let mut open = None;
+    let mut offset = start;
+    loop {
+        offset = next_token(source, offset);
+        if offset >= key.start {
+            break;
+        }
+        let char = source[offset as usize..].chars().next().unwrap_or(' ');
+        if char == '[' {
+            open = Some(offset);
+        }
+        offset += char.len_utf8() as u32;
+    }
+    match (open, token_at(source, key.end, "]")) {
+        (Some(open), Some(close)) => Span::new(open, close.end),
+        _ => key,
+    }
+}
+
+/// `async` or `async *` before the key of a method.
+fn async_head(source: &str, start: u32, key: u32, generator: bool) -> Option<Span> {
+    let keyword = keyword(source, start, key, "async")?;
+    let end = match generator {
+        true => token_at(source, keyword.end, "*")?.end,
+        false => keyword.end,
+    };
+    Some(Span::new(keyword.start, end))
+}
+
+/// The keywords of a function before its name or its parameters: `function`, `async function*`.
+fn function_head(source: &str, function: &Function<'_>) -> Option<Span> {
+    let end = function
+        .id
+        .as_ref()
+        .map_or(function.params.span.start, |name| name.span.start);
+    let keyword = keyword(source, function.span.start, end, "function")?;
+    let end = match function.generator {
+        true => token_at(source, keyword.end, "*")?.end,
+        false => keyword.end,
+    };
+    Some(Span::new(function.span.start, end))
+}
+
+/// The first token of a binding: the name, or the bracket that opens a pattern.
+fn first_token(source: &str, pattern: &BindingPattern<'_>) -> Span {
+    match pattern {
+        BindingPattern::ObjectPattern(it) => prefix(source, it.span, "{"),
+        BindingPattern::ArrayPattern(it) => prefix(source, it.span, "["),
+        _ => pattern.span(),
+    }
+}
+
+/// The first `?.` of a chain, in the order of the source: the one nearest to the start of the chain.
+/// The walk goes from the end of the chain to its start and keeps the last optional link it passes.
+fn optional_chain(source: &str, chain: &ChainExpression<'_>) -> Option<Span> {
+    // The end of the expression before the `?.` found last.
+    let mut before = None;
+    let mut expression = match &chain.expression {
+        ChainElement::CallExpression(call) => {
+            if call.optional {
+                before = Some(call.callee.span().end);
+            }
+            &call.callee
+        }
+        ChainElement::TSNonNullExpression(it) => &it.expression,
+        element => {
+            let member = element.as_member_expression()?;
+            if member.optional() {
+                before = Some(member.object().span().end);
+            }
+            member.object()
+        }
+    };
+    loop {
+        expression = match expression {
+            Expression::CallExpression(call) => {
+                if call.optional {
+                    before = Some(call.callee.span().end);
+                }
+                &call.callee
+            }
+            Expression::TSNonNullExpression(it) => &it.expression,
+            // Parentheses end the chain: `(a?.b).c` holds a chain of its own.
+            _ => match expression.as_member_expression() {
+                Some(member) => {
+                    if member.optional() {
+                        before = Some(member.object().span().end);
+                    }
+                    member.object()
+                }
+                None => break,
+            },
+        };
+    }
+    token_at(source, before?, "?.")
 }
 
 #[cfg(test)]
@@ -654,85 +972,114 @@ mod tests {
         .unwrap()
     }
 
-    const SAMPLES: &[(FeatureId, &str)] = &[
-        (key::BINARY_LITERALS, "0b101;"),
-        (key::NUMERIC_SEPARATORS, "1_000;"),
-        (key::OCTAL_LITERALS, "0o17;"),
-        (key::TEMPLATE_LITERALS, "`a`;"),
-        (key::TEMPLATE_REVISION, "tag`\\unicode`;"),
-        (key::TRAILING_COMMAS, "function f(a,) {}"),
-        (key::UNICODE_POINT_ESCAPES, "'\\u{1F600}';"),
-        (key::ASYNC_FUNCTION_EXPRESSION, "(async function () {});"),
-        (key::ASYNC_GENERATOR_EXPRESSION, "(async function* () {});"),
-        (key::AWAIT, "async function f() { await 1; }"),
-        (key::CLASS_EXPRESSION, "(class {});"),
-        (key::DECREMENT, "let a = 1; a--;"),
-        (key::INCREMENT, "let a = 1; a++;"),
-        (key::DESTRUCTURING, "const [a] = [1];"),
-        (key::DESTRUCTURING_COMPUTED, "const { [k]: v } = o;"),
-        (key::REST_IN_ARRAYS, "const [...r] = a;"),
-        (key::REST_IN_OBJECTS, "const { ...r } = o;"),
-        (key::EXPONENTIATION, "2 ** 3;"),
-        (key::EXPONENTIATION_ASSIGNMENT, "let a = 2; a **= 3;"),
-        (key::GENERATOR_EXPRESSION, "(function* () {});"),
-        (key::LOGICAL_AND_ASSIGNMENT, "let a; a &&= 1;"),
-        (key::LOGICAL_OR_ASSIGNMENT, "let a; a ||= 1;"),
-        (key::NEW_TARGET, "function F() { return new.target; }"),
-        (key::NULLISH, "a ?? b;"),
-        (key::NULLISH_ASSIGNMENT, "let a; a ??= 1;"),
-        (key::COMPUTED_PROPERTIES, "({ [k]: 1 });"),
-        (key::SHORTHAND_METHODS, "({ m() {} });"),
-        (key::SHORTHAND_PROPERTIES, "({ a });"),
-        (key::OPTIONAL_CHAINING, "a?.b;"),
-        (key::SPREAD_IN_ARRAYS, "[...a];"),
-        (key::SPREAD_IN_CALLS, "f(...a);"),
-        (key::SPREAD_IN_OBJECTS, "({ ...o });"),
-        (key::SUPER, "class A extends B { m() { super.m(); } }"),
-        (key::YIELD, "function* g() { yield 1; }"),
-        (key::YIELD_STAR, "function* g() { yield* h(); }"),
-        (key::ASYNC_FUNCTION_DECLARATION, "async function f() {}"),
-        (key::ASYNC_GENERATOR_DECLARATION, "async function* f() {}"),
-        (key::AWAIT_USING, "async function f() { await using r = g(); }"),
-        (key::CLASS_DECLARATION, "class A {}"),
-        (key::CONST, "const a = 1;"),
-        (key::DEBUGGER, "debugger;"),
-        (key::EMPTY, ";"),
-        (key::FOR_AWAIT_OF, "async function f() { for await (const x of y) {} }"),
-        (key::FOR_OF, "for (const x of y) {}"),
-        (key::GENERATOR_DECLARATION, "function* g() {}"),
-        (key::LET, "let a = 1;"),
-        (key::OPTIONAL_CATCH_BINDING, "try {} catch {}"),
-        (key::USING, "{ using r = g(); }"),
-        (key::CONSTRUCTOR, "class A { constructor() {} }"),
-        (key::EXTENDS, "class A extends B {}"),
-        (key::PRIVATE_FIELDS, "class A { #x = 1; }"),
-        (key::PRIVATE_IN, "class A { #x; static has(o) { return #x in o; } }"),
-        (key::PRIVATE_METHODS, "class A { #m() {} }"),
-        (key::PUBLIC_FIELDS, "class A { x = 1; }"),
-        (key::STATIC_MEMBERS, "class A { static m() {} }"),
-        (key::STATIC_FIELDS, "class A { static x = 1; }"),
-        (key::STATIC_BLOCKS, "class A { static {} }"),
-        (key::ARROW_FUNCTIONS, "(() => 1);"),
-        (key::BLOCK_LEVEL_FUNCTIONS, "{ function f() {} }"),
-        (key::DEFAULT_PARAMETERS, "function f(a = 1) {}"),
-        (key::DESTRUCTURED_DEFAULTS, "function f({ a } = {}) {}"),
-        (key::PARAMETERS_AFTER_DEFAULTS, "function f(a = 1, b) {}"),
-        (key::GET_COMPUTED, "({ get [k]() { return 1; } });"),
-        (key::SET_COMPUTED, "({ set [k](v) {} });"),
-        (key::METHOD_DEFINITIONS, "({ m() {} });"),
-        (key::ASYNC_GENERATOR_METHODS, "({ async *m() {} });"),
-        (key::ASYNC_METHODS, "({ async m() {} });"),
-        (key::REST_PARAMETERS, "function f(...a) {}"),
-        (key::REST_DESTRUCTURING, "function f(...[a]) {}"),
-        (key::BIGINT, "10n;"),
+    /// A sample of each key and the text of its range: the token of the feature, not the whole node.
+    const SAMPLES: &[(FeatureId, &str, &str)] = &[
+        (key::BINARY_LITERALS, "0b101;", "0b101"),
+        (key::NUMERIC_SEPARATORS, "1_000;", "1_000"),
+        (key::OCTAL_LITERALS, "0o17;", "0o17"),
+        (key::TEMPLATE_LITERALS, "`a`;", "`"),
+        (key::TEMPLATE_REVISION, "tag`\\unicode`;", "\\unicode"),
+        (key::TRAILING_COMMAS, "function f(a,) {}", ","),
+        (key::UNICODE_POINT_ESCAPES, "'\\u{1F600}';", "\\u{1F600}"),
+        (
+            key::ASYNC_FUNCTION_EXPRESSION,
+            "(async function () {});",
+            "async function",
+        ),
+        (
+            key::ASYNC_GENERATOR_EXPRESSION,
+            "(async function* () {});",
+            "async function*",
+        ),
+        (key::AWAIT, "async function f() { await 1; }", "await"),
+        (key::CLASS_EXPRESSION, "(class {});", "class"),
+        (key::DECREMENT, "let a = 1; a--;", "--"),
+        (key::INCREMENT, "let a = 1; a++;", "++"),
+        (key::DESTRUCTURING, "const [a] = [1];", "["),
+        (key::DESTRUCTURING_COMPUTED, "const { [k]: v } = o;", "[k]"),
+        (key::REST_IN_ARRAYS, "const [...r] = a;", "..."),
+        (key::REST_IN_OBJECTS, "const { ...r } = o;", "..."),
+        (key::EXPONENTIATION, "2 ** 3;", "**"),
+        (key::EXPONENTIATION_ASSIGNMENT, "let a = 2; a **= 3;", "**="),
+        (key::GENERATOR_EXPRESSION, "(function* () {});", "function*"),
+        (key::LOGICAL_AND_ASSIGNMENT, "let a; a &&= 1;", "&&="),
+        (key::LOGICAL_OR_ASSIGNMENT, "let a; a ||= 1;", "||="),
+        (key::NEW_TARGET, "function F() { return new.target; }", "new.target"),
+        (key::NULLISH, "a ?? b;", "??"),
+        (key::NULLISH_ASSIGNMENT, "let a; a ??= 1;", "??="),
+        (key::COMPUTED_PROPERTIES, "({ [k]: 1 });", "[k]"),
+        (key::SHORTHAND_METHODS, "({ m() {} });", "m"),
+        (key::SHORTHAND_PROPERTIES, "({ a });", "a"),
+        (key::OPTIONAL_CHAINING, "a?.b;", "?."),
+        (key::SPREAD_IN_ARRAYS, "[...a];", "..."),
+        (key::SPREAD_IN_CALLS, "f(...a);", "..."),
+        (key::SPREAD_IN_OBJECTS, "({ ...o });", "..."),
+        (key::SUPER, "class A extends B { m() { super.m(); } }", "super"),
+        (key::YIELD, "function* g() { yield 1; }", "yield"),
+        (key::YIELD_STAR, "function* g() { yield* h(); }", "yield*"),
+        (
+            key::ASYNC_FUNCTION_DECLARATION,
+            "async function f() {}",
+            "async function",
+        ),
+        (
+            key::ASYNC_GENERATOR_DECLARATION,
+            "async function* f() {}",
+            "async function*",
+        ),
+        (
+            key::AWAIT_USING,
+            "async function f() { await using r = g(); }",
+            "await using",
+        ),
+        (key::CLASS_DECLARATION, "class A {}", "class"),
+        (key::CONST, "const a = 1;", "const"),
+        (key::DEBUGGER, "debugger;", "debugger"),
+        (key::EMPTY, ";", ";"),
+        (
+            key::FOR_AWAIT_OF,
+            "async function f() { for await (const x of y) {} }",
+            "for await",
+        ),
+        (key::FOR_OF, "for (const x of y) {}", "of"),
+        (key::GENERATOR_DECLARATION, "function* g() {}", "function*"),
+        (key::LET, "let a = 1;", "let"),
+        (key::OPTIONAL_CATCH_BINDING, "try {} catch {}", "catch"),
+        (key::USING, "{ using r = g(); }", "using"),
+        (key::CONSTRUCTOR, "class A { constructor() {} }", "constructor"),
+        (key::EXTENDS, "class A extends B {}", "extends"),
+        (key::PRIVATE_FIELDS, "class A { #x = 1; }", "#x"),
+        (
+            key::PRIVATE_IN,
+            "class A { #x; static has(o) { return #x in o; } }",
+            "#x in",
+        ),
+        (key::PRIVATE_METHODS, "class A { #m() {} }", "#m"),
+        (key::PUBLIC_FIELDS, "class A { x = 1; }", "x"),
+        (key::STATIC_MEMBERS, "class A { static m() {} }", "static"),
+        (key::STATIC_FIELDS, "class A { static x = 1; }", "static"),
+        (key::STATIC_BLOCKS, "class A { static {} }", "static"),
+        (key::ARROW_FUNCTIONS, "(() => 1);", "=>"),
+        (key::BLOCK_LEVEL_FUNCTIONS, "{ function f() {} }", "function"),
+        (key::DEFAULT_PARAMETERS, "function f(a = 1) {}", "="),
+        (key::DESTRUCTURED_DEFAULTS, "function f({ a } = {}) {}", "="),
+        (key::PARAMETERS_AFTER_DEFAULTS, "function f(a = 1, b) {}", "b"),
+        (key::GET_COMPUTED, "({ get [k]() { return 1; } });", "[k]"),
+        (key::SET_COMPUTED, "({ set [k](v) {} });", "[k]"),
+        (key::METHOD_DEFINITIONS, "({ m() {} });", "m"),
+        (key::ASYNC_GENERATOR_METHODS, "({ async *m() {} });", "async *"),
+        (key::ASYNC_METHODS, "({ async m() {} });", "async"),
+        (key::REST_PARAMETERS, "function f(...a) {}", "..."),
+        (key::REST_DESTRUCTURING, "function f(...[a]) {}", "..."),
+        (key::BIGINT, "10n;", "10n"),
     ];
 
     #[test]
     fn every_emitted_key_has_a_sample_that_triggers_it() {
         for key in EMITTED {
-            let (_, source) = SAMPLES
+            let (_, source, _) = SAMPLES
                 .iter()
-                .find(|(sample, _)| sample == key)
+                .find(|(sample, _, _)| sample == key)
                 .unwrap_or_else(|| panic!("{} has no sample", key.as_str()));
             assert!(
                 detected(source, "a.js").contains(key),
@@ -740,6 +1087,153 @@ mod tests {
                 key.as_str()
             );
         }
+    }
+
+    /// The features of the source with the text of their ranges.
+    fn ranges(source: &str, filename: &str) -> Vec<(FeatureId, String)> {
+        with_semantic(source, filename, |semantic, _| {
+            detect(
+                semantic,
+                &ambient_nodes(semantic.nodes()),
+                &Targets::missing_everything(),
+            )
+            .into_iter()
+            .map(|usage| {
+                (
+                    usage.feature,
+                    source[usage.span.start as usize..usage.span.end as usize].to_string(),
+                )
+            })
+            .collect()
+        })
+        .unwrap()
+    }
+
+    fn range_of(source: &str, filename: &str, feature: FeatureId) -> String {
+        let found = ranges(source, filename);
+        let mut texts = found.iter().filter(|(key, _)| *key == feature).map(|(_, text)| text);
+        let text = texts
+            .next()
+            .unwrap_or_else(|| panic!("{} not detected in {source}: {found:?}", feature.as_str()));
+        assert!(
+            texts.next().is_none(),
+            "{} detected twice in {source}",
+            feature.as_str()
+        );
+        text.clone()
+    }
+
+    #[test]
+    fn a_range_covers_the_token_of_the_feature() {
+        for (key, source, text) in SAMPLES {
+            assert_eq!(range_of(source, "a.js", *key), *text, "{} in {source}", key.as_str());
+        }
+    }
+
+    #[test]
+    fn a_range_skips_decorators_modifiers_comments_and_parentheses() {
+        let cases: &[(FeatureId, &str, &str)] = &[
+            (key::CLASS_DECLARATION, "@d abstract class A {}", "class"),
+            (
+                key::EXTENDS,
+                "class A<T extends U> /* extends */ extends B {}",
+                "extends",
+            ),
+            (key::EXTENDS, "(class extends B {});", "extends"),
+            (key::STATIC_MEMBERS, "class A { @d public static m() {} }", "static"),
+            (key::METHOD_DEFINITIONS, "class A { @d public static m() {} }", "m"),
+            (key::STATIC_FIELDS, "class A { @d([1]) static x = 1; }", "static"),
+            (key::PUBLIC_FIELDS, "class A { @d\n  name = 1; }", "name"),
+            (key::PUBLIC_FIELDS, "class A { [ /* ] */ k ] = 1; }", "[ /* ] */ k ]"),
+            (
+                key::ASYNC_GENERATOR_METHODS,
+                "class A { static async /* * */ * [k]() {} }",
+                "async /* * */ *",
+            ),
+            (key::METHOD_DEFINITIONS, "class A { static async *[k]() {} }", "[k]"),
+            (key::ASYNC_METHODS, "({ async async() {} });", "async"),
+            (key::GET_COMPUTED, "class A { static get [k]() { return 1; } }", "[k]"),
+            (key::NULLISH_ASSIGNMENT, "(a) /* ??= */ ??= 1;", "??="),
+            (key::NULLISH, "(a as any) ?? b;", "??"),
+            (key::EXPONENTIATION, "(-1) ** 2;", "**"),
+            (key::INCREMENT, "(a) /* x */ ++;", "++"),
+            (key::DECREMENT, "--a;", "--"),
+            (key::OPTIONAL_CHAINING, "a.b /* ?. */ ?.c?.d();", "?."),
+            (key::OPTIONAL_CHAINING, "f?.();", "?."),
+            (key::OPTIONAL_CHAINING, "a!?.[0];", "?."),
+            (key::ARROW_FUNCTIONS, "async (z): T => z;", "=>"),
+            (key::ASYNC_FUNCTION_EXPRESSION, "async (z): T => z;", "async"),
+            (key::ARROW_FUNCTIONS, "x /* => */ => x;", "=>"),
+            (key::DEFAULT_PARAMETERS, "function f(a: number = 1) {}", "="),
+            (key::DESTRUCTURED_DEFAULTS, "function f({\n  a,\n} = {}) {}", "="),
+            (key::PARAMETERS_AFTER_DEFAULTS, "function f(a = 1, {\n  b,\n}) {}", "{"),
+            (key::REST_DESTRUCTURING, "function f(...{\n  length,\n}) {}", "..."),
+            (key::TRAILING_COMMAS, "f(a, /* , */\n);", ","),
+            (key::FOR_OF, "for ((a) of b) {}", "of"),
+            (
+                key::BLOCK_LEVEL_FUNCTIONS,
+                "{ async function* f() {} }",
+                "async function*",
+            ),
+            (
+                key::YIELD_STAR,
+                "function* g() { yield /* x */ * h(); }",
+                "yield /* x */ *",
+            ),
+            (
+                key::PRIVATE_IN,
+                "class A { #x; static has(o) { return #x /* c */ in o; } }",
+                "#x /* c */ in",
+            ),
+            (key::TEMPLATE_LITERALS, "`a${\n  b\n}c`;", "`"),
+            (key::DESTRUCTURING, "({ a } = o);", "{"),
+            // Non-ASCII text before the token and inside the literal: offsets stay on character boundaries.
+            (
+                key::UNICODE_POINT_ESCAPES,
+                "'é \\\\u{1} \\u{1F600} \\u{2}';",
+                "\\u{1F600}",
+            ),
+            (key::UNICODE_POINT_ESCAPES, "`Мяу ${a} \\u{1F600}`;", "\\u{1F600}"),
+            (key::NULLISH, "'Мяу' ?? b;", "??"),
+        ];
+        for (key, source, text) in cases {
+            assert_eq!(range_of(source, "a.ts", *key), *text, "{} in {source}", key.as_str());
+        }
+    }
+
+    #[test]
+    fn a_range_in_tsx_is_the_token_of_the_feature() {
+        let cases: &[(FeatureId, &str, &str)] = &[
+            (key::ARROW_FUNCTIONS, "<T,>(x: T): T => x;", "=>"),
+            (key::ARROW_FUNCTIONS, "async <T,>(x: T) => x;", "=>"),
+            (key::ASYNC_FUNCTION_EXPRESSION, "async <T,>(x: T) => x;", "async"),
+            (key::ARROW_FUNCTIONS, "(x): (() => void) => x;", "=>"),
+            (key::NULLISH, "(a as any) ?? <b />;", "??"),
+            (
+                key::CLASS_DECLARATION,
+                "@d\nexport abstract class A<T> extends B<T> {}",
+                "class",
+            ),
+            (
+                key::EXTENDS,
+                "@d\nexport abstract class A<T> extends B<T> {}",
+                "extends",
+            ),
+        ];
+        for (key, source, text) in cases {
+            assert_eq!(range_of(source, "a.tsx", *key), *text, "{} in {source}", key.as_str());
+        }
+    }
+
+    #[test]
+    fn a_helper_gives_the_node_when_the_source_does_not_show_the_token() {
+        assert_eq!(prefix("static {}", Span::new(0, 9), "static"), Span::new(0, 6));
+        assert_eq!(prefix("{ a }", Span::new(0, 5), "["), Span::new(0, 5));
+        assert_eq!(token_at("a /* ?? */ b", 1, "??"), None);
+        assert_eq!(
+            operator_after("(a) ) ??= 1", Span::new(1, 2), "??="),
+            Some(Span::new(6, 9))
+        );
     }
 
     #[test]

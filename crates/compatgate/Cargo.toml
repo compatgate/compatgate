@@ -6,8 +6,9 @@ rust-version.workspace = true
 publish = false
 
 [dependencies]
-browserslist-rs.workspace = true
+browserslist-rs = { workspace = true, optional = true }
 globset.workspace = true
+memchr.workspace = true
 oxc_allocator.workspace = true
 oxc_ast.workspace = true
 oxc_parser.workspace = true
@@ -17,11 +18,15 @@ oxc_span.workspace = true
 
 [dev-dependencies]
 # The integration tests read the step counters, which only this feature builds into the library.
-compatgate = { path = ".", features = ["counters"] }
+# The tests write the targets as queries, and `Targets::resolve` needs the `browserslist` feature.
+compatgate = { path = ".", features = ["browserslist", "counters"] }
 # The corpus reads the `allow` entries of a file as JSON.
 serde_json.workspace = true
 
 [features]
+# `Targets::resolve`: a browserslist query resolved by the browserslist-rs crate, for a caller without
+# Node. The Node binding takes the versions from the npm package instead and builds without it.
+browserslist = ["dep:browserslist-rs"]
 # Step counters for the linearity tests: `compatgate::counters`. Off in every build that ships.
 counters = []
 

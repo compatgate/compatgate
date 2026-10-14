@@ -37,14 +37,46 @@ impl AllowList {
         Self { entries: Vec::new() }
     }
 
-    pub fn find(&self, feature: &str, filename: &str) -> Option<usize> {
+    pub(crate) fn len(&self) -> usize {
+        self.entries.len()
+    }
+
+    /// The index of the first entry that allows the feature in the file.
+    #[cfg(test)]
+    fn find(&self, feature: &str, filename: &str) -> Option<usize> {
+        self.matcher(filename).find(feature)
+    }
+
+    /// Matches the entries against one file: the path is normalized and its package found once for all
+    /// features of the file.
+    pub(crate) fn matcher(&self, filename: &str) -> Matcher<'_> {
         let path = normalize(filename);
-        let package = package_name(&path);
+        let package = package_name(&path).map(str::to_owned);
+        Matcher {
+            entries: &self.entries,
+            path,
+            package,
+        }
+    }
+}
+
+/// The entries of an `AllowList` for one file: see `AllowList::matcher`.
+#[derive(Debug)]
+pub(crate) struct Matcher<'a> {
+    entries: &'a [CompiledEntry],
+    path: String,
+    package: Option<String>,
+}
+
+impl Matcher<'_> {
+    /// The index of the first entry that allows the feature in the file.
+    pub(crate) fn find(&self, feature: &str) -> Option<usize> {
+        let package = self.package.as_deref();
         self.entries.iter().position(|entry| {
             entry.feature == feature
                 && (entry.packages.is_empty()
                     || package.is_some_and(|name| entry.packages.iter().any(|known| known == name)))
-                && entry.files.as_ref().is_none_or(|files| files.is_match(&path))
+                && entry.files.as_ref().is_none_or(|files| files.is_match(&self.path))
         })
     }
 }
@@ -116,7 +148,7 @@ fn normalize(path: &str) -> String {
 
 /// The npm package that owns `path`. Uses the last `node_modules` segment,
 /// so nested and pnpm layouts resolve to the package that holds the file.
-pub fn package_name(path: &str) -> Option<&str> {
+pub(crate) fn package_name(path: &str) -> Option<&str> {
     let start = path.rfind("node_modules/")? + "node_modules/".len();
     let rest = &path[start..];
     let mut segments = rest.splitn(3, '/');
@@ -132,7 +164,12 @@ pub fn package_name(path: &str) -> Option<&str> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AllowIssue {
     /// The id is not a BCD feature. Usually a typo.
-    UnknownFeature { index: usize },
+    /// `suggestion` is the closest known id, if there is one: the id with `_static`, or a sibling a few
+    /// edits from the last segment. A mistyped parent segment is corrected the same way.
+    UnknownFeature {
+        index: usize,
+        suggestion: Option<&'static str>,
+    },
     /// Every target supports the feature, so the entry is no longer needed.
     NativeInTargets { index: usize },
 }
@@ -143,7 +180,10 @@ pub fn validate_allow(entries: &[AllowEntry], targets: &crate::targets::Targets)
         .iter()
         .enumerate()
         .filter_map(|(index, entry)| match crate::data::FeatureId::find(&entry.feature) {
-            None => Some(AllowIssue::UnknownFeature { index }),
+            None => Some(AllowIssue::UnknownFeature {
+                index,
+                suggestion: suggestion(&entry.feature),
+            }),
             Some(feature) => matches!(
                 crate::support::evaluate(feature, targets),
                 crate::support::Verdict::Supported
@@ -151,6 +191,99 @@ pub fn validate_allow(entries: &[AllowEntry], targets: &crate::targets::Targets)
             .then_some(AllowIssue::NativeInTargets { index }),
         })
         .collect()
+}
+
+/// The most edits between a typed segment and a known one that still gives a suggestion.
+const MAX_EDITS: usize = 2;
+
+/// The edits that a typed segment allows: one below six characters, two from six on, as in rustc. Two edits
+/// change most of a short segment, and a wrong suggestion is worse than none: `Math.foo` is not `Math.cos`.
+fn max_edits(typed: &str) -> usize {
+    (typed.chars().count().max(3) / 3).min(MAX_EDITS)
+}
+
+/// The closest known id to an unknown `id`: the id with `_static`, as BCD names static members, or the sibling
+/// with the fewest edits in the last segment. A parent that is not in the data is corrected the same way, segment
+/// by segment. Only the entries with an issue need it, so it scans the sorted ids instead of keeping an index.
+fn suggestion(id: &str) -> Option<&'static str> {
+    let (parent, last) = id.rsplit_once('.').filter(|(_, last)| !last.is_empty())?;
+    let prefix = format!("{}.", node(parent)?);
+    for candidate in [format!("{prefix}{last}"), format!("{prefix}{last}_static")] {
+        if let Some(feature) = crate::data::FeatureId::find(&candidate) {
+            return Some(feature.as_str());
+        }
+    }
+    let siblings = crate::data::ids_with_prefix(&prefix).filter(|sibling| !sibling[prefix.len()..].contains('.'));
+    closest(last, siblings)
+}
+
+/// `path` or its correction, as a prefix of a known id: `api.URL` for `api.URl`.
+fn node(path: &str) -> Option<&'static str> {
+    if let Some(feature) = crate::data::FeatureId::find(path) {
+        return Some(feature.as_str());
+    }
+    if let Some(id) = crate::data::ids_with_prefix(&format!("{path}.")).next() {
+        return Some(&id[..path.len()]);
+    }
+    let (prefix, last) = match path.rsplit_once('.') {
+        Some((parent, last)) => (format!("{}.", node(parent)?), last),
+        None => (String::new(), path),
+    };
+    // The ids of one child are mostly adjacent, so skipping a repeat saves most of the distances.
+    let mut previous = "";
+    let children = crate::data::ids_with_prefix(&prefix)
+        .map(|id| {
+            let rest = &id[prefix.len()..];
+            &id[..prefix.len() + rest.find('.').unwrap_or(rest.len())]
+        })
+        .filter(move |child| std::mem::replace(&mut previous, child) != *child);
+    closest(last, children)
+}
+
+/// The candidate whose last segment is the fewest edits from `typed`, at most `max_edits(typed)`. Of equal
+/// candidates the first in byte order wins, so the suggestion does not depend on the order of the data.
+fn closest<'a>(typed: &str, candidates: impl Iterator<Item = &'a str>) -> Option<&'a str> {
+    let typed_length = typed.chars().count();
+    let limit = max_edits(typed);
+    candidates
+        .filter_map(|candidate| {
+            let segment = candidate.rsplit('.').next().unwrap_or(candidate);
+            if segment.chars().count().abs_diff(typed_length) > limit {
+                return None;
+            }
+            let edits = edit_distance(typed, segment);
+            (edits <= limit).then_some((edits, candidate))
+        })
+        .min()
+        .map(|(_, candidate)| candidate)
+}
+
+/// The optimal string alignment (OSA) distance, a restricted Damerau-Levenshtein distance: insertions,
+/// deletions, substitutions and swaps of adjacent characters, with no edit of a swapped pair. A swap is one
+/// edit, as in rustc and clap, so `fecth` is one edit from `fetch`; plain Levenshtein counts two.
+fn edit_distance(a: &str, b: &str) -> usize {
+    let a: Vec<char> = a.chars().collect();
+    let b: Vec<char> = b.chars().collect();
+    let mut rows = vec![vec![0; b.len() + 1]; a.len() + 1];
+    for (i, row) in rows.iter_mut().enumerate() {
+        row[0] = i;
+    }
+    for (j, cell) in rows[0].iter_mut().enumerate() {
+        *cell = j;
+    }
+    for i in 1..=a.len() {
+        for j in 1..=b.len() {
+            let cost = usize::from(a[i - 1] != b[j - 1]);
+            let mut edits = (rows[i - 1][j] + 1)
+                .min(rows[i][j - 1] + 1)
+                .min(rows[i - 1][j - 1] + cost);
+            if i > 1 && j > 1 && a[i - 1] == b[j - 2] && a[i - 2] == b[j - 1] {
+                edits = edits.min(rows[i - 2][j - 2] + 1);
+            }
+            rows[i][j] = edits;
+        }
+    }
+    rows[a.len()][b.len()]
 }
 
 #[cfg(test)]
@@ -275,10 +408,93 @@ mod tests {
         assert_eq!(
             issues,
             [
-                AllowIssue::UnknownFeature { index: 1 },
+                AllowIssue::UnknownFeature {
+                    index: 1,
+                    suggestion: None
+                },
                 AllowIssue::NativeInTargets { index: 2 }
             ]
         );
+    }
+
+    #[test]
+    fn an_unknown_feature_suggests_the_closest_known_id() {
+        let targets = crate::targets::Targets::resolve("Chrome >= 97").unwrap();
+        let issues = validate_allow(&[entry("api.URL.canParse"), entry("api.fetchh")], &targets);
+        assert_eq!(
+            issues,
+            [
+                AllowIssue::UnknownFeature {
+                    index: 0,
+                    suggestion: Some("api.URL.canParse_static")
+                },
+                AllowIssue::UnknownFeature {
+                    index: 1,
+                    suggestion: Some("api.fetch")
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn the_suggestion_is_a_sibling_within_two_edits() {
+        // A transposition is one edit.
+        assert_eq!(suggestion("api.fecth"), Some("api.fetch"));
+        assert_eq!(suggestion("api.Fetch"), Some("api.fetch"));
+        assert_eq!(
+            suggestion("javascript.builtins.Array.att"),
+            Some("javascript.builtins.Array.at")
+        );
+        assert_eq!(suggestion("api.DoesNotExist"), None);
+        assert_eq!(suggestion("api.fetchhhh"), None);
+        assert_eq!(suggestion("nothing"), None);
+        assert_eq!(suggestion(""), None);
+    }
+
+    #[test]
+    fn a_short_segment_allows_fewer_edits() {
+        // Two edits change most of a short segment, so the limit grows with its length.
+        for id in [
+            "javascript.builtins.Math.foo",
+            "javascript.builtins.Array.bar",
+            "javascript.builtins.Array.to",
+            "javascript.builtins.Array.xy",
+            "javascript.builtins.Array.",
+            "javascript.operators.xx",
+            "api.a",
+            "api.ab",
+            "api.",
+            "a.b",
+            "api.Foo",
+        ] {
+            assert_eq!(suggestion(id), None, "{id}");
+        }
+        assert_eq!(max_edits(""), 1);
+        assert_eq!(max_edits("abcde"), 1);
+        assert_eq!(max_edits("abcdef"), 2);
+        assert_eq!(max_edits("abcdefghijkl"), 2);
+    }
+
+    #[test]
+    fn a_mistyped_parent_is_corrected_too() {
+        assert_eq!(suggestion("api.URl.canParse"), Some("api.URL.canParse_static"));
+        assert_eq!(suggestion("apii.fetch"), Some("api.fetch"));
+        assert_eq!(suggestion("api.Nothing.at.all"), None);
+    }
+
+    #[test]
+    fn equal_distances_take_the_first_id_in_order() {
+        let candidates = ["b", "a", "c"];
+        assert_eq!(closest("x", candidates.into_iter()), Some("a"));
+    }
+
+    #[test]
+    fn edit_distance_counts_adjacent_transpositions_as_one() {
+        assert_eq!(edit_distance("fetch", "fecth"), 1);
+        assert_eq!(edit_distance("fetch", "fetch"), 0);
+        assert_eq!(edit_distance("", "ab"), 2);
+        assert_eq!(edit_distance("kitten", "sitting"), 3);
+        assert_eq!(edit_distance("ca", "abc"), 3);
     }
 
     #[test]

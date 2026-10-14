@@ -7,6 +7,8 @@ The [README](../README.md) has the short version.
 
 - **Syntax** newer than your targets: class fields and static blocks, `??=`, optional catch binding and more.
   Module syntax (`import`, `export`, `import()`, top-level `await`) is not checked: bundlers replace it.
+  A syntax finding covers the token of the feature, such as `static` or `??=`, not the whole node:
+  [Ranges of syntax findings](syntax-ranges.md) lists the token of each feature.
 - **Regular expressions**: lookbehind, named groups, modifiers, `\p{…}`, the `d`, `s`, `v`, `y` and `u` flags,
   in literals and in `RegExp()` with string arguments.
 - **Builtins and Web APIs** reached as globals: `structuredClone()`, `new Intl.Segmenter()`, `Object.groupBy()`

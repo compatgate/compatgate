@@ -351,7 +351,123 @@ export function collectInterfaceParents(declarations, featureIds) {
     .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }
 
-export function renderRust(features, bcdVersion, members, singletons, interfaceParents) {
+const compareText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+
+// u16::MAX marks "no feature" in `GLOBALS`, so an index must stay below it.
+function fitU16(value, what) {
+  if (value >= 0xffff) {
+    throw new Error(`A ${what} does not fit u16: ${value}`);
+  }
+  return value;
+}
+
+/**
+ * `name` and the interfaces that it extends, breadth-first, each once. `parents` maps an interface to its
+ * direct parents. Parents can be mixins without BCD rows, and two parents can share a parent. A mixin has
+ * no entry in `collectInterfaceParents`, so the walk does not go past it. A member of an interface earlier
+ * in the list wins over a member of the same name later in it.
+ */
+export function ancestry(name, parents) {
+  const order = [name];
+  for (let index = 0; index < order.length; index++) {
+    for (const parent of parents.get(order[index]) ?? []) {
+      if (!order.includes(parent)) {
+        order.push(parent);
+      }
+    }
+  }
+  return order;
+}
+
+/** The ids of `featureIds` with `count` dot-separated parts that start with `prefix`, as lists of parts. */
+function idsWithParts(featureIds, prefix, count) {
+  return [...featureIds]
+    .map(id => id.split('.'))
+    .filter(parts => parts.length === count && prefix.every((part, index) => parts[index] === part));
+}
+
+/**
+ * Bare global names: `structuredClone`, `Array`, `when`. `plain` is the feature of a read and `constructed`
+ * the feature of `new X()`, or null. A builtin wins over an interface: `javascript.builtins.X`, then
+ * `api.X`. For `new X()` the constructor entry `api.X.X` comes first. Members of the global object come
+ * last: `name` is `api.Window.name`, and `when` is inherited, `api.EventTarget.when`. Rows are sorted by
+ * name for a binary search. Rust compares bytes, and the ids are ASCII, so the orders agree.
+ */
+export function collectGlobals(featureIds, interfaceParents) {
+  const ids = new Set(featureIds);
+  const window = ancestry('Window', new Map(interfaceParents.map(({ name, parents }) => [name, parents])));
+  const names = new Set([
+    ...idsWithParts(ids, ['javascript', 'builtins'], 3).map(parts => parts[2]),
+    ...idsWithParts(ids, ['api'], 2).map(parts => parts[1]),
+    ...idsWithParts(ids, ['api'], 3)
+      .filter(parts => parts[1] === parts[2] || window.includes(parts[1]))
+      .map(parts => parts[2]),
+  ]);
+  const first = candidates => candidates.find(id => ids.has(id)) ?? null;
+  return [...names].sort(compareText).map(name => {
+    const plain = first([`javascript.builtins.${name}`, `api.${name}`, ...window.map(iface => `api.${iface}.${name}`)]);
+    return { name, plain, constructed: first([`api.${name}.${name}`]) ?? plain };
+  });
+}
+
+/**
+ * Members of global objects: `navigator.share`, `document.when`, `Object.groupBy`. A singleton such as
+ * `navigator` takes the members of its interface and of the parents of the interface, the own entry
+ * first: `document.addEventListener` is `api.EventTarget.addEventListener`. Other objects take the rows
+ * under their own name: `javascript.builtins.X.m`, then the static member `api.X.m_static`, then
+ * `api.X.m`. Rows are sorted by object and member for a binary search.
+ */
+export function collectMembers(featureIds, singletons, interfaceParents) {
+  const ids = new Set(featureIds);
+  const parents = new Map(interfaceParents.map(({ name, parents: list }) => [name, list]));
+  const byInterface = new Map();
+  for (const [, iface, member] of idsWithParts(ids, ['api'], 3)) {
+    if (!byInterface.has(iface)) {
+      byInterface.set(iface, []);
+    }
+    byInterface.get(iface).push(member);
+  }
+  const rows = new Map();
+  const add = (object, member, id) => {
+    const key = `${object} ${member}`;
+    if (!rows.has(key)) {
+      rows.set(key, { object, member, id });
+    }
+  };
+  for (const { name, type } of singletons) {
+    for (const iface of ancestry(type, parents)) {
+      for (const member of byInterface.get(iface) ?? []) {
+        add(name, member, `api.${iface}.${member}`);
+      }
+    }
+  }
+  const isSingleton = new Set(singletons.map(({ name }) => name));
+  const candidates = [
+    ...idsWithParts(ids, ['javascript', 'builtins'], 4).map(parts => [parts[2], parts[3]]),
+    ...idsWithParts(ids, ['api'], 3).flatMap(([, object, member]) =>
+      member.endsWith('_static')
+        ? [
+            [object, member],
+            [object, member.slice(0, -'_static'.length)],
+          ]
+        : [[object, member]],
+    ),
+  ];
+  for (const [object, member] of candidates) {
+    if (isSingleton.has(object)) {
+      continue;
+    }
+    const id = [
+      `javascript.builtins.${object}.${member}`,
+      `api.${object}.${member}_static`,
+      `api.${object}.${member}`,
+    ].find(candidate => ids.has(candidate));
+    add(object, member, id);
+  }
+  return [...rows.values()].sort((a, b) => compareText(a.object, b.object) || compareText(a.member, b.member));
+}
+
+export function renderRust(features, bcdVersion, instanceMembers, globals, members) {
   const value = version => (version === UNSUPPORTED ? 'U' : String(version));
   const literal = text => {
     const json = JSON.stringify(text);
@@ -400,7 +516,7 @@ export function renderRust(features, bcdVersion, members, singletons, interfaceP
     lines.push(`    ${literal(note)},`);
   }
   const index = new Map(features.map((feature, featureIndex) => [feature.id, featureIndex]));
-  const rows = members
+  const rows = instanceMembers
     .filter(member => index.has(member.id))
     .map(member => ({ ...member, featureIndex: index.get(member.id) }))
     .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : a.featureIndex - b.featureIndex));
@@ -408,14 +524,77 @@ export function renderRust(features, bcdVersion, members, singletons, interfaceP
   for (const row of rows) {
     lines.push(`    (${literal(row.name)}, ${row.featureIndex}, ${row.reportable}),`);
   }
-  lines.push('];', '', 'pub static SINGLETONS: &[(&str, &str)] = &[');
-  for (const singleton of singletons) {
-    lines.push(`    (${literal(singleton.name)}, ${literal(singleton.type)}),`);
+  // A global or a member names a feature by its index. A missing id is a bug in the generator.
+  const featureIndex = id => {
+    if (!index.has(id)) {
+      throw new Error(`Unknown feature id in a table of globals: ${id}`);
+    }
+    return fitU16(index.get(id), 'feature index');
+  };
+  // With BCD 8.1.4 every name has a feature of a read, so no row of the real data needs it.
+  const optionalIndex = id => (id === null ? 'u16::MAX' : featureIndex(id));
+  // The tables of globals hold indices instead of `&str`: a `&str` in a static costs 16 bytes and, in a
+  // shared library on Linux, a relocation of 24 bytes. Names sort by bytes, so the index order is the
+  // string order, and Rust compares indices where it would compare strings.
+  const names = [
+    ...new Set([...globals.map(({ name }) => name), ...members.flatMap(row => [row.object, row.member])]),
+  ].sort(compareText);
+  const nameIndex = new Map(names.map((name, position) => [name, fitU16(position, 'name index')]));
+  const starts = [0];
+  for (const name of names) {
+    // A name of the data is ASCII, so its length in UTF-16 units is its length in bytes.
+    if (!/^[\x20-\x7e]+$/.test(name)) {
+      throw new Error(`Name of a global is not ASCII: ${JSON.stringify(name)}`);
+    }
+    starts.push(starts.at(-1) + name.length);
   }
-  lines.push('];', '', 'pub static INTERFACE_PARENTS: &[(&str, &[&str])] = &[');
-  for (const { name, parents } of interfaceParents) {
-    lines.push(`    (${literal(name)}, &[${parents.map(literal).join(', ')}]),`);
+  lines.push(
+    '];',
+    '',
+    '// Names of globals, objects and members, sorted by bytes. Name `i` is `NAMES[NAME_STARTS[i]..NAME_STARTS[i + 1]]`.',
+    'pub static NAMES: &str = concat!(',
+  );
+  for (const name of names) {
+    lines.push(`    ${literal(name)},`);
   }
+  lines.push(');', '', 'pub static NAME_STARTS: &[u32] = &[');
+  for (let position = 0; position < starts.length; position += 16) {
+    lines.push(`    ${starts.slice(position, position + 16).join(', ')},`);
+  }
+  lines.push(
+    '];',
+    '',
+    '// Name, feature of a read, feature of `new`; `u16::MAX` is none.',
+    'pub static GLOBALS: &[(u16, u16, u16)] = &[',
+  );
+  for (const { name, plain, constructed } of globals) {
+    lines.push(`    (${nameIndex.get(name)}, ${optionalIndex(plain)}, ${optionalIndex(constructed)}), // ${name}`);
+  }
+  // `members` is sorted by object and member, so the rows of an object are consecutive.
+  const objects = [];
+  const memberRows = [];
+  members.forEach(({ object, member, id }, position) => {
+    if (objects.at(-1)?.object !== object) {
+      objects.push({ object, first: fitU16(position, 'member row') });
+    }
+    memberRows.push(`    (${nameIndex.get(member)}, ${featureIndex(id)}), // ${object}.${member}`);
+  });
+  lines.push(
+    '];',
+    '',
+    '// Object name, first row in `MEMBER_ROWS`. The rows of an object end at the first row of the next object.',
+    'pub static MEMBER_OBJECTS: &[(u16, u16)] = &[',
+  );
+  for (const { object, first } of objects) {
+    lines.push(`    (${nameIndex.get(object)}, ${first}), // ${object}`);
+  }
+  lines.push(
+    '];',
+    '',
+    '// Member name, feature; sorted by the name within an object.',
+    'pub static MEMBER_ROWS: &[(u16, u16)] = &[',
+    ...memberRows,
+  );
   lines.push('];', '');
   return lines.join('\n');
 }
@@ -451,12 +630,13 @@ if (import.meta.main) {
     .filter(name => /^lib\.es[\w.]*\.d\.ts$/.test(name))
     .sort();
   checkAccessors(data, libFiles.map(name => readFileSync(join(libDirectory, name), 'utf8')).join('\n'));
+  const interfaceParents = collectInterfaceParents(webTypes, featureIds);
   const text = renderRust(
     features,
     packageJson.version,
     collectInstanceMembers(data),
-    collectSingletons(webTypes, featureIds),
-    collectInterfaceParents(webTypes, featureIds),
+    collectGlobals(featureIds, interfaceParents),
+    collectMembers(featureIds, collectSingletons(webTypes, featureIds), interfaceParents),
   );
   if (process.argv.includes('--check')) {
     // CI uses this mode: a BCD update or a generator change without regeneration must fail.

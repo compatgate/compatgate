@@ -9,26 +9,26 @@ use crate::targets::Targets;
 pub struct BrowserSet(u16);
 
 impl BrowserSet {
-    pub const EMPTY: Self = Self(0);
+    pub(crate) const EMPTY: Self = Self(0);
 
     pub fn contains(self, browser: Browser) -> bool {
         self.0 & bit(browser) != 0
     }
 
-    pub fn insert(&mut self, browser: Browser) {
+    pub(crate) fn insert(&mut self, browser: Browser) {
         self.0 |= bit(browser);
     }
 
-    pub fn is_empty(self) -> bool {
+    pub(crate) fn is_empty(self) -> bool {
         self.0 == 0
     }
 
     /// Every browser of `self` is in `other`.
-    pub fn is_subset(self, other: Self) -> bool {
+    pub(crate) fn is_subset(self, other: Self) -> bool {
         self.0 & !other.0 == 0
     }
 
-    pub fn union(self, other: Self) -> Self {
+    pub(crate) fn union(self, other: Self) -> Self {
         Self(self.0 | other.0)
     }
 }
@@ -60,12 +60,12 @@ pub struct TargetSupport {
 
 impl TargetSupport {
     /// Every target browser supports the feature fully.
-    pub fn is_supported(self) -> bool {
+    pub(crate) fn is_supported(self) -> bool {
         self.missing.is_empty() && self.partial.is_empty()
     }
 
     /// Target browsers without full support: missing or partial.
-    pub fn gaps(self) -> BrowserSet {
+    pub(crate) fn gaps(self) -> BrowserSet {
         self.missing.union(self.partial)
     }
 }
@@ -73,12 +73,12 @@ impl TargetSupport {
 /// `TargetSupport` of every feature, indexed by feature. One set of targets builds it once:
 /// detectors ask it for every use, and the data lookup costs a binary search per target browser.
 #[derive(Clone, PartialEq, Eq)]
-pub struct SupportTable {
+pub(crate) struct SupportTable {
     features: Box<[TargetSupport]>,
 }
 
 impl SupportTable {
-    pub fn new(minimum: &[(Browser, u32)]) -> Self {
+    pub(crate) fn new(minimum: &[(Browser, u32)]) -> Self {
         let features = FeatureId::all()
             .map(|feature| {
                 let mut support = TargetSupport::default();
@@ -95,16 +95,9 @@ impl SupportTable {
         Self { features }
     }
 
-    /// A table in which every feature is missing in every browser. Detector tests use it to see
-    /// every use that a detector finds.
-    #[cfg(test)]
-    pub fn missing_everything() -> Self {
-        Self::missing_except(&[])
-    }
-
     /// A table in which every feature but `supported` is missing in every browser.
     #[cfg(test)]
-    pub fn missing_except(supported: &[FeatureId]) -> Self {
+    pub(crate) fn missing_except(supported: &[FeatureId]) -> Self {
         let all = Browser::ALL.into_iter().collect();
         Self {
             features: FeatureId::all()
@@ -120,7 +113,7 @@ impl SupportTable {
         }
     }
 
-    pub fn get(&self, feature: FeatureId) -> TargetSupport {
+    pub(crate) fn get(&self, feature: FeatureId) -> TargetSupport {
         self.features[feature.index()]
     }
 }

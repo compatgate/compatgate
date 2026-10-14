@@ -19,7 +19,6 @@
 //! The outcome of the flow and the facts are kept by node, so the uses of a file cost linear work.
 
 use std::collections::HashMap;
-use std::collections::hash_map::Entry;
 use std::rc::Rc;
 
 use oxc_ast::AstKind;
@@ -78,6 +77,13 @@ enum Facts {
     /// The facts of the operands `start..end` of an `&&` chain that is true or an `||` chain that is
     /// false: the index of the chain answers for every part of it.
     Range { index: usize, start: usize, end: usize },
+}
+
+impl Facts {
+    /// Nothing is proven.
+    fn none() -> Self {
+        Self::Set(Rc::default())
+    }
 }
 
 #[derive(Default)]
@@ -375,7 +381,7 @@ impl<'s, 'a> Guards<'s, 'a> {
         if matches!(outcome, Outcome::Safe | Outcome::Escapes(Flow::Optional)) && stores.is_none() {
             return true;
         }
-        let subject = self.subject(usage.key.clone(), usage.feature);
+        let subject = self.subject(usage.key.as_ref(), usage.feature);
         self.decide(usage.node, outcome, subject) && self.are_followed(stores, subject)
     }
 
@@ -618,7 +624,7 @@ impl<'s, 'a> Guards<'s, 'a> {
     }
 
     /// The subject of a use: its key and its feature. `None` for a use without a key, which no check covers.
-    fn subject(&mut self, key: Option<Key<'a>>, feature: FeatureId) -> Option<usize> {
+    fn subject(&mut self, key: Option<&Key<'a>>, feature: FeatureId) -> Option<usize> {
         let fact = self.intern(key?);
         let next = self.subjects.len();
         let subject = *self.subject_ids.entry((fact, feature)).or_insert(next);
@@ -635,22 +641,33 @@ impl<'s, 'a> Guards<'s, 'a> {
         })
     }
 
-    fn intern(&mut self, key: Key<'a>) -> Fact {
-        let next = self.fact_features.len() as Fact;
-        match self.facts.entry(key) {
-            Entry::Occupied(entry) => *entry.get(),
-            Entry::Vacant(entry) => {
-                // A feature that no target lacks implies no other, so a check of it proves only its key.
-                let feature = match entry.key() {
-                    Key::Path(path) => path_feature(path),
-                    Key::Method(_) => None,
-                }
-                .filter(|&feature| !self.targets.support(feature).missing.is_empty());
-                self.fact_features.push(feature);
-                entry.insert(next);
-                next
-            }
+    /// The fact of a key. The key is cloned only when it is new: each use asks for the fact of its key.
+    fn intern(&mut self, key: &Key<'a>) -> Fact {
+        match self.facts.get(key) {
+            Some(&fact) => fact,
+            None => self.insert_fact(key.clone()),
         }
+    }
+
+    /// The fact of a key that a check builds: it moves in without a clone.
+    fn intern_owned(&mut self, key: Key<'a>) -> Fact {
+        match self.facts.get(&key) {
+            Some(&fact) => fact,
+            None => self.insert_fact(key),
+        }
+    }
+
+    fn insert_fact(&mut self, key: Key<'a>) -> Fact {
+        let next = self.fact_features.len() as Fact;
+        // A feature that no target lacks implies no other, so a check of it proves only its key.
+        let feature = match &key {
+            Key::Path(path) => path_feature(path),
+            Key::Method(_) => None,
+        }
+        .filter(|&feature| !self.targets.support(feature).missing.is_empty());
+        self.fact_features.push(feature);
+        self.facts.insert(key, next);
+        next
     }
 
     /// Table 2: whether the parent proves the subject present in its child `child`.
@@ -724,7 +741,7 @@ impl<'s, 'a> Guards<'s, 'a> {
     /// `N(S)` of a statement other than a block: the facts after its normal end.
     fn after(&mut self, statement: &'a Statement<'a>) -> Facts {
         let Statement::IfStatement(check) = statement else {
-            return Facts::Set(Rc::default());
+            return Facts::none();
         };
         let consequent = self.exits(&check.consequent);
         match &check.alternate {
@@ -732,9 +749,9 @@ impl<'s, 'a> Guards<'s, 'a> {
             Some(alternate) => match (consequent, self.exits(alternate)) {
                 (false, true) => self.test(&check.test, true),
                 (true, false) => self.test(&check.test, false),
-                _ => Facts::Set(Rc::default()),
+                _ => Facts::none(),
             },
-            None => Facts::Set(Rc::default()),
+            None => Facts::none(),
         }
     }
 
@@ -815,7 +832,7 @@ impl<'s, 'a> Guards<'s, 'a> {
             }
             Expression::CallExpression(call) if is_boolean(semantic, &call.callee) => match call.arguments.as_slice() {
                 [argument] if let Some(argument) = argument.as_expression() => self.test(argument, value),
-                _ => Facts::Set(Rc::default()),
+                _ => Facts::none(),
             },
             // `A && B` is true when both are, `A || B` is false when both are: the facts of every operand.
             Expression::LogicalExpression(logical)
@@ -854,7 +871,7 @@ impl<'s, 'a> Guards<'s, 'a> {
             leaf => match constant(semantic, leaf) {
                 // A test that always has the other value never gets here.
                 Some(truth) if truth != value => Facts::All,
-                Some(_) => Facts::Set(Rc::default()),
+                Some(_) => Facts::none(),
                 None => self.leaf(leaf, value),
             },
         }
@@ -895,13 +912,9 @@ impl<'s, 'a> Guards<'s, 'a> {
     fn leaf(&mut self, test: &'a Expression<'a>, value: bool) -> Facts {
         let value_of = |guards: &mut Self, expression: &'a Expression<'a>| guards.present(expression, None);
         let Expression::BinaryExpression(binary) = test else {
-            return if value {
-                value_of(self, test)
-            } else {
-                Facts::Set(Rc::default())
-            };
+            return if value { value_of(self, test) } else { Facts::none() };
         };
-        let none = Facts::Set(Rc::default());
+        let none = Facts::none();
         match binary.operator {
             BinaryOperator::In if value => match binary.left.get_inner_expression() {
                 Expression::StringLiteral(name) => self.present(&binary.right, Some(name.value.as_str())),
@@ -946,12 +959,12 @@ impl<'s, 'a> Guards<'s, 'a> {
         // A head has at most two segments.
         for end in 1..=resolved.head.as_ref().map_or(0, |head| head.segments.len()) {
             let segments = &resolved.head.as_ref().expect("a head with segments").segments;
-            let fact = self.intern(Key::Path(segments[..end].to_vec()));
+            let fact = self.intern_owned(Key::Path(segments[..end].to_vec()));
             set.facts.push(fact);
             set.features.extend(self.fact_features[fact as usize]);
         }
         for name in resolved.names {
-            set.facts.push(self.intern(Key::Method(name)));
+            set.facts.push(self.intern_owned(Key::Method(name)));
         }
         set.facts.sort_unstable();
         set.facts.dedup();

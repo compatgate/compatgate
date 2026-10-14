@@ -549,7 +549,7 @@ impl Releases {
 
 /// Every released version of the browser in browserslist-rs and in BCD.
 ///
-/// browserslist-rs gives the core its lowest target versions, so every target is in its list. The core
+/// browserslist-rs gives the core its lowest target versions in this test, so every target is in its list. The core
 /// judges the target and every later released version by the ranges from BCD, and the caniuse data of
 /// browserslist-rs 0.21 lacks many of those versions: it ends at Chrome 151 while BCD 8.1.4 has
 /// Chrome 154 current, and it jumps from Opera for Android 12.1 to 80. BCD removed support in some

@@ -3,9 +3,6 @@
 //! that resolve to no declared binding count, so a local `structuredClone` is ignored. The root of a
 //! chain is a use of its own: `navigation.currentEntry` reads `navigation`, which throws where it is missing.
 
-use std::collections::HashMap;
-use std::sync::LazyLock;
-
 use oxc_ast::AstKind;
 use oxc_ast::ast::{AssignmentTarget, AssignmentTargetProperty, BindingPattern};
 use oxc_semantic::{AstNodes, NodeId, Semantic};
@@ -15,7 +12,7 @@ use super::path::{Member, WINDOW_ALIASES, key_name, member_at, member_over};
 use super::slot::{Pattern, Slot, destructuring, outermost, slot};
 use super::{Key, Origin, Use};
 use crate::check::Kind;
-use crate::data::{FeatureId, interface_parents, singleton_interface};
+use crate::data::{FeatureId, global_feature, member_feature};
 use crate::targets::Targets;
 
 pub fn detect<'a>(semantic: &Semantic<'a>, targets: &Targets) -> Vec<Use<'a>> {
@@ -25,7 +22,6 @@ pub fn detect<'a>(semantic: &Semantic<'a>, targets: &Targets) -> Vec<Use<'a>> {
         uses: Vec::new(),
         targets,
     };
-    let mut globals = GlobalFeatures::default();
     for references in scoping.root_unresolved_references().values() {
         for &reference_id in references.iter() {
             let reference = scoping.get_reference(reference_id);
@@ -45,11 +41,8 @@ pub fn detect<'a>(semantic: &Semantic<'a>, targets: &Targets) -> Vec<Use<'a>> {
             let is_alias = WINDOW_ALIASES.contains(&name);
             // The root of a chain is a use of its own: `navigation` in `navigation.currentEntry` throws where
             // it is missing. Through an alias the root is a member, `window.navigation`.
-            let root = |globals: &mut GlobalFeatures| {
-                globals
-                    .get(name, false)
-                    .map(|feature| (feature, Origin::Global, identifier.span, node_id))
-            };
+            let root =
+                || global_feature(name, false).map(|feature| (feature, Origin::Global, identifier.span, node_id));
             // The position of the reference decides the rest, so it is found once.
             let outer = outermost(nodes, node_id);
             let position = slot(nodes, outer);
@@ -59,15 +52,14 @@ pub fn detect<'a>(semantic: &Semantic<'a>, targets: &Targets) -> Vec<Use<'a>> {
                     continue;
                 }
                 if is_alias {
-                    let root = globals
-                        .get(first.property, false)
+                    let root = global_feature(first.property, false)
                         .map(|feature| (feature, Origin::Member, first.span, first.id));
                     // `window.navigator.userActivation` resolves like `navigator.userActivation`.
                     if let Some(second) = member_over(nodes, first.id) {
                         if is_written_or_deleted(nodes, second.id) {
                             continue;
                         }
-                        if let Some(feature) = member_feature_of(first.property, second.property) {
+                        if let Some(feature) = member_feature(first.property, second.property) {
                             uses.chain(root, &[first.property], &[(feature, second)], true);
                             continue;
                         }
@@ -76,37 +68,36 @@ pub fn detect<'a>(semantic: &Semantic<'a>, targets: &Targets) -> Vec<Use<'a>> {
                         let outer = outermost(nodes, first.id);
                         let position = slot(nodes, outer);
                         let members = resolve_members(destructured(nodes, outer, position), |property| {
-                            member_feature_of(first.property, property)
+                            member_feature(first.property, property)
                         });
                         if !members.is_empty() {
                             uses.chain(root, &[first.property], &members, false);
                             continue;
                         }
                     }
-                    if let Some(feature) = globals.get(first.property, is_new_callee(nodes, first.id)) {
-                        uses.add(feature, Origin::Member, first.span, first.id, vec![first.property]);
+                    if let Some(feature) = global_feature(first.property, is_new_callee(nodes, first.id)) {
+                        uses.add(feature, Origin::Member, first.span, first.id, || vec![first.property]);
                     }
                     continue;
                 }
-                if let Some(feature) = member_feature_of(name, first.property) {
-                    let root = root(&mut globals);
-                    uses.chain(root, &[name], &[(feature, first)], true);
+                if let Some(feature) = member_feature(name, first.property) {
+                    uses.chain(root(), &[name], &[(feature, first)], true);
                     continue;
                 }
             } else {
                 // `const { groupBy } = Object` reads `Object.groupBy`, as the member access does.
                 let members = resolve_members(destructured(nodes, outer, position), |property| {
                     if is_alias {
-                        globals.get(property, false)
+                        global_feature(property, false)
                     } else {
-                        member_feature_of(name, property)
+                        member_feature(name, property)
                     }
                 });
                 if !members.is_empty() {
                     // `const { structuredClone } = window` reads the global `structuredClone`.
                     match is_alias {
                         true => uses.chain(None, &[], &members, false),
-                        false => uses.chain(root(&mut globals), &[name], &members, false),
+                        false => uses.chain(root(), &[name], &members, false),
                     }
                     continue;
                 }
@@ -118,8 +109,8 @@ pub fn detect<'a>(semantic: &Semantic<'a>, targets: &Targets) -> Vec<Use<'a>> {
             if position == Slot::Delete {
                 continue;
             }
-            if let Some(feature) = globals.get(name, position == Slot::NewCallee) {
-                uses.add(feature, Origin::Global, identifier.span, node_id, vec![name]);
+            if let Some(feature) = global_feature(name, position == Slot::NewCallee) {
+                uses.add(feature, Origin::Global, identifier.span, node_id, || vec![name]);
             }
         }
     }
@@ -134,11 +125,19 @@ struct Uses<'r, 'a> {
 }
 
 impl<'a> Uses<'_, 'a> {
-    /// `path` is the key of the use: the path without the aliases of the global object.
-    fn add(&mut self, feature: FeatureId, origin: Origin, span: Span, node: NodeId, path: Vec<&'a str>) {
+    /// `path` gives the key of the use: the path without the aliases of the global object. Most features
+    /// are supported, so the path is built only for a use that stays.
+    fn add(
+        &mut self,
+        feature: FeatureId,
+        origin: Origin,
+        span: Span,
+        node: NodeId,
+        path: impl FnOnce() -> Vec<&'a str>,
+    ) {
         if !self.targets.is_supported(feature) {
             self.uses.push(Use {
-                key: Some(Key::Path(path)),
+                key: Some(Key::Path(path())),
                 ..Use::new(feature, kind_of(feature), origin, span, node)
             });
         }
@@ -162,20 +161,16 @@ impl<'a> Uses<'_, 'a> {
     ) {
         let start = self.uses.len();
         if let Some((feature, origin, span, node)) = root {
-            self.add(feature, origin, span, node, path.to_vec());
+            self.add(feature, origin, span, node, || path.to_vec());
         }
         let added_root = self.uses.len() > start;
         for &(feature, ref member) in members {
             if root.is_some_and(|(root, ..)| self.targets.implies(root, feature)) {
                 continue;
             }
-            self.add(
-                feature,
-                Origin::Member,
-                member.span,
-                member.id,
-                [path, &[member.property]].concat(),
-            );
+            self.add(feature, Origin::Member, member.span, member.id, || {
+                [path, &[member.property]].concat()
+            });
             if let Some((root, ..)) = root
                 && read
                 && added_root
@@ -252,102 +247,6 @@ fn target_members<'a>(target: &AssignmentTarget<'a>) -> Vec<Member<'a>> {
         .collect()
 }
 
-/// The feature of `object.property`: a member of the interface of a singleton such as `navigator`,
-/// or a static member such as `Object.groupBy`.
-fn member_feature_of(object: &str, property: &str) -> Option<FeatureId> {
-    match singleton_interface(object) {
-        Some(interface) => interface_member(interface, property),
-        None => member_feature(object, property),
-    }
-}
-
-/// `api.{Interface}.{member}`, or the entry of the nearest parent interface: `document.addEventListener`
-/// is `api.EventTarget.addEventListener`. The walk is breadth-first, so an own entry wins. Parents can
-/// be mixins without BCD entries, and two parents can share a parent, so each interface is visited once.
-fn interface_member(interface: &'static str, member: &str) -> Option<FeatureId> {
-    breadth_first(interface, |current| {
-        FeatureId::find_parts(&["api.", current, ".", member])
-    })
-}
-
-/// Visits `interface` and its parents breadth-first, each once, until `visit` returns a value.
-fn breadth_first<T>(interface: &'static str, mut visit: impl FnMut(&'static str) -> Option<T>) -> Option<T> {
-    let mut queue = vec![interface];
-    let mut next = 0;
-    while let Some(&current) = queue.get(next) {
-        next += 1;
-        if let Some(found) = visit(current) {
-            return Some(found);
-        }
-        for &parent in interface_parents(current) {
-            if !queue.contains(&parent) {
-                queue.push(parent);
-            }
-        }
-    }
-    None
-}
-
-/// `Window` and its parents in the order of `interface_member`.
-static WINDOW_ANCESTRY: LazyLock<Vec<&'static str>> = LazyLock::new(|| {
-    let mut ancestry = Vec::new();
-    breadth_first::<()>("Window", |interface| {
-        ancestry.push(interface);
-        None
-    });
-    ancestry
-});
-
-/// The answers of `interface_member("Window", member)`, by member. Every unresolved name that is not a
-/// builtin asks for it, and the walk costs a lookup per parent. The entry of the interface that comes
-/// first in `WINDOW_ANCESTRY` wins, as in the walk.
-static WINDOW_MEMBERS: LazyLock<HashMap<&'static str, FeatureId>> = LazyLock::new(|| {
-    let mut members: HashMap<&'static str, (usize, FeatureId)> = HashMap::new();
-    for id in crate::data::feature_ids() {
-        let Some((interface, member)) = id.strip_prefix("api.").and_then(|rest| rest.split_once('.')) else {
-            continue;
-        };
-        let Some(rank) = WINDOW_ANCESTRY.iter().position(|&parent| parent == interface) else {
-            continue;
-        };
-        let Some(feature) = FeatureId::find(id) else {
-            continue;
-        };
-        let entry = members.entry(member).or_insert((rank, feature));
-        if rank < entry.0 {
-            *entry = (rank, feature);
-        }
-    }
-    members
-        .into_iter()
-        .map(|(member, (_, feature))| (member, feature))
-        .collect()
-});
-
-fn window_member(member: &str) -> Option<FeatureId> {
-    WINDOW_MEMBERS.get(member).copied()
-}
-
-/// The results of `global_feature` for one file. A file names the same globals many times, and each
-/// name that is not a builtin costs a lookup per parent of `Window`.
-#[derive(Default)]
-struct GlobalFeatures {
-    plain: HashMap<String, Option<FeatureId>>,
-    constructed: HashMap<String, Option<FeatureId>>,
-}
-
-impl GlobalFeatures {
-    fn get(&mut self, name: &str, is_new: bool) -> Option<FeatureId> {
-        let known = if is_new { &mut self.constructed } else { &mut self.plain };
-        if let Some(&feature) = known.get(name) {
-            return feature;
-        }
-        let feature = global_feature(name, is_new);
-        known.insert(name.to_string(), feature);
-        feature
-    }
-}
-
 /// The member is a target that the code writes or deletes, not a value that it reads:
 /// `X.m = v`, `[X.m] = a`, `({ a: X.m = d } = o)`, `for (X.m of list)`, `delete X.m`.
 fn is_written_or_deleted(nodes: &AstNodes<'_>, member: NodeId) -> bool {
@@ -363,32 +262,9 @@ fn is_new_callee(nodes: &AstNodes<'_>, member: NodeId) -> bool {
 pub(crate) fn path_feature(path: &[&str]) -> Option<FeatureId> {
     match path {
         [name] => global_feature(name, false),
-        [object, property] => member_feature_of(object, property),
+        [object, property] => member_feature(object, property),
         _ => None,
     }
-}
-
-/// `Object.groupBy`, `Intl.Segmenter`, `BarcodeDetector.getSupportedFormats`.
-/// BCD marks static members of Web API interfaces with a `_static` suffix.
-fn member_feature(object: &str, member: &str) -> Option<FeatureId> {
-    FeatureId::find_parts(&["javascript.builtins.", object, ".", member])
-        .or_else(|| FeatureId::find_parts(&["api.", object, ".", member, "_static"]))
-        .or_else(|| FeatureId::find_parts(&["api.", object, ".", member]))
-}
-
-/// A bare global. For `new X()` the constructor entry `api.X.X` is more precise than the interface.
-/// Members of the global object come last: `name` is `api.Window.name`, and `when` is inherited,
-/// `api.EventTarget.when`. With BCD 8.1.4 and @types/web 0.0.358 the parents add only the members of
-/// `EventTarget`: `addEventListener`, `removeEventListener`, `dispatchEvent` and `when`. Only `when`
-/// lacks support in common targets. A data update that gives the mixin parents BCD rows adds bare
-/// names here; `the_parents_of_window_add_only_the_event_target_members` lists them.
-fn global_feature(name: &str, is_new: bool) -> Option<FeatureId> {
-    is_new
-        .then(|| FeatureId::find_parts(&["api.", name, ".", name]))
-        .flatten()
-        .or_else(|| FeatureId::find_parts(&["javascript.builtins.", name]))
-        .or_else(|| FeatureId::find_parts(&["api.", name]))
-        .or_else(|| window_member(name))
 }
 
 pub(crate) fn kind_of(feature: FeatureId) -> Kind {
@@ -768,13 +644,29 @@ mod tests {
     }
 
     #[test]
-    fn the_precomputed_members_of_window_match_the_walk() {
-        let members = crate::data::feature_ids()
-            .filter_map(|id| id.strip_prefix("api.")?.split_once('.').map(|(_, member)| member))
-            .chain(["noSuchThing", "", "when.x"]);
-        for member in members {
-            assert_eq!(window_member(member), interface_member("Window", member), "{member}");
-        }
+    fn a_computed_key_with_a_dot_names_no_sub_feature() {
+        // BCD ids such as `api.Navigator.share.data_files_parameter` are sub-features, not members. Before the
+        // generated tables each of these lines resolved to such an id.
+        assert!(features("f(window['screenLeft.relative-multi-screen']);").is_empty());
+        assert!(features("f(navigator['share.data_files_parameter']);").is_empty());
+        assert!(features("f(Intl['Segmenter.segment']);").is_empty());
+    }
+
+    #[test]
+    fn an_alias_of_the_global_object_is_an_object_with_members() {
+        // `window.self.when` asks the member table for `self.when`, so the rows of `self` and `window` stay.
+        // The root `self` is a use of its own here: the test targets lack it.
+        assert_eq!(
+            detected("window.self.when('click');"),
+            [
+                ("api.Window.self", vec!["self".to_string()]),
+                ("api.EventTarget.when", vec!["self.when".to_string()])
+            ]
+        );
+        assert_eq!(
+            features("const { when } = self.window;"),
+            ["api.Window.window", "api.EventTarget.when"]
+        );
     }
 
     #[test]

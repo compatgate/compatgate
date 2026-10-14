@@ -4,7 +4,7 @@ use crate::position::Position;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
-    /// The browserslist query is invalid or selects no known browser.
+    /// The browsers of the targets are invalid or have no compatibility data.
     Targets(String),
     /// An `allow` entry is invalid.
     Allow(String),

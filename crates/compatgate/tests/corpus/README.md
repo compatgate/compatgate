@@ -42,9 +42,10 @@ while (navigator.share) { navigator.share(d); } //~ @8 api.Navigator.share exact
 - `none` means no findings on the line.
 - `@<column>` comes first when the line has more than one finding of the same feature. The column counts
   from 1 in UTF-16 units, as in ESLint.
-- An expectation has no end column. The end of a finding is the end of the node that the detector reports,
-  and the start and the feature already pick that node: a detector reports a feature once per node, and
-  no two findings of the corpus share the feature and the start. The end becomes a line and a column by
+- An expectation has no end column. The end of a finding is the end of the range that the detector reports,
+  and the start and the feature already pick that range: a detector reports a feature once per node, and
+  no two findings of the corpus share the feature and the start. A syntax finding starts at the token of the
+  feature, such as `static` or `??=`, not at the start of its node. The end becomes a line and a column by
   the same code as the start, and `tests/check.rs` checks the end of a finding.
 - A finding on a line without `//~` fails the run too, so every line with findings carries `//~`.
   A line without findings may leave it out.

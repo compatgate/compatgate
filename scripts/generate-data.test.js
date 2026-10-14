@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -5,12 +7,15 @@ import {
   ACCESSORS,
   BROWSERS,
   UNSUPPORTED,
+  ancestry,
   browserSupport,
   checkAccessors,
   collectFeatures,
+  collectGlobals,
   collectInstanceMembers,
   collectInterfaceParents,
   collectLibMembers,
+  collectMembers,
   collectSingletons,
   encodeVersion,
   noteText,
@@ -187,11 +192,18 @@ test('renderRust writes all tables', () => {
       : [],
   );
   const text = renderRust(
-    [{ id: 'api.A', since, ranges }],
+    [
+      { id: 'api.A', since, ranges },
+      { id: 'api.A.A', since, ranges: BROWSERS.map(() => []) },
+      { id: 'api.B', since, ranges: BROWSERS.map(() => []) },
+    ],
     '1.0.0',
     [{ name: 'm', id: 'api.A', reportable: false }],
-    [{ name: 'a', type: 'A' }],
-    [{ name: 'A', parents: ['B', 'C'] }],
+    [
+      { name: 'A', plain: 'api.A', constructed: 'api.A.A' },
+      { name: 'm', plain: null, constructed: null },
+    ],
+    [{ object: 'b', member: 'A', id: 'api.A.A' }],
   );
   assert.match(text, /pub const BCD_VERSION: &str = "1\.0\.0";/);
   assert.match(text, /pub const BROWSER_KEYS: \[&str; 11\] = \["chrome", "chrome_android"/);
@@ -202,8 +214,186 @@ test('renderRust writes all tables', () => {
   );
   assert.match(text, /pub static NOTES: &\[&str\] = &\[\n {4}"Only on \\"macOS\\"\.",/);
   assert.match(text, /\("m", 0, false\),/);
-  assert.match(text, /\("a", "A"\),/);
-  assert.match(text, /pub static INTERFACE_PARENTS: &\[\(&str, &\[&str\]\)\] = &\[\n {4}\("A", &\["B", "C"\]\),/);
+  // Names sort by bytes, so the index order is the string order: "A" < "b" < "m".
+  assert.match(text, /pub static NAMES: &str = concat!\(\n {4}"A",\n {4}"b",\n {4}"m",\n\);/);
+  assert.match(text, /pub static NAME_STARTS: &\[u32\] = &\[\n {4}0, 1, 2, 3,\n\];/);
+  assert.match(
+    text,
+    /pub static GLOBALS: &\[\(u16, u16, u16\)\] = &\[\n {4}\(0, 0, 1\), \/\/ A\n {4}\(2, u16::MAX, u16::MAX\), \/\/ m\n\];/,
+  );
+  assert.match(text, /pub static MEMBER_OBJECTS: &\[\(u16, u16\)\] = &\[\n {4}\(1, 0\), \/\/ b\n\];/);
+  assert.match(text, /pub static MEMBER_ROWS: &\[\(u16, u16\)\] = &\[\n {4}\(0, 1\), \/\/ b\.A\n\];/);
+  assert.doesNotMatch(text, /pub static MEMBERS:|&\[\(&str, u32, u32\)\]/);
+  assert.doesNotMatch(text, /SINGLETONS|INTERFACE_PARENTS/);
+});
+
+test('renderRust rejects a global or a member of a feature that the data lacks', () => {
+  const feature = { id: 'api.A', since: BROWSERS.map(() => UNSUPPORTED), ranges: BROWSERS.map(() => []) };
+  assert.throws(
+    () => renderRust([feature], '1.0.0', [], [{ name: 'B', plain: 'api.B', constructed: null }], []),
+    /api\.B/,
+  );
+  assert.throws(
+    () => renderRust([feature], '1.0.0', [], [], [{ object: 'a', member: 'b', id: 'api.A.b' }]),
+    /api\.A\.b/,
+  );
+});
+
+test('renderRust rejects an index that does not fit u16', () => {
+  const feature = { id: 'api.A', since: BROWSERS.map(() => UNSUPPORTED), ranges: BROWSERS.map(() => []) };
+  // Every index stays below u16::MAX, which marks "no feature": 65 536 names are one too many.
+  const globals = Array.from({ length: 0x10000 }, (_, index) => ({
+    name: `n${index}`,
+    plain: null,
+    constructed: null,
+  }));
+  assert.throws(() => renderRust([feature], '1.0.0', [], globals, []), /does not fit u16/);
+  assert.doesNotThrow(() => renderRust([feature], '1.0.0', [], globals.slice(1), []));
+});
+
+test('the tables of the real data resolve each name as the detector did', () => {
+  const require = createRequire(import.meta.url);
+  const features = collectFeatures(require('@mdn/browser-compat-data'));
+  const ids = new Set(features.map(feature => feature.id));
+  const webTypes = readFileSync(require.resolve('@types/web/index.d.ts'), 'utf8');
+  const singletons = collectSingletons(webTypes, ids);
+  const interfaceParents = collectInterfaceParents(webTypes, ids);
+  const parents = new Map(interfaceParents.map(({ name, parents: list }) => [name, list]));
+  const first = candidates => candidates.find(id => ids.has(id)) ?? null;
+  const types = new Map(singletons.map(({ name, type }) => [name, type]));
+  const members = collectMembers(ids, singletons, interfaceParents);
+  assert.ok(members.length > 9000);
+  for (const { object, member, id } of members) {
+    const expected = types.has(object)
+      ? first(ancestry(types.get(object), parents).map(iface => `api.${iface}.${member}`))
+      : first([`javascript.builtins.${object}.${member}`, `api.${object}.${member}_static`, `api.${object}.${member}`]);
+    assert.equal(id, expected, `${object}.${member}`);
+  }
+  const window = ancestry('Window', parents);
+  for (const { name, plain, constructed } of collectGlobals(ids, interfaceParents)) {
+    const read = first([`javascript.builtins.${name}`, `api.${name}`, ...window.map(iface => `api.${iface}.${name}`)]);
+    assert.equal(plain, read, name);
+    assert.equal(constructed, first([`api.${name}.${name}`]) ?? read, name);
+  }
+});
+
+test('ancestry lists an interface and its parents breadth-first, each once', () => {
+  const parents = new Map([
+    ['Window', ['EventTarget', 'WindowEventHandlers', 'Mixin']],
+    ['Mixin', ['EventTarget', 'Deep']],
+    ['WindowEventHandlers', ['Deep']],
+  ]);
+  assert.deepEqual(ancestry('Window', parents), ['Window', 'EventTarget', 'WindowEventHandlers', 'Mixin', 'Deep']);
+  assert.deepEqual(ancestry('Lonely', parents), ['Lonely']);
+});
+
+test('collectGlobals resolves bare names as the globals detector did', () => {
+  const ids = new Set([
+    'api.EventTarget.addEventListener',
+    'api.EventTarget.when',
+    'api.Node.contains',
+    'api.ResizeObserver',
+    'api.ResizeObserver.ResizeObserver',
+    'api.ResizeObserver.observe',
+    'api.Window',
+    'api.Window.name',
+    'api.Window.when',
+    // A sub-feature is no member: `screen` is not a global here.
+    'api.Window.screen.secure_context',
+    'api.WindowOrWorker.fetch',
+    'api.structuredClone',
+    'javascript.builtins.Array',
+    'javascript.builtins.Array.from',
+    'javascript.builtins.Window',
+  ]);
+  const parents = [
+    { name: 'Window', parents: ['EventTarget', 'WindowOrWorker'] },
+    { name: 'Document', parents: ['Node'] },
+  ];
+  const rows = collectGlobals(ids, parents).map(({ name, plain, constructed }) =>
+    plain === constructed ? `${name} ${plain}` : `${name} ${plain} new ${constructed}`,
+  );
+  assert.deepEqual(rows, [
+    'Array javascript.builtins.Array',
+    // `new X()` takes the constructor entry.
+    'ResizeObserver api.ResizeObserver new api.ResizeObserver.ResizeObserver',
+    // A builtin wins over an interface of the same name.
+    'Window javascript.builtins.Window',
+    // Members of `Window` and of its parents. `WindowOrWorker` has no BCD row of its own, but `Window`
+    // names it as a parent. The own entry of `Window` wins over the entry of a parent.
+    'addEventListener api.EventTarget.addEventListener',
+    'fetch api.WindowOrWorker.fetch',
+    'name api.Window.name',
+    'structuredClone api.structuredClone',
+    'when api.Window.when',
+  ]);
+});
+
+test('collectMembers resolves members of singletons through parent interfaces and other members by name', () => {
+  const ids = new Set([
+    'api.BarcodeDetector',
+    'api.BarcodeDetector.getSupportedFormats_static',
+    'api.BarcodeDetector.detect',
+    'api.Document',
+    'api.Document.querySelector',
+    'api.Document.when',
+    'api.EventTarget.when',
+    'api.EventTarget.addEventListener',
+    'api.Node.contains',
+    'api.Node.querySelector',
+    'api.Navigator.share',
+    'api.Navigator.share.data_files_parameter',
+    'api.navigator.share',
+    'javascript.builtins.Intl.Segmenter',
+    'javascript.builtins.Object.groupBy',
+    'api.Object.groupBy',
+  ]);
+  const singletons = [
+    { name: 'document', type: 'Document' },
+    { name: 'navigator', type: 'Navigator' },
+  ];
+  const parents = [
+    { name: 'Document', parents: ['Node', 'DocumentOrShadowRoot'] },
+    { name: 'Node', parents: ['EventTarget'] },
+  ];
+  const rows = collectMembers(ids, singletons, parents).map(({ object, member, id }) => `${object}.${member} ${id}`);
+  assert.deepEqual(rows, [
+    'BarcodeDetector.detect api.BarcodeDetector.detect',
+    // A static member has a suffix in BCD. The row is found by its full name too, as before the tables.
+    'BarcodeDetector.getSupportedFormats api.BarcodeDetector.getSupportedFormats_static',
+    'BarcodeDetector.getSupportedFormats_static api.BarcodeDetector.getSupportedFormats_static',
+    // An interface object that is no singleton has the rows under its own name only.
+    'Document.querySelector api.Document.querySelector',
+    'Document.when api.Document.when',
+    'EventTarget.addEventListener api.EventTarget.addEventListener',
+    'EventTarget.when api.EventTarget.when',
+    'Intl.Segmenter javascript.builtins.Intl.Segmenter',
+    'Navigator.share api.Navigator.share',
+    'Node.contains api.Node.contains',
+    'Node.querySelector api.Node.querySelector',
+    // A builtin wins over an interface of the same name.
+    'Object.groupBy javascript.builtins.Object.groupBy',
+    // A singleton takes the members of its interface and of its parents: the own entry first, then the
+    // nearer parent.
+    'document.addEventListener api.EventTarget.addEventListener',
+    'document.contains api.Node.contains',
+    'document.querySelector api.Document.querySelector',
+    'document.when api.Document.when',
+    // A singleton takes no rows under its own name.
+    'navigator.share api.Navigator.share',
+  ]);
+});
+
+test('collectGlobals and collectMembers sort rows by bytes', () => {
+  const ids = new Set(['api.b', 'api.B', 'api._', 'api.B.a', 'api.B.Z', 'api.a.x']);
+  assert.deepEqual(
+    collectGlobals(ids, []).map(row => row.name),
+    ['B', '_', 'b'],
+  );
+  assert.deepEqual(
+    collectMembers(ids, [], []).map(row => `${row.object}.${row.member}`),
+    ['B.Z', 'B.a', 'a.x'],
+  );
 });
 
 test('renderRust stores each note text once', () => {

@@ -23636,509 +23636,18509 @@ pub static INSTANCE_MEMBERS: &[(&str, u32, bool)] = &[
     ("zoomLevel", 1092, false),
 ];
 
-pub static SINGLETONS: &[(&str, &str)] = &[
-    ("caches", "CacheStorage"),
-    ("clientInformation", "Navigator"),
-    ("cookieStore", "CookieStore"),
-    ("crypto", "Crypto"),
-    ("customElements", "CustomElementRegistry"),
-    ("document", "Document"),
-    ("documentPictureInPicture", "DocumentPictureInPicture"),
-    ("external", "External"),
-    ("frameElement", "Element"),
-    ("history", "History"),
-    ("indexedDB", "IDBFactory"),
-    ("localStorage", "Storage"),
-    ("location", "Location"),
-    ("locationbar", "BarProp"),
-    ("menubar", "BarProp"),
-    ("navigation", "Navigation"),
-    ("navigator", "Navigator"),
-    ("performance", "Performance"),
-    ("personalbar", "BarProp"),
-    ("scheduler", "Scheduler"),
-    ("screen", "Screen"),
-    ("scrollbars", "BarProp"),
-    ("self", "Window"),
-    ("sessionStorage", "Storage"),
-    ("speechSynthesis", "SpeechSynthesis"),
-    ("statusbar", "BarProp"),
-    ("toolbar", "BarProp"),
-    ("visualViewport", "VisualViewport"),
-    ("window", "Window"),
+// Names of globals, objects and members, sorted by bytes. Name `i` is `NAMES[NAME_STARTS[i]..NAME_STARTS[i + 1]]`.
+pub static NAMES: &str = concat!(
+    "@@asyncDispose",
+    "@@asyncIterator",
+    "@@dispose",
+    "@@hasInstance",
+    "@@iterator",
+    "@@match",
+    "@@matchAll",
+    "@@replace",
+    "@@search",
+    "@@species",
+    "@@split",
+    "@@toPrimitive",
+    "@@unscopables",
+    "ANGLE_instanced_arrays",
+    "AbortController",
+    "AbortPaymentEvent",
+    "AbortSignal",
+    "AbsoluteOrientationSensor",
+    "AbstractRange",
+    "Accelerometer",
+    "AddSearchProvider",
+    "AggregateError",
+    "AmbientLightSensor",
+    "AnalyserNode",
+    "Animation",
+    "AnimationEffect",
+    "AnimationEvent",
+    "AnimationPlaybackEvent",
+    "AnimationTimeline",
+    "AnimationTrigger",
+    "Array",
+    "ArrayBuffer",
+    "AsyncDisposableStack",
+    "AsyncFunction",
+    "AsyncGenerator",
+    "AsyncGeneratorFunction",
+    "AsyncIterator",
+    "Atomic_operations_on_non_shared_buffers",
+    "Atomics",
+    "Attr",
+    "Audio",
+    "AudioBuffer",
+    "AudioBufferSourceNode",
+    "AudioContext",
+    "AudioData",
+    "AudioDecoder",
+    "AudioDestinationNode",
+    "AudioEncoder",
+    "AudioListener",
+    "AudioNode",
+    "AudioParam",
+    "AudioParamMap",
+    "AudioPlaybackStats",
+    "AudioProcessingEvent",
+    "AudioScheduledSourceNode",
+    "AudioSession",
+    "AudioSinkInfo",
+    "AudioTrack",
+    "AudioTrackList",
+    "AudioWorklet",
+    "AudioWorkletGlobalScope",
+    "AudioWorkletNode",
+    "AudioWorkletProcessor",
+    "AuthenticatorAssertionResponse",
+    "AuthenticatorAttestationResponse",
+    "AuthenticatorResponse",
+    "AutofillEvent",
+    "BYTES_PER_ELEMENT",
+    "BackgroundFetchEvent",
+    "BackgroundFetchManager",
+    "BackgroundFetchRecord",
+    "BackgroundFetchRegistration",
+    "BackgroundFetchUpdateUIEvent",
+    "BarProp",
+    "BarcodeDetector",
+    "BaseAudioContext",
+    "BatteryManager",
+    "BeforeInstallPromptEvent",
+    "BeforeUnloadEvent",
+    "BigInt",
+    "BigInt64Array",
+    "BigUint64Array",
+    "BiquadFilterNode",
+    "Blob",
+    "BlobEvent",
+    "Bluetooth",
+    "BluetoothCharacteristicProperties",
+    "BluetoothDevice",
+    "BluetoothRemoteGATTCharacteristic",
+    "BluetoothRemoteGATTDescriptor",
+    "BluetoothRemoteGATTServer",
+    "BluetoothRemoteGATTService",
+    "BluetoothUUID",
+    "Boolean",
+    "BroadcastChannel",
+    "BrowserCaptureMediaStreamTrack",
+    "BufferedChangeEvent",
+    "ByteLengthQueuingStrategy",
+    "CDATASection",
+    "CSPViolationReportBody",
+    "CSS",
+    "CSSAnimation",
+    "CSSConditionRule",
+    "CSSContainerRule",
+    "CSSCounterStyleRule",
+    "CSSCustomMediaRule",
+    "CSSFontFaceDescriptors",
+    "CSSFontFaceRule",
+    "CSSFontFeatureValuesMap",
+    "CSSFontFeatureValuesRule",
+    "CSSFontPaletteValuesRule",
+    "CSSFunctionDeclarations",
+    "CSSFunctionDescriptors",
+    "CSSFunctionRule",
+    "CSSGroupingRule",
+    "CSSImageValue",
+    "CSSImportRule",
+    "CSSKeyframeRule",
+    "CSSKeyframesRule",
+    "CSSKeywordValue",
+    "CSSLayerBlockRule",
+    "CSSLayerStatementRule",
+    "CSSMarginRule",
+    "CSSMathClamp",
+    "CSSMathInvert",
+    "CSSMathMax",
+    "CSSMathMin",
+    "CSSMathNegate",
+    "CSSMathProduct",
+    "CSSMathSum",
+    "CSSMathValue",
+    "CSSMatrixComponent",
+    "CSSMediaRule",
+    "CSSNamespaceRule",
+    "CSSNestedDeclarations",
+    "CSSNumericArray",
+    "CSSNumericValue",
+    "CSSPageDescriptors",
+    "CSSPageRule",
+    "CSSPerspective",
+    "CSSPositionTryDescriptors",
+    "CSSPositionTryRule",
+    "CSSPositionValue",
+    "CSSPrimitiveValue",
+    "CSSPropertyRule",
+    "CSSPseudoElement",
+    "CSSRotate",
+    "CSSRule",
+    "CSSRuleList",
+    "CSSScale",
+    "CSSScopeRule",
+    "CSSSkew",
+    "CSSSkewX",
+    "CSSSkewY",
+    "CSSStartingStyleRule",
+    "CSSStyleDeclaration",
+    "CSSStyleProperties",
+    "CSSStyleRule",
+    "CSSStyleSheet",
+    "CSSStyleValue",
+    "CSSSupportsRule",
+    "CSSTransformComponent",
+    "CSSTransformValue",
+    "CSSTransition",
+    "CSSTranslate",
+    "CSSUnitValue",
+    "CSSUnparsedValue",
+    "CSSValue",
+    "CSSValueList",
+    "CSSVariableReferenceValue",
+    "CSSViewTransitionRule",
+    "Cache",
+    "CacheStorage",
+    "CanMakePaymentEvent",
+    "CanvasCaptureMediaStreamTrack",
+    "CanvasFilter",
+    "CanvasGradient",
+    "CanvasPattern",
+    "CanvasRenderingContext2D",
+    "CaptureController",
+    "CaretPosition",
+    "ChannelMergerNode",
+    "ChannelSplitterNode",
+    "ChapterInformation",
+    "CharacterBoundsUpdateEvent",
+    "CharacterData",
+    "Client",
+    "Clients",
+    "Clipboard",
+    "ClipboardChangeEvent",
+    "ClipboardEvent",
+    "ClipboardItem",
+    "CloseEvent",
+    "CloseWatcher",
+    "Collator",
+    "CommandEvent",
+    "Comment",
+    "CompositionEvent",
+    "CompressionStream",
+    "ConstantSourceNode",
+    "ContactAddress",
+    "ContactsManager",
+    "ContentIndex",
+    "ContentIndexEvent",
+    "ContentVisibilityAutoStateChangeEvent",
+    "ConvolverNode",
+    "CookieChangeEvent",
+    "CookieStore",
+    "CookieStoreManager",
+    "CountQueuingStrategy",
+    "Counter",
+    "CrashReportContext",
+    "CreateMonitor",
+    "Credential",
+    "CredentialsContainer",
+    "CropTarget",
+    "Crypto",
+    "CryptoKey",
+    "CustomElementRegistry",
+    "CustomEvent",
+    "CustomStateSet",
+    "DOMActivate_event",
+    "DOMContentLoaded_event",
+    "DOMError",
+    "DOMException",
+    "DOMImplementation",
+    "DOMMatrix",
+    "DOMMatrixReadOnly",
+    "DOMMouseScroll_event",
+    "DOMParser",
+    "DOMPoint",
+    "DOMPointReadOnly",
+    "DOMQuad",
+    "DOMRect",
+    "DOMRectList",
+    "DOMRectReadOnly",
+    "DOMStringList",
+    "DOMStringMap",
+    "DOMTokenList",
+    "DataCue",
+    "DataTransfer",
+    "DataTransferItem",
+    "DataTransferItemList",
+    "DataView",
+    "Date",
+    "DateTimeFormat",
+    "DecompressionStream",
+    "DedicatedWorkerGlobalScope",
+    "DelayNode",
+    "DelegatedInkTrailPresenter",
+    "DeprecationReportBody",
+    "DeviceMotionEvent",
+    "DeviceMotionEventAcceleration",
+    "DeviceMotionEventRotationRate",
+    "DeviceOrientationEvent",
+    "DevicePosture",
+    "DigitalCredential",
+    "Directory",
+    "DirectoryEntrySync",
+    "DirectoryReaderSync",
+    "DisplayNames",
+    "DisposableStack",
+    "Document",
+    "DocumentFragment",
+    "DocumentPictureInPicture",
+    "DocumentPictureInPictureEvent",
+    "DocumentTimeline",
+    "DocumentType",
+    "DragEvent",
+    "Duration",
+    "DurationFormat",
+    "DynamicsCompressorNode",
+    "E",
+    "EPSILON",
+    "EXT_blend_minmax",
+    "EXT_color_buffer_float",
+    "EXT_color_buffer_half_float",
+    "EXT_disjoint_timer_query",
+    "EXT_disjoint_timer_query_webgl2",
+    "EXT_float_blend",
+    "EXT_frag_depth",
+    "EXT_sRGB",
+    "EXT_shader_texture_lod",
+    "EXT_texture_compression_bptc",
+    "EXT_texture_compression_rgtc",
+    "EXT_texture_filter_anisotropic",
+    "EXT_texture_norm16",
+    "EditContext",
+    "Element",
+    "ElementInternals",
+    "EncodedAudioChunk",
+    "EncodedVideoChunk",
+    "EntrySync",
+    "Error",
+    "ErrorEvent",
+    "EvalError",
+    "Event",
+    "EventCounts",
+    "EventSource",
+    "EventTarget",
+    "EventTarget_inheritance",
+    "ExtendableCookieChangeEvent",
+    "ExtendableEvent",
+    "ExtendableMessageEvent",
+    "External",
+    "EyeDropper",
+    "FeaturePolicy",
+    "FederatedCredential",
+    "Fence",
+    "FencedFrameConfig",
+    "FetchEvent",
+    "FetchLaterResult",
+    "File",
+    "FileEntrySync",
+    "FileList",
+    "FileReader",
+    "FileReaderSync",
+    "FileSystem",
+    "FileSystemDirectoryEntry",
+    "FileSystemDirectoryHandle",
+    "FileSystemDirectoryReader",
+    "FileSystemEntry",
+    "FileSystemFileEntry",
+    "FileSystemFileHandle",
+    "FileSystemHandle",
+    "FileSystemObserver",
+    "FileSystemSync",
+    "FileSystemSyncAccessHandle",
+    "FileSystemWritableFileStream",
+    "FinalizationRegistry",
+    "Float16Array",
+    "Float32Array",
+    "Float64Array",
+    "FocusEvent",
+    "FontData",
+    "FontFace",
+    "FontFaceSet",
+    "FontFaceSetLoadEvent",
+    "FormData",
+    "FormDataEvent",
+    "FragmentDirective",
+    "Function",
+    "GPU",
+    "GPUAdapter",
+    "GPUAdapterInfo",
+    "GPUBindGroup",
+    "GPUBindGroupLayout",
+    "GPUBuffer",
+    "GPUCanvasContext",
+    "GPUCommandBuffer",
+    "GPUCommandEncoder",
+    "GPUCompilationInfo",
+    "GPUCompilationMessage",
+    "GPUComputePassEncoder",
+    "GPUComputePipeline",
+    "GPUDevice",
+    "GPUDeviceLostInfo",
+    "GPUError",
+    "GPUExternalTexture",
+    "GPUInternalError",
+    "GPUOutOfMemoryError",
+    "GPUPipelineError",
+    "GPUPipelineLayout",
+    "GPUQuerySet",
+    "GPUQueue",
+    "GPURenderBundle",
+    "GPURenderBundleEncoder",
+    "GPURenderPassEncoder",
+    "GPURenderPipeline",
+    "GPUSampler",
+    "GPUShaderModule",
+    "GPUSupportedFeatures",
+    "GPUSupportedLimits",
+    "GPUTexture",
+    "GPUTextureView",
+    "GPUUncapturedErrorEvent",
+    "GPUValidationError",
+    "GainNode",
+    "Gamepad",
+    "GamepadButton",
+    "GamepadEvent",
+    "GamepadHapticActuator",
+    "GamepadPose",
+    "Generator",
+    "GeneratorFunction",
+    "Geolocation",
+    "GeolocationCoordinates",
+    "GeolocationPosition",
+    "GeolocationPositionError",
+    "GestureEvent",
+    "GravitySensor",
+    "Gyroscope",
+    "HID",
+    "HIDConnectionEvent",
+    "HIDDevice",
+    "HIDInputReportEvent",
+    "HMDVRDevice",
+    "HTMLAllCollection",
+    "HTMLAnchorElement",
+    "HTMLAreaElement",
+    "HTMLAudioElement",
+    "HTMLBRElement",
+    "HTMLBaseElement",
+    "HTMLBodyElement",
+    "HTMLButtonElement",
+    "HTMLCameraElement",
+    "HTMLCanvasElement",
+    "HTMLCollection",
+    "HTMLDListElement",
+    "HTMLDataElement",
+    "HTMLDataListElement",
+    "HTMLDetailsElement",
+    "HTMLDialogElement",
+    "HTMLDirectoryElement",
+    "HTMLDivElement",
+    "HTMLDocument",
+    "HTMLElement",
+    "HTMLEmbedElement",
+    "HTMLFencedFrameElement",
+    "HTMLFieldSetElement",
+    "HTMLFontElement",
+    "HTMLFormControlsCollection",
+    "HTMLFormElement",
+    "HTMLFrameElement",
+    "HTMLFrameSetElement",
+    "HTMLGeolocationElement",
+    "HTMLHRElement",
+    "HTMLHeadElement",
+    "HTMLHeadingElement",
+    "HTMLHtmlElement",
+    "HTMLIFrameElement",
+    "HTMLImageElement",
+    "HTMLInputElement",
+    "HTMLInstallElement",
+    "HTMLLIElement",
+    "HTMLLabelElement",
+    "HTMLLegendElement",
+    "HTMLLinkElement",
+    "HTMLMapElement",
+    "HTMLMarqueeElement",
+    "HTMLMediaElement",
+    "HTMLMenuElement",
+    "HTMLMetaElement",
+    "HTMLMeterElement",
+    "HTMLMicrophoneElement",
+    "HTMLModElement",
+    "HTMLModelElement",
+    "HTMLOListElement",
+    "HTMLObjectElement",
+    "HTMLOptGroupElement",
+    "HTMLOptionElement",
+    "HTMLOptionsCollection",
+    "HTMLOutputElement",
+    "HTMLParagraphElement",
+    "HTMLParamElement",
+    "HTMLPictureElement",
+    "HTMLPreElement",
+    "HTMLProgressElement",
+    "HTMLQuoteElement",
+    "HTMLScriptElement",
+    "HTMLSelectElement",
+    "HTMLSelectedContentElement",
+    "HTMLSlotElement",
+    "HTMLSourceElement",
+    "HTMLSpanElement",
+    "HTMLStyleElement",
+    "HTMLTableCaptionElement",
+    "HTMLTableCellElement",
+    "HTMLTableColElement",
+    "HTMLTableElement",
+    "HTMLTableRowElement",
+    "HTMLTableSectionElement",
+    "HTMLTemplateElement",
+    "HTMLTextAreaElement",
+    "HTMLTimeElement",
+    "HTMLTitleElement",
+    "HTMLTrackElement",
+    "HTMLUListElement",
+    "HTMLUnknownElement",
+    "HTMLUserMediaElement",
+    "HTMLVideoElement",
+    "HashChangeEvent",
+    "Headers",
+    "Highlight",
+    "HighlightRegistry",
+    "History",
+    "Hz",
+    "Hz_static",
+    "IDBCursor",
+    "IDBCursorWithValue",
+    "IDBDatabase",
+    "IDBFactory",
+    "IDBIndex",
+    "IDBKeyRange",
+    "IDBObjectStore",
+    "IDBOpenDBRequest",
+    "IDBRecord",
+    "IDBRequest",
+    "IDBTransaction",
+    "IDBVersionChangeEvent",
+    "IIRFilterNode",
+    "IdentityCredential",
+    "IdentityCredentialError",
+    "IdentityProvider",
+    "IdleDeadline",
+    "IdleDetector",
+    "Image",
+    "ImageBitmap",
+    "ImageBitmapRenderingContext",
+    "ImageCapture",
+    "ImageData",
+    "ImageDecoder",
+    "ImageTrack",
+    "ImageTrackList",
+    "Infinity",
+    "Ink",
+    "InputDeviceCapabilities",
+    "InputDeviceInfo",
+    "InputEvent",
+    "InstallEvent",
+    "InstallResultEvent",
+    "Instant",
+    "Int16Array",
+    "Int32Array",
+    "Int8Array",
+    "InteractionContentfulPaint",
+    "InterestEvent",
+    "InternalError",
+    "IntersectionObserver",
+    "IntersectionObserverEntry",
+    "InterventionReportBody",
+    "Intl",
+    "IsSearchProviderInstalled",
+    "Iterator",
+    "JSON",
+    "KHR_parallel_shader_compile",
+    "Keyboard",
+    "KeyboardEvent",
+    "KeyboardLayoutMap",
+    "KeyframeEffect",
+    "LN10",
+    "LN2",
+    "LOG10E",
+    "LOG2E",
+    "LanguageDetector",
+    "LanguageModel",
+    "LargestContentfulPaint",
+    "LaunchParams",
+    "LaunchQueue",
+    "LayoutShift",
+    "LayoutShiftAttribution",
+    "LinearAccelerationSensor",
+    "ListFormat",
+    "Locale",
+    "Location",
+    "Lock",
+    "LockManager",
+    "MAX_SAFE_INTEGER",
+    "MAX_VALUE",
+    "MIDIAccess",
+    "MIDIConnectionEvent",
+    "MIDIInput",
+    "MIDIInputMap",
+    "MIDIMessageEvent",
+    "MIDIOutput",
+    "MIDIOutputMap",
+    "MIDIPort",
+    "MIN_SAFE_INTEGER",
+    "MIN_VALUE",
+    "ML",
+    "MLContext",
+    "MLGraph",
+    "MLGraphBuilder",
+    "MLOperand",
+    "MLTensor",
+    "Magnetometer",
+    "ManagedMediaSource",
+    "ManagedSourceBuffer",
+    "Map",
+    "Math",
+    "MathMLAnchorElement",
+    "MathMLElement",
+    "MediaCapabilities",
+    "MediaController",
+    "MediaDeviceInfo",
+    "MediaDevices",
+    "MediaElementAudioSourceNode",
+    "MediaEncryptedEvent",
+    "MediaError",
+    "MediaKeyMessageEvent",
+    "MediaKeySession",
+    "MediaKeyStatusMap",
+    "MediaKeySystemAccess",
+    "MediaKeys",
+    "MediaList",
+    "MediaMetadata",
+    "MediaQueryList",
+    "MediaQueryListEvent",
+    "MediaRecorder",
+    "MediaRecorderErrorEvent",
+    "MediaSession",
+    "MediaSource",
+    "MediaSourceHandle",
+    "MediaStream",
+    "MediaStreamAudioDestinationNode",
+    "MediaStreamAudioSourceNode",
+    "MediaStreamEvent",
+    "MediaStreamTrack",
+    "MediaStreamTrackAudioSourceNode",
+    "MediaStreamTrackAudioStats",
+    "MediaStreamTrackEvent",
+    "MediaStreamTrackGenerator",
+    "MediaStreamTrackHandle",
+    "MediaStreamTrackProcessor",
+    "MediaStreamTrackVideoStats",
+    "MerchantValidationEvent",
+    "MessageChannel",
+    "MessageEvent",
+    "MessagePort",
+    "Metadata",
+    "MimeType",
+    "MimeTypeArray",
+    "MouseEvent",
+    "MouseScrollEvent",
+    "MozMousePixelScroll_event",
+    "MutationEvent",
+    "MutationObserver",
+    "MutationRecord",
+    "NDEFMessage",
+    "NDEFReader",
+    "NDEFReadingEvent",
+    "NDEFRecord",
+    "NEGATIVE_INFINITY",
+    "NaN",
+    "NamedNodeMap",
+    "NavigateEvent",
+    "Navigation",
+    "NavigationActivation",
+    "NavigationCurrentEntryChangeEvent",
+    "NavigationDestination",
+    "NavigationHistoryEntry",
+    "NavigationPrecommitController",
+    "NavigationPreloadManager",
+    "NavigationTransition",
+    "Navigator",
+    "NavigatorLogin",
+    "NavigatorManagedData",
+    "NavigatorUAData",
+    "NetworkInformation",
+    "Node",
+    "NodeIterator",
+    "NodeList",
+    "NotRestoredReasonDetails",
+    "NotRestoredReasons",
+    "Notification",
+    "NotificationEvent",
+    "Now",
+    "Number",
+    "NumberFormat",
+    "OES_draw_buffers_indexed",
+    "OES_element_index_uint",
+    "OES_fbo_render_mipmap",
+    "OES_standard_derivatives",
+    "OES_texture_float",
+    "OES_texture_float_linear",
+    "OES_texture_half_float",
+    "OES_texture_half_float_linear",
+    "OES_vertex_array_object",
+    "OTPCredential",
+    "OVR_multiview2",
+    "Object",
+    "Observable",
+    "OfflineAudioCompletionEvent",
+    "OfflineAudioContext",
+    "OffscreenCanvas",
+    "OffscreenCanvasRenderingContext2D",
+    "Option",
+    "OrientationSensor",
+    "Origin",
+    "OscillatorNode",
+    "OverconstrainedError",
+    "PI",
+    "POSITIVE_INFINITY",
+    "PageRevealEvent",
+    "PageSwapEvent",
+    "PageTransitionEvent",
+    "PaintRenderingContext2D",
+    "PaintSize",
+    "PaintWorkletGlobalScope",
+    "PannerNode",
+    "PasswordCredential",
+    "Path2D",
+    "PaymentAddress",
+    "PaymentManager",
+    "PaymentMethodChangeEvent",
+    "PaymentRequest",
+    "PaymentRequestEvent",
+    "PaymentRequestUpdateEvent",
+    "PaymentResponse",
+    "Performance",
+    "PerformanceContainerTiming",
+    "PerformanceElementTiming",
+    "PerformanceEntry",
+    "PerformanceEventTiming",
+    "PerformanceLongAnimationFrameTiming",
+    "PerformanceLongTaskTiming",
+    "PerformanceMark",
+    "PerformanceMeasure",
+    "PerformanceNavigation",
+    "PerformanceNavigationTiming",
+    "PerformanceObserver",
+    "PerformanceObserverEntryList",
+    "PerformancePaintTiming",
+    "PerformanceResourceTiming",
+    "PerformanceScriptTiming",
+    "PerformanceServerTiming",
+    "PerformanceSoftNavigation",
+    "PerformanceTiming",
+    "PerformanceTimingConfidence",
+    "PeriodicSyncEvent",
+    "PeriodicSyncManager",
+    "PeriodicWave",
+    "PermissionStatus",
+    "Permissions",
+    "PermissionsPolicy",
+    "PictureInPictureEvent",
+    "PictureInPictureWindow",
+    "PlainDate",
+    "PlainDateTime",
+    "PlainMonthDay",
+    "PlainTime",
+    "PlainYearMonth",
+    "Plugin",
+    "PluginArray",
+    "PluralRules",
+    "PointerEvent",
+    "PopStateEvent",
+    "PositionSensorVRDevice",
+    "PreferenceManager",
+    "PreferenceObject",
+    "Presentation",
+    "PresentationAvailability",
+    "PresentationConnection",
+    "PresentationConnectionAvailableEvent",
+    "PresentationConnectionCloseEvent",
+    "PresentationConnectionList",
+    "PresentationReceiver",
+    "PresentationRequest",
+    "PressureObserver",
+    "PressureRecord",
+    "ProcessingInstruction",
+    "Profiler",
+    "ProgressEvent",
+    "Promise",
+    "PromiseRejectionEvent",
+    "ProtectedAudience",
+    "Proxy",
+    "PublicKeyCredential",
+    "PushEvent",
+    "PushManager",
+    "PushMessageData",
+    "PushSubscription",
+    "PushSubscriptionChangeEvent",
+    "PushSubscriptionOptions",
+    "Q",
+    "Q_static",
+    "QuotaExceededError",
+    "RGBColor",
+    "RTCCertificate",
+    "RTCDTMFSender",
+    "RTCDTMFToneChangeEvent",
+    "RTCDataChannel",
+    "RTCDataChannelEvent",
+    "RTCDtlsTransport",
+    "RTCEncodedAudioFrame",
+    "RTCEncodedVideoFrame",
+    "RTCError",
+    "RTCErrorEvent",
+    "RTCIceCandidate",
+    "RTCIceCandidatePair",
+    "RTCIceTransport",
+    "RTCIdentityAssertion",
+    "RTCPeerConnection",
+    "RTCPeerConnectionIceErrorEvent",
+    "RTCPeerConnectionIceEvent",
+    "RTCRtpReceiver",
+    "RTCRtpScriptTransform",
+    "RTCRtpScriptTransformer",
+    "RTCRtpSender",
+    "RTCRtpTransceiver",
+    "RTCSctpTransport",
+    "RTCSessionDescription",
+    "RTCStatsReport",
+    "RTCTrackEvent",
+    "RTCTransformEvent",
+    "RadioNodeList",
+    "Range",
+    "RangeError",
+    "ReadableByteStreamController",
+    "ReadableStream",
+    "ReadableStreamBYOBReader",
+    "ReadableStreamBYOBRequest",
+    "ReadableStreamDefaultController",
+    "ReadableStreamDefaultReader",
+    "Rect",
+    "ReferenceError",
+    "Reflect",
+    "RegExp",
+    "RelativeOrientationSensor",
+    "RelativeTimeFormat",
+    "RemotePlayback",
+    "Report",
+    "ReportBody",
+    "ReportingObserver",
+    "Request",
+    "ResizeObserver",
+    "ResizeObserverEntry",
+    "ResizeObserverSize",
+    "Response",
+    "RestrictionTarget",
+    "SQRT1_2",
+    "SQRT2",
+    "SVGAElement",
+    "SVGAngle",
+    "SVGAnimateElement",
+    "SVGAnimateMotionElement",
+    "SVGAnimateTransformElement",
+    "SVGAnimatedAngle",
+    "SVGAnimatedBoolean",
+    "SVGAnimatedEnumeration",
+    "SVGAnimatedInteger",
+    "SVGAnimatedLength",
+    "SVGAnimatedLengthList",
+    "SVGAnimatedNumber",
+    "SVGAnimatedNumberList",
+    "SVGAnimatedPreserveAspectRatio",
+    "SVGAnimatedRect",
+    "SVGAnimatedString",
+    "SVGAnimatedTransformList",
+    "SVGAnimationElement",
+    "SVGCircleElement",
+    "SVGClipPathElement",
+    "SVGComponentTransferFunctionElement",
+    "SVGDefsElement",
+    "SVGDescElement",
+    "SVGDiscardElement",
+    "SVGElement",
+    "SVGEllipseElement",
+    "SVGFEBlendElement",
+    "SVGFEColorMatrixElement",
+    "SVGFEComponentTransferElement",
+    "SVGFECompositeElement",
+    "SVGFEConvolveMatrixElement",
+    "SVGFEDiffuseLightingElement",
+    "SVGFEDisplacementMapElement",
+    "SVGFEDistantLightElement",
+    "SVGFEDropShadowElement",
+    "SVGFEFloodElement",
+    "SVGFEFuncAElement",
+    "SVGFEFuncBElement",
+    "SVGFEFuncGElement",
+    "SVGFEFuncRElement",
+    "SVGFEGaussianBlurElement",
+    "SVGFEImageElement",
+    "SVGFEMergeElement",
+    "SVGFEMergeNodeElement",
+    "SVGFEMorphologyElement",
+    "SVGFEOffsetElement",
+    "SVGFEPointLightElement",
+    "SVGFESpecularLightingElement",
+    "SVGFESpotLightElement",
+    "SVGFETileElement",
+    "SVGFETurbulenceElement",
+    "SVGFilterElement",
+    "SVGForeignObjectElement",
+    "SVGGElement",
+    "SVGGeometryElement",
+    "SVGGradientElement",
+    "SVGGraphicsElement",
+    "SVGImageElement",
+    "SVGLength",
+    "SVGLengthList",
+    "SVGLineElement",
+    "SVGLinearGradientElement",
+    "SVGMPathElement",
+    "SVGMarkerElement",
+    "SVGMaskElement",
+    "SVGMetadataElement",
+    "SVGNumber",
+    "SVGNumberList",
+    "SVGPathElement",
+    "SVGPatternElement",
+    "SVGPoint",
+    "SVGPointList",
+    "SVGPolygonElement",
+    "SVGPolylineElement",
+    "SVGPreserveAspectRatio",
+    "SVGRadialGradientElement",
+    "SVGRect",
+    "SVGRectElement",
+    "SVGSVGElement",
+    "SVGScriptElement",
+    "SVGSetElement",
+    "SVGStopElement",
+    "SVGStringList",
+    "SVGStyleElement",
+    "SVGSwitchElement",
+    "SVGSymbolElement",
+    "SVGTSpanElement",
+    "SVGTextContentElement",
+    "SVGTextElement",
+    "SVGTextPathElement",
+    "SVGTextPositioningElement",
+    "SVGTitleElement",
+    "SVGTransform",
+    "SVGTransformList",
+    "SVGUnitTypes",
+    "SVGUseElement",
+    "SVGViewElement",
+    "Sanitizer",
+    "Scheduler",
+    "Scheduling",
+    "Screen",
+    "ScreenDetailed",
+    "ScreenDetails",
+    "ScreenOrientation",
+    "ScriptProcessorNode",
+    "ScrollTimeline",
+    "SecurityPolicyViolationEvent",
+    "Segmenter",
+    "Segments",
+    "Selection",
+    "Sensor",
+    "SensorErrorEvent",
+    "Serial",
+    "SerialPort",
+    "ServiceWorker",
+    "ServiceWorkerContainer",
+    "ServiceWorkerGlobalScope",
+    "ServiceWorkerRegistration",
+    "Set",
+    "ShadowRoot",
+    "SharedArrayBuffer",
+    "SharedStorage",
+    "SharedStorageAppendMethod",
+    "SharedStorageClearMethod",
+    "SharedStorageDeleteMethod",
+    "SharedStorageModifierMethod",
+    "SharedStorageSetMethod",
+    "SharedStorageWorklet",
+    "SharedStorageWorkletGlobalScope",
+    "SharedWorker",
+    "SharedWorkerGlobalScope",
+    "SnapEvent",
+    "SourceBuffer",
+    "SourceBufferList",
+    "SpeechGrammar",
+    "SpeechGrammarList",
+    "SpeechRecognition",
+    "SpeechRecognitionAlternative",
+    "SpeechRecognitionErrorEvent",
+    "SpeechRecognitionEvent",
+    "SpeechRecognitionPhrase",
+    "SpeechRecognitionResult",
+    "SpeechRecognitionResultList",
+    "SpeechSynthesis",
+    "SpeechSynthesisErrorEvent",
+    "SpeechSynthesisEvent",
+    "SpeechSynthesisUtterance",
+    "SpeechSynthesisVoice",
+    "StaticRange",
+    "StereoPannerNode",
+    "Storage",
+    "StorageAccessHandle",
+    "StorageBucket",
+    "StorageBucketManager",
+    "StorageEvent",
+    "StorageManager",
+    "String",
+    "StyleMedia",
+    "StylePropertyMap",
+    "StylePropertyMapReadOnly",
+    "StyleSheet",
+    "StyleSheetList",
+    "SubmitEvent",
+    "Subscriber",
+    "SubtleCrypto",
+    "Summarizer",
+    "SuppressedError",
+    "Symbol",
+    "SyncEvent",
+    "SyncManager",
+    "SyntaxError",
+    "TaskAttributionTiming",
+    "TaskController",
+    "TaskPriorityChangeEvent",
+    "TaskSignal",
+    "Temporal",
+    "Text",
+    "TextDecoder",
+    "TextDecoderStream",
+    "TextEncoder",
+    "TextEncoderStream",
+    "TextEvent",
+    "TextFormat",
+    "TextFormatUpdateEvent",
+    "TextMetrics",
+    "TextTrack",
+    "TextTrackCue",
+    "TextTrackCueList",
+    "TextTrackList",
+    "TextUpdateEvent",
+    "TimeEvent",
+    "TimeRanges",
+    "ToggleEvent",
+    "Touch",
+    "TouchEvent",
+    "TouchList",
+    "TrackEvent",
+    "TransformStream",
+    "TransformStreamDefaultController",
+    "TransitionEvent",
+    "Translator",
+    "TreeWalker",
+    "TrustedHTML",
+    "TrustedHTMLParserOptions",
+    "TrustedScript",
+    "TrustedScriptURL",
+    "TrustedTypePolicy",
+    "TrustedTypePolicyFactory",
+    "TypeError",
+    "TypedArray",
+    "UIEvent",
+    "URIError",
+    "URL",
+    "URLPattern",
+    "URLSearchParams",
+    "USB",
+    "USBAlternateInterface",
+    "USBConfiguration",
+    "USBConnectionEvent",
+    "USBDevice",
+    "USBEndpoint",
+    "USBInTransferResult",
+    "USBInterface",
+    "USBIsochronousInTransferPacket",
+    "USBIsochronousInTransferResult",
+    "USBIsochronousOutTransferPacket",
+    "USBIsochronousOutTransferResult",
+    "USBOutTransferResult",
+    "UTC",
+    "Uint16Array",
+    "Uint32Array",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "UserActivation",
+    "VRDisplay",
+    "VRDisplayCapabilities",
+    "VRDisplayEvent",
+    "VREyeParameters",
+    "VRFieldOfView",
+    "VRFrameData",
+    "VRPose",
+    "VRStageParameters",
+    "VTTCue",
+    "VTTRegion",
+    "ValidityState",
+    "VideoColorSpace",
+    "VideoDecoder",
+    "VideoEncoder",
+    "VideoFrame",
+    "VideoPlaybackQuality",
+    "VideoTrack",
+    "VideoTrackGenerator",
+    "VideoTrackList",
+    "ViewTimeline",
+    "ViewTransition",
+    "ViewTransitionTypeSet",
+    "Viewport",
+    "VirtualKeyboard",
+    "VisibilityStateEntry",
+    "VisualViewport",
+    "WEBGL_color_buffer_float",
+    "WEBGL_compressed_texture_astc",
+    "WEBGL_compressed_texture_etc",
+    "WEBGL_compressed_texture_etc1",
+    "WEBGL_compressed_texture_pvrtc",
+    "WEBGL_compressed_texture_s3tc",
+    "WEBGL_compressed_texture_s3tc_srgb",
+    "WEBGL_debug_renderer_info",
+    "WEBGL_debug_shaders",
+    "WEBGL_depth_texture",
+    "WEBGL_draw_buffers",
+    "WEBGL_lose_context",
+    "WEBGL_multi_draw",
+    "WGSLLanguageFeatures",
+    "WakeLock",
+    "WakeLockSentinel",
+    "WaveShaperNode",
+    "WeakMap",
+    "WeakRef",
+    "WeakSet",
+    "WebGL2RenderingContext",
+    "WebGLActiveInfo",
+    "WebGLBuffer",
+    "WebGLContextEvent",
+    "WebGLFramebuffer",
+    "WebGLObject",
+    "WebGLProgram",
+    "WebGLQuery",
+    "WebGLRenderbuffer",
+    "WebGLRenderingContext",
+    "WebGLSampler",
+    "WebGLShader",
+    "WebGLShaderPrecisionFormat",
+    "WebGLSync",
+    "WebGLTexture",
+    "WebGLTimerQueryEXT",
+    "WebGLTransformFeedback",
+    "WebGLUniformLocation",
+    "WebGLVertexArrayObject",
+    "WebGLVertexArrayObjectOES",
+    "WebKitPoint",
+    "WebSocket",
+    "WebSocketError",
+    "WebSocketStream",
+    "WebTransport",
+    "WebTransportBidirectionalStream",
+    "WebTransportDatagramDuplexStream",
+    "WebTransportDatagramsWritable",
+    "WebTransportError",
+    "WebTransportReceiveStream",
+    "WebTransportSendGroup",
+    "WebTransportSendStream",
+    "WheelEvent",
+    "Window",
+    "WindowClient",
+    "WindowControlsOverlay",
+    "WindowControlsOverlayGeometryChangeEvent",
+    "Worker",
+    "WorkerGlobalScope",
+    "WorkerLocation",
+    "WorkerNavigator",
+    "Worklet",
+    "WorkletGlobalScope",
+    "WritableStream",
+    "WritableStreamDefaultController",
+    "WritableStreamDefaultWriter",
+    "XMLDocument",
+    "XMLHttpRequest",
+    "XMLHttpRequestEventTarget",
+    "XMLHttpRequestUpload",
+    "XMLSerializer",
+    "XPathEvaluator",
+    "XPathExpression",
+    "XPathResult",
+    "XRAnchor",
+    "XRAnchorSet",
+    "XRBoundedReferenceSpace",
+    "XRCPUDepthInformation",
+    "XRCamera",
+    "XRCompositionLayer",
+    "XRCubeLayer",
+    "XRCylinderLayer",
+    "XRDepthInformation",
+    "XREquirectLayer",
+    "XRFrame",
+    "XRHand",
+    "XRHitTestResult",
+    "XRHitTestSource",
+    "XRInputSource",
+    "XRInputSourceArray",
+    "XRInputSourceEvent",
+    "XRInputSourcesChangeEvent",
+    "XRJointPose",
+    "XRJointSpace",
+    "XRLayer",
+    "XRLayerEvent",
+    "XRLightEstimate",
+    "XRLightProbe",
+    "XRMediaBinding",
+    "XRPlane",
+    "XRPlaneSet",
+    "XRPose",
+    "XRProjectionLayer",
+    "XRQuadLayer",
+    "XRRay",
+    "XRReferenceSpace",
+    "XRReferenceSpaceEvent",
+    "XRRenderState",
+    "XRRigidTransform",
+    "XRSession",
+    "XRSessionEvent",
+    "XRSpace",
+    "XRSubImage",
+    "XRSystem",
+    "XRTransientInputHitTestResult",
+    "XRTransientInputHitTestSource",
+    "XRView",
+    "XRViewerPose",
+    "XRViewport",
+    "XRVisibilityMaskChangeEvent",
+    "XRWebGLBinding",
+    "XRWebGLDepthInformation",
+    "XRWebGLLayer",
+    "XRWebGLSubImage",
+    "XSLTProcessor",
+    "ZonedDateTime",
+    "a",
+    "aLink",
+    "abbr",
+    "abort",
+    "abort_event",
+    "abort_static",
+    "aborted",
+    "abortpayment_event",
+    "abs",
+    "absolute",
+    "acceleration",
+    "accelerationIncludingGravity",
+    "accept",
+    "acceptCharset",
+    "accessKey",
+    "accessKeyLabel",
+    "accuracy",
+    "acos",
+    "acosh",
+    "action",
+    "actions",
+    "activate_event",
+    "activated",
+    "activation",
+    "activationStart",
+    "active",
+    "activeCues",
+    "activeElement",
+    "activeSourceBuffers",
+    "activeTexture",
+    "activeVRDisplays",
+    "activeViewTransition",
+    "active_event",
+    "actualBoundingBoxAscent",
+    "actualBoundingBoxDescent",
+    "actualBoundingBoxLeft",
+    "actualBoundingBoxRight",
+    "adAuctionComponents",
+    "adAuctionHeaders",
+    "adapterInfo",
+    "add",
+    "addAll",
+    "addColorStop",
+    "addCue",
+    "addElement",
+    "addEventListener",
+    "addFromString",
+    "addFromURI",
+    "addHandler",
+    "addIceCandidate",
+    "addListener",
+    "addModule",
+    "addPath",
+    "addRange",
+    "addRoutes",
+    "addRule",
+    "addSourceBuffer",
+    "addStream",
+    "addTeardown",
+    "addTextTrack",
+    "addTrack",
+    "addTransceiver",
+    "added",
+    "addedNodes",
+    "addedRanges",
+    "additiveSymbols",
+    "address",
+    "addressLine",
+    "addsourcebuffer_event",
+    "addstream_event",
+    "addtrack_event",
+    "adopt",
+    "adoptNode",
+    "adoptedStyleSheets",
+    "advance",
+    "after",
+    "afterHTML",
+    "afterHTMLUnsafe",
+    "afterprint_event",
+    "afterscriptexecute_event",
+    "album",
+    "alert",
+    "algorithm",
+    "align",
+    "align-self",
+    "alignSelf",
+    "alinkColor",
+    "all",
+    "allKeyed",
+    "allSettled",
+    "allSettledKeyed",
+    "allocationSize",
+    "allow",
+    "allowAttribute",
+    "allowElement",
+    "allowFullscreen",
+    "allowPaymentRequest",
+    "allowProcessingInstruction",
+    "allowedFeatures",
+    "allowsFeature",
+    "alpha",
+    "alphabeticBaseline",
+    "alt",
+    "altKey",
+    "alternate",
+    "alternateSetting",
+    "alternates",
+    "altitude",
+    "altitudeAccuracy",
+    "altitudeAngle",
+    "amplitude",
+    "ancestorOrigins",
+    "anchor",
+    "anchorElement",
+    "anchorNode",
+    "anchorOffset",
+    "anchorSpace",
+    "anchors",
+    "and",
+    "angle",
+    "angularAcceleration",
+    "angularVelocity",
+    "animVal",
+    "animate",
+    "animated",
+    "animatedPoints",
+    "animation",
+    "animationName",
+    "animationcancel_event",
+    "animationend_event",
+    "animationiteration_event",
+    "animationsPaused",
+    "animationstart_event",
+    "annotation",
+    "antialias",
+    "anticipatedConcurrentIncomingBidirectionalStreams",
+    "anticipatedConcurrentIncomingUnidirectionalStreams",
+    "anticipatedRemoval",
+    "any",
+    "any_static",
+    "appCodeName",
+    "appName",
+    "appVersion",
+    "append",
+    "appendBuffer",
+    "appendBufferAsync",
+    "appendChild",
+    "appendData",
+    "appendHTML",
+    "appendHTMLUnsafe",
+    "appendItem",
+    "appendMedium",
+    "appendRule",
+    "appendWindowEnd",
+    "appendWindowStart",
+    "appinstalled_event",
+    "applets",
+    "applicationServerKey",
+    "apply",
+    "applyConstraints",
+    "arc",
+    "arcTo",
+    "architecture",
+    "archive",
+    "areas",
+    "argMax",
+    "argMin",
+    "arguments",
+    "ariaActiveDescendantElement",
+    "ariaAtomic",
+    "ariaAutoComplete",
+    "ariaBrailleLabel",
+    "ariaBrailleRoleDescription",
+    "ariaBusy",
+    "ariaChecked",
+    "ariaColCount",
+    "ariaColIndex",
+    "ariaColIndexText",
+    "ariaColSpan",
+    "ariaControlsElements",
+    "ariaCurrent",
+    "ariaDescribedByElements",
+    "ariaDescription",
+    "ariaDetailsElements",
+    "ariaDisabled",
+    "ariaErrorMessageElements",
+    "ariaExpanded",
+    "ariaFlowToElements",
+    "ariaHasPopup",
+    "ariaHidden",
+    "ariaInvalid",
+    "ariaKeyShortcuts",
+    "ariaLabel",
+    "ariaLabelledByElements",
+    "ariaLevel",
+    "ariaLive",
+    "ariaModal",
+    "ariaMultiLine",
+    "ariaMultiSelectable",
+    "ariaNotify",
+    "ariaOrientation",
+    "ariaOwnsElements",
+    "ariaPlaceholder",
+    "ariaPosInSet",
+    "ariaPressed",
+    "ariaReadOnly",
+    "ariaRelevant",
+    "ariaRequired",
+    "ariaRoleDescription",
+    "ariaRowCount",
+    "ariaRowIndex",
+    "ariaRowIndexText",
+    "ariaRowSpan",
+    "ariaSelected",
+    "ariaSetSize",
+    "ariaSort",
+    "ariaValueMax",
+    "ariaValueMin",
+    "ariaValueNow",
+    "ariaValueText",
+    "arrayBuffer",
+    "artist",
+    "artwork",
+    "as",
+    "asIntN",
+    "asUintN",
+    "ascent-override",
+    "ascentOverride",
+    "asin",
+    "asinh",
+    "aspectRatio",
+    "assert",
+    "assert_static",
+    "assign",
+    "assignedElements",
+    "assignedNodes",
+    "assignedSlot",
+    "async",
+    "asyncDispose",
+    "asyncIterator",
+    "at",
+    "atan",
+    "atan2",
+    "atanh",
+    "atob",
+    "attachInternals",
+    "attachShader",
+    "attachShadow",
+    "attachedElements",
+    "attack",
+    "attestationObject",
+    "attrChange",
+    "attrName",
+    "attributeName",
+    "attributeNamespace",
+    "attributeStyleMap",
+    "attributes",
+    "attribution",
+    "attributionSourceId",
+    "attributionSrc",
+    "audioBitrateMode",
+    "audioBitsPerSecond",
+    "audioSession",
+    "audioTracks",
+    "audioWorklet",
+    "audioend_event",
+    "audioprocess_event",
+    "audiostart_event",
+    "authenticatedSignedWrites",
+    "authentication",
+    "authenticatorAttachment",
+    "authenticatorData",
+    "authorization_removed_cross_origin",
+    "autoIncrement",
+    "autocapitalize",
+    "autocomplete",
+    "autocorrect",
+    "autofillValues",
+    "autofocus",
+    "autolocate",
+    "automationRate",
+    "autoplay",
+    "auxclick_event",
+    "availHeight",
+    "availLeft",
+    "availTop",
+    "availWidth",
+    "availability",
+    "availability_static",
+    "available",
+    "available_static",
+    "averageLatency",
+    "averagePool2d",
+    "ax",
+    "axes",
+    "axis",
+    "ay",
+    "azimuth",
+    "azimuthAngle",
+    "b",
+    "back",
+    "background",
+    "backgroundFetch",
+    "backgroundfetchabort_event",
+    "backgroundfetchclick_event",
+    "backgroundfetchfail_event",
+    "backgroundfetchsuccess_event",
+    "badInput",
+    "badge",
+    "baseFrequencyX",
+    "baseFrequencyY",
+    "baseLatency",
+    "baseLayer",
+    "basePalette",
+    "baseURI",
+    "baseVal",
+    "batchNormalization",
+    "batchUpdate",
+    "before",
+    "beforeHTML",
+    "beforeHTMLUnsafe",
+    "beforeinput_event",
+    "beforeinstallprompt_event",
+    "beforematch_event",
+    "beforeprint_event",
+    "beforescriptexecute_event",
+    "beforetoggle_event",
+    "beforeunload_event",
+    "beforexrselect_event",
+    "beginComputePass",
+    "beginElement",
+    "beginElementAt",
+    "beginEvent_event",
+    "beginOcclusionQuery",
+    "beginPath",
+    "beginQuery",
+    "beginQueryEXT",
+    "beginRenderPass",
+    "beginTransformFeedback",
+    "behavior",
+    "beta",
+    "bezierCurveTo",
+    "bgColor",
+    "bias",
+    "big",
+    "binaryType",
+    "bind",
+    "bindAttribLocation",
+    "bindBuffer",
+    "bindBufferBase",
+    "bindBufferRange",
+    "bindFramebuffer",
+    "bindRenderbuffer",
+    "bindSampler",
+    "bindTexture",
+    "bindTransformFeedback",
+    "bindVertexArray",
+    "bindVertexArrayOES",
+    "blendColor",
+    "blendEquation",
+    "blendEquationSeparate",
+    "blendEquationSeparateiOES",
+    "blendEquationiOES",
+    "blendFunc",
+    "blendFuncSeparate",
+    "blendFuncSeparateiOES",
+    "blendFunciOES",
+    "blendTextureSourceAlpha",
+    "blink",
+    "blitFramebuffer",
+    "blob",
+    "blob_data_support",
+    "block-size",
+    "blockSize",
+    "blockedURI",
+    "blockedURL",
+    "blocked_event",
+    "blocking",
+    "blockingDuration",
+    "blue",
+    "bluetooth",
+    "blur",
+    "blur_event",
+    "body",
+    "bodyUsed",
+    "bold",
+    "booleanValue",
+    "boost",
+    "border",
+    "borderBoxSize",
+    "bottom",
+    "bound",
+    "bound_static",
+    "boundary_event",
+    "boundingBoxCenter",
+    "boundingBoxExtents",
+    "boundingClientRect",
+    "boundingRect",
+    "boundsGeometry",
+    "brands",
+    "broadcast",
+    "browsingTopics",
+    "btoa",
+    "bubbles",
+    "buffer",
+    "bufferData",
+    "bufferSize",
+    "bufferSubData",
+    "buffered",
+    "bufferedAmount",
+    "bufferedAmountLowThreshold",
+    "bufferedamountlow_event",
+    "bufferedchange_event",
+    "build",
+    "buildID",
+    "builtin_element_support",
+    "button",
+    "buttons",
+    "byobRequest",
+    "byob_readers",
+    "byteLength",
+    "byteOffset",
+    "bytes",
+    "bytesWritten",
+    "c",
+    "cache",
+    "caches",
+    "call",
+    "caller",
+    "camera",
+    "canConstructInDedicatedWorker",
+    "canConstructInDedicatedWorker_static",
+    "canGoBack",
+    "canGoForward",
+    "canInsertDTMF",
+    "canIntercept",
+    "canLoadAdAuctionFencedFrame",
+    "canMakePayment",
+    "canParse",
+    "canParse_static",
+    "canPlayEffectType",
+    "canPlayType",
+    "canPresent",
+    "canShare",
+    "canTrickleIceCandidates",
+    "cancel",
+    "cancelAndHoldAtTime",
+    "cancelAnimationFrame",
+    "cancelBubble",
+    "cancelIdleCallback",
+    "cancelScheduledValues",
+    "cancelVideoFrameCallback",
+    "cancelWatchAvailability",
+    "cancel_event",
+    "cancelable",
+    "candidate",
+    "canmakepayment_event",
+    "canonicalUUID",
+    "canonicalUUID_static",
+    "canplay_event",
+    "canplaythrough_event",
+    "canvas",
+    "cap",
+    "cap_static",
+    "capabilities",
+    "caption",
+    "capture",
+    "captureEvents",
+    "captureStackTrace",
+    "captureStream",
+    "capturehandlechange_event",
+    "caretPositionFromPoint",
+    "caretRangeFromPoint",
+    "cast",
+    "catch",
+    "cause",
+    "cbrt",
+    "ceil",
+    "cellIndex",
+    "cellPadding",
+    "cellSpacing",
+    "cells",
+    "centralAngle",
+    "centralHorizontalAngle",
+    "ch",
+    "chOff",
+    "ch_static",
+    "changeId",
+    "changePaymentMethod",
+    "changeShippingAddress",
+    "changeShippingOption",
+    "changeType",
+    "change_event",
+    "changed",
+    "changedTouches",
+    "channel",
+    "channelCount",
+    "channelCountMode",
+    "channelInterpretation",
+    "chapterInfo",
+    "charAt",
+    "charCode",
+    "charCodeAt",
+    "charIndex",
+    "charLength",
+    "characterBounds",
+    "characterBoundsRangeStart",
+    "characterSet",
+    "characterVariant",
+    "characterboundsupdate_event",
+    "characteristic",
+    "characteristicvaluechanged_event",
+    "charging",
+    "chargingTime",
+    "chargingchange_event",
+    "chargingtimechange_event",
+    "charset",
+    "check",
+    "checkEnclosure",
+    "checkFramebufferStatus",
+    "checkIntersection",
+    "checkValidity",
+    "checkVisibility",
+    "checked",
+    "childElementCount",
+    "childNodes",
+    "children",
+    "chunks",
+    "cite",
+    "city",
+    "claim",
+    "claimInterface",
+    "claimed",
+    "clamp",
+    "classList",
+    "className",
+    "clear",
+    "clearAppBadge",
+    "clearBuffer",
+    "clearBufferfi",
+    "clearBufferfv",
+    "clearBufferiv",
+    "clearBufferuiv",
+    "clearColor",
+    "clearData",
+    "clearDepth",
+    "clearHalt",
+    "clearImmediate",
+    "clearInterval",
+    "clearLiveSeekableRange",
+    "clearMarks",
+    "clearMeasures",
+    "clearOriginJoinedAdInterestGroups",
+    "clearOverride",
+    "clearParameters",
+    "clearRect",
+    "clearResourceTimings",
+    "clearStencil",
+    "clearTimeout",
+    "clearWatch",
+    "clear_static",
+    "click",
+    "click_event",
+    "clientDataJSON",
+    "clientHeight",
+    "clientId",
+    "clientInformation",
+    "clientLeft",
+    "clientTop",
+    "clientWaitSync",
+    "clientWidth",
+    "clientX",
+    "clientY",
+    "clients",
+    "clip",
+    "clipPathUnits",
+    "clipboard",
+    "clipboardData",
+    "clipboardchange_event",
+    "clonable",
+    "clone",
+    "cloneContents",
+    "cloneNode",
+    "cloneRange",
+    "close",
+    "closeCode",
+    "closePath",
+    "close_event",
+    "close_static",
+    "closed",
+    "closedBy",
+    "closest",
+    "closing_event",
+    "clz32",
+    "cm",
+    "cm_static",
+    "cmp",
+    "code",
+    "codeBase",
+    "codePointAt",
+    "codeType",
+    "code_param_enforces_trusted_types",
+    "codedHeight",
+    "codedRect",
+    "codedWidth",
+    "colSpan",
+    "collapse",
+    "collapseToEnd",
+    "collapseToStart",
+    "collapsed",
+    "collections",
+    "colno",
+    "color",
+    "colorDepth",
+    "colorMask",
+    "colorMaskiOES",
+    "colorScheme",
+    "colorSpace",
+    "colorTexture",
+    "colorTextureHeight",
+    "colorTextureWidth",
+    "cols",
+    "columnNumber",
+    "command",
+    "commandForElement",
+    "command_event",
+    "commit",
+    "commitStyles",
+    "committed",
+    "commonAncestorContainer",
+    "compact",
+    "compareBoundaryPoints",
+    "compareDocumentPosition",
+    "compareExchange",
+    "compareNode",
+    "comparePoint",
+    "compatMode",
+    "compile",
+    "compileShader",
+    "complete",
+    "complete_event",
+    "completed",
+    "component",
+    "composed",
+    "composedPath",
+    "composite",
+    "compositionend_event",
+    "compositionstart_event",
+    "compositionupdate_event",
+    "compressedTexImage2D",
+    "compressedTexImage3D",
+    "compressedTexSubImage2D",
+    "compressedTexSubImage3D",
+    "computedStyleMap",
+    "concat",
+    "conditionText",
+    "conditions",
+    "coneInnerAngle",
+    "coneOuterAngle",
+    "coneOuterGain",
+    "confidence",
+    "config",
+    "configURL",
+    "configuration",
+    "configurationName",
+    "configurationValue",
+    "configurationchange_event",
+    "configurations",
+    "configure",
+    "confirm",
+    "congestionControl",
+    "connect",
+    "connectEnd",
+    "connectStart",
+    "connect_event",
+    "connected",
+    "connecting_event",
+    "connection",
+    "connectionList",
+    "connectionState",
+    "connectionavailable_event",
+    "connections",
+    "connectionstatechange_event",
+    "console",
+    "consolidate",
+    "constant",
+    "constraint",
+    "construct",
+    "constructor",
+    "constructor_without_parameters",
+    "contacts",
+    "containerId",
+    "containerName",
+    "containerQuery",
+    "containerSrc",
+    "containerTiming",
+    "containerTimingIgnore",
+    "containerType",
+    "contains",
+    "containsNode",
+    "content",
+    "contentBoxSize",
+    "contentDocument",
+    "contentEditable",
+    "contentEncoding",
+    "contentHint",
+    "contentRect",
+    "contentType",
+    "contentWindow",
+    "contentdelete_event",
+    "contentvisibilityautostatechange_event",
+    "context",
+    "contextUsage",
+    "contextWindow",
+    "contextlost_event",
+    "contextmenu_event",
+    "contextoverflow_event",
+    "contextrestored_event",
+    "continue",
+    "continuePrimaryKey",
+    "continuous",
+    "contrast",
+    "control",
+    "controlTransferIn",
+    "controlTransferOut",
+    "controller",
+    "controllerchange_event",
+    "controls",
+    "controlsList",
+    "conv2d",
+    "convTranspose2d",
+    "convertToBlob",
+    "convertToSpecifiedUnits",
+    "cookie",
+    "cookieEnabled",
+    "cookieStore",
+    "cookiechange_event",
+    "cookies",
+    "coords",
+    "copyBufferSubData",
+    "copyBufferToBuffer",
+    "copyBufferToTexture",
+    "copyExternalImageToTexture",
+    "copyFromChannel",
+    "copyTexImage2D",
+    "copyTexSubImage2D",
+    "copyTexSubImage3D",
+    "copyTextureToBuffer",
+    "copyTextureToTexture",
+    "copyTo",
+    "copyToChannel",
+    "copyWithin",
+    "copy_event",
+    "corruptedVideoFrames",
+    "cos",
+    "cosh",
+    "count",
+    "countReset",
+    "countReset_static",
+    "count_static",
+    "country",
+    "cpuPerformance",
+    "cqb",
+    "cqb_static",
+    "cqh",
+    "cqh_static",
+    "cqi",
+    "cqi_static",
+    "cqmax",
+    "cqmax_static",
+    "cqmin",
+    "cqmin_static",
+    "cqw",
+    "cqw_static",
+    "crashReport",
+    "create",
+    "createAnalyser",
+    "createAnchor",
+    "createAnswer",
+    "createAttribute",
+    "createAttributeNS",
+    "createAuctionNonce",
+    "createBidirectionalStream",
+    "createBindGroup",
+    "createBindGroupLayout",
+    "createBiquadFilter",
+    "createBuffer",
+    "createBufferSource",
+    "createCDATASection",
+    "createCaption",
+    "createChannelMerger",
+    "createChannelSplitter",
+    "createCommandEncoder",
+    "createComment",
+    "createComputePipeline",
+    "createComputePipelineAsync",
+    "createConicGradient",
+    "createConstantSource",
+    "createConstantTensor",
+    "createContext",
+    "createContextualFragment",
+    "createConvolver",
+    "createCubeLayer",
+    "createCylinderLayer",
+    "createDTMFSender",
+    "createDataChannel",
+    "createDelay",
+    "createDocument",
+    "createDocumentFragment",
+    "createDocumentType",
+    "createDynamicsCompressor",
+    "createElement",
+    "createElementNS",
+    "createEncodedStreams",
+    "createEquirectLayer",
+    "createEvent",
+    "createExpression",
+    "createFramebuffer",
+    "createGain",
+    "createHTML",
+    "createHTMLDocument",
+    "createIIRFilter",
+    "createImageBitmap",
+    "createImageData",
+    "createIndex",
+    "createLinearGradient",
+    "createMediaElementSource",
+    "createMediaKeys",
+    "createMediaStreamDestination",
+    "createMediaStreamSource",
+    "createMediaStreamTrackSource",
+    "createNSResolver",
+    "createNodeIterator",
+    "createObjectStore",
+    "createObjectURL",
+    "createObjectURL_static",
+    "createOffer",
+    "createOscillator",
+    "createPanner",
+    "createPattern",
+    "createPeriodicWave",
+    "createPipelineLayout",
+    "createPolicy",
+    "createProcessingInstruction",
+    "createProgram",
+    "createProjectionLayer",
+    "createQuadLayer",
+    "createQuery",
+    "createQueryEXT",
+    "createQuerySet",
+    "createRadialGradient",
+    "createRange",
+    "createReader",
+    "createRenderBundleEncoder",
+    "createRenderPipeline",
+    "createRenderPipelineAsync",
+    "createRenderbuffer",
+    "createSVGAngle",
+    "createSVGLength",
+    "createSVGMatrix",
+    "createSVGNumber",
+    "createSVGPathSegArcAbs",
+    "createSVGPathSegArcRel",
+    "createSVGPathSegClosePath",
+    "createSVGPathSegCurvetoCubicAbs",
+    "createSVGPathSegCurvetoCubicRel",
+    "createSVGPathSegCurvetoCubicSmoothAbs",
+    "createSVGPathSegCurvetoCubicSmoothRel",
+    "createSVGPathSegCurvetoQuadraticAbs",
+    "createSVGPathSegCurvetoQuadraticRel",
+    "createSVGPathSegCurvetoQuadraticSmoothAbs",
+    "createSVGPathSegCurvetoQuadraticSmoothRel",
+    "createSVGPathSegLinetoAbs",
+    "createSVGPathSegLinetoHorizontalAbs",
+    "createSVGPathSegLinetoHorizontalRel",
+    "createSVGPathSegLinetoRel",
+    "createSVGPathSegLinetoVerticalAbs",
+    "createSVGPathSegLinetoVerticalRel",
+    "createSVGPathSegMovetoAbs",
+    "createSVGPathSegMovetoRel",
+    "createSVGPoint",
+    "createSVGRect",
+    "createSVGTransform",
+    "createSVGTransformFromMatrix",
+    "createSampler",
+    "createScript",
+    "createScriptProcessor",
+    "createScriptURL",
+    "createSendGroup",
+    "createSession",
+    "createShader",
+    "createShaderModule",
+    "createStereoPanner",
+    "createSyncAccessHandle",
+    "createTBody",
+    "createTFoot",
+    "createTHead",
+    "createTensor",
+    "createTextNode",
+    "createTexture",
+    "createTouch",
+    "createTouchList",
+    "createTransformFeedback",
+    "createTreeWalker",
+    "createUnidirectionalStream",
+    "createVertexArray",
+    "createVertexArrayOES",
+    "createView",
+    "createWaveShaper",
+    "createWorklet",
+    "createWritable",
+    "createWriter",
+    "create_static",
+    "creationTime",
+    "credentialless",
+    "credentials",
+    "criticalCHRestart",
+    "cropTo",
+    "crossOrigin",
+    "crossOriginIsolated",
+    "crypto",
+    "csp",
+    "cssFloat",
+    "cssRules",
+    "cssText",
+    "cssValueType",
+    "ctrlKey",
+    "cuechange_event",
+    "cues",
+    "cullFace",
+    "cumulativeSum",
+    "currentCSSZoom",
+    "currentDirection",
+    "currentEntry",
+    "currentFrame",
+    "currentLocalDescription",
+    "currentNode",
+    "currentRect",
+    "currentRemoteDescription",
+    "currentScale",
+    "currentScreen",
+    "currentScript",
+    "currentSrc",
+    "currentTarget",
+    "currentTime",
+    "currentTranslate",
+    "currentView",
+    "currententrychange_event",
+    "currentscreenchange_event",
+    "curve",
+    "customElementRegistry",
+    "customElements",
+    "customError",
+    "cut_event",
+    "cx",
+    "cy",
+    "d",
+    "data",
+    "dataTransfer",
+    "dataType",
+    "dataavailable_event",
+    "databases",
+    "datachannel_event",
+    "datagrams",
+    "dataset",
+    "dateTime",
+    "db",
+    "dblclick_event",
+    "debug",
+    "debug_static",
+    "decapsulateBits",
+    "decapsulateKey",
+    "declare",
+    "decode",
+    "decodeAudioData",
+    "decodeQueueSize",
+    "decodeURI",
+    "decodeURIComponent",
+    "decodedBodySize",
+    "decoding",
+    "decodingInfo",
+    "decreaseZoomLevel",
+    "decrypt",
+    "default",
+    "defaultChecked",
+    "defaultMuted",
+    "defaultPlaybackRate",
+    "defaultPolicy",
+    "defaultPrevented",
+    "defaultRequest",
+    "defaultSelected",
+    "defaultValue",
+    "defaultView",
+    "defer",
+    "define",
+    "defineGetter",
+    "defineProperties",
+    "defineProperty",
+    "defineSetter",
+    "deg",
+    "deg_static",
+    "delay",
+    "delayTime",
+    "delegatesFocus",
+    "delete",
+    "deleteBuffer",
+    "deleteCaption",
+    "deleteCell",
+    "deleteContents",
+    "deleteData",
+    "deleteDatabase",
+    "deleteFramebuffer",
+    "deleteFromDocument",
+    "deleteIndex",
+    "deleteMedium",
+    "deleteObjectStore",
+    "deletePersistentAnchor",
+    "deleteProgram",
+    "deleteProperty",
+    "deleteQuery",
+    "deleteQueryEXT",
+    "deleteRenderbuffer",
+    "deleteRow",
+    "deleteRule",
+    "deleteSampler",
+    "deleteShader",
+    "deleteSync",
+    "deleteTFoot",
+    "deleteTHead",
+    "deleteTexture",
+    "deleteTransformFeedback",
+    "deleteVertexArray",
+    "deleteVertexArrayOES",
+    "deleted",
+    "deliveredFrames",
+    "deliveryType",
+    "deltaMode",
+    "deltaPose",
+    "deltaX",
+    "deltaY",
+    "deltaZ",
+    "dependentLocality",
+    "deprecatedReplaceInURN",
+    "deprecatedRunAdAuctionEnforcesKAnonymity",
+    "depthActive",
+    "depthDataFormat",
+    "depthFar",
+    "depthFunc",
+    "depthMask",
+    "depthNear",
+    "depthOrArrayLayers",
+    "depthRange",
+    "depthStencilTexture",
+    "depthStencilTextureHeight",
+    "depthStencilTextureWidth",
+    "depthType",
+    "depthUsage",
+    "dequantizeLinear",
+    "dequeue_event",
+    "deref",
+    "deriveBits",
+    "deriveKey",
+    "descent-override",
+    "descentOverride",
+    "description",
+    "deselectAll",
+    "designMode",
+    "desiredSize",
+    "destination",
+    "destroy",
+    "detach",
+    "detachShader",
+    "detached",
+    "detail",
+    "details",
+    "detect",
+    "detectedMeshes",
+    "detectedPlanes",
+    "detune",
+    "device",
+    "deviceClass",
+    "deviceId",
+    "deviceMemory",
+    "devicePixelContentBoxSize",
+    "devicePixelRatio",
+    "devicePosture",
+    "deviceProtocol",
+    "deviceSubclass",
+    "deviceVersionMajor",
+    "deviceVersionMinor",
+    "deviceVersionSubminor",
+    "devicechange_event",
+    "devicemotion_event",
+    "deviceorientation_event",
+    "deviceorientationabsolute_event",
+    "didTimeout",
+    "difference",
+    "diffuseConstant",
+    "digest",
+    "dimension",
+    "dir",
+    "dirName",
+    "dir_static",
+    "direction",
+    "dirxml",
+    "dirxml_static",
+    "disable",
+    "disablePictureInPicture",
+    "disableRemotePlayback",
+    "disableVertexAttribArray",
+    "disabled",
+    "disableiOES",
+    "discardedFrames",
+    "dischargingTime",
+    "dischargingtimechange_event",
+    "disconnect",
+    "disconnect_event",
+    "disconnect_static",
+    "dispatch",
+    "dispatchEvent",
+    "dispatchWorkgroups",
+    "dispatchWorkgroupsIndirect",
+    "display",
+    "displayHeight",
+    "displayId",
+    "displayName",
+    "displayWidth",
+    "dispose",
+    "disposeAsync",
+    "dispose_event",
+    "disposed",
+    "disposition",
+    "distanceModel",
+    "div",
+    "divisor",
+    "doNotTrack",
+    "doc_html",
+    "doc_xml",
+    "doctype",
+    "document",
+    "documentElement",
+    "documentPictureInPicture",
+    "documentURI",
+    "documentURL",
+    "domComplete",
+    "domContentLoadedEventEnd",
+    "domContentLoadedEventStart",
+    "domInteractive",
+    "domLoading",
+    "domOverlayState",
+    "domain",
+    "domainLookupEnd",
+    "domainLookupStart",
+    "dotAll",
+    "downDegrees",
+    "downlink",
+    "downlinkMax",
+    "download",
+    "downloadRequest",
+    "downloadTotal",
+    "downloaded",
+    "downloadprogress_event",
+    "dpcm",
+    "dpcm_static",
+    "dpi",
+    "dpi_static",
+    "dppx",
+    "dppx_static",
+    "drag_event",
+    "dragend_event",
+    "dragenter_event",
+    "dragexit_event",
+    "draggable",
+    "dragleave_event",
+    "dragover_event",
+    "dragstart_event",
+    "draining",
+    "draw",
+    "drawArrays",
+    "drawArraysInstanced",
+    "drawArraysInstancedANGLE",
+    "drawBuffers",
+    "drawBuffersWEBGL",
+    "drawElements",
+    "drawElementsInstanced",
+    "drawElementsInstancedANGLE",
+    "drawFocusIfNeeded",
+    "drawImage",
+    "drawIndexed",
+    "drawIndexedIndirect",
+    "drawIndirect",
+    "drawRangeElements",
+    "drawingBufferColorSpace",
+    "drawingBufferFormat",
+    "drawingBufferHeight",
+    "drawingBufferStorage",
+    "drawingBufferWidth",
+    "drop",
+    "dropEffect",
+    "drop_event",
+    "droppedVideoFrames",
+    "dtmf",
+    "dump",
+    "duplex",
+    "durability",
+    "duration",
+    "durationchange_event",
+    "dvb",
+    "dvb_static",
+    "dvh",
+    "dvh_static",
+    "dvi",
+    "dvi_static",
+    "dvmax",
+    "dvmax_static",
+    "dvmin",
+    "dvmin_static",
+    "dvw",
+    "dvw_static",
+    "dx",
+    "dy",
+    "e",
+    "ecmascript_modules",
+    "edgeMode",
+    "editContext",
+    "effect",
+    "effectAllowed",
+    "effectiveDirective",
+    "effectiveType",
+    "effects",
+    "elapsedTime",
+    "element",
+    "elementFromPoint",
+    "elementTiming",
+    "elements",
+    "elementsFromPoint",
+    "elevation",
+    "ellipse",
+    "elu",
+    "em",
+    "emHeightAscent",
+    "emHeightDescent",
+    "em_static",
+    "embeds",
+    "emptied_event",
+    "empty",
+    "emptyHTML",
+    "emptyScript",
+    "emulatedPosition",
+    "enable",
+    "enableDelegations",
+    "enableStyleSheetsForSet",
+    "enableVertexAttribArray",
+    "enabled",
+    "enabledFeatures",
+    "enabledPlugin",
+    "enableiOES",
+    "encapsulateBits",
+    "encapsulateKey",
+    "encode",
+    "encodeInto",
+    "encodeQueueSize",
+    "encodeURI",
+    "encodeURIComponent",
+    "encodedBodySize",
+    "encoding",
+    "encodingInfo",
+    "encrypt",
+    "encrypted_event",
+    "enctype",
+    "end",
+    "endContainer",
+    "endElement",
+    "endElementAt",
+    "endEvent_event",
+    "endOcclusionQuery",
+    "endOfStream",
+    "endOffset",
+    "endQuery",
+    "endQueryEXT",
+    "endTime",
+    "endTransformFeedback",
+    "end_event",
+    "ended",
+    "ended_event",
+    "endpoint",
+    "endpointNumber",
+    "endpoints",
+    "endsWith",
+    "endstreaming_event",
+    "enqueue",
+    "enterKeyHint",
+    "enter_event",
+    "enterpictureinpicture_event",
+    "entityTransform",
+    "entries",
+    "entry",
+    "entryType",
+    "enumerateDevices",
+    "environmentBlendMode",
+    "environmentMap",
+    "environmentMapReady",
+    "equal",
+    "equals",
+    "erf",
+    "error",
+    "errorCode",
+    "errorDetail",
+    "errorText",
+    "error_event",
+    "error_static",
+    "errors",
+    "escape",
+    "escape_static",
+    "estimate",
+    "eval",
+    "evaluate",
+    "event",
+    "eventCounts",
+    "eventPhase",
+    "every",
+    "ex",
+    "ex_static",
+    "exception",
+    "exception_static",
+    "exchange",
+    "exec",
+    "execCommand",
+    "executeBundles",
+    "executionStart",
+    "exitFullscreen",
+    "exitPictureInPicture",
+    "exitPointerLock",
+    "exitPresent",
+    "exit_event",
+    "exp",
+    "expand",
+    "expectedContextLanguages",
+    "expectedImprovement",
+    "expectedInputLanguages",
+    "expiration",
+    "expirationTime",
+    "expires",
+    "explicitOriginalTarget",
+    "expm1",
+    "exponent",
+    "exponentialRampToValueAtTime",
+    "exportKey",
+    "exportKeyingMaterial",
+    "extend",
+    "extension_linear_indexing",
+    "extension_packed_4x8_integer_dot_product",
+    "extension_pointer_composite_access",
+    "extension_readonly_and_readwrite_storage_textures",
+    "extension_subgroup_id",
+    "extension_subgroup_uniformity",
+    "extension_texture_and_sampler_let",
+    "extension_uniform_buffer_standard_layout",
+    "extension_unrestricted_pointer_parameters",
+    "extensions",
+    "external",
+    "extractContents",
+    "extractable",
+    "eye",
+    "f",
+    "f16round",
+    "face",
+    "failureReason",
+    "fallback",
+    "family",
+    "fastSeek",
+    "fatal",
+    "featurePolicy",
+    "featureSettings",
+    "feature_bgra8unorm-storage",
+    "feature_clip-distances",
+    "feature_core-features-and-limits",
+    "feature_depth-clip-control",
+    "feature_depth32float-stencil8",
+    "feature_dual-source-blending",
+    "feature_float32-blendable",
+    "feature_float32-filterable",
+    "feature_indirect-first-instance",
+    "feature_primitive-index",
+    "feature_rg11b10ufloat-renderable",
+    "feature_shader-f16",
+    "feature_subgroups",
+    "feature_texture-component-swizzle",
+    "feature_texture-compression-astc",
+    "feature_texture-compression-astc-sliced-3d",
+    "feature_texture-compression-bc",
+    "feature_texture-compression-bc-sliced-3d",
+    "feature_texture-compression-etc2",
+    "feature_texture-formats-tier1",
+    "feature_texture-formats-tier2",
+    "feature_timestamp-query",
+    "features",
+    "fence",
+    "fenceSync",
+    "fetch",
+    "fetchLater",
+    "fetchPriority",
+    "fetchStart",
+    "fetch_event",
+    "fftSize",
+    "fgColor",
+    "fieldOfView",
+    "file",
+    "fileName",
+    "filename",
+    "files",
+    "filesystem",
+    "fill",
+    "fillJointRadii",
+    "fillPoses",
+    "fillRect",
+    "fillStyle",
+    "fillText",
+    "filter",
+    "filterUnits",
+    "finalResponseHeadersStart",
+    "finally",
+    "find",
+    "findIndex",
+    "findLast",
+    "findLastIndex",
+    "findRule",
+    "finish",
+    "finish_event",
+    "finished",
+    "firesTouchEvents",
+    "first",
+    "first-contentful-paint",
+    "first-paint",
+    "firstChild",
+    "firstElementChild",
+    "firstInterimResponseStart",
+    "firstRenderTime",
+    "firstUIEventTimestamp",
+    "fixed",
+    "fixedFoveation",
+    "flags",
+    "flat",
+    "flatMap",
+    "flip",
+    "flipX",
+    "flipY",
+    "floor",
+    "flush",
+    "focus",
+    "focusNode",
+    "focusOffset",
+    "focus_event",
+    "focused",
+    "focusin_event",
+    "focusout_event",
+    "font",
+    "font-display",
+    "font-family",
+    "font-feature-settings",
+    "font-language-override",
+    "font-stretch",
+    "font-style",
+    "font-variation-settings",
+    "font-weight",
+    "font-width",
+    "fontBoundingBoxAscent",
+    "fontBoundingBoxDescent",
+    "fontDisplay",
+    "fontFamily",
+    "fontFeatureSettings",
+    "fontKerning",
+    "fontLanguageOverride",
+    "fontStretch",
+    "fontStyle",
+    "fontVariantCaps",
+    "fontVariationSettings",
+    "fontWeight",
+    "fontWidth",
+    "fontcolor",
+    "fontfaces",
+    "fonts",
+    "fontsize",
+    "for",
+    "forEach",
+    "force",
+    "forceMonoPresentation",
+    "forceRedraw",
+    "forcedStyleAndLayoutDuration",
+    "forget",
+    "form",
+    "formAction",
+    "formData",
+    "formEnctype",
+    "formMethod",
+    "formNoValidate",
+    "formTarget",
+    "format",
+    "formdata_event",
+    "forms",
+    "forward",
+    "forwardWheel",
+    "forwardX",
+    "forwardY",
+    "forwardZ",
+    "foundation",
+    "foveateBoundTexture",
+    "fr",
+    "fr_static",
+    "fragmentDirective",
+    "frame",
+    "frameBorder",
+    "frameCount",
+    "frameElement",
+    "frameRate",
+    "frameType",
+    "framebuffer",
+    "framebufferHeight",
+    "framebufferRenderbuffer",
+    "framebufferTexture2D",
+    "framebufferTextureLayer",
+    "framebufferTextureMultiviewOVR",
+    "framebufferWidth",
+    "frames",
+    "freeze",
+    "freeze_event",
+    "frequency",
+    "frequencyBinCount",
+    "from",
+    "fromAsync",
+    "fromBase64",
+    "fromCharCode",
+    "fromCodePoint",
+    "fromElement",
+    "fromElement_static",
+    "fromEntries",
+    "fromFloat32Array",
+    "fromFloat32Array_static",
+    "fromFloat64Array",
+    "fromFloat64Array_static",
+    "fromHex",
+    "fromMatrix",
+    "fromMatrix_static",
+    "fromPoint",
+    "fromPoint_static",
+    "fromQuad",
+    "fromQuad_static",
+    "fromRect",
+    "fromRect_static",
+    "from_static",
+    "frontFace",
+    "fround",
+    "fullName",
+    "fullPath",
+    "fullRange",
+    "fullScreen",
+    "fullscreen",
+    "fullscreenElement",
+    "fullscreenEnabled",
+    "fullscreenchange_event",
+    "fullscreenerror_event",
+    "fx",
+    "fy",
+    "gain",
+    "gamepad",
+    "gamepadconnected_event",
+    "gamepaddisconnected_event",
+    "gamma",
+    "gather",
+    "gatherElements",
+    "gatherND",
+    "gatheringState",
+    "gatheringstatechange_event",
+    "gatt",
+    "gattserverdisconnected_event",
+    "gelu",
+    "gemm",
+    "generateCertificate",
+    "generateCertificate_static",
+    "generateKey",
+    "generateKeyFrame",
+    "generateMipmap",
+    "generateRequest",
+    "geolocation",
+    "geometrychange_event",
+    "gesturechange_event",
+    "gestureend_event",
+    "gesturestart_event",
+    "get",
+    "getActiveAttrib",
+    "getActiveUniform",
+    "getActiveUniformBlockName",
+    "getActiveUniformBlockParameter",
+    "getActiveUniforms",
+    "getAll",
+    "getAllKeys",
+    "getAllRecords",
+    "getAllResponseHeaders",
+    "getAllowlistForFeature",
+    "getAnimations",
+    "getAsFile",
+    "getAsFileSystemHandle",
+    "getAsString",
+    "getAttachedShaders",
+    "getAttribLocation",
+    "getAttribute",
+    "getAttributeNS",
+    "getAttributeNames",
+    "getAttributeNode",
+    "getAttributeNodeNS",
+    "getAttributeType",
+    "getAudioTracks",
+    "getAuthenticatorData",
+    "getAutoplayPolicy",
+    "getAvailability",
+    "getBBox",
+    "getBattery",
+    "getBigInt64",
+    "getBigUint64",
+    "getBindGroupLayout",
+    "getBoundingClientRect",
+    "getBounds",
+    "getBoxQuads",
+    "getBufferParameter",
+    "getBufferSubData",
+    "getByteFrequencyData",
+    "getByteTimeDomainData",
+    "getCTM",
+    "getCameraImage",
+    "getCanonicalLocales",
+    "getCapabilities",
+    "getCapabilities_static",
+    "getCaptureHandle",
+    "getChannelData",
+    "getCharNumAtPosition",
+    "getCharacteristic",
+    "getCharacteristic_static",
+    "getCharacteristics",
+    "getClientCapabilities",
+    "getClientCapabilities_static",
+    "getClientExtensionResults",
+    "getClientRect",
+    "getClientRects",
+    "getCoalescedEvents",
+    "getCompilationInfo",
+    "getComposedRanges",
+    "getComputedStyle",
+    "getComputedTextLength",
+    "getComputedTiming",
+    "getConfiguration",
+    "getConstraints",
+    "getContext",
+    "getContextAttributes",
+    "getContributingSources",
+    "getCounterValue",
+    "getCueAsHTML",
+    "getCueById",
+    "getCurrentPosition",
+    "getCurrentTexture",
+    "getCurrentTime",
+    "getData",
+    "getDate",
+    "getDay",
+    "getDefaultComputedStyle",
+    "getDepthInMeters",
+    "getDepthInformation",
+    "getDescriptor",
+    "getDescriptor_static",
+    "getDescriptors",
+    "getDevices",
+    "getDigitalGoodsService",
+    "getDirectory",
+    "getDirectoryHandle",
+    "getDisplayMedia",
+    "getElementById",
+    "getElementsByClassName",
+    "getElementsByName",
+    "getElementsByTagName",
+    "getElementsByTagNameNS",
+    "getEnclosureList",
+    "getEndPositionOfChar",
+    "getEntries",
+    "getEntriesByName",
+    "getEntriesByType",
+    "getError",
+    "getExtension",
+    "getExtentOfChar",
+    "getEyeParameters",
+    "getFile",
+    "getFileHandle",
+    "getFiles",
+    "getFilesAndDirectories",
+    "getFingerprints",
+    "getFloat16",
+    "getFloat32",
+    "getFloat64",
+    "getFloatFrequencyData",
+    "getFloatTimeDomainData",
+    "getFloatValue",
+    "getFragDataLocation",
+    "getFrameData",
+    "getFramebufferAttachmentParameter",
+    "getFrequencyResponse",
+    "getFullYear",
+    "getGamepads",
+    "getHTML",
+    "getHeaderExtensionsToNegotiate",
+    "getHighEntropyValues",
+    "getHitTestResults",
+    "getHitTestResultsForTransientInput",
+    "getHours",
+    "getIdentityAssertion",
+    "getIds",
+    "getImageData",
+    "getImmediatePose",
+    "getImmediateState",
+    "getIndexedParameter",
+    "getInfo",
+    "getInstalledRelatedApps",
+    "getInt16",
+    "getInt32",
+    "getInt8",
+    "getInterestGroupAdAuctionData",
+    "getInternalformatParameter",
+    "getIntersectionList",
+    "getItem",
+    "getJointPose",
+    "getKey",
+    "getKeyframes",
+    "getLargestInteractionContentfulPaint",
+    "getLayers",
+    "getLayoutMap",
+    "getLightEstimate",
+    "getLineDash",
+    "getLocalCandidates",
+    "getLocalParameters",
+    "getLocalStreams",
+    "getManagedConfiguration",
+    "getMappedRange",
+    "getMetadata",
+    "getMilliseconds",
+    "getMinutes",
+    "getModifierState",
+    "getMonth",
+    "getName",
+    "getNamedItem",
+    "getNamedItemNS",
+    "getNativeFramebufferScaleFactor",
+    "getNativeFramebufferScaleFactor_static",
+    "getNegotiatedHeaderExtensions",
+    "getNestedConfigs",
+    "getNotifications",
+    "getNumberOfChars",
+    "getOffsetReferenceSpace",
+    "getOrInsert",
+    "getOrInsertComputed",
+    "getOutputTimestamp",
+    "getOwnPropertyDescriptor",
+    "getOwnPropertyDescriptors",
+    "getOwnPropertyNames",
+    "getOwnPropertySymbols",
+    "getParameter",
+    "getParameters",
+    "getParent",
+    "getPathData",
+    "getPathSegAtLength",
+    "getPathSegmentAtLength",
+    "getPhotoCapabilities",
+    "getPhotoSettings",
+    "getPointAtLength",
+    "getPorts",
+    "getPose",
+    "getPredictedEvents",
+    "getPreferredCanvasFormat",
+    "getPrimaryService",
+    "getPrimaryServices",
+    "getProgramInfoLog",
+    "getProgramParameter",
+    "getProperties",
+    "getPropertyCSSValue",
+    "getPropertyPriority",
+    "getPropertyType",
+    "getPropertyValue",
+    "getPrototypeOf",
+    "getPublicKey",
+    "getPublicKeyAlgorithm",
+    "getQuery",
+    "getQueryEXT",
+    "getQueryObjectEXT",
+    "getQueryParameter",
+    "getRGBColorValue",
+    "getRandomValues",
+    "getRangeAt",
+    "getReader",
+    "getReceivers",
+    "getRectValue",
+    "getReflectionCubeMap",
+    "getRegistration",
+    "getRegistrations",
+    "getRemoteCandidates",
+    "getRemoteCertificates",
+    "getRemoteParameters",
+    "getRemoteStreams",
+    "getRenderbufferParameter",
+    "getResponseHeader",
+    "getRootNode",
+    "getRotationOfChar",
+    "getSVGDocument",
+    "getSamplerParameter",
+    "getScreenCTM",
+    "getScreenDetails",
+    "getSeconds",
+    "getSecurePaymentConfirmationCapabilities",
+    "getSecurePaymentConfirmationCapabilities_static",
+    "getSelectedCandidatePair",
+    "getSelection",
+    "getSenders",
+    "getService",
+    "getService_static",
+    "getSetCookie",
+    "getSettings",
+    "getShaderInfoLog",
+    "getShaderParameter",
+    "getShaderPrecisionFormat",
+    "getShaderSource",
+    "getSignals",
+    "getSimpleDuration",
+    "getSize",
+    "getStartDate",
+    "getStartPositionOfChar",
+    "getStartTime",
+    "getState",
+    "getStats",
+    "getStatusForPolicy",
+    "getStringValue",
+    "getSubImage",
+    "getSubStringLength",
+    "getSubscription",
+    "getSubscriptions",
+    "getSupportedConstraints",
+    "getSupportedExtensions",
+    "getSupportedFormats",
+    "getSupportedFormats_static",
+    "getSupportedProfiles",
+    "getSupportedZoomLevels",
+    "getSyncParameter",
+    "getSynchronizationSources",
+    "getTags",
+    "getTargetRanges",
+    "getTexParameter",
+    "getTextFormats",
+    "getTime",
+    "getTimezoneOffset",
+    "getTiming",
+    "getTitlebarAreaRect",
+    "getTotalLength",
+    "getTrackById",
+    "getTracks",
+    "getTransceivers",
+    "getTransform",
+    "getTransformFeedbackVarying",
+    "getTranslatedShaderSource",
+    "getTransports",
+    "getType",
+    "getUTCDate",
+    "getUTCDay",
+    "getUTCFullYear",
+    "getUTCHours",
+    "getUTCMilliseconds",
+    "getUTCMinutes",
+    "getUTCMonth",
+    "getUTCSeconds",
+    "getUint16",
+    "getUint32",
+    "getUint8",
+    "getUniform",
+    "getUniformBlockIndex",
+    "getUniformIndices",
+    "getUniformLocation",
+    "getUserInfo",
+    "getUserInfo_static",
+    "getUserMedia",
+    "getVRDisplays",
+    "getVertexAttrib",
+    "getVertexAttribOffset",
+    "getVideoPlaybackQuality",
+    "getVideoTracks",
+    "getViewSubImage",
+    "getViewerPose",
+    "getViewport",
+    "getVoices",
+    "getWriter",
+    "getYear",
+    "global",
+    "globalAlpha",
+    "globalCompositeOperation",
+    "globalPrivacyControl",
+    "globalThis",
+    "go",
+    "gotpointercapture_event",
+    "gpu",
+    "grabFrame",
+    "grad",
+    "grad_static",
+    "gradientTransform",
+    "gradientUnits",
+    "grammars",
+    "greater",
+    "greaterOrEqual",
+    "green",
+    "gripSpace",
+    "group",
+    "groupBy",
+    "groupCollapsed",
+    "groupCollapsed_static",
+    "groupEnd",
+    "groupEnd_static",
+    "groupId",
+    "group_static",
+    "grow",
+    "growable",
+    "gru",
+    "gruCell",
+    "hadRecentInput",
+    "hand",
+    "handedness",
+    "handle",
+    "handled",
+    "hangingBaseline",
+    "hapticActuators",
+    "hardSigmoid",
+    "hardSwish",
+    "hardwareConcurrency",
+    "has",
+    "hasAttribute",
+    "hasAttributeNS",
+    "hasAttributes",
+    "hasBeenActive",
+    "hasChildNodes",
+    "hasExternalDisplay",
+    "hasFeature",
+    "hasFocus",
+    "hasIndices",
+    "hasInstance",
+    "hasOrientation",
+    "hasOwn",
+    "hasOwnProperty",
+    "hasPermission",
+    "hasPointerCapture",
+    "hasPosition",
+    "hasPrivateToken",
+    "hasReading",
+    "hasRedemptionRecord",
+    "hasRegExpGroups",
+    "hasStorageAccess",
+    "hasUAVisualTransition",
+    "hasUnpartitionedCookieAccess",
+    "hash",
+    "hashChange",
+    "hashchange_event",
+    "head",
+    "headers",
+    "heading",
+    "headingOffset",
+    "headingReset",
+    "height",
+    "hid",
+    "hidden",
+    "hide",
+    "hidePopover",
+    "high",
+    "highWaterMark",
+    "highlights",
+    "highlightsFromPoint",
+    "highlights_static",
+    "hint",
+    "history",
+    "host",
+    "hostCandidate",
+    "hostname",
+    "href",
+    "hrefTranslate",
+    "hreflang",
+    "hspace",
+    "htmlFor",
+    "httpEquiv",
+    "httpRequestStatusCode",
+    "hypot",
+    "ic",
+    "ic_static",
+    "iceConnectionState",
+    "iceGatheringState",
+    "iceTransport",
+    "icecandidate_event",
+    "icecandidateerror_event",
+    "iceconnectionstatechange_event",
+    "icegatheringstatechange_event",
+    "icon",
+    "iconURL",
+    "id",
+    "identifier",
+    "identity",
+    "ideographicBaseline",
+    "idp",
+    "idpLoginUrl",
+    "ignoreBOM",
+    "ignoreCase",
+    "ignoreDepthValues",
+    "illuminance",
+    "image",
+    "imageIndex",
+    "imageSizes",
+    "imageSmoothingEnabled",
+    "imageSmoothingQuality",
+    "imageSrcset",
+    "images",
+    "implementation",
+    "importExternalTexture",
+    "importKey",
+    "importNode",
+    "importScripts",
+    "importStylesheet",
+    "imul",
+    "in",
+    "in1",
+    "in2",
+    "inBandMetadataTrackDispatchType",
+    "in_static",
+    "inactive_event",
+    "includes",
+    "incomingBidirectionalStreams",
+    "incomingHighWaterMark",
+    "incomingMaxAge",
+    "incomingMaxBufferedDatagrams",
+    "incomingUnidirectionalStreams",
+    "increaseZoomLevel",
+    "incremental",
+    "incumbent_settings_object_tracking",
+    "indeterminate",
+    "index",
+    "indexNames",
+    "indexOf",
+    "index_properties_not_consulting_prototype",
+    "indexedDB",
+    "indicate",
+    "indices",
+    "inert",
+    "info",
+    "info_static",
+    "inherits",
+    "initCompositionEvent",
+    "initCustomEvent",
+    "initData",
+    "initDataType",
+    "initEvent",
+    "initGestureEvent",
+    "initKeyboardEvent",
+    "initMessageEvent",
+    "initMouseEvent",
+    "initMutationEvent",
+    "initStorageEvent",
+    "initTextEvent",
+    "initTimeEvent",
+    "initUIEvent",
+    "initialPermissionStatus",
+    "initialValue",
+    "initialize",
+    "initiateRoomCapture",
+    "initiatorType",
+    "ink",
+    "inline-size",
+    "inlineSize",
+    "inlineVerticalFieldOfView",
+    "innerHTML",
+    "innerHeight",
+    "innerText",
+    "innerWidth",
+    "input",
+    "inputBuffer",
+    "inputMode",
+    "inputQuota",
+    "inputSource",
+    "inputSources",
+    "inputType",
+    "input_event",
+    "inputreport_event",
+    "inputs",
+    "inputsourceschange_event",
+    "insertAdjacentElement",
+    "insertAdjacentHTML",
+    "insertAdjacentText",
+    "insertBefore",
+    "insertCell",
+    "insertDTMF",
+    "insertData",
+    "insertDebugMarker",
+    "insertItemBefore",
+    "insertNode",
+    "insertRow",
+    "insertRule",
+    "inset",
+    "inset-block",
+    "inset-block-end",
+    "inset-block-start",
+    "inset-inline",
+    "inset-inline-end",
+    "inset-inline-start",
+    "insetBlock",
+    "insetBlockEnd",
+    "insetBlockStart",
+    "insetInline",
+    "insetInlineEnd",
+    "insetInlineStart",
+    "inspect",
+    "install",
+    "install_event",
+    "install_static",
+    "installing",
+    "installresult_event",
+    "instanceNormalization",
+    "integrity",
+    "interactionCount",
+    "interactionId",
+    "interactionMode",
+    "intercept",
+    "interestForElement",
+    "interestGroups",
+    "interest_event",
+    "interfaceClass",
+    "interfaceName",
+    "interfaceNumber",
+    "interfaceProtocol",
+    "interfaceSubclass",
+    "interfaces",
+    "interimResults",
+    "intersection",
+    "intersectionRatio",
+    "intersectionRect",
+    "intersectsNode",
+    "interval",
+    "invalidIteratorState",
+    "invalidReason",
+    "invalid_event",
+    "invalidateFramebuffer",
+    "invalidateSubFramebuffer",
+    "inverse",
+    "invertSelf",
+    "invoker",
+    "invokerType",
+    "is",
+    "is2D",
+    "isActive",
+    "isArray",
+    "isAutoLocale",
+    "isAutoSelected",
+    "isBuffer",
+    "isCollapsed",
+    "isComposing",
+    "isConcatSpreadable",
+    "isConditionalMediationAvailable",
+    "isConditionalMediationAvailable_static",
+    "isConfigSupported",
+    "isConfigSupported_static",
+    "isConnected",
+    "isContentEditable",
+    "isContextLost",
+    "isDefaultNamespace",
+    "isDirectory",
+    "isDisjointFrom",
+    "isEnabled",
+    "isEqualNode",
+    "isError",
+    "isExtended",
+    "isExtensible",
+    "isFallbackAdapter",
+    "isFile",
+    "isFinal",
+    "isFinite",
+    "isFirstPersonObserver",
+    "isFramebuffer",
+    "isFrozen",
+    "isHTML",
+    "isHistoryNavigation",
+    "isIdentity",
+    "isInfinite",
+    "isInputPending",
+    "isInteger",
+    "isInternal",
+    "isIntersecting",
+    "isLockFree",
+    "isMap",
+    "isNaN",
+    "isPointInFill",
+    "isPointInPath",
+    "isPointInRange",
+    "isPointInStroke",
+    "isPresenting",
+    "isPrimary",
+    "isProgram",
+    "isPrototypeOf",
+    "isQuery",
+    "isQueryEXT",
+    "isRawJSON",
+    "isReload",
+    "isReloadNavigation",
+    "isRenderbuffer",
+    "isSafeInteger",
+    "isSameEntry",
+    "isSameNode",
+    "isSameOrigin",
+    "isSameSite",
+    "isSampler",
+    "isScript",
+    "isScriptURL",
+    "isSealed",
+    "isSecureContext",
+    "isSessionSupported",
+    "isShader",
+    "isSubsetOf",
+    "isSupersetOf",
+    "isSync",
+    "isSystemKeyboardSupported",
+    "isTexture",
+    "isTransformFeedback",
+    "isTrusted",
+    "isTypeSupported",
+    "isTypeSupported_static",
+    "isUserVerifyingPlatformAuthenticatorAvailable",
+    "isUserVerifyingPlatformAuthenticatorAvailable_static",
+    "isValid",
+    "isVertexArray",
+    "isVertexArrayOES",
+    "isView",
+    "isVisible",
+    "isWellFormed",
+    "isochronousTransferIn",
+    "isochronousTransferOut",
+    "italics",
+    "item",
+    "items",
+    "iterable_in_constructor",
+    "iterateNext",
+    "iterate_combined_duplicates",
+    "iterate_lexicographically",
+    "iterationComposite",
+    "iterator",
+    "javaEnabled",
+    "jitterBufferTarget",
+    "join",
+    "joinAdInterestGroup",
+    "jointName",
+    "json",
+    "json_static",
+    "json_superset",
+    "justify-self",
+    "justifySelf",
+    "k1",
+    "k2",
+    "k3",
+    "k4",
+    "kHz",
+    "kHz_static",
+    "keepalive",
+    "kernelMatrix",
+    "kernelUnitLengthX",
+    "kernelUnitLengthY",
+    "key",
+    "keyCode",
+    "keyFor",
+    "keyIdentifier",
+    "keyPath",
+    "keyStatuses",
+    "keySystem",
+    "keyText",
+    "key_equality_for_zeros",
+    "keyboard",
+    "keydown_event",
+    "keypress_event",
+    "keys",
+    "keystatuseschange_event",
+    "keyup_event",
+    "kind",
+    "knee",
+    "knownSources",
+    "knownSources_static",
+    "l2Pool2d",
+    "label",
+    "labels",
+    "lang",
+    "language",
+    "languagechange_event",
+    "languages",
+    "largestContentfulPaint",
+    "last",
+    "lastChance",
+    "lastChangedTime",
+    "lastChild",
+    "lastElementChild",
+    "lastEventId",
+    "lastIndex",
+    "lastIndexOf",
+    "lastInputTime",
+    "lastMatch",
+    "lastModified",
+    "lastModifiedDate",
+    "lastPaintedElement",
+    "lastParen",
+    "lastStyleSheetSet",
+    "latency",
+    "latitude",
+    "launchQueue",
+    "layer",
+    "layerName",
+    "layerNormalization",
+    "layerX",
+    "layerY",
+    "layers",
+    "layout",
+    "leading_zero_strings_as_decimal",
+    "leakyRelu",
+    "leaveAdInterestGroup",
+    "leavepictureinpicture_event",
+    "left",
+    "leftContext",
+    "leftDegrees",
+    "leftProjectionMatrix",
+    "leftViewMatrix",
+    "length",
+    "lengthAdjust",
+    "lengthComputable",
+    "lesser",
+    "lesserOrEqual",
+    "letterSpacing",
+    "level",
+    "levelchange_event",
+    "lh",
+    "lh_static",
+    "limitingConeAngle",
+    "limits",
+    "line",
+    "line-gap-override",
+    "lineAlign",
+    "lineCap",
+    "lineDashOffset",
+    "lineGapOverride",
+    "lineJoin",
+    "lineNum",
+    "lineNumber",
+    "linePos",
+    "lineTo",
+    "lineWidth",
+    "linear",
+    "linearAcceleration",
+    "linearRampToValueAtTime",
+    "linearVelocity",
+    "lineno",
+    "lines",
+    "link",
+    "linkColor",
+    "linkProgram",
+    "links",
+    "list",
+    "listStyle",
+    "listener",
+    "load",
+    "loadEventEnd",
+    "loadEventStart",
+    "loadTime",
+    "load_event",
+    "loaded",
+    "loadeddata_event",
+    "loadedmetadata_event",
+    "loadend_event",
+    "loading",
+    "loading_event",
+    "loadingdone_event",
+    "loadingerror_event",
+    "loadstart_event",
+    "local",
+    "localDescription",
+    "localName",
+    "localService",
+    "localStorage",
+    "local_network_access",
+    "locale",
+    "localeCompare",
+    "location",
+    "location_event",
+    "locationbar",
+    "lock",
+    "lockOrientation",
+    "locked",
+    "locks",
+    "log",
+    "log10",
+    "log1p",
+    "log2",
+    "log_static",
+    "logicalAnd",
+    "logicalNot",
+    "logicalOr",
+    "logicalXor",
+    "login",
+    "longDesc",
+    "longitude",
+    "lookupGetter",
+    "lookupNamespaceURI",
+    "lookupPrefix",
+    "lookupSetter",
+    "loop",
+    "loopEnd",
+    "loopStart",
+    "loseContext",
+    "loseinterest_event",
+    "lost",
+    "lostpointercapture_event",
+    "low",
+    "lower",
+    "lowerBound",
+    "lowerBound_static",
+    "lowerOpen",
+    "lowerVerticalAngle",
+    "lowsrc",
+    "lstm",
+    "lstmCell",
+    "lvb",
+    "lvb_static",
+    "lvh",
+    "lvh_static",
+    "lvi",
+    "lvi_static",
+    "lvmax",
+    "lvmax_static",
+    "lvmin",
+    "lvmin_static",
+    "lvw",
+    "lvw_static",
+    "m11",
+    "m12",
+    "m13",
+    "m14",
+    "m21",
+    "m22",
+    "m23",
+    "m24",
+    "m31",
+    "m32",
+    "m33",
+    "m34",
+    "m41",
+    "m42",
+    "m43",
+    "m44",
+    "makeReadOnly",
+    "makeXRCompatible",
+    "managed",
+    "managedconfigurationchange_event",
+    "manifest",
+    "manifestId",
+    "manufacturer",
+    "manufacturerName",
+    "map",
+    "mapAsync",
+    "mapState",
+    "mapping",
+    "margin",
+    "margin-block",
+    "margin-block-end",
+    "margin-block-start",
+    "margin-bottom",
+    "margin-inline",
+    "margin-inline-end",
+    "margin-inline-start",
+    "margin-left",
+    "margin-right",
+    "margin-top",
+    "marginBlock",
+    "marginBlockEnd",
+    "marginBlockStart",
+    "marginBottom",
+    "marginHeight",
+    "marginInline",
+    "marginInlineEnd",
+    "marginInlineStart",
+    "marginLeft",
+    "marginRight",
+    "marginTop",
+    "marginWidth",
+    "mark",
+    "mark_event",
+    "markerHeight",
+    "markerUnits",
+    "markerWidth",
+    "maskContentUnits",
+    "maskUnits",
+    "match",
+    "matchAll",
+    "matchMedia",
+    "matchMedium",
+    "matches",
+    "matmul",
+    "matrix",
+    "matrixTransform",
+    "max",
+    "max-block-size",
+    "max-height",
+    "max-inline-size",
+    "max-width",
+    "maxActions",
+    "maxActions_static",
+    "maxAlternatives",
+    "maxBindGroups",
+    "maxBindGroupsPlusVertexBuffers",
+    "maxBindingsPerBindGroup",
+    "maxBlockSize",
+    "maxBufferSize",
+    "maxByteLength",
+    "maxChannelCount",
+    "maxChannels",
+    "maxColorAttachmentBytesPerSample",
+    "maxColorAttachments",
+    "maxComputeInvocationsPerWorkgroup",
+    "maxComputeWorkgroupSizeX",
+    "maxComputeWorkgroupSizeY",
+    "maxComputeWorkgroupSizeZ",
+    "maxComputeWorkgroupStorageSize",
+    "maxComputeWorkgroupsPerDimension",
+    "maxDatagramSize",
+    "maxDecibels",
+    "maxDistance",
+    "maxDynamicStorageBuffersPerPipelineLayout",
+    "maxDynamicUniformBuffersPerPipelineLayout",
+    "maxHeight",
+    "maxImmediateSize",
+    "maxInlineSize",
+    "maxInterStageShaderComponents",
+    "maxInterStageShaderVariables",
+    "maxLayers",
+    "maxLength",
+    "maxMessageSize",
+    "maxPacketLifeTime",
+    "maxPool2d",
+    "maxRenderLayers",
+    "maxRetransmits",
+    "maxSampledTexturesPerShaderStage",
+    "maxSamplersPerShaderStage",
+    "maxStorageBufferBindingSize",
+    "maxStorageBuffersInFragmentStage",
+    "maxStorageBuffersInVertexStage",
+    "maxStorageBuffersPerShaderStage",
+    "maxStorageTexturesInFragmentStage",
+    "maxStorageTexturesInVertexStage",
+    "maxStorageTexturesPerShaderStage",
+    "maxTextureArrayLayers",
+    "maxTextureDimension1D",
+    "maxTextureDimension2D",
+    "maxTextureDimension3D",
+    "maxTouchPoints",
+    "maxUniformBufferBindingSize",
+    "maxUniformBuffersPerShaderStage",
+    "maxValue",
+    "maxVertexAttributes",
+    "maxVertexBufferArrayStride",
+    "maxVertexBuffers",
+    "maxWidth",
+    "maximumFieldOfView",
+    "maximumLatency",
+    "measure",
+    "measureContextUsage",
+    "measureInputUsage",
+    "measureText",
+    "measureUserAgentSpecificMemory",
+    "media",
+    "mediaCapabilities",
+    "mediaDevices",
+    "mediaElement",
+    "mediaGroup",
+    "mediaKeys",
+    "mediaSession",
+    "mediaStream",
+    "mediaText",
+    "mediaType",
+    "meetOrSlice",
+    "memory",
+    "menubar",
+    "merchantvalidation_event",
+    "message",
+    "messageType",
+    "message_event",
+    "messageerror_event",
+    "messages",
+    "metaKey",
+    "metadata",
+    "method",
+    "methodData",
+    "methodDetails",
+    "methodName",
+    "mid",
+    "midimessage_event",
+    "mimeType",
+    "mimeTypes",
+    "min",
+    "min-block-size",
+    "min-height",
+    "min-inline-size",
+    "min-width",
+    "minBlockSize",
+    "minDecibels",
+    "minHeight",
+    "minInlineSize",
+    "minLength",
+    "minStorageBufferOffsetAlignment",
+    "minUniformBufferOffsetAlignment",
+    "minValue",
+    "minWidth",
+    "minimumFieldOfView",
+    "minimumLatency",
+    "mipLevelCount",
+    "mipLevels",
+    "miterLimit",
+    "ml",
+    "mm",
+    "mm_static",
+    "mobile",
+    "mode",
+    "modificationTime",
+    "modifiers",
+    "modify",
+    "momentum",
+    "motionVectorTexture",
+    "motionVectorTextureHeight",
+    "motionVectorTextureWidth",
+    "mousedown_event",
+    "mouseenter_event",
+    "mouseleave_event",
+    "mousemove_event",
+    "mouseout_event",
+    "mouseover_event",
+    "mouseup_event",
+    "mousewheel_event",
+    "move",
+    "moveBefore",
+    "moveBy",
+    "moveTo",
+    "movementX",
+    "movementY",
+    "mozAudioCaptured",
+    "mozCaptureStreamUntilEnded",
+    "mozCursor",
+    "mozDecodedFrames",
+    "mozFragmentEnd",
+    "mozFrameDelay",
+    "mozGetMetadata",
+    "mozHasAudio",
+    "mozInnerScreenX",
+    "mozInnerScreenY",
+    "mozOpaque",
+    "mozPaintedFrames",
+    "mozParsedFrames",
+    "mozPresentedFrames",
+    "mozPrintCallback",
+    "mozSetImageElement",
+    "mozSourceNode",
+    "mozUserCancelled",
+    "ms",
+    "ms_static",
+    "mul",
+    "multiDrawArraysInstancedWEBGL",
+    "multiDrawArraysWEBGL",
+    "multiDrawElementsInstancedWEBGL",
+    "multiDrawElementsWEBGL",
+    "multiEntry",
+    "multiline",
+    "multiple",
+    "multiply",
+    "multiplySelf",
+    "mute_event",
+    "muted",
+    "n",
+    "name",
+    "nameList",
+    "namedItem",
+    "named_properties",
+    "namespaceURI",
+    "nativeProjectionScaleFactor",
+    "naturalHeight",
+    "naturalWidth",
+    "navigate",
+    "navigate_event",
+    "navigateerror_event",
+    "navigatesuccess_event",
+    "navigation",
+    "navigationId",
+    "navigationPreload",
+    "navigationStart",
+    "navigationType",
+    "navigator",
+    "needsRedraw",
+    "neg",
+    "negative",
+    "negotiated",
+    "negotiationneeded_event",
+    "networkState",
+    "newState",
+    "newSubscription",
+    "newURL",
+    "newValue",
+    "newValueSpecifiedUnits",
+    "newVersion",
+    "next",
+    "nextElementSibling",
+    "nextHopProtocol",
+    "nextNode",
+    "nextSibling",
+    "noHref",
+    "noModule",
+    "noResize",
+    "noShade",
+    "noValidate",
+    "noWrap",
+    "node",
+    "nodeName",
+    "nodeType",
+    "nodeValue",
+    "nomatch_event",
+    "nonce",
+    "normDepthBufferFromNormView",
+    "normalize",
+    "notEqual",
+    "notRestoredReasons",
+    "notification",
+    "notificationclick_event",
+    "notificationclose_event",
+    "notify",
+    "now",
+    "numOctaves",
+    "number",
+    "numberOfChannels",
+    "numberOfFrames",
+    "numberOfInputs",
+    "numberOfItems",
+    "numberOfOutputs",
+    "numberValue",
+    "number_static",
+    "objectStore",
+    "objectStoreNames",
+    "observe",
+    "of",
+    "offline_event",
+    "offset",
+    "offsetHeight",
+    "offsetLeft",
+    "offsetNode",
+    "offsetParent",
+    "offsetTop",
+    "offsetWidth",
+    "offsetX",
+    "offsetY",
+    "ok",
+    "oldState",
+    "oldSubscription",
+    "oldURL",
+    "oldValue",
+    "oldVersion",
+    "onLine",
+    "onSubmittedWorkDone",
+    "online_event",
+    "only",
+    "only_static",
+    "opSupportLimits",
+    "opacity",
+    "opaque",
+    "open",
+    "openCursor",
+    "openKeyCursor",
+    "openWindow",
+    "open_event",
+    "opened",
+    "opener",
+    "operator",
+    "optimum",
+    "options",
+    "options_colorSpaceConversion_parameter",
+    "options_imageOrientation_parameter",
+    "options_parameter",
+    "options_premultiplyAlpha_parameter",
+    "options_resizeHeight_parameter",
+    "options_resizeQuality_parameter",
+    "options_resizeWidth_parameter",
+    "or",
+    "orderX",
+    "orderY",
+    "ordered",
+    "organization",
+    "orient",
+    "orientAngle",
+    "orientType",
+    "orientation",
+    "orientationX",
+    "orientationY",
+    "orientationZ",
+    "orientationchange_event",
+    "origin",
+    "originAgentCluster",
+    "originalPolicy",
+    "originalTarget",
+    "ornaments",
+    "oscpu",
+    "outerHTML",
+    "outerHeight",
+    "outerText",
+    "outerWidth",
+    "outgoingHighWaterMark",
+    "outgoingMaxAge",
+    "outgoingMaxBufferedDatagrams",
+    "outputBuffer",
+    "outputLanguage",
+    "outputLatency",
+    "outputs",
+    "overallProgress",
+    "overlaysContent",
+    "override",
+    "overrideColors",
+    "overrideMimeType",
+    "oversample",
+    "ownKeys",
+    "ownerDocument",
+    "ownerElement",
+    "ownerNode",
+    "ownerRule",
+    "ownerSVGElement",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "packetSize",
+    "packets",
+    "pad",
+    "padEnd",
+    "padStart",
+    "page-orientation",
+    "pageLeft",
+    "pageOrientation",
+    "pageTop",
+    "pageX",
+    "pageY",
+    "pagehide_event",
+    "pagereveal_event",
+    "pageshow_event",
+    "pageswap_event",
+    "paintTime",
+    "paintWorklet",
+    "paintWorklet_static",
+    "pan",
+    "panningModel",
+    "parameters",
+    "parent",
+    "parentElement",
+    "parentNode",
+    "parentRule",
+    "parentStyleSheet",
+    "parse",
+    "parseAll",
+    "parseAll_static",
+    "parseCreationOptionsFromJSON",
+    "parseCreationOptionsFromJSON_static",
+    "parseFloat",
+    "parseFromString",
+    "parseHTML",
+    "parseHTMLUnsafe",
+    "parseHTMLUnsafe_static",
+    "parseHTML_static",
+    "parseInt",
+    "parseRequestOptionsFromJSON",
+    "parseRequestOptionsFromJSON_static",
+    "parse_static",
+    "part",
+    "passthroughFullyObscured",
+    "password",
+    "paste_event",
+    "path",
+    "pathLength",
+    "pathname",
+    "pattern",
+    "patternContentUnits",
+    "patternMismatch",
+    "patternTransform",
+    "patternUnits",
+    "pause",
+    "pauseAnimations",
+    "pauseDepthSensing",
+    "pauseDuration",
+    "pauseOnExit",
+    "pauseTransformFeedback",
+    "pause_event",
+    "paused",
+    "payerEmail",
+    "payerName",
+    "payerPhone",
+    "payerdetailchange_event",
+    "paymentManager",
+    "paymentOptions",
+    "paymentRequestId",
+    "paymentRequestOrigin",
+    "paymentmethodchange_event",
+    "paymentrequest_event",
+    "pc",
+    "pc_static",
+    "pdfViewerEnabled",
+    "peerIdentity",
+    "pending",
+    "pendingLocalDescription",
+    "pendingRemoteDescription",
+    "percent",
+    "percent_static",
+    "performance",
+    "periodicSync",
+    "periodicsync_event",
+    "permission",
+    "permissionState",
+    "permissionStatus",
+    "permission_accelerometer",
+    "permission_accessibility-events",
+    "permission_ambient-light-sensor",
+    "permission_background-sync",
+    "permission_camera",
+    "permission_captured-surface-control",
+    "permission_clipboard-read",
+    "permission_clipboard-write",
+    "permission_geolocation",
+    "permission_gyroscope",
+    "permission_local-fonts",
+    "permission_local-network",
+    "permission_local-network-access",
+    "permission_loopback-network",
+    "permission_magnetometer",
+    "permission_microphone",
+    "permission_midi",
+    "permission_notifications",
+    "permission_payment-handler",
+    "permission_periodic-background-sync",
+    "permission_persistent-storage",
+    "permission_push",
+    "permission_screen-wake-lock",
+    "permission_static",
+    "permission_storage-access",
+    "permission_top-level-storage-access",
+    "permission_web-app-installation",
+    "permission_window-management",
+    "permissions",
+    "persist",
+    "persisted",
+    "persistentAnchors",
+    "persistentDeviceId",
+    "personalbar",
+    "phone",
+    "phrase",
+    "phrases",
+    "pictureInPictureElement",
+    "pictureInPictureEnabled",
+    "pictureInPictureWindow",
+    "pinch_to_zoom_support",
+    "ping",
+    "pipeThrough",
+    "pipeTo",
+    "pitch",
+    "pixelDepth",
+    "pixelFormat",
+    "pixelStorei",
+    "place-self",
+    "placeSelf",
+    "placeholder",
+    "planeSpace",
+    "platform",
+    "platforms",
+    "play",
+    "playEffect",
+    "playState",
+    "play_event",
+    "playbackRate",
+    "playbackState",
+    "playbackStats",
+    "playbackTime",
+    "played",
+    "playing_event",
+    "playsInline",
+    "plugins",
+    "pointerBeforeReferenceNode",
+    "pointerId",
+    "pointerLockElement",
+    "pointerType",
+    "pointercancel_event",
+    "pointerdown_event",
+    "pointerenter_event",
+    "pointerleave_event",
+    "pointerlockchange_event",
+    "pointerlockerror_event",
+    "pointermove_event",
+    "pointerout_event",
+    "pointerover_event",
+    "pointerrawupdate_event",
+    "pointerup_event",
+    "points",
+    "pointsAtX",
+    "pointsAtY",
+    "pointsAtZ",
+    "polygon",
+    "polygonOffset",
+    "pop",
+    "popDebugGroup",
+    "popErrorScope",
+    "popover",
+    "popoverTargetAction",
+    "popoverTargetElement",
+    "popstate_event",
+    "populateMatrix",
+    "port",
+    "port1",
+    "port2",
+    "ports",
+    "pose",
+    "position",
+    "position-anchor",
+    "position-area",
+    "positionAlign",
+    "positionAnchor",
+    "positionArea",
+    "positionX",
+    "positionY",
+    "positionZ",
+    "postMessage",
+    "postTask",
+    "postalCode",
+    "poster",
+    "postscriptName",
+    "pow",
+    "preMultiplySelf",
+    "precision",
+    "predictedDisplayTime",
+    "preferences",
+    "preferredReflectionFormat",
+    "preferredStyleSheetSet",
+    "prefix",
+    "preload",
+    "preloadResponse",
+    "prelu",
+    "prepend",
+    "prependHTML",
+    "prependHTMLUnsafe",
+    "prerendering",
+    "prerenderingchange_event",
+    "presentation",
+    "presentationArea",
+    "presentationStyle",
+    "presentationTime",
+    "preserveAlpha",
+    "preserveAspectRatio",
+    "preservesPitch",
+    "pressed",
+    "pressure",
+    "prevValue",
+    "preventDefault",
+    "preventExtensions",
+    "preventSilentAccess",
+    "previousElementSibling",
+    "previousNode",
+    "previousPriority",
+    "previousRect",
+    "previousSibling",
+    "primaries",
+    "primaryKey",
+    "primaryLightDirection",
+    "primaryLightIntensity",
+    "primitiveType",
+    "primitiveUnits",
+    "print",
+    "priority",
+    "prioritychange_event",
+    "privateToken",
+    "probeSpace",
+    "processLocally",
+    "processingEnd",
+    "processingStart",
+    "processorerror_event",
+    "product",
+    "productId",
+    "productName",
+    "productSub",
+    "profile",
+    "profileEnd",
+    "profileEnd_static",
+    "profile_static",
+    "profiles",
+    "progress_event",
+    "projectionMatrix",
+    "promise",
+    "prompt",
+    "promptStreaming",
+    "promptaction_event",
+    "promptdismiss_event",
+    "properties",
+    "propertyIsEnumerable",
+    "propertyName",
+    "protectedAudience",
+    "proto",
+    "protocol",
+    "protocol_rfc_6455",
+    "provider",
+    "pseudo",
+    "pseudoElement",
+    "pt",
+    "pt_static",
+    "publicId",
+    "pulse",
+    "push",
+    "pushDebugGroup",
+    "pushErrorScope",
+    "pushManager",
+    "pushState",
+    "push_event",
+    "pushsubscriptionchange_event",
+    "put",
+    "putImageData",
+    "px",
+    "px_static",
+    "quadraticCurveTo",
+    "quality",
+    "quantizeLinear",
+    "quaternion",
+    "query",
+    "queryCommandEnabled",
+    "queryCommandIndeterm",
+    "queryCommandState",
+    "queryCommandSupported",
+    "queryCommandValue",
+    "queryCounterEXT",
+    "queryFeatureSupport",
+    "queryLocalFonts",
+    "queryPermission",
+    "querySelector",
+    "querySelectorAll",
+    "queue",
+    "queueMicrotask",
+    "quota",
+    "r",
+    "race",
+    "rad",
+    "rad_static",
+    "radius",
+    "radiusX",
+    "radiusY",
+    "random",
+    "randomUUID",
+    "randomizedTriggerRate",
+    "range",
+    "rangeCount",
+    "rangeEnd",
+    "rangeMax",
+    "rangeMin",
+    "rangeOverflow",
+    "rangeStart",
+    "rangeUnderflow",
+    "rate",
+    "ratechange_event",
+    "ratio",
+    "raw",
+    "rawId",
+    "rawJSON",
+    "rawValueToMeters",
+    "rcap",
+    "rcap_static",
+    "rch",
+    "rch_static",
+    "read",
+    "readAsArrayBuffer",
+    "readAsBinaryString",
+    "readAsDataURL",
+    "readAsText",
+    "readBuffer",
+    "readEntries",
+    "readOnly",
+    "readPixels",
+    "readTensor",
+    "readText",
+    "readValue",
+    "readable",
+    "reading_event",
+    "readingerror_event",
+    "ready",
+    "readyState",
+    "readystatechange_event",
+    "reason",
+    "reasons",
+    "receiveFeatureReport",
+    "receivedAlert",
+    "receiver",
+    "recipient",
+    "reciprocal",
+    "recommendedViewportScale",
+    "reconnect",
+    "recordType",
+    "records",
+    "recordsAvailable",
+    "rect",
+    "red",
+    "redirect",
+    "redirectCount",
+    "redirectEnd",
+    "redirectStart",
+    "redirect_static",
+    "redirected",
+    "redraw_event",
+    "reduce",
+    "reduceL1",
+    "reduceL2",
+    "reduceLogSum",
+    "reduceLogSumExp",
+    "reduceMax",
+    "reduceMean",
+    "reduceMin",
+    "reduceProduct",
+    "reduceRight",
+    "reduceSum",
+    "reduceSumSquare",
+    "reducedData",
+    "reducedMotion",
+    "reducedTransparency",
+    "reduction",
+    "refDistance",
+    "refX",
+    "refY",
+    "referenceNode",
+    "referenceSpace",
+    "referenceTarget",
+    "referrer",
+    "referrerPolicy",
+    "refill",
+    "reflectionchange_event",
+    "refresh",
+    "region",
+    "regionAnchorX",
+    "regionAnchorY",
+    "register",
+    "registerPaint",
+    "registerProcessor",
+    "registerProperty",
+    "registerProperty_static",
+    "registerProtocolHandler",
+    "registration",
+    "registrations",
+    "reject",
+    "rejectionhandled_event",
+    "rel",
+    "relList",
+    "relatedAddress",
+    "relatedNode",
+    "relatedPort",
+    "relatedTarget",
+    "relayProtocol",
+    "release",
+    "releaseCapture",
+    "releaseEvents",
+    "releaseInterface",
+    "releaseLock",
+    "releasePointerCapture",
+    "release_event",
+    "released",
+    "reliability",
+    "reliable",
+    "reliableWrite",
+    "reload",
+    "relu",
+    "rem",
+    "rem_static",
+    "remote",
+    "remoteDescription",
+    "remove",
+    "removeAllRanges",
+    "removeAsync",
+    "removeAttribute",
+    "removeAttributeNS",
+    "removeAttributeNode",
+    "removeChild",
+    "removeCue",
+    "removeElement",
+    "removeEntry",
+    "removeEventListener",
+    "removeItem",
+    "removeListener",
+    "removeNamedItem",
+    "removeNamedItemNS",
+    "removeParameter",
+    "removeProcessingInstruction",
+    "removeProperty",
+    "removeRange",
+    "removeRecursively",
+    "removeRule",
+    "removeSourceBuffer",
+    "removeStream",
+    "removeTrack",
+    "removeUnsafe",
+    "remove_duplicates",
+    "remove_event",
+    "remove_filling_animation",
+    "removed",
+    "removedNodes",
+    "removedRanges",
+    "removesourcebuffer_event",
+    "removestream_event",
+    "removetrack_event",
+    "renderBlockingStatus",
+    "renderHeight",
+    "renderQuantumSize",
+    "renderStart",
+    "renderState",
+    "renderTime",
+    "renderWidth",
+    "renderbufferStorage",
+    "renderbufferStorageMultisample",
+    "renderedBuffer",
+    "renotify",
+    "repeat",
+    "repeatEvent_event",
+    "repetitionCount",
+    "replace",
+    "replaceAll",
+    "replaceChild",
+    "replaceChildren",
+    "replaceData",
+    "replaceElementWithChildren",
+    "replaceItem",
+    "replaceState",
+    "replaceSync",
+    "replaceTrack",
+    "replaceWith",
+    "replaceWithHTML",
+    "replaceWithHTMLUnsafe",
+    "reportError",
+    "reportEvent",
+    "reportId",
+    "reportValidity",
+    "request",
+    "requestAdapter",
+    "requestAdapterInfo",
+    "requestAll",
+    "requestAnimationFrame",
+    "requestClose",
+    "requestData",
+    "requestDevice",
+    "requestFileSystem",
+    "requestFrame",
+    "requestFullscreen",
+    "requestHitTestSource",
+    "requestHitTestSourceForTransientInput",
+    "requestId",
+    "requestIdleCallback",
+    "requestLightProbe",
+    "requestMIDIAccess",
+    "requestMediaKeySystemAccess",
+    "requestOverride",
+    "requestPermission",
+    "requestPermission_static",
+    "requestPersistentHandle",
+    "requestPictureInPicture",
+    "requestPointerLock",
+    "requestPort",
+    "requestPresent",
+    "requestPresenter",
+    "requestReferenceSpace",
+    "requestResize",
+    "requestSession",
+    "requestStart",
+    "requestStorageAccess",
+    "requestStorageAccessFor",
+    "requestSubmit",
+    "requestVideoFrameCallback",
+    "requestViewportScale",
+    "requestWindow",
+    "requested",
+    "requireInteraction",
+    "required",
+    "requiredExtensions",
+    "resample2d",
+    "reset",
+    "resetLatency",
+    "resetPose",
+    "resetSensor",
+    "resetTransform",
+    "resetZoomLevel",
+    "reset_event",
+    "reshape",
+    "resizable",
+    "resize",
+    "resizeBy",
+    "resizeTo",
+    "resize_event",
+    "resolve",
+    "resolveLocalFileSystemURL",
+    "resolveQuerySet",
+    "resolve_static",
+    "resourcetimingbufferfull_event",
+    "respond",
+    "respondWith",
+    "respondWithNewView",
+    "response",
+    "responseEnd",
+    "responseHeaders",
+    "responseReady",
+    "responseStart",
+    "responseStatus",
+    "responseText",
+    "responseType",
+    "responseURL",
+    "responseXML",
+    "restartIce",
+    "restore",
+    "restoreContext",
+    "restorePersistentAnchor",
+    "restrictTo",
+    "result",
+    "resultIndex",
+    "resultType",
+    "result_event",
+    "resultingClientId",
+    "results",
+    "resume",
+    "resumeDepthSensing",
+    "resumeTransformFeedback",
+    "resume_event",
+    "retry",
+    "return",
+    "returnType",
+    "returnValue",
+    "rev",
+    "reverse",
+    "reversed",
+    "revocable",
+    "revoke",
+    "revokeObjectURL",
+    "revokeObjectURL_static",
+    "rex",
+    "rex_static",
+    "ric",
+    "ric_static",
+    "right",
+    "rightContext",
+    "rightDegrees",
+    "rightProjectionMatrix",
+    "rightViewMatrix",
+    "rlh",
+    "rlh_static",
+    "role",
+    "rolloffFactor",
+    "root",
+    "rootBounds",
+    "rootElement",
+    "rootMargin",
+    "rotate",
+    "rotateAxisAngle",
+    "rotateAxisAngleSelf",
+    "rotateFromVector",
+    "rotateFromVectorSelf",
+    "rotateSelf",
+    "rotation",
+    "rotationAngle",
+    "rotationRate",
+    "round",
+    "roundEven",
+    "roundRect",
+    "rowIndex",
+    "rowSpan",
+    "rows",
+    "rtcpTransport",
+    "rtctransform_event",
+    "rtt",
+    "rules",
+    "run",
+    "runAdAuction",
+    "runScripts",
+    "rx",
+    "ry",
+    "s",
+    "s_static",
+    "sameDocument",
+    "sample",
+    "sampleCount",
+    "sampleCoverage",
+    "sampleInterval",
+    "sampleRate",
+    "samplerParameterf",
+    "samplerParameteri",
+    "sandbox",
+    "sanitizer",
+    "save",
+    "saveData",
+    "scale",
+    "scale3d",
+    "scale3dSelf",
+    "scaleNonUniform",
+    "scaleSelf",
+    "scan",
+    "scatterElements",
+    "scatterND",
+    "scheduler",
+    "scheduling",
+    "scheme",
+    "scissor",
+    "scope",
+    "screen",
+    "screenLeft",
+    "screenState",
+    "screenTop",
+    "screenX",
+    "screenY",
+    "screens",
+    "screenschange_event",
+    "scriptURL",
+    "scripts",
+    "scroll",
+    "scrollAmount",
+    "scrollBy",
+    "scrollByLines",
+    "scrollByPages",
+    "scrollDelay",
+    "scrollHeight",
+    "scrollIntoView",
+    "scrollIntoViewIfNeeded",
+    "scrollLeft",
+    "scrollLeftMax",
+    "scrollMargin",
+    "scrollMaxX",
+    "scrollMaxY",
+    "scrollRestoration",
+    "scrollTo",
+    "scrollTop",
+    "scrollTopMax",
+    "scrollWidth",
+    "scrollX",
+    "scrollY",
+    "scroll_event",
+    "scrollbars",
+    "scrollend_event",
+    "scrolling",
+    "scrollingElement",
+    "scrollsnapchange_event",
+    "scrollsnapchanging_event",
+    "sctp",
+    "sctpCauseCode",
+    "sctp_sdp_21",
+    "sdp",
+    "sdpLineNumber",
+    "sdpMLineIndex",
+    "sdpMid",
+    "seal",
+    "search",
+    "searchParams",
+    "search_event",
+    "sectionRowIndex",
+    "secureConnectionStart",
+    "securePaymentConfirmationAvailability",
+    "securePaymentConfirmationAvailability_static",
+    "secure_context_required",
+    "securitypolicyviolation_event",
+    "seed",
+    "seek",
+    "seekable",
+    "seeked_event",
+    "seeking",
+    "seeking_event",
+    "segments",
+    "select",
+    "selectAllChildren",
+    "selectAlternateInterface",
+    "selectAudioOutput",
+    "selectConfiguration",
+    "selectNode",
+    "selectNodeContents",
+    "selectSubString",
+    "selectURL",
+    "select_event",
+    "selected",
+    "selectedIndex",
+    "selectedOptions",
+    "selectedStyleSheetSet",
+    "selectedTrack",
+    "selectedcandidatepairchange_event",
+    "selectend_event",
+    "selectionDirection",
+    "selectionEnd",
+    "selectionStart",
+    "selectionchange_event",
+    "selectorText",
+    "selectstart_event",
+    "self",
+    "semanticLabel",
+    "send",
+    "sendBeacon",
+    "sendFeatureReport",
+    "sendGroup",
+    "sendKeyFrameRequest",
+    "sendOrder",
+    "sendReport",
+    "sender",
+    "sentAlert",
+    "separator",
+    "serial",
+    "serialNumber",
+    "serializable",
+    "serializable_object",
+    "serializeToString",
+    "serverTiming",
+    "service",
+    "serviceWorker",
+    "session",
+    "sessionId",
+    "sessionStorage",
+    "set",
+    "setActionHandler",
+    "setAppBadge",
+    "setAttribute",
+    "setAttributeNS",
+    "setAttributeNode",
+    "setAttributeNodeNS",
+    "setAttributionReporting",
+    "setBaseAndExtent",
+    "setBigInt64",
+    "setBigUint64",
+    "setBindGroup",
+    "setBlendConstant",
+    "setCameraActive",
+    "setCapture",
+    "setCaptureHandleConfig",
+    "setCodecPreferences",
+    "setComments",
+    "setConfiguration",
+    "setConstraints",
+    "setConsumer",
+    "setCurrentTime",
+    "setCustomValidity",
+    "setData",
+    "setDataAttributes",
+    "setDate",
+    "setDragImage",
+    "setEnd",
+    "setEndAfter",
+    "setEndBefore",
+    "setExpires",
+    "setFieldOfView",
+    "setFloat16",
+    "setFloat32",
+    "setFloat64",
+    "setFloatValue",
+    "setFocusBehavior",
+    "setFormValue",
+    "setFromBase64",
+    "setFromHex",
+    "setFullYear",
+    "setHTML",
+    "setHTMLUnsafe",
+    "setHeaderExtensionsToNegotiate",
+    "setHeaderValue",
+    "setHours",
+    "setIdentityProvider",
+    "setImmediate",
+    "setImmediates",
+    "setIndexBuffer",
+    "setInt16",
+    "setInt32",
+    "setInt8",
+    "setInterval",
+    "setItem",
+    "setJavascriptURLs",
+    "setKeyframes",
+    "setLineDash",
+    "setLiveSeekableRange",
+    "setLocalDescription",
+    "setMatrix",
+    "setMatrixValue",
+    "setMediaKeys",
+    "setMicrophoneActive",
+    "setMilliseconds",
+    "setMinutes",
+    "setMonth",
+    "setNamedItem",
+    "setNamedItemNS",
+    "setOrientToAngle",
+    "setOrientToAuto",
+    "setOrientation",
+    "setParameter",
+    "setParameters",
+    "setPathData",
+    "setPeriodicWave",
+    "setPipeline",
+    "setPointerCapture",
+    "setPosition",
+    "setPositionState",
+    "setPriority",
+    "setPrivateToken",
+    "setProperty",
+    "setPrototypeOf",
+    "setRangeText",
+    "setRemoteDescription",
+    "setReportEventDataForAutomaticBeacons",
+    "setRequestHeader",
+    "setResizable",
+    "setResourceTimingBufferSize",
+    "setRotate",
+    "setScale",
+    "setScissorRect",
+    "setScreenshareActive",
+    "setSeconds",
+    "setSelectionRange",
+    "setServerCertificate",
+    "setSharedStorageContext",
+    "setSignals",
+    "setSinkId",
+    "setSkewX",
+    "setSkewY",
+    "setStart",
+    "setStartAfter",
+    "setStartBefore",
+    "setStatus",
+    "setStdDeviation",
+    "setStencilReference",
+    "setStreams",
+    "setStringValue",
+    "setTargetAtTime",
+    "setTime",
+    "setTimeout",
+    "setTransform",
+    "setTranslate",
+    "setUTCDate",
+    "setUTCFullYear",
+    "setUTCHours",
+    "setUTCMilliseconds",
+    "setUTCMinutes",
+    "setUTCMonth",
+    "setUTCSeconds",
+    "setUint16",
+    "setUint32",
+    "setUint8",
+    "setValidity",
+    "setValueAtTime",
+    "setValueCurveAtTime",
+    "setVertexBuffer",
+    "setViewport",
+    "setYear",
+    "shaderSource",
+    "shadowBlur",
+    "shadowColor",
+    "shadowOffsetX",
+    "shadowOffsetY",
+    "shadowRoot",
+    "shadowRootClonable",
+    "shadowRootCustomElementRegistry",
+    "shadowRootDelegatesFocus",
+    "shadowRootMode",
+    "shadowRootReferenceTarget",
+    "shadowRootSerializable",
+    "shadowRootSlotAssignment",
+    "shape",
+    "share",
+    "sharedContext",
+    "sharedStorage",
+    "sharedStorageWritable",
+    "sheet",
+    "shift",
+    "shiftKey",
+    "shippingAddress",
+    "shippingOption",
+    "shippingOptions",
+    "shippingType",
+    "shippingaddresschange_event",
+    "shippingoptionchange_event",
+    "show",
+    "showDirectoryPicker",
+    "showModal",
+    "showNotification",
+    "showOpenFilePicker",
+    "showPicker",
+    "showPopover",
+    "showSaveFilePicker",
+    "show_event",
+    "side",
+    "sigmoid",
+    "sign",
+    "signal",
+    "signalAllAcceptedCredentials",
+    "signalAllAcceptedCredentials_static",
+    "signalCurrentUserDetails",
+    "signalCurrentUserDetails_static",
+    "signalUnknownCredential",
+    "signalUnknownCredential_static",
+    "signalingState",
+    "signalingstatechange_event",
+    "signature",
+    "silent",
+    "sin",
+    "singleNodeValue",
+    "sinh",
+    "sinkId",
+    "sinkchange_event",
+    "sittingToStandingTransform",
+    "size",
+    "size-adjust",
+    "sizeAdjust",
+    "sizeX",
+    "sizeY",
+    "sizes",
+    "skewX",
+    "skewXSelf",
+    "skewY",
+    "skewYSelf",
+    "skipRendering",
+    "skipTransition",
+    "skipWaiting",
+    "skipped",
+    "slice",
+    "slope",
+    "slot",
+    "slotAssignment",
+    "slotchange_event",
+    "small",
+    "smoothingTimeConstant",
+    "snapTargetBlock",
+    "snapTargetInline",
+    "snapToLines",
+    "snapshotItem",
+    "snapshotLength",
+    "softmax",
+    "softplus",
+    "softsign",
+    "some",
+    "sort",
+    "sortingCode",
+    "soundend_event",
+    "soundstart_event",
+    "source",
+    "sourceBuffer",
+    "sourceBuffers",
+    "sourceCapabilities",
+    "sourceCharPosition",
+    "sourceElement",
+    "sourceFile",
+    "sourceFunctionName",
+    "sourceLanguage",
+    "sourceURL",
+    "sourceclose_event",
+    "sourceended_event",
+    "sourceopen_event",
+    "sources",
+    "space",
+    "spacing",
+    "span",
+    "speak",
+    "speakAs",
+    "speaking",
+    "species",
+    "specified",
+    "specularConstant",
+    "specularExponent",
+    "speechSynthesis",
+    "speechend_event",
+    "speechstart_event",
+    "speed",
+    "spellcheck",
+    "sphericalHarmonicsCoefficients",
+    "splice",
+    "split",
+    "splitText",
+    "spreadMethod",
+    "sqrt",
+    "squeeze_event",
+    "squeezeend_event",
+    "squeezestart_event",
+    "src",
+    "srcElement",
+    "srcObject",
+    "srcdoc",
+    "srclang",
+    "srcset",
+    "stack",
+    "stackTraceLimit",
+    "stageMode",
+    "stageParameters",
+    "stalled_event",
+    "standby",
+    "start",
+    "startContainer",
+    "startMessages",
+    "startNotifications",
+    "startOffset",
+    "startRendering",
+    "startTime",
+    "startViewTransition",
+    "start_event",
+    "startsWith",
+    "startstreaming_event",
+    "state",
+    "statechange_event",
+    "states",
+    "stats",
+    "status",
+    "statusCode",
+    "statusMessage",
+    "statusText",
+    "statusbar",
+    "stdDeviationX",
+    "stdDeviationY",
+    "stencilFunc",
+    "stencilFuncSeparate",
+    "stencilMask",
+    "stencilMaskSeparate",
+    "stencilOp",
+    "stencilOpSeparate",
+    "step",
+    "stepDown",
+    "stepMismatch",
+    "stepUp",
+    "sticky",
+    "stitchTiles",
+    "stop",
+    "stopImmediatePropagation",
+    "stopNotifications",
+    "stopPropagation",
+    "stop_event",
+    "stopped",
+    "storage",
+    "storageArea",
+    "storageBuckets",
+    "storage_event",
+    "store",
+    "stream",
+    "streamAfterHTML",
+    "streamAfterHTMLUnsafe",
+    "streamAppendHTML",
+    "streamAppendHTMLUnsafe",
+    "streamBeforeHTML",
+    "streamBeforeHTMLUnsafe",
+    "streamErrorCode",
+    "streamHTML",
+    "streamHTMLUnsafe",
+    "streamPrependHTML",
+    "streamPrependHTMLUnsafe",
+    "streamReplaceWithHTML",
+    "streamReplaceWithHTMLUnsafe",
+    "stream_event",
+    "streaming",
+    "streams",
+    "stretch",
+    "strike",
+    "stringValue",
+    "stringify",
+    "stroke",
+    "strokeRect",
+    "strokeStyle",
+    "strokeText",
+    "structuredClone",
+    "style",
+    "styleAndLayoutStart",
+    "styleMap",
+    "styleMedia",
+    "styleSheet",
+    "styleSheetSets",
+    "styleSheets",
+    "styleset",
+    "stylistic",
+    "sub",
+    "subarray",
+    "subgroupMaxSize",
+    "subgroupMinSize",
+    "subject",
+    "submit",
+    "submitFrame",
+    "submit_event",
+    "submitter",
+    "subscribe",
+    "subscriptionId",
+    "substitution_strings",
+    "substr",
+    "substring",
+    "substringData",
+    "subtle",
+    "success_event",
+    "suffix",
+    "suffixes",
+    "sumPrecise",
+    "summarize",
+    "summarizeStreaming",
+    "summary",
+    "sup",
+    "supportedContentEncodings",
+    "supportedContentEncodings_static",
+    "supportedEntryTypes",
+    "supportedEntryTypes_static",
+    "supportedFrameRates",
+    "supportedValuesOf",
+    "supports",
+    "supportsReliableOnly",
+    "supportsReliableOnly_static",
+    "supportsText",
+    "supports_parameters_for_callback",
+    "supports_static",
+    "suppressed",
+    "surfaceScale",
+    "surroundContents",
+    "suspend",
+    "suspendRedraw",
+    "suspend_event",
+    "svb",
+    "svb_static",
+    "svgimageelement_as_source_image",
+    "svh",
+    "svh_static",
+    "svi",
+    "svi_static",
+    "svmax",
+    "svmax_static",
+    "svmin",
+    "svmin_static",
+    "svw",
+    "svw_static",
+    "swash",
+    "switchMap",
+    "symbol_as_keys",
+    "symbols",
+    "symmetricDifference",
+    "sync",
+    "sync_event",
+    "syntax",
+    "sysexEnabled",
+    "system",
+    "systemId",
+    "systemLanguage",
+    "tBodies",
+    "tFoot",
+    "tHead",
+    "tabIndex",
+    "table",
+    "tableValues",
+    "table_static",
+    "tag",
+    "tagName",
+    "taintEnabled",
+    "take",
+    "takePhoto",
+    "takeRecords",
+    "takeUntil",
+    "tan",
+    "tangentialPressure",
+    "tanh",
+    "target",
+    "targetAddressSpace",
+    "targetElement",
+    "targetLanguage",
+    "targetRayMode",
+    "targetRaySpace",
+    "targetTouches",
+    "targetURL",
+    "targetX",
+    "targetY",
+    "tcpType",
+    "tee",
+    "terminate",
+    "terminate_event",
+    "test",
+    "texImage2D",
+    "texImage3D",
+    "texParameterf",
+    "texParameteri",
+    "texStorage2D",
+    "texStorage3D",
+    "texSubImage2D",
+    "texSubImage3D",
+    "text",
+    "textAlign",
+    "textBaseline",
+    "textContent",
+    "textLength",
+    "textRendering",
+    "textStream",
+    "textTracks",
+    "textformatupdate_event",
+    "textupdate_event",
+    "texture",
+    "textureArrayLength",
+    "textureBindingViewDimension",
+    "textureHeight",
+    "textureType",
+    "textureWidth",
+    "then",
+    "threshold",
+    "thresholds",
+    "throw",
+    "throwIfAborted",
+    "tile",
+    "tiltX",
+    "tiltY",
+    "time",
+    "timeEnd",
+    "timeEnd_static",
+    "timeLog",
+    "timeLog_static",
+    "timeOrigin",
+    "timeRemaining",
+    "timeStamp",
+    "timeStamp_static",
+    "time_static",
+    "timecode",
+    "timeline",
+    "timelineTime",
+    "timeout",
+    "timeout_event",
+    "timeout_static",
+    "timestamp",
+    "timestampOffset",
+    "timeupdate_event",
+    "timing",
+    "title",
+    "titlebarAreaRect",
+    "to",
+    "toArray",
+    "toBase64",
+    "toBlob",
+    "toDataURL",
+    "toDateString",
+    "toExponential",
+    "toFixed",
+    "toFloat32Array",
+    "toFloat64Array",
+    "toGMTString",
+    "toHex",
+    "toISOString",
+    "toJSON",
+    "toLocaleDateString",
+    "toLocaleLowerCase",
+    "toLocaleString",
+    "toLocaleTimeString",
+    "toLocaleUpperCase",
+    "toLowerCase",
+    "toMatrix",
+    "toPrecision",
+    "toPrimitive",
+    "toRecords",
+    "toReversed",
+    "toSorted",
+    "toSpliced",
+    "toString",
+    "toStringTag",
+    "toSum",
+    "toTemporalInstant",
+    "toTimeString",
+    "toURL",
+    "toUTCString",
+    "toUpperCase",
+    "toWellFormed",
+    "toggle",
+    "toggleAttribute",
+    "togglePopover",
+    "toggle_event",
+    "token",
+    "tone",
+    "toneBuffer",
+    "tonechange_event",
+    "tooLong",
+    "tooShort",
+    "toolbar",
+    "top",
+    "topOrigin",
+    "total",
+    "totalDuration",
+    "totalFrameDelay",
+    "totalFrames",
+    "totalVideoFrames",
+    "touchType",
+    "touchcancel_event",
+    "touched",
+    "touchend_event",
+    "touches",
+    "touchmove_event",
+    "touchstart_event",
+    "trace",
+    "trace_static",
+    "track",
+    "trackVisibility",
+    "track_event",
+    "trackedAnchors",
+    "trackedSources",
+    "tracks",
+    "transaction",
+    "transceiver",
+    "transcript",
+    "transfer",
+    "transferControlToOffscreen",
+    "transferFromImageBitmap",
+    "transferIn",
+    "transferOut",
+    "transferSize",
+    "transferToFixedLength",
+    "transferToImageBitmap",
+    "transferable",
+    "transform",
+    "transformFeedbackVaryings",
+    "transformPoint",
+    "transformToDocument",
+    "transformToFragment",
+    "transformer",
+    "transition",
+    "transitionProperty",
+    "transitionRoot",
+    "transitioncancel_event",
+    "transitionend_event",
+    "transitionrun_event",
+    "transitionstart_event",
+    "translate",
+    "translateSelf",
+    "translateStreaming",
+    "transport",
+    "transpose",
+    "traverseTo",
+    "triangular",
+    "trim",
+    "trimEnd",
+    "trimLeft",
+    "trimRight",
+    "trimStart",
+    "trim_whitespace",
+    "trueSpeed",
+    "trunc",
+    "truncate",
+    "trustedTypes",
+    "try",
+    "turn",
+    "turn_static",
+    "twist",
+    "type",
+    "typeMismatch",
+    "type_candidate-pair",
+    "type_certificate",
+    "type_codec",
+    "type_data-channel",
+    "type_image-png",
+    "type_image_svg_xml",
+    "type_inbound-rtp",
+    "type_local-candidate",
+    "type_media-playout",
+    "type_media-source",
+    "type_outbound-rtp",
+    "type_peer-connection",
+    "type_remote-candidate",
+    "type_remote-inbound-rtp",
+    "type_remote-outbound-rtp",
+    "type_text-html",
+    "type_text-plain",
+    "type_transport",
+    "type_web",
+    "typechange_event",
+    "types",
+    "uncapturederror_event",
+    "unconfigure",
+    "undefined",
+    "underlineStyle",
+    "underlineThickness",
+    "underrunDuration",
+    "underrunEvents",
+    "unescape",
+    "unhandledrejection_event",
+    "unicode",
+    "unicode-range",
+    "unicodeRange",
+    "unicodeSets",
+    "unicode_code_point_escapes",
+    "uniform1f",
+    "uniform1fv",
+    "uniform1i",
+    "uniform1iv",
+    "uniform1ui",
+    "uniform1uiv",
+    "uniform2f",
+    "uniform2fv",
+    "uniform2i",
+    "uniform2iv",
+    "uniform2ui",
+    "uniform2uiv",
+    "uniform3f",
+    "uniform3fv",
+    "uniform3i",
+    "uniform3iv",
+    "uniform3ui",
+    "uniform3uiv",
+    "uniform4f",
+    "uniform4fv",
+    "uniform4i",
+    "uniform4iv",
+    "uniform4ui",
+    "uniform4uiv",
+    "uniformBlockBinding",
+    "uniformMatrix2fv",
+    "uniformMatrix2x3fv",
+    "uniformMatrix2x4fv",
+    "uniformMatrix3fv",
+    "uniformMatrix3x2fv",
+    "uniformMatrix3x4fv",
+    "uniformMatrix4fv",
+    "uniformMatrix4x2fv",
+    "uniformMatrix4x3fv",
+    "union",
+    "unique",
+    "unit",
+    "unitType",
+    "unloadEventEnd",
+    "unloadEventStart",
+    "unload_event",
+    "unlock",
+    "unlockOrientation",
+    "unmap",
+    "unmute_event",
+    "unobserve",
+    "unpackColorSpace",
+    "unpause",
+    "unpauseAnimations",
+    "unregister",
+    "unregisterProtocolHandler",
+    "unscopables",
+    "unshift",
+    "unspokenPunctuation",
+    "unsubscribe",
+    "unsuspendRedraw",
+    "unsuspendRedrawAll",
+    "unwrapKey",
+    "upDegrees",
+    "upX",
+    "upY",
+    "upZ",
+    "update",
+    "updateAdInterestGroups",
+    "updateCallbackDone",
+    "updateCharacterBounds",
+    "updateCommands",
+    "updateControlBounds",
+    "updateCurrentEntry",
+    "updateInkTrailStartPoint",
+    "updatePlaybackRate",
+    "updateRangeEnd",
+    "updateRangeStart",
+    "updateRenderState",
+    "updateSelection",
+    "updateSelectionBounds",
+    "updateTargetFrameRate",
+    "updateText",
+    "updateTiming",
+    "updateUI",
+    "updateViaCache",
+    "updateWith",
+    "update_event",
+    "updateend_event",
+    "updatefound_event",
+    "updatestart_event",
+    "updating",
+    "upgrade",
+    "upgradeneeded_event",
+    "upload",
+    "uploadTotal",
+    "uploaded",
+    "upper",
+    "upperBound",
+    "upperBound_static",
+    "upperOpen",
+    "upperVerticalAngle",
+    "url",
+    "usage",
+    "usages",
+    "usb",
+    "usbVersionMajor",
+    "usbVersionMinor",
+    "usbVersionSubminor",
+    "use",
+    "useCurrentView",
+    "useMap",
+    "useProgram",
+    "userActivation",
+    "userAgent",
+    "userAgentAllowsProtocol",
+    "userAgentAllowsProtocol_static",
+    "userAgentData",
+    "userChoice",
+    "userHandle",
+    "userHint",
+    "userInitiated",
+    "userState",
+    "userVisibleOnly",
+    "user_interaction",
+    "username",
+    "usernameFragment",
+    "usesDepthValues",
+    "utterance",
+    "uuid",
+    "vAlign",
+    "vLink",
+    "valid",
+    "validValues",
+    "validateProgram",
+    "validationMessage",
+    "validationURL",
+    "validationstatuschange_event",
+    "validity",
+    "value",
+    "valueAsDate",
+    "valueAsNumber",
+    "valueAsString",
+    "valueInSpecifiedUnits",
+    "valueMissing",
+    "valueOf",
+    "valueType",
+    "values",
+    "variable",
+    "variant",
+    "variationSettings",
+    "vb",
+    "vb_static",
+    "vendor",
+    "vendorId",
+    "vendorSub",
+    "verify",
+    "version",
+    "versionchange_event",
+    "vertexAttrib1f",
+    "vertexAttrib1fv",
+    "vertexAttrib2f",
+    "vertexAttrib2fv",
+    "vertexAttrib3f",
+    "vertexAttrib3fv",
+    "vertexAttrib4f",
+    "vertexAttrib4fv",
+    "vertexAttribDivisor",
+    "vertexAttribDivisorANGLE",
+    "vertexAttribI4i",
+    "vertexAttribI4iv",
+    "vertexAttribI4ui",
+    "vertexAttribI4uiv",
+    "vertexAttribIPointer",
+    "vertexAttribPointer",
+    "vertical",
+    "vertices",
+    "vh",
+    "vh_static",
+    "vi",
+    "vi_static",
+    "vibrate",
+    "vibrationActuator",
+    "videoBitsPerSecond",
+    "videoHeight",
+    "videoTracks",
+    "videoWidth",
+    "view",
+    "viewBox",
+    "viewTransition",
+    "viewport",
+    "viewportAnchorX",
+    "viewportAnchorY",
+    "viewportElement",
+    "views",
+    "violatedDirective",
+    "virtualKeyboard",
+    "virtualKeyboardPolicy",
+    "visibilityState",
+    "visibilitychange_event",
+    "visibilitymaskchange_event",
+    "visible",
+    "visibleRect",
+    "visualViewport",
+    "vlinkColor",
+    "vmax",
+    "vmax_static",
+    "vmin",
+    "vmin_static",
+    "voice",
+    "voiceURI",
+    "voiceschanged_event",
+    "volume",
+    "volumechange_event",
+    "vrdisplayactivate_event",
+    "vrdisplayconnect_event",
+    "vrdisplaydeactivate_event",
+    "vrdisplaydisconnect_event",
+    "vrdisplaypresentchange_event",
+    "vspace",
+    "vw",
+    "vw_static",
+    "w",
+    "wait",
+    "waitAsync",
+    "waitSync",
+    "waitUntil",
+    "waiting",
+    "waiting_event",
+    "waitingforkey_event",
+    "wakeLock",
+    "warn",
+    "warn_static",
+    "wasClean",
+    "wasDiscarded",
+    "watch",
+    "watchAvailability",
+    "watchPosition",
+    "webdriver",
+    "webglcontextcreationerror_event",
+    "webglcontextlost_event",
+    "webglcontextrestored_event",
+    "webkitConvertPointFromNodeToPage",
+    "webkitConvertPointFromPageToNode",
+    "webkitEntries",
+    "webkitGetAsEntry",
+    "webkitRelativePath",
+    "webkitdirectory",
+    "webkitmouseforcechanged_event",
+    "webkitmouseforcedown_event",
+    "webkitmouseforceup_event",
+    "webkitmouseforcewillbegin_event",
+    "weight",
+    "wgslLanguageFeatures",
+    "whatToShow",
+    "wheelDelta",
+    "wheelDeltaX",
+    "wheelDeltaY",
+    "wheel_event",
+    "when",
+    "whenDefined",
+    "where",
+    "which",
+    "wholeText",
+    "width",
+    "willValidate",
+    "window",
+    "windowAttribution",
+    "windowControlsOverlay",
+    "windows",
+    "with",
+    "withCredentials",
+    "withResolvers",
+    "wordSpacing",
+    "workerCacheLookupStart",
+    "workerFinalRouterSource",
+    "workerMatchedRouterSource",
+    "workerRouterEvaluationStart",
+    "workerStart",
+    "worker_support",
+    "worklet",
+    "wrap",
+    "wrapKey",
+    "writable",
+    "writableAuxiliaries",
+    "write",
+    "writeBuffer",
+    "writeTensor",
+    "writeText",
+    "writeTexture",
+    "writeTimestamp",
+    "writeValue",
+    "writeValueWithResponse",
+    "writeValueWithoutResponse",
+    "writeWithoutResponse",
+    "writeln",
+    "writingSuggestions",
+    "x",
+    "x1",
+    "x2",
+    "xChannelSelector",
+    "xmlEncoding",
+    "xmlStandalone",
+    "xmlVersion",
+    "xor",
+    "xr",
+    "y",
+    "y1",
+    "y2",
+    "yChannelSelector",
+    "yield",
+    "z",
+    "zip",
+    "zipKeyed",
+    "zoomLevel",
+    "zoomlevelchange_event",
+);
+
+pub static NAME_STARTS: &[u32] = &[
+    0, 14, 29, 38, 51, 61, 68, 78, 87, 95, 104, 111, 124, 137, 159, 174,
+    191, 202, 227, 240, 253, 270, 284, 302, 314, 323, 338, 352, 374, 391, 407, 412,
+    423, 443, 456, 470, 492, 505, 544, 551, 555, 560, 571, 592, 604, 613, 625, 645,
+    657, 670, 679, 689, 702, 720, 740, 764, 776, 789, 799, 813, 825, 848, 864, 885,
+    915, 947, 968, 981, 998, 1018, 1040, 1061, 1088, 1116, 1123, 1138, 1154, 1168, 1192, 1209,
+    1215, 1228, 1242, 1258, 1262, 1271, 1280, 1313, 1328, 1361, 1390, 1415, 1441, 1454, 1461, 1477,
+    1507, 1526, 1551, 1563, 1585, 1588, 1600, 1616, 1632, 1651, 1669, 1691, 1706, 1729, 1753, 1777,
+    1800, 1822, 1837, 1852, 1865, 1878, 1893, 1909, 1924, 1941, 1962, 1975, 1987, 2000, 2010, 2020,
+    2033, 2047, 2057, 2069, 2087, 2099, 2115, 2136, 2151, 2166, 2184, 2195, 2209, 2234, 2252, 2268,
+    2285, 2300, 2316, 2325, 2332, 2343, 2351, 2363, 2370, 2378, 2386, 2406, 2425, 2443, 2455, 2468,
+    2481, 2496, 2517, 2534, 2547, 2559, 2571, 2587, 2595, 2607, 2632, 2653, 2658, 2670, 2689, 2718,
+    2730, 2744, 2757, 2781, 2798, 2811, 2828, 2847, 2865, 2891, 2904, 2910, 2917, 2926, 2946, 2960,
+    2973, 2983, 2995, 3003, 3015, 3022, 3038, 3055, 3073, 3087, 3102, 3114, 3131, 3168, 3181, 3198,
+    3209, 3227, 3247, 3254, 3272, 3285, 3295, 3315, 3325, 3331, 3340, 3361, 3372, 3386, 3403, 3425,
+    3433, 3445, 3462, 3471, 3488, 3508, 3517, 3525, 3541, 3548, 3555, 3566, 3581, 3594, 3606, 3618,
+    3625, 3637, 3653, 3673, 3681, 3685, 3699, 3718, 3744, 3753, 3779, 3800, 3817, 3846, 3875, 3897,
+    3910, 3927, 3936, 3954, 3973, 3985, 4000, 4008, 4024, 4048, 4077, 4093, 4105, 4114, 4122, 4136,
+    4158, 4159, 4166, 4182, 4204, 4231, 4255, 4286, 4301, 4315, 4323, 4345, 4373, 4401, 4431, 4449,
+    4460, 4467, 4483, 4500, 4517, 4526, 4531, 4541, 4550, 4555, 4566, 4577, 4588, 4611, 4638, 4653,
+    4675, 4683, 4693, 4706, 4725, 4730, 4747, 4757, 4773, 4777, 4790, 4798, 4808, 4822, 4832, 4856,
+    4881, 4906, 4921, 4940, 4960, 4976, 4994, 5008, 5034, 5062, 5082, 5094, 5106, 5118, 5128, 5136,
+    5144, 5155, 5175, 5183, 5196, 5213, 5221, 5224, 5234, 5248, 5260, 5278, 5287, 5303, 5319, 5336,
+    5354, 5375, 5396, 5414, 5423, 5440, 5448, 5466, 5482, 5501, 5517, 5534, 5545, 5553, 5568, 5590,
+    5610, 5627, 5637, 5652, 5672, 5690, 5700, 5714, 5737, 5755, 5763, 5770, 5783, 5795, 5816, 5827,
+    5836, 5853, 5864, 5886, 5905, 5929, 5941, 5954, 5963, 5966, 5984, 5993, 6012, 6023, 6040, 6057,
+    6072, 6088, 6101, 6116, 6131, 6148, 6165, 6182, 6196, 6212, 6227, 6246, 6264, 6281, 6301, 6315,
+    6327, 6338, 6354, 6376, 6395, 6410, 6436, 6451, 6467, 6486, 6508, 6521, 6536, 6554, 6569, 6586,
+    6602, 6618, 6636, 6649, 6665, 6682, 6697, 6711, 6729, 6745, 6760, 6775, 6791, 6812, 6826, 6842,
+    6858, 6875, 6894, 6911, 6932, 6949, 6969, 6985, 7003, 7017, 7036, 7052, 7069, 7086, 7112, 7127,
+    7144, 7159, 7175, 7198, 7218, 7237, 7253, 7272, 7295, 7314, 7333, 7348, 7364, 7380, 7396, 7414,
+    7434, 7450, 7465, 7472, 7481, 7498, 7505, 7507, 7516, 7525, 7543, 7554, 7564, 7572, 7583, 7597,
+    7613, 7622, 7632, 7646, 7667, 7680, 7698, 7721, 7737, 7749, 7761, 7766, 7777, 7804, 7816, 7825,
+    7837, 7847, 7861, 7869, 7872, 7895, 7910, 7920, 7932, 7950, 7957, 7967, 7977, 7986, 8012, 8025,
+    8038, 8058, 8083, 8105, 8109, 8134, 8142, 8146, 8173, 8181, 8194, 8211, 8225, 8229, 8232, 8238,
+    8243, 8259, 8272, 8294, 8306, 8317, 8328, 8350, 8374, 8384, 8390, 8398, 8402, 8413, 8429, 8438,
+    8448, 8467, 8476, 8488, 8504, 8514, 8527, 8535, 8551, 8560, 8562, 8571, 8578, 8592, 8601, 8609,
+    8621, 8639, 8658, 8661, 8665, 8684, 8697, 8714, 8729, 8744, 8756, 8783, 8802, 8812, 8832, 8847,
+    8864, 8884, 8893, 8902, 8915, 8929, 8948, 8961, 8984, 8996, 9007, 9024, 9035, 9066, 9092, 9108,
+    9124, 9155, 9181, 9202, 9227, 9249, 9274, 9300, 9323, 9337, 9349, 9360, 9368, 9376, 9389, 9399,
+    9415, 9440, 9453, 9469, 9483, 9494, 9504, 9520, 9530, 9547, 9550, 9562, 9575, 9585, 9605, 9638,
+    9659, 9681, 9710, 9734, 9754, 9763, 9777, 9797, 9812, 9830, 9834, 9846, 9854, 9878, 9896, 9908,
+    9925, 9928, 9934, 9946, 9970, 9992, 10013, 10037, 10054, 10078, 10100, 10129, 10152, 10165, 10179, 10185,
+    10195, 10222, 10241, 10256, 10289, 10295, 10312, 10318, 10332, 10352, 10354, 10371, 10386, 10399, 10418, 10441,
+    10450, 10473, 10483, 10501, 10507, 10521, 10535, 10559, 10573, 10592, 10617, 10632, 10643, 10669, 10693, 10709,
+    10731, 10766, 10791, 10806, 10824, 10845, 10872, 10891, 10919, 10941, 10966, 10989, 11012, 11037, 11054, 11081,
+    11098, 11117, 11129, 11145, 11156, 11173, 11194, 11216, 11225, 11238, 11251, 11260, 11274, 11280, 11291, 11302,
+    11314, 11327, 11349, 11366, 11382, 11394, 11418, 11440, 11476, 11508, 11534, 11554, 11573, 11589, 11603, 11624,
+    11632, 11645, 11652, 11673, 11690, 11695, 11714, 11723, 11734, 11749, 11765, 11792, 11815, 11816, 11824, 11842,
+    11850, 11864, 11877, 11899, 11913, 11932, 11948, 11968, 11988, 11996, 12009, 12024, 12043, 12058, 12078, 12095,
+    12125, 12150, 12164, 12185, 12208, 12220, 12237, 12253, 12274, 12288, 12301, 12318, 12331, 12336, 12346, 12374,
+    12388, 12412, 12437, 12468, 12495, 12499, 12513, 12520, 12526, 12551, 12569, 12583, 12589, 12599, 12616, 12623,
+    12637, 12656, 12674, 12682, 12699, 12706, 12711, 12722, 12730, 12747, 12770, 12796, 12812, 12830, 12852, 12870,
+    12887, 12908, 12925, 12946, 12976, 12991, 13008, 13032, 13051, 13067, 13085, 13120, 13134, 13148, 13165, 13175,
+    13192, 13209, 13232, 13261, 13282, 13308, 13335, 13362, 13386, 13408, 13425, 13442, 13459, 13476, 13493, 13517,
+    13534, 13551, 13572, 13594, 13612, 13634, 13662, 13683, 13699, 13721, 13737, 13760, 13771, 13789, 13807, 13825,
+    13840, 13849, 13862, 13876, 13900, 13915, 13931, 13945, 13963, 13972, 13985, 13999, 14016, 14024, 14036, 14053,
+    14071, 14093, 14117, 14124, 14138, 14151, 14167, 14180, 14194, 14207, 14222, 14238, 14254, 14269, 14290, 14304,
+    14322, 14347, 14362, 14374, 14390, 14402, 14415, 14429, 14438, 14447, 14457, 14463, 14477, 14490, 14507, 14526,
+    14540, 14568, 14577, 14585, 14594, 14600, 14616, 14622, 14632, 14645, 14667, 14691, 14716, 14719, 14729, 14746,
+    14759, 14784, 14808, 14833, 14860, 14882, 14902, 14933, 14945, 14968, 14977, 14989, 15005, 15018, 15035, 15052,
+    15080, 15107, 15129, 15152, 15175, 15202, 15217, 15242, 15262, 15286, 15306, 15317, 15333, 15340, 15359, 15372,
+    15392, 15404, 15418, 15424, 15434, 15450, 15474, 15484, 15498, 15509, 15519, 15531, 15541, 15556, 15562, 15571,
+    15582, 15593, 15614, 15628, 15651, 15661, 15669, 15673, 15684, 15701, 15712, 15729, 15738, 15748, 15769, 15780,
+    15789, 15801, 15817, 15830, 15845, 15854, 15864, 15875, 15880, 15890, 15899, 15909, 15924, 15956, 15971, 15981,
+    15991, 16002, 16026, 16039, 16055, 16072, 16096, 16105, 16115, 16122, 16130, 16133, 16143, 16158, 16161, 16182,
+    16198, 16216, 16225, 16236, 16255, 16267, 16297, 16327, 16358, 16389, 16409, 16412, 16423, 16434, 16444, 16461,
+    16475, 16484, 16505, 16519, 16534, 16547, 16558, 16564, 16581, 16587, 16596, 16609, 16624, 16636, 16648, 16658,
+    16678, 16688, 16707, 16721, 16733, 16747, 16768, 16776, 16791, 16811, 16825, 16849, 16878, 16906, 16935, 16965,
+    16994, 17028, 17053, 17072, 17091, 17109, 17127, 17143, 17163, 17171, 17187, 17201, 17208, 17215, 17222, 17244,
+    17259, 17270, 17287, 17303, 17314, 17326, 17336, 17353, 17374, 17386, 17397, 17423, 17432, 17444, 17462, 17484,
+    17504, 17526, 17551, 17562, 17571, 17585, 17600, 17612, 17643, 17675, 17704, 17721, 17746, 17767, 17789, 17799,
+    17805, 17817, 17838, 17878, 17884, 17901, 17915, 17930, 17937, 17955, 17969, 18000, 18027, 18038, 18052, 18077,
+    18097, 18110, 18124, 18139, 18150, 18158, 18169, 18192, 18213, 18221, 18239, 18250, 18265, 18283, 18298, 18305,
+    18311, 18326, 18341, 18354, 18372, 18390, 18415, 18426, 18438, 18445, 18457, 18472, 18484, 18498, 18505, 18515,
+    18521, 18538, 18549, 18554, 18570, 18591, 18604, 18620, 18629, 18643, 18650, 18660, 18668, 18697, 18726, 18732,
+    18744, 18754, 18781, 18795, 18818, 18830, 18845, 18858, 18871, 18872, 18877, 18881, 18886, 18897, 18909, 18916,
+    18934, 18937, 18945, 18957, 18985, 18991, 19004, 19013, 19027, 19035, 19039, 19044, 19050, 19057, 19071, 19080,
+    19090, 19105, 19111, 19121, 19134, 19153, 19166, 19182, 19202, 19214, 19237, 19261, 19282, 19304, 19323, 19339,
+    19350, 19353, 19359, 19371, 19377, 19387, 19403, 19416, 19426, 19436, 19451, 19462, 19471, 19478, 19486, 19495,
+    19502, 19517, 19526, 19537, 19549, 19557, 19571, 19576, 19586, 19597, 19612, 19619, 19630, 19651, 19666, 19680,
+    19685, 19694, 19712, 19719, 19724, 19733, 19748, 19764, 19788, 19793, 19798, 19807, 19812, 19822, 19831, 19841,
+    19844, 19852, 19862, 19877, 19891, 19896, 19910, 19922, 19937, 19956, 19982, 19997, 20010, 20015, 20033, 20036,
+    20042, 20051, 20067, 20077, 20085, 20101, 20114, 20123, 20138, 20144, 20157, 20167, 20179, 20190, 20197, 20200,
+    20205, 20224, 20239, 20246, 20253, 20261, 20275, 20284, 20297, 20318, 20336, 20360, 20376, 20396, 20406, 20415,
+    20464, 20514, 20532, 20535, 20545, 20556, 20563, 20573, 20579, 20591, 20608, 20619, 20629, 20639, 20655, 20665,
+    20677, 20687, 20702, 20719, 20737, 20744, 20764, 20769, 20785, 20788, 20793, 20805, 20812, 20817, 20823, 20829,
+    20838, 20865, 20875, 20891, 20907, 20933, 20941, 20952, 20964, 20976, 20992, 21003, 21023, 21034, 21057, 21072,
+    21091, 21103, 21127, 21139, 21157, 21169, 21179, 21190, 21206, 21215, 21237, 21246, 21254, 21263, 21276, 21295,
+    21305, 21320, 21336, 21351, 21363, 21374, 21386, 21398, 21410, 21429, 21441, 21453, 21469, 21480, 21492, 21503,
+    21511, 21523, 21535, 21547, 21560, 21571, 21577, 21584, 21586, 21592, 21599, 21614, 21628, 21632, 21637, 21648,
+    21654, 21667, 21673, 21689, 21702, 21714, 21719, 21731, 21744, 21746, 21750, 21755, 21760, 21764, 21779, 21791,
+    21803, 21819, 21825, 21842, 21852, 21860, 21873, 21891, 21908, 21918, 21929, 21948, 21962, 21978, 21996, 22008,
+    22019, 22031, 22045, 22063, 22079, 22104, 22118, 22141, 22158, 22192, 22205, 22219, 22231, 22242, 22256, 22265,
+    22275, 22289, 22297, 22311, 22322, 22331, 22339, 22349, 22361, 22380, 22389, 22405, 22419, 22432, 22434, 22438,
+    22442, 22444, 22451, 22463, 22464, 22468, 22478, 22493, 22519, 22545, 22570, 22598, 22606, 22611, 22625, 22639,
+    22650, 22659, 22670, 22677, 22684, 22702, 22713, 22719, 22729, 22745, 22762, 22787, 22804, 22821, 22846, 22864,
+    22882, 22902, 22918, 22930, 22944, 22960, 22979, 22988, 22998, 23011, 23026, 23048, 23056, 23060, 23073, 23080,
+    23084, 23087, 23097, 23101, 23119, 23129, 23143, 23158, 23173, 23189, 23200, 23211, 23232, 23247, 23265, 23275,
+    23288, 23309, 23334, 23351, 23360, 23377, 23398, 23411, 23434, 23439, 23454, 23458, 23475, 23485, 23494, 23504,
+    23514, 23527, 23535, 23551, 23555, 23564, 23568, 23578, 23582, 23590, 23594, 23606, 23611, 23617, 23630, 23636,
+    23641, 23653, 23667, 23684, 23702, 23720, 23732, 23746, 23752, 23761, 23775, 23779, 23786, 23792, 23802, 23812,
+    23825, 23833, 23847, 23873, 23896, 23916, 23921, 23928, 23951, 23957, 23964, 23975, 23987, 23997, 24007, 24012,
+    24024, 24025, 24030, 24036, 24040, 24046, 24052, 24081, 24117, 24126, 24138, 24151, 24163, 24190, 24204, 24212,
+    24227, 24244, 24255, 24265, 24273, 24296, 24302, 24321, 24341, 24353, 24371, 24392, 24416, 24439, 24451, 24461,
+    24470, 24490, 24503, 24523, 24536, 24556, 24562, 24565, 24575, 24587, 24594, 24601, 24614, 24631, 24644, 24669,
+    24691, 24710, 24714, 24719, 24724, 24728, 24732, 24741, 24752, 24763, 24768, 24780, 24802, 24804, 24809, 24818,
+    24826, 24845, 24866, 24886, 24896, 24908, 24915, 24929, 24936, 24948, 24964, 24985, 24996, 25002, 25010, 25020,
+    25029, 25039, 25054, 25079, 25091, 25107, 25134, 25148, 25180, 25188, 25200, 25220, 25244, 25251, 25256, 25270,
+    25292, 25309, 25322, 25337, 25344, 25361, 25371, 25379, 25385, 25389, 25393, 25398, 25412, 25419, 25424, 25433,
+    25442, 25447, 25460, 25471, 25484, 25497, 25510, 25524, 25534, 25543, 25553, 25562, 25576, 25589, 25611, 25621,
+    25634, 25667, 25680, 25695, 25704, 25724, 25736, 25748, 25758, 25770, 25775, 25786, 25800, 25812, 25820, 25837,
+    25847, 25856, 25870, 25881, 25888, 25895, 25902, 25906, 25919, 25928, 25941, 25962, 25970, 25975, 25988, 25997,
+    26007, 26012, 26021, 26030, 26041, 26053, 26059, 26067, 26074, 26087, 26092, 26094, 26103, 26106, 26110, 26118,
+    26129, 26137, 26170, 26181, 26190, 26200, 26207, 26215, 26228, 26243, 26252, 26263, 26268, 26273, 26283, 26292,
+    26305, 26316, 26326, 26338, 26356, 26373, 26377, 26389, 26396, 26413, 26426, 26432, 26444, 26453, 26476, 26483,
+    26504, 26527, 26542, 26553, 26565, 26575, 26582, 26595, 26603, 26617, 26626, 26635, 26643, 26655, 26664, 26684,
+    26706, 26729, 26749, 26769, 26792, 26815, 26831, 26837, 26850, 26860, 26874, 26888, 26901, 26911, 26917, 26926,
+    26939, 26956, 26974, 26999, 27013, 27022, 27029, 27046, 27053, 27063, 27075, 27088, 27097, 27113, 27123, 27137,
+    27152, 27177, 27188, 27215, 27222, 27233, 27241, 27251, 27260, 27271, 27301, 27309, 27320, 27333, 27347, 27359,
+    27374, 27395, 27408, 27416, 27428, 27435, 27449, 27464, 27479, 27494, 27505, 27516, 27527, 27540, 27559, 27597,
+    27604, 27616, 27629, 27646, 27663, 27684, 27705, 27713, 27731, 27741, 27749, 27756, 27773, 27791, 27801, 27823,
+    27831, 27843, 27849, 27864, 27877, 27900, 27906, 27919, 27930, 27948, 27955, 27961, 27978, 27996, 28015, 28041,
+    28056, 28070, 28087, 28104, 28123, 28143, 28149, 28162, 28172, 28182, 28202, 28205, 28209, 28214, 28224, 28241,
+    28253, 28260, 28274, 28277, 28287, 28290, 28300, 28303, 28313, 28318, 28330, 28335, 28347, 28350, 28360, 28371,
+    28377, 28391, 28403, 28415, 28430, 28447, 28465, 28490, 28505, 28526, 28544, 28556, 28574, 28592, 28605, 28624,
+    28645, 28665, 28678, 28699, 28725, 28744, 28764, 28784, 28797, 28821, 28836, 28851, 28870, 28886, 28903, 28914,
+    28928, 28950, 28968, 28992, 29005, 29020, 29040, 29059, 29070, 29086, 29103, 29113, 29123, 29141, 29156, 29173,
+    29188, 29199, 29219, 29243, 29258, 29286, 29309, 29337, 29353, 29371, 29388, 29403, 29425, 29436, 29452, 29464,
+    29477, 29495, 29515, 29527, 29554, 29567, 29588, 29603, 29614, 29628, 29642, 29662, 29673, 29685, 29710, 29730,
+    29755, 29773, 29787, 29802, 29817, 29832, 29854, 29876, 29901, 29932, 29963, 30000, 30037, 30072, 30107, 30148,
+    30189, 30214, 30249, 30284, 30309, 30342, 30375, 30400, 30425, 30439, 30452, 30470, 30498, 30511, 30523, 30544,
+    30559, 30574, 30587, 30599, 30617, 30635, 30657, 30668, 30679, 30690, 30702, 30716, 30729, 30740, 30755, 30778,
+    30794, 30820, 30837, 30857, 30867, 30883, 30896, 30910, 30922, 30935, 30947, 30961, 30972, 30989, 30995, 31006,
+    31025, 31031, 31034, 31042, 31050, 31057, 31069, 31076, 31091, 31095, 31103, 31116, 31130, 31146, 31158, 31170,
+    31193, 31204, 31215, 31239, 31251, 31264, 31277, 31287, 31300, 31311, 31327, 31338, 31362, 31387, 31392, 31413,
+    31427, 31438, 31447, 31449, 31451, 31452, 31456, 31468, 31476, 31495, 31504, 31521, 31530, 31537, 31545, 31547,
+    31561, 31566, 31578, 31593, 31607, 31614, 31620, 31635, 31650, 31659, 31677, 31692, 31700, 31712, 31729, 31736,
+    31743, 31757, 31769, 31788, 31801, 31817, 31831, 31846, 31858, 31869, 31874, 31880, 31892, 31908, 31922, 31934,
+    31937, 31947, 31952, 31961, 31975, 31981, 31993, 32006, 32016, 32030, 32040, 32054, 32071, 32089, 32100, 32112,
+    32129, 32151, 32164, 32178, 32189, 32203, 32221, 32230, 32240, 32253, 32265, 32275, 32286, 32297, 32310, 32333,
+    32350, 32370, 32377, 32392, 32404, 32413, 32422, 32428, 32434, 32440, 32457, 32479, 32519, 32530, 32545, 32553,
+    32562, 32571, 32580, 32598, 32608, 32627, 32652, 32676, 32685, 32695, 32711, 32724, 32729, 32739, 32748, 32764,
+    32779, 32790, 32801, 32811, 32822, 32833, 32840, 32846, 32858, 32866, 32872, 32879, 32885, 32899, 32913, 32919,
+    32925, 32936, 32944, 32956, 32981, 32997, 33010, 33024, 33038, 33056, 33074, 33095, 33113, 33131, 33154, 33185,
+    33195, 33205, 33220, 33226, 33235, 33238, 33245, 33255, 33264, 33270, 33283, 33290, 33313, 33334, 33358, 33366,
+    33377, 33392, 33407, 33434, 33444, 33460, 33477, 33485, 33498, 33516, 33542, 33549, 33562, 33571, 33582, 33594,
+    33601, 33613, 33626, 33634, 33645, 33658, 33661, 33668, 33678, 33686, 33693, 33700, 33708, 33723, 33747, 33758,
+    33769, 33780, 33804, 33830, 33844, 33854, 33869, 33875, 33890, 33907, 33913, 33924, 33932, 33943, 33951, 33966,
+    33979, 33989, 34011, 34015, 34026, 34029, 34039, 34043, 34054, 34064, 34077, 34092, 34106, 34115, 34130, 34144,
+    34159, 34167, 34171, 34181, 34200, 34224, 34235, 34251, 34263, 34284, 34310, 34327, 34336, 34347, 34366, 34378,
+    34395, 34418, 34437, 34456, 34476, 34494, 34498, 34508, 34518, 34536, 34540, 34544, 34550, 34560, 34568, 34588,
+    34591, 34601, 34604, 34614, 34617, 34627, 34632, 34644, 34649, 34661, 34664, 34674, 34676, 34678, 34679, 34697,
+    34705, 34716, 34722, 34735, 34753, 34766, 34773, 34784, 34791, 34807, 34820, 34828, 34845, 34854, 34861, 34864,
+    34866, 34880, 34895, 34904, 34910, 34923, 34928, 34937, 34948, 34964, 34970, 34987, 35010, 35033, 35040, 35055,
+    35068, 35078, 35093, 35107, 35113, 35123, 35138, 35147, 35165, 35180, 35188, 35200, 35207, 35222, 35229, 35232,
+    35244, 35254, 35266, 35280, 35297, 35308, 35317, 35325, 35336, 35343, 35363, 35372, 35377, 35388, 35396, 35410,
+    35419, 35427, 35445, 35452, 35464, 35475, 35502, 35517, 35524, 35529, 35538, 35554, 35574, 35588, 35607, 35612,
+    35618, 35621, 35626, 35635, 35646, 35655, 35666, 35678, 35684, 35690, 35703, 35711, 35715, 35723, 35728, 35739,
+    35749, 35754, 35756, 35765, 35774, 35790, 35798, 35802, 35813, 35827, 35841, 35855, 35875, 35890, 35901, 35911,
+    35914, 35920, 35944, 35963, 35985, 35995, 36009, 36016, 36038, 36043, 36051, 36079, 36088, 36108, 36114, 36139,
+    36179, 36213, 36262, 36283, 36312, 36345, 36385, 36426, 36436, 36444, 36459, 36470, 36473, 36474, 36482, 36486,
+    36499, 36507, 36513, 36521, 36526, 36539, 36554, 36580, 36602, 36634, 36660, 36689, 36717, 36742, 36768, 36799,
+    36822, 36854, 36872, 36889, 36922, 36954, 36996, 37026, 37066, 37098, 37127, 37156, 37179, 37187, 37192, 37201,
+    37206, 37216, 37229, 37239, 37250, 37257, 37264, 37275, 37279, 37287, 37295, 37300, 37310, 37314, 37328, 37337,
+    37345, 37354, 37362, 37368, 37379, 37404, 37411, 37415, 37424, 37432, 37445, 37453, 37459, 37471, 37479, 37495,
+    37500, 37522, 37533, 37543, 37560, 37585, 37600, 37621, 37626, 37640, 37645, 37649, 37656, 37660, 37665, 37670,
+    37675, 37680, 37685, 37694, 37705, 37716, 37723, 37736, 37750, 37754, 37766, 37777, 37798, 37820, 37832, 37842,
+    37865, 37876, 37886, 37907, 37929, 37940, 37950, 37969, 37980, 38000, 38011, 38020, 38035, 38056, 38066, 38075,
+    38084, 38093, 38098, 38106, 38109, 38116, 38121, 38142, 38153, 38181, 38187, 38191, 38201, 38209, 38220, 38230,
+    38244, 38254, 38260, 38274, 38279, 38286, 38298, 38306, 38314, 38322, 38332, 38351, 38353, 38362, 38379, 38384,
+    38395, 38405, 38417, 38426, 38435, 38446, 38463, 38486, 38506, 38529, 38559, 38575, 38581, 38587, 38599, 38608,
+    38625, 38629, 38638, 38648, 38660, 38673, 38684, 38702, 38713, 38729, 38752, 38768, 38791, 38798, 38808, 38825,
+    38834, 38850, 38858, 38873, 38881, 38896, 38907, 38916, 38922, 38930, 38938, 38947, 38957, 38967, 38984, 39001,
+    39023, 39044, 39046, 39048, 39052, 39059, 39081, 39106, 39111, 39117, 39131, 39139, 39153, 39179, 39183, 39211,
+    39215, 39219, 39238, 39264, 39275, 39291, 39305, 39320, 39331, 39351, 39370, 39386, 39404, 39407, 39422, 39438,
+    39463, 39493, 39510, 39516, 39526, 39539, 39560, 39582, 39595, 39604, 39625, 39636, 39654, 39671, 39683, 39697,
+    39714, 39730, 39748, 39764, 39778, 39798, 39815, 39830, 39837, 39847, 39858, 39870, 39888, 39909, 39918, 39929,
+    39947, 39963, 39983, 40004, 40010, 40024, 40043, 40058, 40080, 40096, 40110, 40130, 40147, 40171, 40189, 40210,
+    40238, 40263, 40276, 40290, 40308, 40326, 40343, 40359, 40380, 40397, 40413, 40427, 40437, 40457, 40479, 40494,
+    40506, 40516, 40534, 40551, 40565, 40572, 40579, 40585, 40608, 40624, 40643, 40656, 40676, 40690, 40700, 40722,
+    40734, 40752, 40767, 40781, 40803, 40820, 40840, 40862, 40878, 40898, 40908, 40924, 40940, 40948, 40960, 40975,
+    40991, 40998, 41011, 41019, 41041, 41056, 41066, 41076, 41086, 41107, 41129, 41142, 41161, 41173, 41206, 41226,
+    41237, 41248, 41255, 41285, 41305, 41322, 41356, 41364, 41384, 41390, 41402, 41418, 41435, 41454, 41461, 41484,
+    41492, 41500, 41507, 41536, 41562, 41581, 41588, 41600, 41606, 41618, 41654, 41663, 41675, 41691, 41702, 41720,
+    41738, 41753, 41776, 41790, 41801, 41816, 41826, 41842, 41850, 41857, 41869, 41883, 41914, 41952, 41981, 41997,
+    42013, 42029, 42052, 42063, 42082, 42100, 42124, 42149, 42168, 42189, 42201, 42214, 42223, 42234, 42252, 42274,
+    42294, 42310, 42326, 42334, 42341, 42359, 42383, 42400, 42418, 42435, 42454, 42467, 42486, 42505, 42520, 42536,
+    42550, 42562, 42583, 42591, 42602, 42619, 42636, 42652, 42667, 42677, 42686, 42698, 42710, 42730, 42745, 42761,
+    42780, 42801, 42820, 42836, 42860, 42877, 42888, 42905, 42919, 42938, 42950, 42966, 42976, 43016, 43063, 43087,
+    43099, 43109, 43119, 43136, 43148, 43159, 43175, 43193, 43217, 43232, 43242, 43259, 43266, 43278, 43300, 43312,
+    43320, 43328, 43346, 43360, 43371, 43389, 43404, 43420, 43443, 43465, 43484, 43510, 43530, 43552, 43568, 43593,
+    43600, 43615, 43630, 43644, 43651, 43668, 43677, 43696, 43710, 43722, 43731, 43746, 43758, 43785, 43810, 43823,
+    43830, 43840, 43849, 43863, 43874, 43892, 43905, 43916, 43929, 43938, 43947, 43955, 43965, 43985, 44002, 44020,
+    44031, 44049, 44061, 44074, 44089, 44110, 44133, 44147, 44162, 44175, 44186, 44195, 44204, 44211, 44217, 44228,
+    44252, 44272, 44282, 44284, 44307, 44310, 44319, 44323, 44334, 44351, 44364, 44372, 44379, 44393, 44398, 44407,
+    44412, 44419, 44433, 44454, 44462, 44477, 44484, 44496, 44500, 44508, 44511, 44518, 44532, 44536, 44546, 44552,
+    44559, 44574, 44589, 44600, 44609, 44628, 44631, 44643, 44657, 44670, 44683, 44696, 44714, 44724, 44732, 44742,
+    44753, 44767, 44773, 44787, 44800, 44817, 44828, 44843, 44853, 44872, 44887, 44903, 44924, 44952, 44956, 44966,
+    44982, 44986, 44993, 45000, 45013, 45025, 45031, 45034, 45040, 45044, 45055, 45059, 45072, 45082, 45101, 45118,
+    45122, 45129, 45133, 45146, 45154, 45158, 45171, 45179, 45185, 45192, 45201, 45222, 45227, 45229, 45238, 45256,
+    45273, 45285, 45303, 45326, 45356, 45385, 45389, 45396, 45398, 45408, 45416, 45435, 45438, 45449, 45458, 45468,
+    45485, 45496, 45501, 45511, 45521, 45542, 45563, 45574, 45580, 45594, 45615, 45624, 45634, 45647, 45663, 45667,
+    45669, 45672, 45675, 45706, 45715, 45729, 45737, 45765, 45786, 45800, 45828, 45857, 45874, 45885, 45919, 45932,
+    45937, 45947, 45954, 45995, 46004, 46012, 46019, 46024, 46028, 46039, 46047, 46067, 46082, 46090, 46102, 46111,
+    46127, 46144, 46160, 46174, 46191, 46207, 46220, 46233, 46244, 46267, 46279, 46289, 46308, 46321, 46324, 46335,
+    46345, 46370, 46379, 46390, 46399, 46409, 46414, 46425, 46434, 46444, 46455, 46467, 46476, 46487, 46504, 46510,
+    46534, 46555, 46573, 46591, 46603, 46613, 46623, 46633, 46650, 46666, 46676, 46685, 46695, 46700, 46711, 46726,
+    46743, 46755, 46771, 46789, 46799, 46812, 46827, 46838, 46852, 46868, 46875, 46882, 46895, 46909, 46919, 46938,
+    46959, 46968, 46984, 46997, 47012, 47021, 47039, 47053, 47067, 47081, 47094, 47109, 47126, 47143, 47153, 47167,
+    47179, 47196, 47212, 47226, 47234, 47254, 47267, 47280, 47301, 47325, 47332, 47342, 47349, 47360, 47362, 47366,
+    47374, 47381, 47393, 47407, 47415, 47426, 47437, 47455, 47486, 47524, 47541, 47565, 47576, 47593, 47606, 47624,
+    47635, 47649, 47658, 47669, 47676, 47686, 47698, 47715, 47721, 47728, 47736, 47757, 47770, 47778, 47784, 47803,
+    47813, 47823, 47837, 47846, 47856, 47870, 47880, 47885, 47890, 47903, 47916, 47930, 47945, 47957, 47966, 47975,
+    47988, 47995, 48005, 48014, 48022, 48040, 48054, 48067, 48078, 48088, 48100, 48110, 48119, 48127, 48138, 48146,
+    48161, 48179, 48187, 48197, 48209, 48215, 48240, 48249, 48268, 48277, 48292, 48314, 48359, 48411, 48418, 48431,
+    48447, 48453, 48462, 48474, 48495, 48517, 48524, 48528, 48533, 48556, 48567, 48594, 48619, 48637, 48645, 48656,
+    48674, 48678, 48697, 48706, 48710, 48721, 48734, 48746, 48757, 48759, 48761, 48763, 48765, 48768, 48778, 48787,
+    48799, 48816, 48833, 48836, 48843, 48849, 48862, 48869, 48880, 48889, 48896, 48918, 48926, 48939, 48953, 48957,
+    48980, 48991, 48995, 48999, 49011, 49030, 49038, 49043, 49049, 49053, 49061, 49081, 49090, 49112, 49116, 49126,
+    49141, 49150, 49166, 49177, 49186, 49197, 49210, 49219, 49231, 49247, 49265, 49274, 49291, 49298, 49306, 49317,
+    49322, 49331, 49349, 49355, 49361, 49367, 49373, 49404, 49413, 49433, 49460, 49464, 49475, 49486, 49506, 49520,
+    49526, 49538, 49554, 49560, 49573, 49586, 49591, 49608, 49610, 49619, 49636, 49642, 49646, 49663, 49672, 49679,
+    49693, 49708, 49716, 49723, 49733, 49740, 49746, 49755, 49761, 49779, 49802, 49816, 49822, 49827, 49831, 49840,
+    49851, 49856, 49860, 49869, 49877, 49881, 49893, 49907, 49915, 49925, 49931, 49947, 49967, 49980, 49987, 50000,
+    50017, 50035, 50050, 50055, 50071, 50080, 50092, 50104, 50124, 50130, 50143, 50151, 50165, 50176, 50180, 50195,
+    50201, 50206, 50209, 50214, 50219, 50223, 50233, 50243, 50253, 50262, 50272, 50277, 50285, 50294, 50306, 50324,
+    50336, 50348, 50352, 50359, 50368, 50379, 50397, 50401, 50425, 50428, 50433, 50443, 50460, 50469, 50487, 50493,
+    50497, 50505, 50508, 50518, 50521, 50531, 50534, 50544, 50549, 50561, 50566, 50578, 50581, 50591, 50594, 50597,
+    50600, 50603, 50606, 50609, 50612, 50615, 50618, 50621, 50624, 50627, 50630, 50633, 50636, 50639, 50651, 50667,
+    50674, 50706, 50714, 50724, 50736, 50752, 50755, 50763, 50771, 50778, 50784, 50796, 50812, 50830, 50843, 50856,
+    50873, 50892, 50903, 50915, 50925, 50936, 50950, 50966, 50978, 50990, 51002, 51017, 51034, 51044, 51055, 51064,
+    51075, 51079, 51089, 51101, 51112, 51123, 51139, 51148, 51153, 51161, 51171, 51182, 51189, 51195, 51201, 51216,
+    51219, 51233, 51243, 51258, 51267, 51277, 51294, 51309, 51322, 51352, 51375, 51387, 51400, 51413, 51428, 51439,
+    51471, 51490, 51523, 51547, 51571, 51595, 51625, 51657, 51672, 51683, 51694, 51735, 51776, 51785, 51801, 51814,
+    51843, 51871, 51880, 51889, 51903, 51920, 51929, 51944, 51958, 51990, 52015, 52042, 52074, 52104, 52135, 52168,
+    52199, 52231, 52252, 52273, 52294, 52315, 52329, 52356, 52387, 52395, 52414, 52440, 52456, 52464, 52482, 52496,
+    52503, 52522, 52539, 52550, 52580, 52585, 52602, 52614, 52626, 52636, 52645, 52657, 52668, 52677, 52686, 52697,
+    52703, 52710, 52734, 52741, 52752, 52765, 52783, 52791, 52798, 52806, 52812, 52822, 52835, 52845, 52848, 52865,
+    52873, 52882, 52885, 52899, 52909, 52924, 52933, 52945, 52956, 52965, 52978, 52987, 53018, 53049, 53057, 53065,
+    53083, 53097, 53110, 53119, 53129, 53131, 53133, 53142, 53148, 53152, 53168, 53177, 53183, 53191, 53210, 53235,
+    53259, 53274, 53290, 53306, 53321, 53335, 53350, 53363, 53379, 53383, 53393, 53399, 53405, 53414, 53423, 53439,
+    53465, 53474, 53490, 53504, 53517, 53531, 53542, 53557, 53572, 53581, 53597, 53612, 53630, 53646, 53664, 53677,
+    53693, 53695, 53704, 53707, 53736, 53756, 53787, 53809, 53819, 53828, 53836, 53844, 53856, 53866, 53871, 53872,
+    53876, 53884, 53893, 53909, 53921, 53948, 53961, 53973, 53981, 53995, 54014, 54035, 54045, 54057, 54074, 54089,
+    54103, 54112, 54123, 54126, 54134, 54144, 54167, 54179, 54187, 54202, 54208, 54216, 54238, 54248, 54252, 54270,
+    54285, 54293, 54304, 54310, 54318, 54326, 54333, 54343, 54349, 54353, 54361, 54369, 54378, 54391, 54396, 54423,
+    54432, 54440, 54458, 54470, 54493, 54516, 54522, 54525, 54535, 54541, 54557, 54571, 54585, 54598, 54613, 54624,
+    54637, 54648, 54664, 54671, 54673, 54686, 54692, 54704, 54714, 54724, 54736, 54745, 54756, 54763, 54770, 54772,
+    54780, 54795, 54801, 54809, 54819, 54825, 54844, 54856, 54860, 54871, 54886, 54893, 54899, 54903, 54913, 54926,
+    54936, 54946, 54952, 54958, 54966, 54973, 54980, 55018, 55052, 55069, 55103, 55133, 55164, 55193, 55195, 55201,
+    55207, 55214, 55226, 55232, 55243, 55253, 55264, 55276, 55288, 55300, 55323, 55329, 55347, 55361, 55375, 55384,
+    55389, 55398, 55409, 55418, 55428, 55449, 55463, 55491, 55503, 55517, 55530, 55537, 55552, 55567, 55575, 55589,
+    55605, 55615, 55622, 55635, 55647, 55656, 55665, 55680, 55682, 55684, 55686, 55688, 55698, 55705, 55708, 55714,
+    55722, 55738, 55746, 55761, 55768, 55773, 55778, 55792, 55808, 55822, 55836, 55845, 55857, 55876, 55879, 55891,
+    55901, 55907, 55920, 55930, 55940, 55956, 55961, 55969, 55984, 56012, 56047, 56057, 56072, 56081, 56096, 56118,
+    56134, 56142, 56169, 56203, 56215, 56219, 56243, 56251, 56262, 56266, 56276, 56284, 56291, 56310, 56325, 56341,
+    56353, 56358, 56373, 56390, 56403, 56414, 56436, 56447, 56453, 56463, 56472, 56482, 56505, 56519, 56533, 56549,
+    56569, 56594, 56614, 56616, 56625, 56641, 56653, 56660, 56683, 56707, 56714, 56728, 56739, 56751, 56769, 56779,
+    56794, 56810, 56834, 56865, 56896, 56922, 56939, 56974, 56999, 57025, 57047, 57067, 57089, 57113, 57144, 57171,
+    57194, 57215, 57230, 57254, 57280, 57315, 57344, 57359, 57386, 57403, 57428, 57463, 57494, 57522, 57533, 57540,
+    57549, 57566, 57584, 57595, 57600, 57606, 57613, 57636, 57659, 57681, 57702, 57706, 57717, 57723, 57728, 57738,
+    57749, 57760, 57770, 57779, 57790, 57800, 57808, 57817, 57821, 57831, 57840, 57850, 57862, 57875, 57888, 57900,
+    57906, 57919, 57930, 57937, 57963, 57972, 57990, 58001, 58020, 58037, 58055, 58073, 58096, 58118, 58135, 58151,
+    58168, 58190, 58205, 58211, 58220, 58229, 58238, 58245, 58258, 58261, 58274, 58287, 58294, 58313, 58333, 58347,
+    58361, 58365, 58370, 58375, 58380, 58384, 58392, 58407, 58420, 58433, 58447, 58459, 58468, 58477, 58486, 58497,
+    58505, 58515, 58521, 58535, 58538, 58553, 58562, 58582, 58593, 58618, 58640, 58646, 58653, 58668, 58673, 58680,
+    58691, 58708, 58720, 58744, 58756, 58772, 58789, 58805, 58818, 58837, 58851, 58858, 58866, 58875, 58889, 58906,
+    58925, 58947, 58959, 58975, 58987, 59002, 59011, 59021, 59042, 59063, 59076, 59090, 59095, 59103, 59123, 59135,
+    59145, 59159, 59172, 59187, 59207, 59214, 59223, 59234, 59244, 59251, 59261, 59278, 59292, 59300, 59314, 59330,
+    59337, 59343, 59358, 59376, 59395, 59405, 59425, 59437, 59454, 59459, 59467, 59484, 59492, 59498, 59511, 59513,
+    59522, 59530, 59535, 59539, 59553, 59567, 59578, 59587, 59597, 59625, 59628, 59640, 59642, 59651, 59667, 59674,
+    59688, 59698, 59703, 59722, 59742, 59759, 59780, 59797, 59812, 59831, 59846, 59861, 59874, 59890, 59895, 59909,
+    59914, 59915, 59919, 59922, 59932, 59938, 59945, 59952, 59958, 59968, 59989, 59994, 60004, 60012, 60020, 60028,
+    60041, 60051, 60065, 60069, 60085, 60090, 60093, 60098, 60105, 60121, 60125, 60136, 60139, 60149, 60153, 60170,
+    60188, 60201, 60211, 60221, 60232, 60240, 60250, 60260, 60268, 60277, 60285, 60298, 60316, 60321, 60331, 60353,
+    60359, 60366, 60386, 60399, 60407, 60416, 60426, 60450, 60459, 60469, 60476, 60492, 60496, 60499, 60507, 60520,
+    60531, 60544, 60559, 60569, 60581, 60587, 60595, 60603, 60615, 60630, 60639, 60649, 60658, 60671, 60682, 60691,
+    60706, 60717, 60730, 60749, 60758, 60769, 60773, 60777, 60790, 60804, 60819, 60827, 60841, 60847, 60869, 60876,
+    60882, 60895, 60908, 60916, 60929, 60946, 60962, 60985, 61008, 61020, 61033, 61039, 61061, 61064, 61071, 61085,
+    61096, 61107, 61120, 61133, 61140, 61154, 61167, 61183, 61194, 61215, 61228, 61236, 61247, 61255, 61268, 61274,
+    61278, 61281, 61291, 61297, 61314, 61320, 61335, 61346, 61361, 61378, 61397, 61408, 61417, 61430, 61441, 61460,
+    61470, 61484, 61499, 61516, 61531, 61558, 61572, 61583, 61600, 61610, 61628, 61640, 61651, 61663, 61680, 61692,
+    61716, 61723, 61735, 61748, 61772, 61790, 61807, 61827, 61839, 61856, 61867, 61878, 61888, 61899, 61918, 61948,
+    61962, 61970, 61976, 61993, 62008, 62015, 62025, 62037, 62052, 62063, 62089, 62100, 62112, 62123, 62135, 62146,
+    62161, 62182, 62193, 62204, 62212, 62226, 62233, 62247, 62265, 62275, 62296, 62308, 62319, 62332, 62349, 62361,
+    62378, 62398, 62435, 62444, 62463, 62480, 62497, 62524, 62539, 62556, 62580, 62603, 62626, 62644, 62655, 62669,
+    62685, 62706, 62719, 62733, 62745, 62765, 62788, 62801, 62826, 62846, 62859, 62868, 62886, 62894, 62912, 62922,
+    62927, 62939, 62948, 62959, 62973, 62987, 62998, 63005, 63014, 63020, 63028, 63036, 63048, 63055, 63080, 63095,
+    63109, 63139, 63146, 63157, 63175, 63183, 63194, 63209, 63222, 63235, 63249, 63261, 63273, 63284, 63295, 63305,
+    63312, 63326, 63349, 63359, 63365, 63376, 63386, 63398, 63415, 63422, 63428, 63446, 63469, 63481, 63486, 63492,
+    63502, 63513, 63516, 63523, 63531, 63540, 63546, 63561, 63583, 63586, 63596, 63599, 63609, 63614, 63626, 63638,
+    63659, 63674, 63677, 63687, 63691, 63704, 63708, 63718, 63729, 63739, 63745, 63760, 63779, 63795, 63815, 63825,
+    63833, 63846, 63858, 63863, 63872, 63881, 63889, 63896, 63900, 63913, 63931, 63934, 63939, 63942, 63954, 63964,
+    63966, 63968, 63969, 63977, 63989, 63995, 64006, 64020, 64034, 64044, 64061, 64078, 64085, 64094, 64098, 64106,
+    64111, 64118, 64129, 64144, 64153, 64157, 64172, 64181, 64190, 64200, 64206, 64213, 64218, 64224, 64234, 64245,
+    64254, 64261, 64268, 64275, 64294, 64303, 64310, 64316, 64328, 64336, 64349, 64362, 64373, 64385, 64399, 64421,
+    64431, 64444, 64456, 64466, 64476, 64493, 64501, 64510, 64522, 64533, 64540, 64547, 64559, 64569, 64584, 64593,
+    64609, 64631, 64655, 64659, 64672, 64683, 64686, 64699, 64712, 64718, 64722, 64728, 64740, 64752, 64767, 64788,
+    64825, 64869, 64892, 64921, 64925, 64929, 64937, 64949, 64956, 64969, 64977, 64983, 65000, 65024, 65041, 65060,
+    65070, 65088, 65103, 65112, 65124, 65132, 65145, 65160, 65181, 65194, 65227, 65242, 65260, 65272, 65286, 65307,
+    65319, 65336, 65340, 65353, 65357, 65367, 65384, 65393, 65412, 65421, 65431, 65437, 65446, 65455, 65461, 65473,
+    65485, 65504, 65521, 65533, 65540, 65553, 65560, 65569, 65583, 65586, 65602, 65613, 65625, 65639, 65655, 65673,
+    65696, 65712, 65723, 65735, 65747, 65763, 65778, 65788, 65810, 65829, 65840, 65856, 65870, 65881, 65895, 65912,
+    65919, 65936, 65943, 65955, 65961, 65972, 65984, 65994, 66008, 66018, 66028, 66038, 66051, 66067, 66079, 66092,
+    66102, 66113, 66120, 66133, 66163, 66177, 66185, 66204, 66216, 66229, 66243, 66251, 66259, 66266, 66277, 66284,
+    66301, 66313, 66324, 66344, 66363, 66372, 66386, 66398, 66417, 66432, 66442, 66450, 66462, 66476, 66492, 66507,
+    66521, 66533, 66546, 66557, 66572, 66583, 66600, 66611, 66627, 66638, 66653, 66664, 66678, 66690, 66710, 66747,
+    66763, 66775, 66802, 66811, 66819, 66833, 66853, 66863, 66880, 66900, 66923, 66933, 66942, 66950, 66958, 66966,
+    66979, 66993, 67002, 67017, 67036, 67046, 67060, 67075, 67082, 67092, 67104, 67116, 67126, 67140, 67151, 67169,
+    67182, 67193, 67206, 67215, 67224, 67232, 67243, 67257, 67276, 67291, 67302, 67309, 67321, 67331, 67342, 67355,
+    67368, 67378, 67396, 67427, 67451, 67465, 67490, 67512, 67536, 67541, 67546, 67559, 67572, 67593, 67598, 67603,
+    67611, 67626, 67640, 67655, 67667, 67694, 67720, 67724, 67743, 67752, 67768, 67786, 67796, 67807, 67825, 67835,
+    67839, 67846, 67850, 67856, 67884, 67919, 67943, 67974, 67997, 68027, 68041, 68067, 68076, 68082, 68085, 68100,
+    68104, 68110, 68126, 68152, 68156, 68167, 68177, 68182, 68187, 68192, 68197, 68206, 68211, 68220, 68233, 68247,
+    68258, 68265, 68270, 68275, 68279, 68293, 68309, 68314, 68335, 68350, 68366, 68377, 68389, 68403, 68410, 68418,
+    68426, 68430, 68434, 68445, 68459, 68475, 68481, 68493, 68506, 68524, 68542, 68555, 68565, 68583, 68597, 68606,
+    68623, 68640, 68656, 68663, 68668, 68675, 68679, 68684, 68691, 68699, 68706, 68715, 68731, 68747, 68762, 68777,
+    68794, 68799, 68809, 68839, 68845, 68850, 68859, 68871, 68875, 68888, 68904, 68922, 68925, 68935, 68944, 68950,
+    68957, 68963, 68968, 68983, 68992, 69007, 69020, 69027, 69032, 69046, 69059, 69077, 69088, 69102, 69111, 69130,
+    69141, 69151, 69171, 69176, 69193, 69199, 69204, 69210, 69220, 69233, 69243, 69252, 69265, 69278, 69289, 69308,
+    69319, 69338, 69347, 69364, 69368, 69376, 69388, 69394, 69400, 69411, 69415, 69439, 69456, 69471, 69481, 69488,
+    69495, 69506, 69520, 69533, 69538, 69544, 69559, 69580, 69596, 69618, 69634, 69656, 69671, 69681, 69697, 69714,
+    69737, 69758, 69785, 69797, 69806, 69813, 69820, 69826, 69837, 69846, 69852, 69862, 69873, 69883, 69898, 69903,
+    69922, 69930, 69940, 69950, 69964, 69975, 69983, 69992, 69995, 70003, 70018, 70033, 70040, 70046, 70057, 70069,
+    70078, 70087, 70101, 70121, 70127, 70136, 70149, 70155, 70168, 70174, 70182, 70192, 70201, 70219, 70226, 70229,
+    70254, 70286, 70305, 70331, 70350, 70367, 70375, 70395, 70422, 70434, 70466, 70481, 70491, 70503, 70519, 70526,
+    70539, 70552, 70555, 70565, 70596, 70599, 70609, 70612, 70622, 70627, 70639, 70644, 70656, 70659, 70669, 70674,
+    70683, 70697, 70704, 70723, 70727, 70737, 70743, 70755, 70761, 70769, 70783, 70790, 70795, 70800, 70808, 70813,
+    70824, 70836, 70839, 70846, 70858, 70862, 70871, 70882, 70891, 70894, 70912, 70916, 70922, 70940, 70953, 70967,
+    70980, 70994, 71007, 71016, 71023, 71030, 71037, 71040, 71049, 71064, 71068, 71078, 71088, 71101, 71114, 71126,
+    71138, 71151, 71164, 71168, 71177, 71189, 71200, 71210, 71223, 71233, 71243, 71265, 71281, 71288, 71306, 71333,
+    71346, 71357, 71369, 71373, 71382, 71392, 71397, 71411, 71415, 71420, 71425, 71429, 71436, 71450, 71457, 71471,
+    71481, 71494, 71503, 71519, 71530, 71538, 71546, 71558, 71565, 71578, 71592, 71601, 71616, 71632, 71638, 71643,
+    71659, 71661, 71668, 71676, 71682, 71691, 71703, 71716, 71723, 71737, 71751, 71762, 71767, 71778, 71784, 71802,
+    71819, 71833, 71851, 71868, 71879, 71887, 71898, 71909, 71918, 71928, 71936, 71945, 71953, 71964, 71969, 71986,
+    71998, 72003, 72014, 72025, 72037, 72043, 72058, 72071, 72083, 72088, 72092, 72102, 72118, 72125, 72133, 72140,
+    72143, 72152, 72157, 72170, 72185, 72196, 72212, 72221, 72238, 72245, 72259, 72266, 72281, 72297, 72302, 72314,
+    72319, 72334, 72345, 72359, 72373, 72379, 72390, 72401, 72411, 72419, 72445, 72468, 72478, 72489, 72501, 72522,
+    72543, 72555, 72564, 72589, 72603, 72622, 72641, 72652, 72662, 72680, 72694, 72716, 72735, 72754, 72775, 72784,
+    72797, 72815, 72824, 72833, 72843, 72853, 72857, 72864, 72872, 72881, 72890, 72905, 72914, 72919, 72927, 72939,
+    72942, 72946, 72957, 72962, 72966, 72978, 72997, 73013, 73023, 73040, 73054, 73072, 73088, 73108, 73126, 73143,
+    73160, 73180, 73201, 73224, 73248, 73262, 73277, 73291, 73299, 73315, 73320, 73341, 73352, 73361, 73375, 73393,
+    73409, 73423, 73431, 73455, 73462, 73475, 73487, 73498, 73524, 73533, 73543, 73552, 73562, 73572, 73583, 73592,
+    73602, 73611, 73621, 73631, 73642, 73651, 73661, 73670, 73680, 73690, 73701, 73710, 73720, 73729, 73739, 73749,
+    73760, 73779, 73795, 73813, 73831, 73847, 73865, 73883, 73899, 73917, 73935, 73940, 73946, 73950, 73958, 73972,
+    73988, 74000, 74006, 74023, 74028, 74040, 74049, 74065, 74072, 74089, 74099, 74124, 74135, 74142, 74161, 74172,
+    74187, 74205, 74214, 74223, 74226, 74229, 74232, 74238, 74260, 74278, 74299, 74313, 74332, 74350, 74374, 74392,
+    74406, 74422, 74439, 74454, 74475, 74496, 74506, 74518, 74526, 74540, 74550, 74562, 74577, 74594, 74611, 74619,
+    74626, 74645, 74651, 74662, 74670, 74675, 74685, 74702, 74711, 74729, 74732, 74737, 74743, 74746, 74761, 74776,
+    74794, 74797, 74811, 74817, 74827, 74841, 74850, 74873, 74903, 74916, 74926, 74936, 74944, 74957, 74966, 74981,
+    74997, 75005, 75021, 75036, 75045, 75049, 75055, 75060, 75065, 75076, 75091, 75108, 75121, 75149, 75157, 75162,
+    75173, 75186, 75199, 75220, 75232, 75239, 75248, 75254, 75262, 75269, 75286, 75288, 75297, 75303, 75311, 75320,
+    75326, 75333, 75352, 75366, 75381, 75395, 75410, 75424, 75439, 75453, 75468, 75487, 75511, 75526, 75542, 75558,
+    75575, 75595, 75614, 75622, 75630, 75632, 75641, 75643, 75652, 75659, 75676, 75694, 75705, 75716, 75726, 75730,
+    75737, 75751, 75759, 75774, 75789, 75804, 75809, 75826, 75841, 75862, 75877, 75899, 75925, 75932, 75943, 75957,
+    75967, 75971, 75982, 75986, 75997, 76002, 76010, 76029, 76035, 76053, 76076, 76098, 76123, 76148, 76176, 76182,
+    76184, 76193, 76194, 76198, 76207, 76215, 76224, 76231, 76244, 76263, 76271, 76275, 76286, 76294, 76306, 76311,
+    76328, 76341, 76350, 76381, 76403, 76429, 76461, 76493, 76506, 76522, 76540, 76555, 76584, 76610, 76634, 76665,
+    76671, 76691, 76701, 76711, 76722, 76733, 76744, 76748, 76759, 76764, 76769, 76778, 76783, 76795, 76801, 76818,
+    76839, 76846, 76850, 76865, 76878, 76889, 76911, 76934, 76959, 76986, 76997, 77011, 77018, 77022, 77029, 77037,
+    77056, 77061, 77072, 77083, 77092, 77104, 77118, 77128, 77150, 77175, 77195, 77202, 77220, 77221, 77223, 77225,
+    77241, 77252, 77265, 77275, 77278, 77280, 77281, 77283, 77285, 77301, 77306, 77307, 77310, 77318, 77327, 77348,
 ];
 
-pub static INTERFACE_PARENTS: &[(&str, &[&str])] = &[
-    ("AbortSignal", &["EventTarget"]),
-    ("AnalyserNode", &["AudioNode"]),
-    ("Animation", &["EventTarget"]),
-    ("AnimationEvent", &["Event"]),
-    ("AnimationPlaybackEvent", &["Event"]),
-    ("Attr", &["Node"]),
-    ("AudioBufferSourceNode", &["AudioScheduledSourceNode"]),
-    ("AudioContext", &["BaseAudioContext"]),
-    ("AudioDecoder", &["EventTarget"]),
-    ("AudioDestinationNode", &["AudioNode"]),
-    ("AudioEncoder", &["EventTarget"]),
-    ("AudioNode", &["EventTarget"]),
-    ("AudioParamMap", &["ReadonlyMap"]),
-    ("AudioProcessingEvent", &["Event"]),
-    ("AudioScheduledSourceNode", &["AudioNode"]),
-    ("AudioWorklet", &["Worklet"]),
-    ("AudioWorkletNode", &["AudioNode"]),
-    ("AuthenticatorAssertionResponse", &["AuthenticatorResponse"]),
-    ("AuthenticatorAttestationResponse", &["AuthenticatorResponse"]),
-    ("BaseAudioContext", &["EventTarget"]),
-    ("BeforeUnloadEvent", &["Event"]),
-    ("BiquadFilterNode", &["AudioNode"]),
-    ("BlobEvent", &["Event"]),
-    ("BroadcastChannel", &["EventTarget"]),
-    ("ByteLengthQueuingStrategy", &["QueuingStrategy"]),
-    ("CDATASection", &["Text"]),
-    ("CSSAnimation", &["Animation"]),
-    ("CSSConditionRule", &["CSSGroupingRule"]),
-    ("CSSContainerRule", &["CSSConditionRule"]),
-    ("CSSCounterStyleRule", &["CSSRule"]),
-    ("CSSFontFaceDescriptors", &["CSSStyleDeclarationBase"]),
-    ("CSSFontFaceRule", &["CSSRule"]),
-    ("CSSFontFeatureValuesRule", &["CSSRule"]),
-    ("CSSFontPaletteValuesRule", &["CSSRule"]),
-    ("CSSGroupingRule", &["CSSRule"]),
-    ("CSSImageValue", &["CSSStyleValue"]),
-    ("CSSImportRule", &["CSSRule"]),
-    ("CSSKeyframeRule", &["CSSRule"]),
-    ("CSSKeyframesRule", &["CSSRule"]),
-    ("CSSKeywordValue", &["CSSStyleValue"]),
-    ("CSSLayerBlockRule", &["CSSGroupingRule"]),
-    ("CSSLayerStatementRule", &["CSSRule"]),
-    ("CSSMathClamp", &["CSSMathValue"]),
-    ("CSSMathInvert", &["CSSMathValue"]),
-    ("CSSMathMax", &["CSSMathValue"]),
-    ("CSSMathMin", &["CSSMathValue"]),
-    ("CSSMathNegate", &["CSSMathValue"]),
-    ("CSSMathProduct", &["CSSMathValue"]),
-    ("CSSMathSum", &["CSSMathValue"]),
-    ("CSSMathValue", &["CSSNumericValue"]),
-    ("CSSMatrixComponent", &["CSSTransformComponent"]),
-    ("CSSMediaRule", &["CSSConditionRule"]),
-    ("CSSNamespaceRule", &["CSSRule"]),
-    ("CSSNestedDeclarations", &["CSSRule"]),
-    ("CSSNumericValue", &["CSSStyleValue"]),
-    ("CSSPageDescriptors", &["CSSStyleDeclarationBase"]),
-    ("CSSPageRule", &["CSSGroupingRule"]),
-    ("CSSPerspective", &["CSSTransformComponent"]),
-    ("CSSPositionTryDescriptors", &["CSSStyleDeclarationBase"]),
-    ("CSSPositionTryRule", &["CSSRule"]),
-    ("CSSPropertyRule", &["CSSRule"]),
-    ("CSSRotate", &["CSSTransformComponent"]),
-    ("CSSScale", &["CSSTransformComponent"]),
-    ("CSSScopeRule", &["CSSGroupingRule"]),
-    ("CSSSkew", &["CSSTransformComponent"]),
-    ("CSSSkewX", &["CSSTransformComponent"]),
-    ("CSSSkewY", &["CSSTransformComponent"]),
-    ("CSSStartingStyleRule", &["CSSGroupingRule"]),
-    ("CSSStyleDeclaration", &["CSSStyleProperties"]),
-    ("CSSStyleProperties", &["CSSStyleDeclarationBase"]),
-    ("CSSStyleRule", &["CSSGroupingRule"]),
-    ("CSSStyleSheet", &["StyleSheet"]),
-    ("CSSSupportsRule", &["CSSConditionRule"]),
-    ("CSSTransformValue", &["CSSStyleValue"]),
-    ("CSSTransition", &["Animation"]),
-    ("CSSTranslate", &["CSSTransformComponent"]),
-    ("CSSUnitValue", &["CSSNumericValue"]),
-    ("CSSUnparsedValue", &["CSSStyleValue"]),
-    ("CSSViewTransitionRule", &["CSSRule"]),
-    ("CanvasCaptureMediaStreamTrack", &["MediaStreamTrack"]),
-    ("CanvasRenderingContext2D", &["CanvasCompositing", "CanvasDrawImage", "CanvasDrawPath", "CanvasFillStrokeStyles", "CanvasFilters", "CanvasImageData", "CanvasImageSmoothing", "CanvasPath", "CanvasPathDrawingStyles", "CanvasRect", "CanvasSettings", "CanvasShadowStyles", "CanvasState", "CanvasText", "CanvasTextDrawingStyles", "CanvasTransform", "CanvasUserInterface"]),
-    ("ChannelMergerNode", &["AudioNode"]),
-    ("ChannelSplitterNode", &["AudioNode"]),
-    ("CharacterData", &["Node", "ChildNode", "NonDocumentTypeChildNode"]),
-    ("Clipboard", &["EventTarget"]),
-    ("ClipboardEvent", &["Event"]),
-    ("CloseEvent", &["Event"]),
-    ("CloseWatcher", &["EventTarget"]),
-    ("CommandEvent", &["Event"]),
-    ("Comment", &["CharacterData"]),
-    ("CompositionEvent", &["UIEvent"]),
-    ("CompressionStream", &["GenericTransformStream"]),
-    ("ConstantSourceNode", &["AudioScheduledSourceNode"]),
-    ("ContentVisibilityAutoStateChangeEvent", &["Event"]),
-    ("ConvolverNode", &["AudioNode"]),
-    ("CookieChangeEvent", &["Event"]),
-    ("CookieStore", &["EventTarget"]),
-    ("CountQueuingStrategy", &["QueuingStrategy"]),
-    ("CustomEvent", &["Event"]),
-    ("CustomStateSet", &["Set"]),
-    ("DOMException", &["Error"]),
-    ("DOMMatrix", &["DOMMatrixReadOnly"]),
-    ("DOMPoint", &["DOMPointReadOnly"]),
-    ("DOMRect", &["DOMRectReadOnly"]),
-    ("DecompressionStream", &["GenericTransformStream"]),
-    ("DelayNode", &["AudioNode"]),
-    ("DeviceMotionEvent", &["Event"]),
-    ("DeviceOrientationEvent", &["Event"]),
-    ("DigitalCredential", &["Credential"]),
-    ("Document", &["Node", "DocumentOrShadowRoot", "FontFaceSource", "GlobalEventHandlers", "NonElementParentNode", "ParentNode", "XPathEvaluatorBase"]),
-    ("DocumentFragment", &["Node", "NonElementParentNode", "ParentNode"]),
-    ("DocumentPictureInPicture", &["EventTarget"]),
-    ("DocumentPictureInPictureEvent", &["Event"]),
-    ("DocumentTimeline", &["AnimationTimeline"]),
-    ("DocumentType", &["Node", "ChildNode"]),
-    ("DragEvent", &["MouseEvent"]),
-    ("DynamicsCompressorNode", &["AudioNode"]),
-    ("Element", &["Node", "ARIAMixin", "Animatable", "ChildNode", "NonDocumentTypeChildNode", "ParentNode", "Slottable"]),
-    ("ElementInternals", &["ARIAMixin"]),
-    ("ErrorEvent", &["Event"]),
-    ("EventCounts", &["ReadonlyMap"]),
-    ("EventSource", &["EventTarget"]),
-    ("File", &["Blob"]),
-    ("FileReader", &["EventTarget"]),
-    ("FileSystemDirectoryEntry", &["FileSystemEntry"]),
-    ("FileSystemDirectoryHandle", &["FileSystemHandle"]),
-    ("FileSystemFileEntry", &["FileSystemEntry"]),
-    ("FileSystemFileHandle", &["FileSystemHandle"]),
-    ("FileSystemWritableFileStream", &["WritableStream"]),
-    ("FocusEvent", &["UIEvent"]),
-    ("FontFaceSet", &["EventTarget", "Set"]),
-    ("FontFaceSetLoadEvent", &["Event"]),
-    ("FormDataEvent", &["Event"]),
-    ("GPUBindGroup", &["GPUObjectBase"]),
-    ("GPUBindGroupLayout", &["GPUObjectBase"]),
-    ("GPUBuffer", &["GPUObjectBase"]),
-    ("GPUCommandBuffer", &["GPUObjectBase"]),
-    ("GPUCommandEncoder", &["GPUDebugCommandsMixin", "GPUObjectBase"]),
-    ("GPUComputePassEncoder", &["GPUBindingCommandsMixin", "GPUDebugCommandsMixin", "GPUObjectBase"]),
-    ("GPUComputePipeline", &["GPUObjectBase", "GPUPipelineBase"]),
-    ("GPUDevice", &["EventTarget", "GPUObjectBase"]),
-    ("GPUExternalTexture", &["GPUObjectBase"]),
-    ("GPUInternalError", &["GPUError"]),
-    ("GPUOutOfMemoryError", &["GPUError"]),
-    ("GPUPipelineError", &["DOMException"]),
-    ("GPUPipelineLayout", &["GPUObjectBase"]),
-    ("GPUQuerySet", &["GPUObjectBase"]),
-    ("GPUQueue", &["GPUObjectBase"]),
-    ("GPURenderBundle", &["GPUObjectBase"]),
-    ("GPURenderBundleEncoder", &["GPUBindingCommandsMixin", "GPUDebugCommandsMixin", "GPUObjectBase", "GPURenderCommandsMixin"]),
-    ("GPURenderPassEncoder", &["GPUBindingCommandsMixin", "GPUDebugCommandsMixin", "GPUObjectBase", "GPURenderCommandsMixin"]),
-    ("GPURenderPipeline", &["GPUObjectBase", "GPUPipelineBase"]),
-    ("GPUSampler", &["GPUObjectBase"]),
-    ("GPUShaderModule", &["GPUObjectBase"]),
-    ("GPUSupportedFeatures", &["ReadonlySet"]),
-    ("GPUTexture", &["GPUObjectBase"]),
-    ("GPUTextureView", &["GPUObjectBase"]),
-    ("GPUUncapturedErrorEvent", &["Event"]),
-    ("GPUValidationError", &["GPUError"]),
-    ("GainNode", &["AudioNode"]),
-    ("GamepadEvent", &["Event"]),
-    ("HTMLAnchorElement", &["HTMLElement", "HTMLHyperlinkElementUtils", "HyperlinkElementUtils"]),
-    ("HTMLAreaElement", &["HTMLElement", "HTMLHyperlinkElementUtils", "HyperlinkElementUtils"]),
-    ("HTMLAudioElement", &["HTMLMediaElement"]),
-    ("HTMLBRElement", &["HTMLElement"]),
-    ("HTMLBaseElement", &["HTMLElement"]),
-    ("HTMLBodyElement", &["HTMLElement", "WindowEventHandlers"]),
-    ("HTMLButtonElement", &["HTMLElement", "PopoverTargetAttributes"]),
-    ("HTMLCanvasElement", &["HTMLElement"]),
-    ("HTMLCollection", &["HTMLCollectionBase"]),
-    ("HTMLDListElement", &["HTMLElement"]),
-    ("HTMLDataElement", &["HTMLElement"]),
-    ("HTMLDataListElement", &["HTMLElement"]),
-    ("HTMLDetailsElement", &["HTMLElement"]),
-    ("HTMLDialogElement", &["HTMLElement"]),
-    ("HTMLDirectoryElement", &["HTMLElement"]),
-    ("HTMLDivElement", &["HTMLElement"]),
-    ("HTMLDocument", &["Document"]),
-    ("HTMLElement", &["Element", "ElementCSSInlineStyle", "ElementContentEditable", "GlobalEventHandlers", "HTMLOrSVGElement", "HTMLOrSVGOrMathMLElement"]),
-    ("HTMLEmbedElement", &["HTMLElement"]),
-    ("HTMLFieldSetElement", &["HTMLElement"]),
-    ("HTMLFontElement", &["HTMLElement"]),
-    ("HTMLFormControlsCollection", &["HTMLCollectionBase"]),
-    ("HTMLFormElement", &["HTMLElement"]),
-    ("HTMLFrameElement", &["HTMLElement"]),
-    ("HTMLFrameSetElement", &["HTMLElement", "WindowEventHandlers"]),
-    ("HTMLHRElement", &["HTMLElement"]),
-    ("HTMLHeadElement", &["HTMLElement"]),
-    ("HTMLHeadingElement", &["HTMLElement"]),
-    ("HTMLHtmlElement", &["HTMLElement"]),
-    ("HTMLIFrameElement", &["HTMLElement"]),
-    ("HTMLImageElement", &["HTMLElement"]),
-    ("HTMLInputElement", &["HTMLElement", "PopoverTargetAttributes"]),
-    ("HTMLLIElement", &["HTMLElement"]),
-    ("HTMLLabelElement", &["HTMLElement"]),
-    ("HTMLLegendElement", &["HTMLElement"]),
-    ("HTMLLinkElement", &["HTMLElement", "LinkStyle"]),
-    ("HTMLMapElement", &["HTMLElement"]),
-    ("HTMLMarqueeElement", &["HTMLElement"]),
-    ("HTMLMediaElement", &["HTMLElement"]),
-    ("HTMLMenuElement", &["HTMLElement"]),
-    ("HTMLMetaElement", &["HTMLElement"]),
-    ("HTMLMeterElement", &["HTMLElement"]),
-    ("HTMLModElement", &["HTMLElement"]),
-    ("HTMLOListElement", &["HTMLElement"]),
-    ("HTMLObjectElement", &["HTMLElement"]),
-    ("HTMLOptGroupElement", &["HTMLElement"]),
-    ("HTMLOptionElement", &["HTMLElement"]),
-    ("HTMLOptionsCollection", &["HTMLCollectionOf"]),
-    ("HTMLOutputElement", &["HTMLElement"]),
-    ("HTMLParagraphElement", &["HTMLElement"]),
-    ("HTMLParamElement", &["HTMLElement"]),
-    ("HTMLPictureElement", &["HTMLElement"]),
-    ("HTMLPreElement", &["HTMLElement"]),
-    ("HTMLProgressElement", &["HTMLElement"]),
-    ("HTMLQuoteElement", &["HTMLElement"]),
-    ("HTMLScriptElement", &["HTMLElement"]),
-    ("HTMLSelectElement", &["HTMLElement"]),
-    ("HTMLSlotElement", &["HTMLElement"]),
-    ("HTMLSourceElement", &["HTMLElement"]),
-    ("HTMLSpanElement", &["HTMLElement"]),
-    ("HTMLStyleElement", &["HTMLElement", "LinkStyle"]),
-    ("HTMLTableCaptionElement", &["HTMLElement"]),
-    ("HTMLTableCellElement", &["HTMLElement"]),
-    ("HTMLTableColElement", &["HTMLElement"]),
-    ("HTMLTableElement", &["HTMLElement"]),
-    ("HTMLTableRowElement", &["HTMLElement"]),
-    ("HTMLTableSectionElement", &["HTMLElement"]),
-    ("HTMLTemplateElement", &["HTMLElement"]),
-    ("HTMLTextAreaElement", &["HTMLElement"]),
-    ("HTMLTimeElement", &["HTMLElement"]),
-    ("HTMLTitleElement", &["HTMLElement"]),
-    ("HTMLTrackElement", &["HTMLElement"]),
-    ("HTMLUListElement", &["HTMLElement"]),
-    ("HTMLUnknownElement", &["HTMLElement"]),
-    ("HTMLVideoElement", &["HTMLMediaElement"]),
-    ("HashChangeEvent", &["Event"]),
-    ("Highlight", &["Set"]),
-    ("HighlightRegistry", &["Map"]),
-    ("IDBCursorWithValue", &["IDBCursor"]),
-    ("IDBDatabase", &["EventTarget"]),
-    ("IDBOpenDBRequest", &["IDBRequest"]),
-    ("IDBRequest", &["EventTarget"]),
-    ("IDBTransaction", &["EventTarget"]),
-    ("IDBVersionChangeEvent", &["Event"]),
-    ("IIRFilterNode", &["AudioNode"]),
-    ("InputDeviceInfo", &["MediaDeviceInfo"]),
-    ("InputEvent", &["UIEvent"]),
-    ("KeyboardEvent", &["UIEvent"]),
-    ("KeyframeEffect", &["AnimationEffect"]),
-    ("LargestContentfulPaint", &["PerformanceEntry", "PaintTimingMixin"]),
-    ("MIDIAccess", &["EventTarget"]),
-    ("MIDIConnectionEvent", &["Event"]),
-    ("MIDIInput", &["MIDIPort"]),
-    ("MIDIInputMap", &["ReadonlyMap"]),
-    ("MIDIMessageEvent", &["Event"]),
-    ("MIDIOutput", &["MIDIPort"]),
-    ("MIDIOutputMap", &["ReadonlyMap"]),
-    ("MIDIPort", &["EventTarget"]),
-    ("MathMLElement", &["Element", "ElementCSSInlineStyle", "GlobalEventHandlers", "HTMLOrSVGOrMathMLElement"]),
-    ("MediaDevices", &["EventTarget"]),
-    ("MediaElementAudioSourceNode", &["AudioNode"]),
-    ("MediaEncryptedEvent", &["Event"]),
-    ("MediaKeyMessageEvent", &["Event"]),
-    ("MediaKeySession", &["EventTarget"]),
-    ("MediaQueryList", &["EventTarget"]),
-    ("MediaQueryListEvent", &["Event"]),
-    ("MediaRecorder", &["EventTarget"]),
-    ("MediaSource", &["EventTarget"]),
-    ("MediaStream", &["EventTarget"]),
-    ("MediaStreamAudioDestinationNode", &["AudioNode"]),
-    ("MediaStreamAudioSourceNode", &["AudioNode"]),
-    ("MediaStreamTrack", &["EventTarget"]),
-    ("MediaStreamTrackEvent", &["Event"]),
-    ("MessageEvent", &["Event"]),
-    ("MessagePort", &["EventTarget", "MessageEventTarget"]),
-    ("MouseEvent", &["UIEvent"]),
-    ("NavigateEvent", &["Event"]),
-    ("Navigation", &["EventTarget"]),
-    ("NavigationCurrentEntryChangeEvent", &["Event"]),
-    ("NavigationHistoryEntry", &["EventTarget"]),
-    ("Navigator", &["NavigatorAutomationInformation", "NavigatorBadge", "NavigatorConcurrentHardware", "NavigatorContentUtils", "NavigatorCookies", "NavigatorGPU", "NavigatorID", "NavigatorLanguage", "NavigatorLocks", "NavigatorOnLine", "NavigatorPlugins", "NavigatorStorage"]),
-    ("Node", &["EventTarget"]),
-    ("Notification", &["EventTarget"]),
-    ("OfflineAudioCompletionEvent", &["Event"]),
-    ("OfflineAudioContext", &["BaseAudioContext"]),
-    ("OffscreenCanvas", &["EventTarget"]),
-    ("OffscreenCanvasRenderingContext2D", &["CanvasCompositing", "CanvasDrawImage", "CanvasDrawPath", "CanvasFillStrokeStyles", "CanvasFilters", "CanvasImageData", "CanvasImageSmoothing", "CanvasPath", "CanvasPathDrawingStyles", "CanvasRect", "CanvasShadowStyles", "CanvasState", "CanvasText", "CanvasTextDrawingStyles", "CanvasTransform"]),
-    ("OscillatorNode", &["AudioScheduledSourceNode"]),
-    ("OverconstrainedError", &["DOMException"]),
-    ("PageRevealEvent", &["Event"]),
-    ("PageSwapEvent", &["Event"]),
-    ("PageTransitionEvent", &["Event"]),
-    ("PannerNode", &["AudioNode"]),
-    ("Path2D", &["CanvasPath"]),
-    ("PaymentMethodChangeEvent", &["PaymentRequestUpdateEvent"]),
-    ("PaymentRequest", &["EventTarget"]),
-    ("PaymentRequestUpdateEvent", &["Event"]),
-    ("PaymentResponse", &["EventTarget"]),
-    ("Performance", &["EventTarget"]),
-    ("PerformanceEventTiming", &["PerformanceEntry"]),
-    ("PerformanceMark", &["PerformanceEntry"]),
-    ("PerformanceMeasure", &["PerformanceEntry"]),
-    ("PerformanceNavigationTiming", &["PerformanceResourceTiming"]),
-    ("PerformancePaintTiming", &["PerformanceEntry", "PaintTimingMixin"]),
-    ("PerformanceResourceTiming", &["PerformanceEntry"]),
-    ("PermissionStatus", &["EventTarget"]),
-    ("PictureInPictureEvent", &["Event"]),
-    ("PictureInPictureWindow", &["EventTarget"]),
-    ("PointerEvent", &["MouseEvent"]),
-    ("PopStateEvent", &["Event"]),
-    ("ProcessingInstruction", &["CharacterData", "LinkStyle"]),
-    ("ProgressEvent", &["Event"]),
-    ("PromiseRejectionEvent", &["Event"]),
-    ("PublicKeyCredential", &["Credential"]),
-    ("RTCDTMFSender", &["EventTarget"]),
-    ("RTCDTMFToneChangeEvent", &["Event"]),
-    ("RTCDataChannel", &["EventTarget"]),
-    ("RTCDataChannelEvent", &["Event"]),
-    ("RTCDtlsTransport", &["EventTarget"]),
-    ("RTCError", &["DOMException"]),
-    ("RTCErrorEvent", &["Event"]),
-    ("RTCIceTransport", &["EventTarget"]),
-    ("RTCPeerConnection", &["EventTarget"]),
-    ("RTCPeerConnectionIceErrorEvent", &["Event"]),
-    ("RTCPeerConnectionIceEvent", &["Event"]),
-    ("RTCSctpTransport", &["EventTarget"]),
-    ("RTCStatsReport", &["ReadonlyMap"]),
-    ("RTCTrackEvent", &["Event"]),
-    ("RadioNodeList", &["NodeListOf"]),
-    ("Range", &["AbstractRange"]),
-    ("ReadableStreamBYOBReader", &["ReadableStreamGenericReader"]),
-    ("ReadableStreamDefaultReader", &["ReadableStreamGenericReader"]),
-    ("RemotePlayback", &["EventTarget"]),
-    ("Request", &["Body"]),
-    ("Response", &["Body"]),
-    ("SVGAElement", &["SVGGraphicsElement", "SVGURIReference"]),
-    ("SVGAnimateElement", &["SVGAnimationElement"]),
-    ("SVGAnimateMotionElement", &["SVGAnimationElement"]),
-    ("SVGAnimateTransformElement", &["SVGAnimationElement"]),
-    ("SVGAnimationElement", &["SVGElement", "SVGTests"]),
-    ("SVGCircleElement", &["SVGGeometryElement"]),
-    ("SVGClipPathElement", &["SVGElement"]),
-    ("SVGComponentTransferFunctionElement", &["SVGElement"]),
-    ("SVGDefsElement", &["SVGGraphicsElement"]),
-    ("SVGDescElement", &["SVGElement"]),
-    ("SVGElement", &["Element", "ElementCSSInlineStyle", "GlobalEventHandlers", "HTMLOrSVGElement", "HTMLOrSVGOrMathMLElement"]),
-    ("SVGEllipseElement", &["SVGGeometryElement"]),
-    ("SVGFEBlendElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFEColorMatrixElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFEComponentTransferElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFECompositeElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFEConvolveMatrixElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFEDiffuseLightingElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFEDisplacementMapElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFEDistantLightElement", &["SVGElement"]),
-    ("SVGFEDropShadowElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFEFloodElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFEFuncAElement", &["SVGComponentTransferFunctionElement"]),
-    ("SVGFEFuncBElement", &["SVGComponentTransferFunctionElement"]),
-    ("SVGFEFuncGElement", &["SVGComponentTransferFunctionElement"]),
-    ("SVGFEFuncRElement", &["SVGComponentTransferFunctionElement"]),
-    ("SVGFEGaussianBlurElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFEImageElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes", "SVGURIReference"]),
-    ("SVGFEMergeElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFEMergeNodeElement", &["SVGElement"]),
-    ("SVGFEMorphologyElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFEOffsetElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFEPointLightElement", &["SVGElement"]),
-    ("SVGFESpecularLightingElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFESpotLightElement", &["SVGElement"]),
-    ("SVGFETileElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFETurbulenceElement", &["SVGElement", "SVGFilterPrimitiveStandardAttributes"]),
-    ("SVGFilterElement", &["SVGElement"]),
-    ("SVGForeignObjectElement", &["SVGGraphicsElement"]),
-    ("SVGGElement", &["SVGGraphicsElement"]),
-    ("SVGGeometryElement", &["SVGGraphicsElement"]),
-    ("SVGGradientElement", &["SVGElement", "SVGURIReference"]),
-    ("SVGGraphicsElement", &["SVGElement", "SVGTests"]),
-    ("SVGImageElement", &["SVGGraphicsElement", "SVGURIReference"]),
-    ("SVGLineElement", &["SVGGeometryElement"]),
-    ("SVGLinearGradientElement", &["SVGGradientElement"]),
-    ("SVGMPathElement", &["SVGElement", "SVGURIReference"]),
-    ("SVGMarkerElement", &["SVGElement", "SVGFitToViewBox"]),
-    ("SVGMaskElement", &["SVGElement"]),
-    ("SVGMetadataElement", &["SVGElement"]),
-    ("SVGPathElement", &["SVGGeometryElement"]),
-    ("SVGPatternElement", &["SVGElement", "SVGFitToViewBox", "SVGURIReference"]),
-    ("SVGPolygonElement", &["SVGGeometryElement", "SVGAnimatedPoints"]),
-    ("SVGPolylineElement", &["SVGGeometryElement", "SVGAnimatedPoints"]),
-    ("SVGRadialGradientElement", &["SVGGradientElement"]),
-    ("SVGRectElement", &["SVGGeometryElement"]),
-    ("SVGSVGElement", &["SVGGraphicsElement", "SVGFitToViewBox", "WindowEventHandlers"]),
-    ("SVGScriptElement", &["SVGElement", "SVGURIReference"]),
-    ("SVGSetElement", &["SVGAnimationElement"]),
-    ("SVGStopElement", &["SVGElement"]),
-    ("SVGStyleElement", &["SVGElement", "LinkStyle"]),
-    ("SVGSwitchElement", &["SVGGraphicsElement"]),
-    ("SVGSymbolElement", &["SVGElement", "SVGFitToViewBox"]),
-    ("SVGTSpanElement", &["SVGTextPositioningElement"]),
-    ("SVGTextContentElement", &["SVGGraphicsElement"]),
-    ("SVGTextElement", &["SVGTextPositioningElement"]),
-    ("SVGTextPathElement", &["SVGTextContentElement", "SVGURIReference"]),
-    ("SVGTextPositioningElement", &["SVGTextContentElement"]),
-    ("SVGTitleElement", &["SVGElement"]),
-    ("SVGUseElement", &["SVGGraphicsElement", "SVGURIReference"]),
-    ("SVGViewElement", &["SVGElement", "SVGFitToViewBox"]),
-    ("ScreenOrientation", &["EventTarget"]),
-    ("ScriptProcessorNode", &["AudioNode"]),
-    ("ScrollTimeline", &["AnimationTimeline"]),
-    ("SecurityPolicyViolationEvent", &["Event"]),
-    ("Serial", &["EventTarget"]),
-    ("SerialPort", &["EventTarget"]),
-    ("ServiceWorker", &["EventTarget", "AbstractWorker"]),
-    ("ServiceWorkerContainer", &["EventTarget"]),
-    ("ServiceWorkerRegistration", &["EventTarget", "PushManagerAttribute"]),
-    ("ShadowRoot", &["DocumentFragment", "DocumentOrShadowRoot"]),
-    ("SharedWorker", &["EventTarget", "AbstractWorker"]),
-    ("SourceBuffer", &["EventTarget"]),
-    ("SourceBufferList", &["EventTarget"]),
-    ("SpeechRecognitionErrorEvent", &["Event"]),
-    ("SpeechRecognitionEvent", &["Event"]),
-    ("SpeechSynthesis", &["EventTarget"]),
-    ("SpeechSynthesisErrorEvent", &["SpeechSynthesisEvent"]),
-    ("SpeechSynthesisEvent", &["Event"]),
-    ("SpeechSynthesisUtterance", &["EventTarget"]),
-    ("StaticRange", &["AbstractRange"]),
-    ("StereoPannerNode", &["AudioNode"]),
-    ("StorageEvent", &["Event"]),
-    ("StylePropertyMap", &["StylePropertyMapReadOnly"]),
-    ("SubmitEvent", &["Event"]),
-    ("TaskController", &["AbortController"]),
-    ("TaskPriorityChangeEvent", &["Event"]),
-    ("TaskSignal", &["AbortSignal"]),
-    ("Text", &["CharacterData", "Slottable"]),
-    ("TextDecoder", &["TextDecoderCommon"]),
-    ("TextDecoderStream", &["GenericTransformStream", "TextDecoderCommon"]),
-    ("TextEncoder", &["TextEncoderCommon"]),
-    ("TextEncoderStream", &["GenericTransformStream", "TextEncoderCommon"]),
-    ("TextEvent", &["UIEvent"]),
-    ("TextTrack", &["EventTarget"]),
-    ("TextTrackCue", &["EventTarget"]),
-    ("TextTrackList", &["EventTarget"]),
-    ("ToggleEvent", &["Event"]),
-    ("TouchEvent", &["UIEvent"]),
-    ("TrackEvent", &["Event"]),
-    ("TransitionEvent", &["Event"]),
-    ("UIEvent", &["Event"]),
-    ("VTTCue", &["TextTrackCue"]),
-    ("VideoDecoder", &["EventTarget"]),
-    ("VideoEncoder", &["EventTarget"]),
-    ("ViewTimeline", &["ScrollTimeline"]),
-    ("ViewTransitionTypeSet", &["Set"]),
-    ("VisualViewport", &["EventTarget"]),
-    ("WGSLLanguageFeatures", &["ReadonlySet"]),
-    ("WakeLockSentinel", &["EventTarget"]),
-    ("WaveShaperNode", &["AudioNode"]),
-    ("WebGL2RenderingContext", &["WebGL2RenderingContextBase", "WebGL2RenderingContextOverloads", "WebGLRenderingContextBase"]),
-    ("WebGLContextEvent", &["Event"]),
-    ("WebGLRenderingContext", &["WebGLRenderingContextBase", "WebGLRenderingContextOverloads"]),
-    ("WebSocket", &["EventTarget"]),
-    ("WebTransportError", &["DOMException"]),
-    ("WebTransportReceiveStream", &["ReadableStream"]),
-    ("WebTransportSendStream", &["WritableStream"]),
-    ("WheelEvent", &["MouseEvent"]),
-    ("Window", &["EventTarget", "AnimationFrameProvider", "GlobalEventHandlers", "WindowEventHandlers", "WindowLocalStorage", "WindowOrWorkerGlobalScope", "WindowSessionStorage"]),
-    ("Worker", &["EventTarget", "AbstractWorker", "MessageEventTarget"]),
-    ("XMLDocument", &["Document"]),
-    ("XMLHttpRequest", &["XMLHttpRequestEventTarget"]),
-    ("XMLHttpRequestEventTarget", &["EventTarget"]),
-    ("XMLHttpRequestUpload", &["XMLHttpRequestEventTarget"]),
-    ("XPathEvaluator", &["XPathEvaluatorBase"]),
+// Name, feature of a read, feature of `new`; `u16::MAX` is none.
+pub static GLOBALS: &[(u16, u16, u16)] = &[
+    (13, 0, 0), // ANGLE_instanced_arrays
+    (14, 4, 5), // AbortController
+    (15, 9, 10), // AbortPaymentEvent
+    (16, 12, 12), // AbortSignal
+    (17, 21, 22), // AbsoluteOrientationSensor
+    (18, 23, 23), // AbstractRange
+    (19, 29, 30), // Accelerometer
+    (21, 10252, 10252), // AggregateError
+    (22, 34, 35), // AmbientLightSensor
+    (23, 37, 38), // AnalyserNode
+    (24, 48, 49), // Animation
+    (25, 75, 75), // AnimationEffect
+    (26, 79, 80), // AnimationEvent
+    (27, 85, 86), // AnimationPlaybackEvent
+    (28, 89, 89), // AnimationTimeline
+    (29, 92, 92), // AnimationTrigger
+    (30, 10256, 10256), // Array
+    (31, 10307, 10307), // ArrayBuffer
+    (32, 10320, 10320), // AsyncDisposableStack
+    (33, 10329, 10329), // AsyncFunction
+    (34, 10332, 10332), // AsyncGenerator
+    (35, 10336, 10336), // AsyncGeneratorFunction
+    (36, 10339, 10339), // AsyncIterator
+    (38, 10342, 10342), // Atomics
+    (39, 93, 93), // Attr
+    (41, 101, 102), // AudioBuffer
+    (42, 110, 111), // AudioBufferSourceNode
+    (43, 119, 120), // AudioContext
+    (44, 139, 140), // AudioData
+    (45, 151, 152), // AudioDecoder
+    (46, 162, 162), // AudioDestinationNode
+    (47, 164, 165), // AudioEncoder
+    (48, 179, 179), // AudioListener
+    (49, 191, 191), // AudioNode
+    (50, 202, 202), // AudioParam
+    (51, 215, 215), // AudioParamMap
+    (52, 224, 224), // AudioPlaybackStats
+    (53, 233, 234), // AudioProcessingEvent
+    (54, 238, 238), // AudioScheduledSourceNode
+    (55, 242, 242), // AudioSession
+    (56, 246, 246), // AudioSinkInfo
+    (57, 248, 248), // AudioTrack
+    (58, 255, 255), // AudioTrackList
+    (59, 261, 261), // AudioWorklet
+    (60, 263, 263), // AudioWorkletGlobalScope
+    (61, 269, 270), // AudioWorkletNode
+    (62, 274, 275), // AudioWorkletProcessor
+    (63, 277, 277), // AuthenticatorAssertionResponse
+    (64, 281, 281), // AuthenticatorAttestationResponse
+    (65, 290, 290), // AuthenticatorResponse
+    (66, 292, 292), // AutofillEvent
+    (68, 295, 296), // BackgroundFetchEvent
+    (69, 298, 298), // BackgroundFetchManager
+    (70, 302, 302), // BackgroundFetchRecord
+    (71, 305, 305), // BackgroundFetchRegistration
+    (72, 318, 319), // BackgroundFetchUpdateUIEvent
+    (73, 321, 321), // BarProp
+    (74, 324, 325), // BarcodeDetector
+    (75, 328, 328), // BaseAudioContext
+    (76, 359, 359), // BatteryManager
+    (77, 369, 370), // BeforeInstallPromptEvent
+    (78, 374, 374), // BeforeUnloadEvent
+    (79, 10358, 10358), // BigInt
+    (80, 10367, 10367), // BigInt64Array
+    (81, 10369, 10369), // BigUint64Array
+    (82, 377, 378), // BiquadFilterNode
+    (83, 385, 386), // Blob
+    (84, 395, 396), // BlobEvent
+    (85, 399, 399), // Bluetooth
+    (86, 405, 405), // BluetoothCharacteristicProperties
+    (87, 415, 415), // BluetoothDevice
+    (88, 420, 420), // BluetoothRemoteGATTCharacteristic
+    (89, 434, 434), // BluetoothRemoteGATTDescriptor
+    (90, 440, 440), // BluetoothRemoteGATTServer
+    (91, 447, 447), // BluetoothRemoteGATTService
+    (92, 453, 453), // BluetoothUUID
+    (93, 10371, 10371), // Boolean
+    (94, 458, 459), // BroadcastChannel
+    (95, 465, 465), // BrowserCaptureMediaStreamTrack
+    (96, 469, 470), // BufferedChangeEvent
+    (97, 473, 474), // ByteLengthQueuingStrategy
+    (98, 477, 477), // CDATASection
+    (99, 478, 478), // CSPViolationReportBody
+    (100, 491, 491), // CSS
+    (101, 561, 561), // CSSAnimation
+    (102, 563, 563), // CSSConditionRule
+    (103, 565, 565), // CSSContainerRule
+    (104, 569, 569), // CSSCounterStyleRule
+    (105, 581, 581), // CSSCustomMediaRule
+    (106, 582, 582), // CSSFontFaceDescriptors
+    (107, 612, 612), // CSSFontFaceRule
+    (108, 615, 615), // CSSFontFeatureValuesMap
+    (109, 627, 627), // CSSFontFeatureValuesRule
+    (110, 635, 635), // CSSFontPaletteValuesRule
+    (111, 640, 640), // CSSFunctionDeclarations
+    (112, 642, 642), // CSSFunctionDescriptors
+    (113, 644, 644), // CSSFunctionRule
+    (114, 648, 648), // CSSGroupingRule
+    (115, 652, 652), // CSSImageValue
+    (116, 653, 653), // CSSImportRule
+    (117, 659, 659), // CSSKeyframeRule
+    (118, 662, 662), // CSSKeyframesRule
+    (119, 669, 670), // CSSKeywordValue
+    (120, 672, 672), // CSSLayerBlockRule
+    (121, 674, 674), // CSSLayerStatementRule
+    (122, 676, 676), // CSSMarginRule
+    (123, 679, 680), // CSSMathClamp
+    (124, 684, 685), // CSSMathInvert
+    (125, 687, 688), // CSSMathMax
+    (126, 690, 691), // CSSMathMin
+    (127, 693, 694), // CSSMathNegate
+    (128, 696, 697), // CSSMathProduct
+    (129, 699, 700), // CSSMathSum
+    (130, 702, 702), // CSSMathValue
+    (131, 704, 705), // CSSMatrixComponent
+    (132, 707, 707), // CSSMediaRule
+    (133, 710, 710), // CSSNamespaceRule
+    (134, 713, 713), // CSSNestedDeclarations
+    (135, 715, 715), // CSSNumericArray
+    (136, 722, 722), // CSSNumericValue
+    (137, 734, 734), // CSSPageDescriptors
+    (138, 747, 747), // CSSPageRule
+    (139, 751, 752), // CSSPerspective
+    (140, 754, 754), // CSSPositionTryDescriptors
+    (141, 825, 825), // CSSPositionTryRule
+    (142, 828, 829), // CSSPositionValue
+    (143, 832, 832), // CSSPrimitiveValue
+    (144, 841, 841), // CSSPropertyRule
+    (145, 846, 846), // CSSPseudoElement
+    (146, 851, 852), // CSSRotate
+    (147, 857, 857), // CSSRule
+    (148, 862, 862), // CSSRuleList
+    (149, 865, 866), // CSSScale
+    (150, 870, 870), // CSSScopeRule
+    (151, 873, 874), // CSSSkew
+    (152, 877, 878), // CSSSkewX
+    (153, 880, 881), // CSSSkewY
+    (154, 883, 883), // CSSStartingStyleRule
+    (155, 884, 884), // CSSStyleDeclaration
+    (156, 896, 896), // CSSStyleProperties
+    (157, 898, 898), // CSSStyleRule
+    (158, 906, 907), // CSSStyleSheet
+    (159, 919, 919), // CSSStyleValue
+    (160, 923, 923), // CSSSupportsRule
+    (161, 925, 925), // CSSTransformComponent
+    (162, 929, 931), // CSSTransformValue
+    (163, 939, 939), // CSSTransition
+    (164, 941, 942), // CSSTranslate
+    (165, 946, 947), // CSSUnitValue
+    (166, 950, 952), // CSSUnparsedValue
+    (167, 958, 958), // CSSValue
+    (168, 961, 961), // CSSValueList
+    (169, 964, 965), // CSSVariableReferenceValue
+    (170, 968, 968), // CSSViewTransitionRule
+    (171, 971, 971), // Cache
+    (172, 980, 980), // CacheStorage
+    (173, 988, 989), // CanMakePaymentEvent
+    (174, 991, 991), // CanvasCaptureMediaStreamTrack
+    (175, 994, 995), // CanvasFilter
+    (176, 996, 996), // CanvasGradient
+    (177, 998, 998), // CanvasPattern
+    (178, 1001, 1001), // CanvasRenderingContext2D
+    (179, 1084, 1085), // CaptureController
+    (180, 1094, 1094), // CaretPosition
+    (181, 1098, 1099), // ChannelMergerNode
+    (182, 1100, 1101), // ChannelSplitterNode
+    (183, 1102, 1102), // ChapterInformation
+    (184, 1106, 1107), // CharacterBoundsUpdateEvent
+    (185, 1110, 1110), // CharacterData
+    (186, 1136, 1136), // Client
+    (187, 1142, 1142), // Clients
+    (188, 1148, 1148), // Clipboard
+    (189, 1158, 1159), // ClipboardChangeEvent
+    (190, 1162, 1163), // ClipboardEvent
+    (191, 1165, 1166), // ClipboardItem
+    (192, 1173, 1174), // CloseEvent
+    (193, 1178, 1179), // CloseWatcher
+    (195, 1185, 1186), // CommandEvent
+    (196, 1189, 1190), // Comment
+    (197, 1191, 1192), // CompositionEvent
+    (198, 1196, 1197), // CompressionStream
+    (199, 1205, 1206), // ConstantSourceNode
+    (200, 1208, 1208), // ContactAddress
+    (201, 1220, 1220), // ContactsManager
+    (202, 1223, 1223), // ContentIndex
+    (203, 1227, 1228), // ContentIndexEvent
+    (204, 1230, 1231), // ContentVisibilityAutoStateChangeEvent
+    (205, 1233, 1234), // ConvolverNode
+    (206, 1237, 1238), // CookieChangeEvent
+    (207, 1241, 1241), // CookieStore
+    (208, 1258, 1258), // CookieStoreManager
+    (209, 1262, 1263), // CountQueuingStrategy
+    (210, 1266, 1266), // Counter
+    (211, 1270, 1270), // CrashReportContext
+    (212, 1274, 1274), // CreateMonitor
+    (213, 1276, 1276), // Credential
+    (214, 1280, 1280), // CredentialsContainer
+    (215, 1318, 1318), // CropTarget
+    (216, 1320, 1320), // Crypto
+    (217, 1325, 1325), // CryptoKey
+    (218, 1330, 1331), // CustomElementRegistry
+    (219, 1343, 1344), // CustomEvent
+    (220, 1348, 1348), // CustomStateSet
+    (223, 1359, 1359), // DOMError
+    (224, 1362, 1363), // DOMException
+    (225, 1368, 1368), // DOMImplementation
+    (226, 1373, 1374), // DOMMatrix
+    (227, 1413, 1414), // DOMMatrixReadOnly
+    (229, 1461, 1462), // DOMParser
+    (230, 1468, 1469), // DOMPoint
+    (231, 1476, 1477), // DOMPointReadOnly
+    (232, 1486, 1487), // DOMQuad
+    (233, 1497, 1498), // DOMRect
+    (234, 1505, 1505), // DOMRectList
+    (235, 1508, 1509), // DOMRectReadOnly
+    (236, 1521, 1521), // DOMStringList
+    (237, 1525, 1525), // DOMStringMap
+    (238, 1526, 1526), // DOMTokenList
+    (239, 1548, 1549), // DataCue
+    (240, 1552, 1553), // DataTransfer
+    (241, 1567, 1567), // DataTransferItem
+    (242, 1574, 1574), // DataTransferItemList
+    (243, 10375, 10375), // DataView
+    (244, 10403, 10403), // Date
+    (246, 1579, 1580), // DecompressionStream
+    (247, 1588, 1588), // DedicatedWorkerGlobalScope
+    (248, 1597, 1598), // DelayNode
+    (249, 1600, 1600), // DelegatedInkTrailPresenter
+    (250, 1604, 1604), // DeprecationReportBody
+    (251, 1612, 1613), // DeviceMotionEvent
+    (252, 1619, 1619), // DeviceMotionEventAcceleration
+    (253, 1623, 1623), // DeviceMotionEventRotationRate
+    (254, 1627, 1628), // DeviceOrientationEvent
+    (255, 1634, 1634), // DevicePosture
+    (256, 1637, 1637), // DigitalCredential
+    (257, 1642, 1642), // Directory
+    (258, 1647, 1647), // DirectoryEntrySync
+    (259, 1648, 1648), // DirectoryReaderSync
+    (261, 10467, 10467), // DisposableStack
+    (262, 1649, 1651), // Document
+    (263, 1849, 1850), // DocumentFragment
+    (264, 1862, 1862), // DocumentPictureInPicture
+    (265, 1868, 1869), // DocumentPictureInPictureEvent
+    (266, 1871, 1872), // DocumentTimeline
+    (267, 1873, 1873), // DocumentType
+    (268, 1881, 1882), // DragEvent
+    (271, 1884, 1885), // DynamicsCompressorNode
+    (274, 1892, 1892), // EXT_blend_minmax
+    (275, 1893, 1893), // EXT_color_buffer_float
+    (276, 1894, 1894), // EXT_color_buffer_half_float
+    (277, 1895, 1895), // EXT_disjoint_timer_query
+    (278, 1904, 1904), // EXT_disjoint_timer_query_webgl2
+    (279, 1906, 1906), // EXT_float_blend
+    (280, 1907, 1907), // EXT_frag_depth
+    (281, 1908, 1908), // EXT_sRGB
+    (282, 1909, 1909), // EXT_shader_texture_lod
+    (283, 1910, 1910), // EXT_texture_compression_bptc
+    (284, 1911, 1911), // EXT_texture_compression_rgtc
+    (285, 1912, 1912), // EXT_texture_filter_anisotropic
+    (286, 1913, 1913), // EXT_texture_norm16
+    (287, 1914, 1915), // EditContext
+    (288, 1932, 1932), // Element
+    (289, 2235, 2235), // ElementInternals
+    (290, 2299, 2300), // EncodedAudioChunk
+    (291, 2306, 2307), // EncodedVideoChunk
+    (292, 2313, 2313), // EntrySync
+    (293, 10476, 10476), // Error
+    (294, 2314, 2315), // ErrorEvent
+    (295, 10493, 10493), // EvalError
+    (296, 2321, 2322), // Event
+    (297, 2343, 2343), // EventCounts
+    (298, 2352, 2353), // EventSource
+    (299, 2363, 2364), // EventTarget
+    (301, 2379, 2380), // ExtendableCookieChangeEvent
+    (302, 2385, 2386), // ExtendableEvent
+    (303, 2389, 2390), // ExtendableMessageEvent
+    (304, 2396, 2396), // External
+    (305, 2399, 2400), // EyeDropper
+    (306, 2403, 2403), // FeaturePolicy
+    (307, 2408, 2409), // FederatedCredential
+    (308, 2414, 2414), // Fence
+    (309, 2418, 2418), // FencedFrameConfig
+    (310, 2420, 2421), // FetchEvent
+    (311, 2431, 2431), // FetchLaterResult
+    (312, 2433, 2434), // File
+    (313, 2439, 2439), // FileEntrySync
+    (314, 2440, 2440), // FileList
+    (315, 2443, 2444), // FileReader
+    (316, 2460, 2461), // FileReaderSync
+    (317, 2467, 2467), // FileSystem
+    (318, 2470, 2470), // FileSystemDirectoryEntry
+    (319, 2475, 2475), // FileSystemDirectoryHandle
+    (320, 2484, 2484), // FileSystemDirectoryReader
+    (321, 2486, 2486), // FileSystemEntry
+    (322, 2498, 2498), // FileSystemFileEntry
+    (323, 2501, 2501), // FileSystemFileHandle
+    (324, 2507, 2507), // FileSystemHandle
+    (325, 2515, 2516), // FileSystemObserver
+    (326, 2519, 2519), // FileSystemSync
+    (327, 2522, 2522), // FileSystemSyncAccessHandle
+    (328, 2533, 2533), // FileSystemWritableFileStream
+    (329, 10496, 10496), // FinalizationRegistry
+    (330, 10502, 10502), // Float16Array
+    (331, 10504, 10504), // Float32Array
+    (332, 10508, 10508), // Float64Array
+    (333, 2537, 2538), // FocusEvent
+    (334, 2540, 2540), // FontData
+    (335, 2546, 2547), // FontFace
+    (336, 2564, 2566), // FontFaceSet
+    (337, 2584, 2585), // FontFaceSetLoadEvent
+    (338, 2588, 2590), // FormData
+    (339, 2604, 2605), // FormDataEvent
+    (340, 2607, 2607), // FragmentDirective
+    (341, 10512, 10512), // Function
+    (342, 2608, 2608), // GPU
+    (343, 2614, 2614), // GPUAdapter
+    (344, 2623, 2623), // GPUAdapterInfo
+    (345, 2631, 2631), // GPUBindGroup
+    (346, 2633, 2633), // GPUBindGroupLayout
+    (347, 2635, 2635), // GPUBuffer
+    (348, 2644, 2644), // GPUCanvasContext
+    (349, 2651, 2651), // GPUCommandBuffer
+    (350, 2653, 2653), // GPUCommandEncoder
+    (351, 2674, 2674), // GPUCompilationInfo
+    (352, 2676, 2676), // GPUCompilationMessage
+    (353, 2683, 2683), // GPUComputePassEncoder
+    (354, 2696, 2696), // GPUComputePipeline
+    (355, 2699, 2699), // GPUDevice
+    (356, 2751, 2751), // GPUDeviceLostInfo
+    (357, 2754, 2754), // GPUError
+    (358, 2756, 2756), // GPUExternalTexture
+    (359, 2758, 2759), // GPUInternalError
+    (360, 2760, 2761), // GPUOutOfMemoryError
+    (361, 2762, 2763), // GPUPipelineError
+    (362, 2766, 2766), // GPUPipelineLayout
+    (363, 2768, 2768), // GPUQuerySet
+    (364, 2774, 2774), // GPUQueue
+    (365, 2784, 2784), // GPURenderBundle
+    (366, 2786, 2786), // GPURenderBundleEncoder
+    (367, 2803, 2803), // GPURenderPassEncoder
+    (368, 2828, 2828), // GPURenderPipeline
+    (369, 2831, 2831), // GPUSampler
+    (370, 2833, 2833), // GPUShaderModule
+    (371, 2836, 2836), // GPUSupportedFeatures
+    (372, 2867, 2867), // GPUSupportedLimits
+    (373, 2905, 2905), // GPUTexture
+    (374, 2924, 2924), // GPUTextureView
+    (375, 2926, 2927), // GPUUncapturedErrorEvent
+    (376, 2929, 2930), // GPUValidationError
+    (377, 2931, 2932), // GainNode
+    (378, 2934, 2934), // Gamepad
+    (379, 2947, 2947), // GamepadButton
+    (380, 2951, 2952), // GamepadEvent
+    (381, 2954, 2954), // GamepadHapticActuator
+    (382, 2965, 2965), // GamepadPose
+    (383, 10530, 10530), // Generator
+    (384, 10534, 10534), // GeneratorFunction
+    (385, 2974, 2974), // Geolocation
+    (386, 2979, 2979), // GeolocationCoordinates
+    (387, 2989, 2989), // GeolocationPosition
+    (388, 2994, 2994), // GeolocationPositionError
+    (389, 2998, 2998), // GestureEvent
+    (390, 3011, 3012), // GravitySensor
+    (391, 3013, 3014), // Gyroscope
+    (392, 3018, 3018), // HID
+    (393, 3024, 3025), // HIDConnectionEvent
+    (394, 3028, 3028), // HIDDevice
+    (395, 3042, 3042), // HIDInputReportEvent
+    (396, 3047, 3047), // HMDVRDevice
+    (397, 3050, 3050), // HTMLAllCollection
+    (398, 3054, 3054), // HTMLAnchorElement
+    (399, 3088, 3088), // HTMLAreaElement
+    (400, 3118, 3118), // HTMLAudioElement
+    (401, 3120, 3120), // HTMLBRElement
+    (402, 3122, 3122), // HTMLBaseElement
+    (403, 3127, 3127), // HTMLBodyElement
+    (404, 3135, 3135), // HTMLButtonElement
+    (405, 3161, 3161), // HTMLCameraElement
+    (406, 3168, 3168), // HTMLCanvasElement
+    (407, 3209, 3209), // HTMLCollection
+    (408, 3213, 3213), // HTMLDListElement
+    (409, 3215, 3215), // HTMLDataElement
+    (410, 3217, 3217), // HTMLDataListElement
+    (411, 3219, 3219), // HTMLDetailsElement
+    (412, 3222, 3222), // HTMLDialogElement
+    (413, 3232, 3232), // HTMLDirectoryElement
+    (414, 3234, 3234), // HTMLDivElement
+    (415, 3236, 3236), // HTMLDocument
+    (416, 3237, 3237), // HTMLElement
+    (417, 3318, 3318), // HTMLEmbedElement
+    (418, 3326, 3326), // HTMLFencedFrameElement
+    (419, 3332, 3332), // HTMLFieldSetElement
+    (420, 3345, 3345), // HTMLFontElement
+    (421, 3349, 3349), // HTMLFormControlsCollection
+    (422, 3351, 3351), // HTMLFormElement
+    (423, 3373, 3373), // HTMLFrameElement
+    (424, 3384, 3384), // HTMLFrameSetElement
+    (425, 3387, 3387), // HTMLGeolocationElement
+    (426, 3400, 3400), // HTMLHRElement
+    (427, 3406, 3406), // HTMLHeadElement
+    (428, 3407, 3407), // HTMLHeadingElement
+    (429, 3409, 3409), // HTMLHtmlElement
+    (430, 3411, 3411), // HTMLIFrameElement
+    (431, 3443, 3443), // HTMLImageElement
+    (432, 3478, 3478), // HTMLInputElement
+    (433, 3556, 3556), // HTMLInstallElement
+    (434, 3563, 3563), // HTMLLIElement
+    (435, 3566, 3566), // HTMLLabelElement
+    (436, 3570, 3570), // HTMLLegendElement
+    (437, 3573, 3573), // HTMLLinkElement
+    (438, 3597, 3597), // HTMLMapElement
+    (439, 3600, 3600), // HTMLMarqueeElement
+    (440, 3614, 3614), // HTMLMediaElement
+    (441, 3691, 3691), // HTMLMenuElement
+    (442, 3693, 3693), // HTMLMetaElement
+    (443, 3699, 3699), // HTMLMeterElement
+    (444, 3707, 3707), // HTMLMicrophoneElement
+    (445, 3714, 3714), // HTMLModElement
+    (446, 3717, 3717), // HTMLModelElement
+    (447, 3725, 3725), // HTMLOListElement
+    (448, 3730, 3730), // HTMLObjectElement
+    (449, 3757, 3757), // HTMLOptGroupElement
+    (450, 3760, 3760), // HTMLOptionElement
+    (451, 3770, 3770), // HTMLOptionsCollection
+    (452, 3775, 3775), // HTMLOutputElement
+    (453, 3789, 3789), // HTMLParagraphElement
+    (454, 3791, 3791), // HTMLParamElement
+    (455, 3796, 3796), // HTMLPictureElement
+    (456, 3797, 3797), // HTMLPreElement
+    (457, 3799, 3799), // HTMLProgressElement
+    (458, 3804, 3804), // HTMLQuoteElement
+    (459, 3806, 3806), // HTMLScriptElement
+    (460, 3832, 3832), // HTMLSelectElement
+    (461, 3859, 3859), // HTMLSelectedContentElement
+    (462, 3860, 3860), // HTMLSlotElement
+    (463, 3866, 3866), // HTMLSourceElement
+    (464, 3874, 3874), // HTMLSpanElement
+    (465, 3875, 3875), // HTMLStyleElement
+    (466, 3881, 3881), // HTMLTableCaptionElement
+    (467, 3883, 3883), // HTMLTableCellElement
+    (468, 3899, 3899), // HTMLTableColElement
+    (469, 3906, 3906), // HTMLTableElement
+    (470, 3930, 3930), // HTMLTableRowElement
+    (471, 3943, 3943), // HTMLTableSectionElement
+    (472, 3951, 3951), // HTMLTemplateElement
+    (473, 3961, 3961), // HTMLTextAreaElement
+    (474, 3994, 3994), // HTMLTimeElement
+    (475, 3996, 3996), // HTMLTitleElement
+    (476, 3998, 3998), // HTMLTrackElement
+    (477, 4007, 4007), // HTMLUListElement
+    (478, 4010, 4010), // HTMLUnknownElement
+    (479, 4011, 4011), // HTMLUserMediaElement
+    (480, 4018, 4018), // HTMLVideoElement
+    (481, 4039, 4040), // HashChangeEvent
+    (482, 4043, 4045), // Headers
+    (483, 4058, 4060), // Highlight
+    (484, 4072, 4072), // HighlightRegistry
+    (485, 4085, 4085), // History
+    (488, 4096, 4096), // IDBCursor
+    (489, 4109, 4109), // IDBCursorWithValue
+    (490, 4112, 4112), // IDBDatabase
+    (491, 4125, 4125), // IDBFactory
+    (492, 4131, 4131), // IDBIndex
+    (493, 4153, 4153), // IDBKeyRange
+    (494, 4164, 4164), // IDBObjectStore
+    (495, 4192, 4192), // IDBOpenDBRequest
+    (496, 4196, 4196), // IDBRecord
+    (497, 4200, 4200), // IDBRequest
+    (498, 4211, 4211), // IDBTransaction
+    (499, 4225, 4226), // IDBVersionChangeEvent
+    (500, 4230, 4231), // IIRFilterNode
+    (501, 4233, 4233), // IdentityCredential
+    (502, 4238, 4239), // IdentityCredentialError
+    (503, 4242, 4242), // IdentityProvider
+    (504, 4246, 4246), // IdleDeadline
+    (505, 4249, 4250), // IdleDetector
+    (507, 4256, 4256), // ImageBitmap
+    (508, 4260, 4260), // ImageBitmapRenderingContext
+    (509, 4263, 4264), // ImageCapture
+    (510, 4270, 4271), // ImageData
+    (511, 4281, 4282), // ImageDecoder
+    (512, 4291, 4291), // ImageTrack
+    (513, 4296, 4296), // ImageTrackList
+    (514, 10537, 10537), // Infinity
+    (515, 4301, 4301), // Ink
+    (516, 4303, 4304), // InputDeviceCapabilities
+    (517, 4306, 4306), // InputDeviceInfo
+    (518, 4308, 4309), // InputEvent
+    (519, 4316, 4317), // InstallEvent
+    (520, 4319, 4320), // InstallResultEvent
+    (522, 10538, 10538), // Int16Array
+    (523, 10542, 10542), // Int32Array
+    (524, 10546, 10546), // Int8Array
+    (525, 4322, 4322), // InteractionContentfulPaint
+    (526, 4328, 4329), // InterestEvent
+    (527, 10550, 10550), // InternalError
+    (528, 4331, 4332), // IntersectionObserver
+    (529, 4345, 4346), // IntersectionObserverEntry
+    (530, 4355, 4355), // InterventionReportBody
+    (531, 10552, 10552), // Intl
+    (533, 10703, 10703), // Iterator
+    (534, 10726, 10726), // JSON
+    (535, 4362, 4362), // KHR_parallel_shader_compile
+    (536, 4363, 4363), // Keyboard
+    (537, 4367, 4368), // KeyboardEvent
+    (538, 4398, 4398), // KeyboardLayoutMap
+    (539, 4407, 4408), // KeyframeEffect
+    (544, 4415, 4415), // LanguageDetector
+    (545, 4423, 4423), // LanguageModel
+    (546, 4435, 4435), // LargestContentfulPaint
+    (547, 4446, 4446), // LaunchParams
+    (548, 4449, 4449), // LaunchQueue
+    (549, 4451, 4451), // LayoutShift
+    (550, 4457, 4457), // LayoutShiftAttribution
+    (551, 4462, 4463), // LinearAccelerationSensor
+    (554, 4464, 4464), // Location
+    (555, 4479, 4479), // Lock
+    (556, 4482, 4482), // LockManager
+    (559, 4485, 4485), // MIDIAccess
+    (560, 4490, 4491), // MIDIConnectionEvent
+    (561, 4493, 4493), // MIDIInput
+    (562, 4495, 4495), // MIDIInputMap
+    (563, 4504, 4505), // MIDIMessageEvent
+    (564, 4507, 4507), // MIDIOutput
+    (565, 4510, 4510), // MIDIOutputMap
+    (566, 4519, 4519), // MIDIPort
+    (569, 4530, 4530), // ML
+    (570, 4532, 4532), // MLContext
+    (571, 4541, 4541), // MLGraph
+    (572, 4543, 4544), // MLGraphBuilder
+    (573, 4643, 4643), // MLOperand
+    (574, 4646, 4646), // MLTensor
+    (575, 4653, 4654), // Magnetometer
+    (576, 4658, 4659), // ManagedMediaSource
+    (577, 4663, 4663), // ManagedSourceBuffer
+    (578, 10734, 10734), // Map
+    (579, 10754, 10754), // Math
+    (580, 4665, 4665), // MathMLAnchorElement
+    (581, 4680, 4680), // MathMLElement
+    (582, 4690, 4690), // MediaCapabilities
+    (583, 4701, 4702), // MediaController
+    (584, 4717, 4717), // MediaDeviceInfo
+    (585, 4723, 4723), // MediaDevices
+    (586, 4756, 4757), // MediaElementAudioSourceNode
+    (587, 4759, 4760), // MediaEncryptedEvent
+    (588, 4763, 4763), // MediaError
+    (589, 4766, 4767), // MediaKeyMessageEvent
+    (590, 4770, 4770), // MediaKeySession
+    (591, 4782, 4782), // MediaKeyStatusMap
+    (592, 4791, 4791), // MediaKeySystemAccess
+    (593, 4795, 4795), // MediaKeys
+    (594, 4799, 4799), // MediaList
+    (595, 4806, 4807), // MediaMetadata
+    (596, 4813, 4813), // MediaQueryList
+    (597, 4820, 4821), // MediaQueryListEvent
+    (598, 4824, 4825), // MediaRecorder
+    (599, 4845, 4846), // MediaRecorderErrorEvent
+    (600, 4848, 4848), // MediaSession
+    (601, 4873, 4874), // MediaSource
+    (602, 4891, 4891), // MediaSourceHandle
+    (603, 4892, 4893), // MediaStream
+    (604, 4907, 4908), // MediaStreamAudioDestinationNode
+    (605, 4910, 4911), // MediaStreamAudioSourceNode
+    (606, 4913, 4914), // MediaStreamEvent
+    (607, 4916, 4916), // MediaStreamTrack
+    (608, 4960, 4961), // MediaStreamTrackAudioSourceNode
+    (609, 4962, 4962), // MediaStreamTrackAudioStats
+    (610, 4969, 4970), // MediaStreamTrackEvent
+    (611, 4972, 4973), // MediaStreamTrackGenerator
+    (612, 4975, 4976), // MediaStreamTrackHandle
+    (613, 4977, 4978), // MediaStreamTrackProcessor
+    (614, 4982, 4982), // MediaStreamTrackVideoStats
+    (615, 4987, 4988), // MerchantValidationEvent
+    (616, 4992, 4993), // MessageChannel
+    (617, 4996, 4997), // MessageEvent
+    (618, 5005, 5005), // MessagePort
+    (619, 5013, 5013), // Metadata
+    (620, 5016, 5016), // MimeType
+    (621, 5021, 5021), // MimeTypeArray
+    (622, 5025, 5026), // MouseEvent
+    (623, 5052, 5052), // MouseScrollEvent
+    (625, 5053, 5053), // MutationEvent
+    (626, 5060, 5061), // MutationObserver
+    (627, 5065, 5065), // MutationRecord
+    (628, 5075, 5076), // NDEFMessage
+    (629, 5079, 5080), // NDEFReader
+    (630, 5087, 5088), // NDEFReadingEvent
+    (631, 5092, 5093), // NDEFRecord
+    (633, 10800, 10800), // NaN
+    (634, 5102, 5102), // NamedNodeMap
+    (635, 5111, 5112), // NavigateEvent
+    (636, 5127, 5127), // Navigation
+    (637, 5144, 5144), // NavigationActivation
+    (638, 5148, 5149), // NavigationCurrentEntryChangeEvent
+    (639, 5152, 5152), // NavigationDestination
+    (640, 5159, 5159), // NavigationHistoryEntry
+    (641, 5167, 5167), // NavigationPrecommitController
+    (642, 5170, 5170), // NavigationPreloadManager
+    (643, 5175, 5175), // NavigationTransition
+    (644, 5181, 5181), // Navigator
+    (645, 5320, 5320), // NavigatorLogin
+    (646, 5322, 5322), // NavigatorManagedData
+    (647, 5325, 5325), // NavigatorUAData
+    (648, 5331, 5331), // NetworkInformation
+    (649, 5341, 5341), // Node
+    (650, 5372, 5372), // NodeIterator
+    (651, 5381, 5381), // NodeList
+    (652, 5389, 5389), // NotRestoredReasonDetails
+    (653, 5394, 5394), // NotRestoredReasons
+    (654, 5402, 5403), // Notification
+    (655, 5431, 5432), // NotificationEvent
+    (657, 10801, 10801), // Number
+    (659, 5435, 5435), // OES_draw_buffers_indexed
+    (660, 5443, 5443), // OES_element_index_uint
+    (661, 5444, 5444), // OES_fbo_render_mipmap
+    (662, 5445, 5445), // OES_standard_derivatives
+    (663, 5446, 5446), // OES_texture_float
+    (664, 5447, 5447), // OES_texture_float_linear
+    (665, 5448, 5448), // OES_texture_half_float
+    (666, 5449, 5449), // OES_texture_half_float_linear
+    (667, 5450, 5450), // OES_vertex_array_object
+    (668, 5455, 5455), // OTPCredential
+    (669, 5457, 5457), // OVR_multiview2
+    (670, 10825, 10825), // Object
+    (671, 5459, 5460), // Observable
+    (672, 5481, 5482), // OfflineAudioCompletionEvent
+    (673, 5484, 5485), // OfflineAudioContext
+    (674, 5493, 5494), // OffscreenCanvas
+    (675, 5508, 5508), // OffscreenCanvasRenderingContext2D
+    (677, 5582, 5582), // OrientationSensor
+    (678, 5585, 5586), // Origin
+    (679, 5591, 5592), // OscillatorNode
+    (680, 5597, 5598), // OverconstrainedError
+    (683, 5600, 5601), // PageRevealEvent
+    (684, 5603, 5604), // PageSwapEvent
+    (685, 5607, 5608), // PageTransitionEvent
+    (686, 5610, 5610), // PaintRenderingContext2D
+    (687, 5651, 5651), // PaintSize
+    (688, 5654, 5654), // PaintWorkletGlobalScope
+    (689, 5657, 5658), // PannerNode
+    (690, 5675, 5676), // PasswordCredential
+    (691, 5680, 5681), // Path2D
+    (692, 5693, 5693), // PaymentAddress
+    (693, 5705, 5705), // PaymentManager
+    (694, 5709, 5710), // PaymentMethodChangeEvent
+    (695, 5713, 5714), // PaymentRequest
+    (696, 5729, 5730), // PaymentRequestEvent
+    (697, 5744, 5745), // PaymentRequestUpdateEvent
+    (698, 5748, 5748), // PaymentResponse
+    (699, 5761, 5761), // Performance
+    (700, 5787, 5787), // PerformanceContainerTiming
+    (701, 5797, 5797), // PerformanceElementTiming
+    (702, 5811, 5811), // PerformanceEntry
+    (703, 5819, 5819), // PerformanceEventTiming
+    (704, 5826, 5826), // PerformanceLongAnimationFrameTiming
+    (705, 5835, 5835), // PerformanceLongTaskTiming
+    (706, 5838, 5839), // PerformanceMark
+    (707, 5841, 5841), // PerformanceMeasure
+    (708, 5843, 5843), // PerformanceNavigation
+    (709, 5847, 5847), // PerformanceNavigationTiming
+    (710, 5863, 5864), // PerformanceObserver
+    (711, 5871, 5871), // PerformanceObserverEntryList
+    (712, 5875, 5875), // PerformancePaintTiming
+    (713, 5881, 5881), // PerformanceResourceTiming
+    (714, 5914, 5914), // PerformanceScriptTiming
+    (715, 5926, 5926), // PerformanceServerTiming
+    (716, 5931, 5931), // PerformanceSoftNavigation
+    (717, 5938, 5938), // PerformanceTiming
+    (718, 5961, 5961), // PerformanceTimingConfidence
+    (719, 5965, 5966), // PeriodicSyncEvent
+    (720, 5968, 5968), // PeriodicSyncManager
+    (721, 5972, 5973), // PeriodicWave
+    (722, 5974, 5974), // PermissionStatus
+    (723, 5978, 5978), // Permissions
+    (724, 6010, 6010), // PermissionsPolicy
+    (725, 6015, 6016), // PictureInPictureEvent
+    (726, 6018, 6018), // PictureInPictureWindow
+    (732, 6022, 6022), // Plugin
+    (733, 6029, 6029), // PluginArray
+    (735, 6034, 6035), // PointerEvent
+    (736, 6054, 6055), // PopStateEvent
+    (737, 6058, 6058), // PositionSensorVRDevice
+    (738, 6062, 6062), // PreferenceManager
+    (739, 6068, 6068), // PreferenceObject
+    (740, 6075, 6075), // Presentation
+    (741, 6078, 6078), // PresentationAvailability
+    (742, 6081, 6081), // PresentationConnection
+    (743, 6093, 6094), // PresentationConnectionAvailableEvent
+    (744, 6096, 6097), // PresentationConnectionCloseEvent
+    (745, 6100, 6100), // PresentationConnectionList
+    (746, 6103, 6103), // PresentationReceiver
+    (747, 6105, 6106), // PresentationRequest
+    (748, 6112, 6113), // PressureObserver
+    (749, 6119, 6119), // PressureRecord
+    (750, 6124, 6124), // ProcessingInstruction
+    (751, 6136, 6137), // Profiler
+    (752, 6141, 6142), // ProgressEvent
+    (753, 10863, 10863), // Promise
+    (754, 6148, 6149), // PromiseRejectionEvent
+    (755, 6152, 6152), // ProtectedAudience
+    (756, 10880, 10880), // Proxy
+    (757, 6154, 6154), // PublicKeyCredential
+    (758, 6168, 6169), // PushEvent
+    (759, 6172, 6172), // PushManager
+    (760, 6181, 6181), // PushMessageData
+    (761, 6187, 6187), // PushSubscription
+    (762, 6195, 6196), // PushSubscriptionChangeEvent
+    (763, 6199, 6199), // PushSubscriptionOptions
+    (766, 6202, 6203), // QuotaExceededError
+    (767, 6206, 6206), // RGBColor
+    (768, 6210, 6210), // RTCCertificate
+    (769, 6213, 6213), // RTCDTMFSender
+    (770, 6218, 6219), // RTCDTMFToneChangeEvent
+    (771, 6221, 6221), // RTCDataChannel
+    (772, 6247, 6248), // RTCDataChannelEvent
+    (773, 6250, 6250), // RTCDtlsTransport
+    (774, 6256, 6257), // RTCEncodedAudioFrame
+    (775, 6279, 6280), // RTCEncodedVideoFrame
+    (776, 6309, 6310), // RTCError
+    (777, 6319, 6320), // RTCErrorEvent
+    (778, 6323, 6324), // RTCIceCandidate
+    (779, 6342, 6342), // RTCIceCandidatePair
+    (780, 6345, 6345), // RTCIceTransport
+    (781, 6357, 6357), // RTCIdentityAssertion
+    (782, 6360, 6361), // RTCPeerConnection
+    (783, 6440, 6441), // RTCPeerConnectionIceErrorEvent
+    (784, 6448, 6449), // RTCPeerConnectionIceEvent
+    (785, 6452, 6452), // RTCRtpReceiver
+    (786, 6475, 6476), // RTCRtpScriptTransform
+    (787, 6477, 6477), // RTCRtpScriptTransformer
+    (788, 6483, 6483), // RTCRtpSender
+    (789, 6517, 6517), // RTCRtpTransceiver
+    (790, 6531, 6531), // RTCSctpTransport
+    (791, 6537, 6538), // RTCSessionDescription
+    (792, 6542, 6542), // RTCStatsReport
+    (793, 6797, 6798), // RTCTrackEvent
+    (794, 6803, 6803), // RTCTransformEvent
+    (795, 6805, 6805), // RadioNodeList
+    (796, 6807, 6808), // Range
+    (797, 10896, 10896), // RangeError
+    (798, 6842, 6842), // ReadableByteStreamController
+    (799, 6848, 6850), // ReadableStream
+    (800, 6860, 6861), // ReadableStreamBYOBReader
+    (801, 6868, 6868), // ReadableStreamBYOBRequest
+    (802, 6872, 6872), // ReadableStreamDefaultController
+    (803, 6877, 6878), // ReadableStreamDefaultReader
+    (804, 6884, 6884), // Rect
+    (805, 10899, 10899), // ReferenceError
+    (806, 10902, 10902), // Reflect
+    (807, 10916, 10916), // RegExp
+    (808, 6889, 6890), // RelativeOrientationSensor
+    (810, 6891, 6891), // RemotePlayback
+    (811, 6899, 6899), // Report
+    (812, 6904, 6904), // ReportBody
+    (813, 6906, 6907), // ReportingObserver
+    (814, 6921, 6922), // Request
+    (815, 6968, 6969), // ResizeObserver
+    (816, 6974, 6974), // ResizeObserverEntry
+    (817, 6980, 6980), // ResizeObserverSize
+    (818, 6983, 6984), // Response
+    (819, 7008, 7008), // RestrictionTarget
+    (822, 7010, 7010), // SVGAElement
+    (823, 7031, 7031), // SVGAngle
+    (824, 7038, 7038), // SVGAnimateElement
+    (825, 7039, 7039), // SVGAnimateMotionElement
+    (826, 7040, 7040), // SVGAnimateTransformElement
+    (827, 7041, 7041), // SVGAnimatedAngle
+    (828, 7044, 7044), // SVGAnimatedBoolean
+    (829, 7047, 7047), // SVGAnimatedEnumeration
+    (830, 7050, 7050), // SVGAnimatedInteger
+    (831, 7053, 7053), // SVGAnimatedLength
+    (832, 7056, 7056), // SVGAnimatedLengthList
+    (833, 7059, 7059), // SVGAnimatedNumber
+    (834, 7062, 7062), // SVGAnimatedNumberList
+    (835, 7065, 7065), // SVGAnimatedPreserveAspectRatio
+    (836, 7068, 7068), // SVGAnimatedRect
+    (837, 7071, 7071), // SVGAnimatedString
+    (838, 7075, 7075), // SVGAnimatedTransformList
+    (839, 7078, 7078), // SVGAnimationElement
+    (840, 7092, 7092), // SVGCircleElement
+    (841, 7096, 7096), // SVGClipPathElement
+    (842, 7099, 7099), // SVGComponentTransferFunctionElement
+    (843, 7107, 7107), // SVGDefsElement
+    (844, 7108, 7108), // SVGDescElement
+    (845, 7109, 7109), // SVGDiscardElement
+    (846, 7110, 7110), // SVGElement
+    (847, 7126, 7126), // SVGEllipseElement
+    (848, 7131, 7131), // SVGFEBlendElement
+    (849, 7140, 7140), // SVGFEColorMatrixElement
+    (850, 7149, 7149), // SVGFEComponentTransferElement
+    (851, 7156, 7156), // SVGFECompositeElement
+    (852, 7169, 7169), // SVGFEConvolveMatrixElement
+    (853, 7187, 7187), // SVGFEDiffuseLightingElement
+    (854, 7198, 7198), // SVGFEDisplacementMapElement
+    (855, 7209, 7209), // SVGFEDistantLightElement
+    (856, 7212, 7212), // SVGFEDropShadowElement
+    (857, 7224, 7224), // SVGFEFloodElement
+    (858, 7230, 7230), // SVGFEFuncAElement
+    (859, 7231, 7231), // SVGFEFuncBElement
+    (860, 7232, 7232), // SVGFEFuncGElement
+    (861, 7233, 7233), // SVGFEFuncRElement
+    (862, 7234, 7234), // SVGFEGaussianBlurElement
+    (863, 7245, 7245), // SVGFEImageElement
+    (864, 7254, 7254), // SVGFEMergeElement
+    (865, 7260, 7260), // SVGFEMergeNodeElement
+    (866, 7262, 7262), // SVGFEMorphologyElement
+    (867, 7272, 7272), // SVGFEOffsetElement
+    (868, 7281, 7281), // SVGFEPointLightElement
+    (869, 7285, 7285), // SVGFESpecularLightingElement
+    (870, 7297, 7297), // SVGFESpotLightElement
+    (871, 7306, 7306), // SVGFETileElement
+    (872, 7313, 7313), // SVGFETurbulenceElement
+    (873, 7325, 7325), // SVGFilterElement
+    (874, 7333, 7333), // SVGForeignObjectElement
+    (875, 7338, 7338), // SVGGElement
+    (876, 7339, 7339), // SVGGeometryElement
+    (877, 7347, 7347), // SVGGradientElement
+    (878, 7352, 7352), // SVGGraphicsElement
+    (879, 7364, 7364), // SVGImageElement
+    (880, 7374, 7374), // SVGLength
+    (881, 7381, 7381), // SVGLengthList
+    (882, 7391, 7391), // SVGLineElement
+    (883, 7396, 7396), // SVGLinearGradientElement
+    (884, 7401, 7401), // SVGMPathElement
+    (885, 7403, 7403), // SVGMarkerElement
+    (886, 7416, 7416), // SVGMaskElement
+    (887, 7423, 7423), // SVGMetadataElement
+    (888, 7424, 7424), // SVGNumber
+    (889, 7426, 7426), // SVGNumberList
+    (890, 7436, 7436), // SVGPathElement
+    (891, 7463, 7463), // SVGPatternElement
+    (892, 7474, 7474), // SVGPoint
+    (893, 7478, 7478), // SVGPointList
+    (894, 7488, 7488), // SVGPolygonElement
+    (895, 7491, 7491), // SVGPolylineElement
+    (896, 7494, 7494), // SVGPreserveAspectRatio
+    (897, 7497, 7497), // SVGRadialGradientElement
+    (898, 7504, 7504), // SVGRect
+    (899, 7509, 7509), // SVGRectElement
+    (900, 7516, 7516), // SVGSVGElement
+    (901, 7550, 7550), // SVGScriptElement
+    (902, 7556, 7556), // SVGSetElement
+    (903, 7557, 7557), // SVGStopElement
+    (904, 7559, 7559), // SVGStringList
+    (905, 7569, 7569), // SVGStyleElement
+    (906, 7575, 7575), // SVGSwitchElement
+    (907, 7576, 7576), // SVGSymbolElement
+    (908, 7579, 7579), // SVGTSpanElement
+    (909, 7580, 7580), // SVGTextContentElement
+    (910, 7592, 7592), // SVGTextElement
+    (911, 7593, 7593), // SVGTextPathElement
+    (912, 7599, 7599), // SVGTextPositioningElement
+    (913, 7605, 7605), // SVGTitleElement
+    (914, 7606, 7606), // SVGTransform
+    (915, 7616, 7616), // SVGTransformList
+    (916, 7628, 7628), // SVGUnitTypes
+    (917, 7629, 7629), // SVGUseElement
+    (918, 7635, 7635), // SVGViewElement
+    (919, 7638, 7639), // Sanitizer
+    (920, 7652, 7652), // Scheduler
+    (921, 7655, 7655), // Scheduling
+    (922, 7657, 7657), // Screen
+    (923, 7678, 7678), // ScreenDetailed
+    (924, 7687, 7687), // ScreenDetails
+    (925, 7692, 7692), // ScreenOrientation
+    (926, 7698, 7698), // ScriptProcessorNode
+    (927, 7701, 7702), // ScrollTimeline
+    (928, 7705, 7706), // SecurityPolicyViolationEvent
+    (931, 7720, 7720), // Selection
+    (932, 7755, 7755), // Sensor
+    (933, 7764, 7765), // SensorErrorEvent
+    (934, 7767, 7767), // Serial
+    (935, 7772, 7772), // SerialPort
+    (936, 7787, 7787), // ServiceWorker
+    (937, 7794, 7794), // ServiceWorkerContainer
+    (938, 7806, 7806), // ServiceWorkerGlobalScope
+    (939, 7832, 7832), // ServiceWorkerRegistration
+    (940, 10956, 10956), // Set
+    (941, 7858, 7858), // ShadowRoot
+    (942, 10979, 10979), // SharedArrayBuffer
+    (943, 7909, 7909), // SharedStorage
+    (944, 7920, 7921), // SharedStorageAppendMethod
+    (945, 7922, 7923), // SharedStorageClearMethod
+    (946, 7924, 7925), // SharedStorageDeleteMethod
+    (947, 7926, 7926), // SharedStorageModifierMethod
+    (948, 7927, 7928), // SharedStorageSetMethod
+    (949, 7929, 7929), // SharedStorageWorklet
+    (950, 7932, 7932), // SharedStorageWorkletGlobalScope
+    (951, 7936, 7937), // SharedWorker
+    (952, 7947, 7947), // SharedWorkerGlobalScope
+    (953, 7951, 7952), // SnapEvent
+    (954, 7955, 7955), // SourceBuffer
+    (955, 7993, 7993), // SourceBufferList
+    (956, 8000, 8001), // SpeechGrammar
+    (957, 8004, 8005), // SpeechGrammarList
+    (958, 8010, 8011), // SpeechRecognition
+    (959, 8045, 8045), // SpeechRecognitionAlternative
+    (960, 8048, 8049), // SpeechRecognitionErrorEvent
+    (961, 8052, 8053), // SpeechRecognitionEvent
+    (962, 8056, 8057), // SpeechRecognitionPhrase
+    (963, 8060, 8060), // SpeechRecognitionResult
+    (964, 8064, 8064), // SpeechRecognitionResultList
+    (965, 8067, 8067), // SpeechSynthesis
+    (966, 8077, 8078), // SpeechSynthesisErrorEvent
+    (967, 8080, 8081), // SpeechSynthesisEvent
+    (968, 8088, 8089), // SpeechSynthesisUtterance
+    (969, 8103, 8103), // SpeechSynthesisVoice
+    (970, 8109, 8110), // StaticRange
+    (971, 8116, 8117), // StereoPannerNode
+    (972, 8119, 8119), // Storage
+    (973, 8126, 8126), // StorageAccessHandle
+    (974, 8138, 8138), // StorageBucket
+    (975, 8148, 8148), // StorageBucketManager
+    (976, 8152, 8153), // StorageEvent
+    (977, 8160, 8160), // StorageManager
+    (978, 10988, 10988), // String
+    (979, 8166, 8166), // StyleMedia
+    (980, 8169, 8169), // StylePropertyMap
+    (981, 8174, 8174), // StylePropertyMapReadOnly
+    (982, 8184, 8184), // StyleSheet
+    (983, 8192, 8192), // StyleSheetList
+    (984, 8195, 8196), // SubmitEvent
+    (985, 8198, 8198), // Subscriber
+    (986, 8205, 8205), // SubtleCrypto
+    (987, 8244, 8244), // Summarizer
+    (988, 11050, 11050), // SuppressedError
+    (989, 11054, 11054), // Symbol
+    (990, 8259, 8260), // SyncEvent
+    (991, 8263, 8263), // SyncManager
+    (992, 11078, 11078), // SyntaxError
+    (993, 8267, 8267), // TaskAttributionTiming
+    (994, 8273, 8274), // TaskController
+    (995, 8276, 8277), // TaskPriorityChangeEvent
+    (996, 8279, 8279), // TaskSignal
+    (997, 11081, 11081), // Temporal
+    (998, 8283, 8284), // Text
+    (999, 8289, 8290), // TextDecoder
+    (1000, 8296, 8297), // TextDecoderStream
+    (1001, 8303, 8304), // TextEncoder
+    (1002, 8309, 8310), // TextEncoderStream
+    (1003, 8314, 8314), // TextEvent
+    (1004, 8317, 8318), // TextFormat
+    (1005, 8323, 8324), // TextFormatUpdateEvent
+    (1006, 8326, 8326), // TextMetrics
+    (1007, 8339, 8339), // TextTrack
+    (1008, 8352, 8352), // TextTrackCue
+    (1009, 8360, 8360), // TextTrackCueList
+    (1010, 8363, 8363), // TextTrackList
+    (1011, 8369, 8370), // TextUpdateEvent
+    (1012, 8376, 8376), // TimeEvent
+    (1013, 8380, 8380), // TimeRanges
+    (1014, 8384, 8385), // ToggleEvent
+    (1015, 8389, 8390), // Touch
+    (1016, 8406, 8407), // TouchEvent
+    (1017, 8415, 8415), // TouchList
+    (1018, 8418, 8419), // TrackEvent
+    (1019, 8421, 8422), // TransformStream
+    (1020, 8427, 8427), // TransformStreamDefaultController
+    (1021, 8432, 8433), // TransitionEvent
+    (1022, 8438, 8438), // Translator
+    (1023, 8448, 8448), // TreeWalker
+    (1024, 8460, 8460), // TrustedHTML
+    (1025, 8463, 8463), // TrustedHTMLParserOptions
+    (1026, 8466, 8466), // TrustedScript
+    (1027, 8469, 8469), // TrustedScriptURL
+    (1028, 8472, 8472), // TrustedTypePolicy
+    (1029, 8477, 8477), // TrustedTypePolicyFactory
+    (1030, 11323, 11323), // TypeError
+    (1031, 11326, 11326), // TypedArray
+    (1032, 8487, 8488), // UIEvent
+    (1033, 11372, 11372), // URIError
+    (1034, 8494, 8495), // URL
+    (1035, 8515, 8516), // URLPattern
+    (1036, 8529, 8531), // URLSearchParams
+    (1037, 8550, 8550), // USB
+    (1038, 8557, 8558), // USBAlternateInterface
+    (1039, 8566, 8567), // USBConfiguration
+    (1040, 8572, 8573), // USBConnectionEvent
+    (1041, 8576, 8576), // USBDevice
+    (1042, 8610, 8611), // USBEndpoint
+    (1043, 8617, 8618), // USBInTransferResult
+    (1044, 8622, 8623), // USBInterface
+    (1045, 8629, 8630), // USBIsochronousInTransferPacket
+    (1046, 8634, 8635), // USBIsochronousInTransferResult
+    (1047, 8639, 8640), // USBIsochronousOutTransferPacket
+    (1048, 8644, 8645), // USBIsochronousOutTransferResult
+    (1049, 8648, 8649), // USBOutTransferResult
+    (1051, 11375, 11375), // Uint16Array
+    (1052, 11379, 11379), // Uint32Array
+    (1053, 11383, 11383), // Uint8Array
+    (1054, 11393, 11393), // Uint8ClampedArray
+    (1055, 8653, 8653), // UserActivation
+    (1056, 8656, 8656), // VRDisplay
+    (1057, 8676, 8676), // VRDisplayCapabilities
+    (1058, 8682, 8683), // VRDisplayEvent
+    (1059, 8686, 8686), // VREyeParameters
+    (1060, 8693, 8693), // VRFieldOfView
+    (1061, 8698, 8699), // VRFrameData
+    (1062, 8706, 8706), // VRPose
+    (1063, 8713, 8713), // VRStageParameters
+    (1064, 8717, 8718), // VTTCue
+    (1065, 8731, 8732), // VTTRegion
+    (1066, 8741, 8741), // ValidityState
+    (1067, 8753, 8754), // VideoColorSpace
+    (1068, 8760, 8761), // VideoDecoder
+    (1069, 8775, 8776), // VideoEncoder
+    (1070, 8786, 8787), // VideoFrame
+    (1071, 8809, 8809), // VideoPlaybackQuality
+    (1072, 8815, 8815), // VideoTrack
+    (1073, 8822, 8823), // VideoTrackGenerator
+    (1074, 8827, 8827), // VideoTrackList
+    (1075, 8834, 8835), // ViewTimeline
+    (1076, 8839, 8839), // ViewTransition
+    (1077, 8847, 8847), // ViewTransitionTypeSet
+    (1078, 8858, 8858), // Viewport
+    (1079, 8860, 8860), // VirtualKeyboard
+    (1080, 8866, 8866), // VisibilityStateEntry
+    (1081, 8871, 8871), // VisualViewport
+    (1082, 8882, 8882), // WEBGL_color_buffer_float
+    (1083, 8883, 8883), // WEBGL_compressed_texture_astc
+    (1084, 8885, 8885), // WEBGL_compressed_texture_etc
+    (1085, 8886, 8886), // WEBGL_compressed_texture_etc1
+    (1086, 8887, 8887), // WEBGL_compressed_texture_pvrtc
+    (1087, 8888, 8888), // WEBGL_compressed_texture_s3tc
+    (1088, 8889, 8889), // WEBGL_compressed_texture_s3tc_srgb
+    (1089, 8890, 8890), // WEBGL_debug_renderer_info
+    (1090, 8891, 8891), // WEBGL_debug_shaders
+    (1091, 8893, 8893), // WEBGL_depth_texture
+    (1092, 8894, 8894), // WEBGL_draw_buffers
+    (1093, 8896, 8896), // WEBGL_lose_context
+    (1094, 8899, 8899), // WEBGL_multi_draw
+    (1095, 8904, 8904), // WGSLLanguageFeatures
+    (1096, 8921, 8921), // WakeLock
+    (1097, 8923, 8923), // WakeLockSentinel
+    (1098, 8928, 8929), // WaveShaperNode
+    (1099, 11397, 11397), // WeakMap
+    (1100, 11408, 11408), // WeakRef
+    (1101, 11412, 11412), // WeakSet
+    (1102, 8932, 8932), // WebGL2RenderingContext
+    (1103, 9192, 9192), // WebGLActiveInfo
+    (1104, 9197, 9197), // WebGLBuffer
+    (1105, 9199, 9200), // WebGLContextEvent
+    (1106, 9203, 9203), // WebGLFramebuffer
+    (1107, 9205, 9205), // WebGLObject
+    (1108, 9206, 9206), // WebGLProgram
+    (1109, 9208, 9208), // WebGLQuery
+    (1110, 9209, 9209), // WebGLRenderbuffer
+    (1111, 9211, 9211), // WebGLRenderingContext
+    (1112, 9362, 9362), // WebGLSampler
+    (1113, 9363, 9363), // WebGLShader
+    (1114, 9365, 9365), // WebGLShaderPrecisionFormat
+    (1115, 9370, 9370), // WebGLSync
+    (1116, 9371, 9371), // WebGLTexture
+    (1117, 9373, 9373), // WebGLTimerQueryEXT
+    (1118, 9374, 9374), // WebGLTransformFeedback
+    (1119, 9375, 9375), // WebGLUniformLocation
+    (1120, 9377, 9377), // WebGLVertexArrayObject
+    (1121, 9378, 9378), // WebGLVertexArrayObjectOES
+    (1122, 9379, 9380), // WebKitPoint
+    (1123, 9383, 9384), // WebSocket
+    (1124, 9401, 9402), // WebSocketError
+    (1125, 9405, 9406), // WebSocketStream
+    (1126, 9411, 9412), // WebTransport
+    (1127, 9442, 9442), // WebTransportBidirectionalStream
+    (1128, 9447, 9447), // WebTransportDatagramDuplexStream
+    (1129, 9459, 9459), // WebTransportDatagramsWritable
+    (1130, 9462, 9463), // WebTransportError
+    (1131, 9466, 9466), // WebTransportReceiveStream
+    (1132, 9468, 9468), // WebTransportSendGroup
+    (1133, 9470, 9470), // WebTransportSendStream
+    (1134, 9475, 9476), // WheelEvent
+    (1135, 9486, 9486), // Window
+    (1136, 9663, 9663), // WindowClient
+    (1137, 9670, 9670), // WindowControlsOverlay
+    (1138, 9674, 9675), // WindowControlsOverlayGeometryChangeEvent
+    (1139, 9678, 9679), // Worker
+    (1140, 9692, 9692), // WorkerGlobalScope
+    (1141, 9708, 9708), // WorkerLocation
+    (1142, 9719, 9719), // WorkerNavigator
+    (1143, 9745, 9745), // Worklet
+    (1144, 9748, 9748), // WorkletGlobalScope
+    (1145, 9749, 9750), // WritableStream
+    (1146, 9756, 9756), // WritableStreamDefaultController
+    (1147, 9759, 9760), // WritableStreamDefaultWriter
+    (1148, 9768, 9768), // XMLDocument
+    (1149, 9769, 9770), // XMLHttpRequest
+    (1150, 9811, 9811), // XMLHttpRequestEventTarget
+    (1151, 9812, 9812), // XMLHttpRequestUpload
+    (1152, 9820, 9821), // XMLSerializer
+    (1153, 9823, 9824), // XPathEvaluator
+    (1154, 9828, 9828), // XPathExpression
+    (1155, 9830, 9830), // XPathResult
+    (1156, 9840, 9840), // XRAnchor
+    (1157, 9844, 9844), // XRAnchorSet
+    (1158, 9852, 9852), // XRBoundedReferenceSpace
+    (1159, 9854, 9854), // XRCPUDepthInformation
+    (1160, 9857, 9857), // XRCamera
+    (1161, 9860, 9860), // XRCompositionLayer
+    (1162, 9869, 9869), // XRCubeLayer
+    (1163, 9873, 9873), // XRCylinderLayer
+    (1164, 9880, 9880), // XRDepthInformation
+    (1165, 9887, 9887), // XREquirectLayer
+    (1166, 9895, 9895), // XRFrame
+    (1167, 9911, 9911), // XRHand
+    (1168, 9919, 9919), // XRHitTestResult
+    (1169, 9922, 9922), // XRHitTestSource
+    (1170, 9924, 9924), // XRInputSource
+    (1171, 9933, 9933), // XRInputSourceArray
+    (1172, 9940, 9941), // XRInputSourceEvent
+    (1173, 9944, 9945), // XRInputSourcesChangeEvent
+    (1174, 9949, 9949), // XRJointPose
+    (1175, 9951, 9951), // XRJointSpace
+    (1176, 9953, 9953), // XRLayer
+    (1177, 9954, 9955), // XRLayerEvent
+    (1178, 9957, 9957), // XRLightEstimate
+    (1179, 9961, 9961), // XRLightProbe
+    (1180, 9964, 9965), // XRMediaBinding
+    (1181, 9969, 9969), // XRPlane
+    (1182, 9975, 9975), // XRPlaneSet
+    (1183, 9983, 9983), // XRPose
+    (1184, 9988, 9988), // XRProjectionLayer
+    (1185, 9995, 9995), // XRQuadLayer
+    (1186, 10001, 10002), // XRRay
+    (1187, 10006, 10006), // XRReferenceSpace
+    (1188, 10009, 10010), // XRReferenceSpaceEvent
+    (1189, 10013, 10013), // XRRenderState
+    (1190, 10020, 10021), // XRRigidTransform
+    (1191, 10026, 10026), // XRSession
+    (1192, 10069, 10070), // XRSessionEvent
+    (1193, 10072, 10072), // XRSpace
+    (1194, 10073, 10073), // XRSubImage
+    (1195, 10075, 10075), // XRSystem
+    (1196, 10079, 10079), // XRTransientInputHitTestResult
+    (1197, 10082, 10082), // XRTransientInputHitTestSource
+    (1198, 10084, 10084), // XRView
+    (1199, 10093, 10093), // XRViewerPose
+    (1200, 10095, 10095), // XRViewport
+    (1201, 10100, 10101), // XRVisibilityMaskChangeEvent
+    (1202, 10107, 10108), // XRWebGLBinding
+    (1203, 10122, 10122), // XRWebGLDepthInformation
+    (1204, 10126, 10127), // XRWebGLLayer
+    (1205, 10136, 10136), // XRWebGLSubImage
+    (1206, 10147, 10148), // XSLTProcessor
+    (1253, 2365, 2365), // addEventListener
+    (1286, 9487, 9487), // afterprint_event
+    (1289, 9488, 9488), // alert
+    (1363, 9489, 9489), // appinstalled_event
+    (1452, 10157, 10157), // atob
+    (1530, 9490, 9490), // beforeinstallprompt_event
+    (1532, 9491, 9491), // beforeprint_event
+    (1535, 9492, 9492), // beforeunload_event
+    (1589, 9497, 9497), // blur
+    (1590, 9498, 9498), // blur_event
+    (1610, 10159, 10159), // btoa
+    (1634, 10161, 10161), // caches
+    (1655, 9499, 9499), // cancelAnimationFrame
+    (1657, 9500, 9500), // cancelIdleCallback
+    (1675, 9501, 9501), // captureEvents
+    (1755, 9502, 9502), // clearImmediate
+    (1756, 10164, 10164), // clearInterval
+    (1766, 10166, 10166), // clearTimeout
+    (1792, 9503, 9503), // close
+    (1797, 9504, 9504), // closed
+    (1877, 9505, 9505), // confirm
+    (1891, 10168, 10168), // console
+    (1943, 9506, 9506), // cookieStore
+    (1982, 9507, 9507), // crashReport
+    (2030, 10204, 10204), // createImageBitmap
+    (2122, 9508, 9508), // credentialless
+    (2127, 10214, 10214), // crossOriginIsolated
+    (2128, 10215, 10215), // crypto
+    (2159, 9509, 9509), // customElements
+    (2184, 11420, 11420), // decodeURI
+    (2185, 11421, 11421), // decodeURIComponent
+    (2292, 9510, 9510), // devicePixelRatio
+    (2300, 9511, 9511), // devicemotion_event
+    (2301, 9512, 9512), // deviceorientation_event
+    (2302, 9513, 9513), // deviceorientationabsolute_event
+    (2327, 2374, 2374), // dispatchEvent
+    (2347, 9514, 9514), // document
+    (2349, 9515, 9515), // documentPictureInPicture
+    (2410, 9516, 9516), // dump
+    (2470, 11422, 11422), // encodeURI
+    (2471, 11423, 11423), // encodeURIComponent
+    (2517, 9517, 9517), // error_event
+    (2520, 11424, 11424), // escape
+    (2523, 11425, 11425), // eval
+    (2525, 9518, 9518), // event
+    (2568, 9519, 9519), // external
+    (2605, 9520, 9520), // fence
+    (2607, 10217, 10217), // fetch
+    (2608, 9521, 9521), // fetchLater
+    (2630, 9522, 9522), // find
+    (2657, 9523, 9523), // focus
+    (2660, 9524, 9524), // focus_event
+    (2721, 9525, 9525), // frameElement
+    (2731, 9526, 9526), // frames
+    (2763, 9527, 9527), // fullScreen
+    (2773, 9528, 9528), // gamepadconnected_event
+    (2774, 9529, 9529), // gamepaddisconnected_event
+    (2854, 9530, 9530), // getComputedStyle
+    (2871, 9533, 9533), // getDefaultComputedStyle
+    (2878, 9535, 9535), // getDigitalGoodsService
+    (3018, 9536, 9536), // getScreenDetails
+    (3023, 9537, 9537), // getSelection
+    (3105, 11426, 11426), // globalThis
+    (3167, 9538, 9538), // hashchange_event
+    (3184, 9539, 9539), // history
+    (3251, 10232, 10232), // indexedDB
+    (3282, 9540, 9540), // innerHeight
+    (3284, 9541, 9541), // innerWidth
+    (3385, 11427, 11427), // isFinite
+    (3399, 11428, 11428), // isNaN
+    (3423, 10234, 10234), // isSecureContext
+    (3498, 9542, 9542), // languagechange_event
+    (3518, 9543, 9543), // launchQueue
+    (3535, 9544, 9544), // length
+    (3576, 9545, 9545), // load_event
+    (3590, 9546, 9546), // localStorage
+    (3594, 9547, 9547), // location
+    (3596, 9548, 9548), // locationbar
+    (3705, 9549, 9549), // matchMedia
+    (3792, 9550, 9550), // menubar
+    (3796, 9551, 9551), // message_event
+    (3797, 9552, 9552), // messageerror_event
+    (3850, 9553, 9553), // moveBy
+    (3851, 9554, 9554), // moveTo
+    (3862, 9556, 9556), // mozInnerScreenX
+    (3863, 9557, 9557), // mozInnerScreenY
+    (3887, 9558, 9558), // name
+    (3899, 9559, 9559), // navigation
+    (3904, 9560, 9560), // navigator
+    (3956, 9561, 9561), // offline_event
+    (3974, 9562, 9562), // online_event
+    (3980, 9563, 9563), // open
+    (3986, 9568, 9568), // opener
+    (4005, 9569, 9569), // orientation
+    (4009, 9570, 9570), // orientationchange_event
+    (4010, 10236, 10236), // origin
+    (4011, 9571, 9571), // originAgentCluster
+    (4017, 9572, 9572), // outerHeight
+    (4019, 9573, 9573), // outerWidth
+    (4054, 9574, 9574), // pagehide_event
+    (4055, 9575, 9575), // pagereveal_event
+    (4056, 9576, 9576), // pageshow_event
+    (4057, 9577, 9577), // pageswap_event
+    (4064, 9578, 9578), // parent
+    (4074, 11429, 11429), // parseFloat
+    (4080, 11430, 11430), // parseInt
+    (4123, 10237, 10237), // performance
+    (4162, 9579, 9579), // personalbar
+    (4222, 9580, 9580), // popstate_event
+    (4238, 9581, 9581), // postMessage
+    (4283, 9585, 9585), // print
+    (4304, 9586, 9586), // prompt
+    (4325, 9587, 9587), // pushManager
+    (4345, 9588, 9588), // queryLocalFonts
+    (4350, 10239, 10239), // queueMicrotask
+    (4459, 9589, 9589), // rejectionhandled_event
+    (4469, 9590, 9590), // releaseEvents
+    (4494, 2375, 2375), // removeEventListener
+    (4545, 10240, 10240), // reportError
+    (4553, 9591, 9591), // requestAnimationFrame
+    (4557, 9592, 9592), // requestFileSystem
+    (4563, 9593, 9593), // requestIdleCallback
+    (4577, 9594, 9594), // requestResize
+    (4601, 9595, 9595), // resizeBy
+    (4602, 9596, 9596), // resizeTo
+    (4603, 9597, 9597), // resize_event
+    (4605, 9598, 9598), // resolveLocalFileSystemURL
+    (4711, 10241, 10241), // scheduler
+    (4716, 9599, 9599), // screen
+    (4717, 9600, 9600), // screenLeft
+    (4719, 9602, 9602), // screenTop
+    (4720, 9604, 9604), // screenX
+    (4721, 9606, 9606), // screenY
+    (4726, 9608, 9608), // scroll
+    (4728, 9613, 9613), // scrollBy
+    (4729, 9618, 9618), // scrollByLines
+    (4730, 9619, 9619), // scrollByPages
+    (4738, 9620, 9620), // scrollMaxX
+    (4739, 9621, 9621), // scrollMaxY
+    (4741, 9622, 9622), // scrollTo
+    (4745, 9627, 9627), // scrollX
+    (4746, 9629, 9629), // scrollY
+    (4748, 9631, 9631), // scrollbars
+    (4752, 9632, 9632), // scrollsnapchange_event
+    (4753, 9633, 9633), // scrollsnapchanging_event
+    (4801, 9634, 9634), // self
+    (4823, 9635, 9635), // sessionStorage
+    (4871, 9636, 9636), // setImmediate
+    (4877, 10242, 10242), // setInterval
+    (4912, 9637, 9637), // setResizable
+    (4936, 10246, 10246), // setTimeout
+    (4971, 9638, 9638), // sharedStorage
+    (4983, 9639, 9639), // showDirectoryPicker
+    (4986, 9640, 9640), // showOpenFilePicker
+    (4989, 9641, 9641), // showSaveFilePicker
+    (5069, 9642, 9642), // speechSynthesis
+    (5110, 9643, 9643), // status
+    (5114, 9644, 9644), // statusbar
+    (5129, 9645, 9645), // stop
+    (5138, 9646, 9646), // storage_event
+    (5165, 10250, 10250), // structuredClone
+    (5169, 9647, 9647), // styleMedia
+    (5374, 9648, 9648), // toolbar
+    (5375, 9649, 9649), // top
+    (5438, 10251, 10251), // trustedTypes
+    (5468, 11432, 11432), // undefined
+    (5473, 11433, 11433), // unescape
+    (5474, 9650, 9650), // unhandledrejection_event
+    (5520, 9651, 9651), // unload_event
+    (5546, 9652, 9652), // updateCommands
+    (5665, 9653, 9653), // viewport
+    (5678, 9654, 9654), // visualViewport
+    (5689, 9655, 9655), // vrdisplayactivate_event
+    (5690, 9656, 9656), // vrdisplayconnect_event
+    (5691, 9657, 9657), // vrdisplaydeactivate_event
+    (5692, 9658, 9658), // vrdisplaydisconnect_event
+    (5693, 9659, 9659), // vrdisplaypresentchange_event
+    (5717, 9660, 9660), // webkitConvertPointFromNodeToPage
+    (5718, 9661, 9661), // webkitConvertPointFromPageToNode
+    (5734, 2378, 2378), // when
+    (5741, 9662, 9662), // window
+];
+
+// Object name, first row in `MEMBER_ROWS`. The rows of an object end at the first row of the next object.
+pub static MEMBER_OBJECTS: &[(u16, u16)] = &[
+    (13, 0), // ANGLE_instanced_arrays
+    (14, 3), // AbortController
+    (15, 6), // AbortPaymentEvent
+    (16, 8), // AbortSignal
+    (17, 18), // AbsoluteOrientationSensor
+    (18, 19), // AbstractRange
+    (19, 24), // Accelerometer
+    (21, 28), // AggregateError
+    (22, 31), // AmbientLightSensor
+    (23, 33), // AnalyserNode
+    (24, 43), // Animation
+    (25, 68), // AnimationEffect
+    (26, 71), // AnimationEvent
+    (27, 76), // AnimationPlaybackEvent
+    (28, 79), // AnimationTimeline
+    (30, 81), // Array
+    (31, 128), // ArrayBuffer
+    (32, 139), // AsyncDisposableStack
+    (33, 147), // AsyncFunction
+    (34, 148), // AsyncGenerator
+    (35, 151), // AsyncGeneratorFunction
+    (36, 152), // AsyncIterator
+    (38, 154), // Atomics
+    (39, 169), // Attr
+    (41, 176), // AudioBuffer
+    (42, 184), // AudioBufferSourceNode
+    (43, 192), // AudioContext
+    (44, 208), // AudioData
+    (45, 219), // AudioDecoder
+    (46, 230), // AudioDestinationNode
+    (47, 231), // AudioEncoder
+    (48, 242), // AudioListener
+    (49, 253), // AudioNode
+    (50, 261), // AudioParam
+    (51, 273), // AudioParamMap
+    (52, 281), // AudioPlaybackStats
+    (53, 289), // AudioProcessingEvent
+    (54, 293), // AudioScheduledSourceNode
+    (55, 296), // AudioSession
+    (56, 299), // AudioSinkInfo
+    (57, 300), // AudioTrack
+    (58, 306), // AudioTrackList
+    (59, 311), // AudioWorklet
+    (60, 312), // AudioWorkletGlobalScope
+    (61, 317), // AudioWorkletNode
+    (62, 321), // AudioWorkletProcessor
+    (63, 323), // AuthenticatorAssertionResponse
+    (64, 326), // AuthenticatorAttestationResponse
+    (65, 331), // AuthenticatorResponse
+    (66, 332), // AutofillEvent
+    (68, 334), // BackgroundFetchEvent
+    (69, 336), // BackgroundFetchManager
+    (70, 339), // BackgroundFetchRecord
+    (71, 341), // BackgroundFetchRegistration
+    (72, 353), // BackgroundFetchUpdateUIEvent
+    (73, 355), // BarProp
+    (74, 356), // BarcodeDetector
+    (75, 360), // BaseAudioContext
+    (76, 387), // BatteryManager
+    (77, 396), // BeforeInstallPromptEvent
+    (78, 400), // BeforeUnloadEvent
+    (79, 402), // BigInt
+    (80, 408), // BigInt64Array
+    (81, 409), // BigUint64Array
+    (82, 410), // BiquadFilterNode
+    (83, 417), // Blob
+    (84, 426), // BlobEvent
+    (85, 429), // Bluetooth
+    (86, 432), // BluetoothCharacteristicProperties
+    (87, 441), // BluetoothDevice
+    (88, 445), // BluetoothRemoteGATTCharacteristic
+    (89, 458), // BluetoothRemoteGATTDescriptor
+    (90, 463), // BluetoothRemoteGATTServer
+    (91, 469), // BluetoothRemoteGATTService
+    (92, 474), // BluetoothUUID
+    (93, 482), // Boolean
+    (94, 485), // BroadcastChannel
+    (95, 491), // BrowserCaptureMediaStreamTrack
+    (96, 494), // BufferedChangeEvent
+    (97, 497), // ByteLengthQueuingStrategy
+    (99, 500), // CSPViolationReportBody
+    (100, 512), // CSS
+    (101, 648), // CSSAnimation
+    (102, 649), // CSSConditionRule
+    (103, 650), // CSSContainerRule
+    (104, 653), // CSSCounterStyleRule
+    (106, 664), // CSSFontFaceDescriptors
+    (107, 693), // CSSFontFaceRule
+    (108, 694), // CSSFontFeatureValuesMap
+    (109, 705), // CSSFontFeatureValuesRule
+    (110, 712), // CSSFontPaletteValuesRule
+    (111, 716), // CSSFunctionDeclarations
+    (112, 717), // CSSFunctionDescriptors
+    (113, 718), // CSSFunctionRule
+    (114, 721), // CSSGroupingRule
+    (116, 724), // CSSImportRule
+    (117, 729), // CSSKeyframeRule
+    (118, 731), // CSSKeyframesRule
+    (119, 737), // CSSKeywordValue
+    (120, 739), // CSSLayerBlockRule
+    (121, 740), // CSSLayerStatementRule
+    (122, 741), // CSSMarginRule
+    (123, 743), // CSSMathClamp
+    (124, 747), // CSSMathInvert
+    (125, 749), // CSSMathMax
+    (126, 751), // CSSMathMin
+    (127, 753), // CSSMathNegate
+    (128, 755), // CSSMathProduct
+    (129, 757), // CSSMathSum
+    (130, 759), // CSSMathValue
+    (131, 760), // CSSMatrixComponent
+    (132, 762), // CSSMediaRule
+    (133, 764), // CSSNamespaceRule
+    (134, 766), // CSSNestedDeclarations
+    (135, 767), // CSSNumericArray
+    (136, 773), // CSSNumericValue
+    (137, 785), // CSSPageDescriptors
+    (138, 797), // CSSPageRule
+    (139, 799), // CSSPerspective
+    (140, 801), // CSSPositionTryDescriptors
+    (141, 871), // CSSPositionTryRule
+    (142, 873), // CSSPositionValue
+    (143, 876), // CSSPrimitiveValue
+    (144, 884), // CSSPropertyRule
+    (145, 888), // CSSPseudoElement
+    (146, 892), // CSSRotate
+    (147, 897), // CSSRule
+    (148, 901), // CSSRuleList
+    (149, 903), // CSSScale
+    (150, 907), // CSSScopeRule
+    (151, 909), // CSSSkew
+    (152, 912), // CSSSkewX
+    (153, 914), // CSSSkewY
+    (155, 916), // CSSStyleDeclaration
+    (156, 927), // CSSStyleProperties
+    (157, 928), // CSSStyleRule
+    (158, 934), // CSSStyleSheet
+    (159, 944), // CSSStyleValue
+    (160, 949), // CSSSupportsRule
+    (161, 950), // CSSTransformComponent
+    (162, 953), // CSSTransformValue
+    (163, 962), // CSSTransition
+    (164, 963), // CSSTranslate
+    (165, 967), // CSSUnitValue
+    (166, 970), // CSSUnparsedValue
+    (167, 977), // CSSValue
+    (168, 979), // CSSValueList
+    (169, 981), // CSSVariableReferenceValue
+    (170, 984), // CSSViewTransitionRule
+    (171, 986), // Cache
+    (172, 994), // CacheStorage
+    (173, 1001), // CanMakePaymentEvent
+    (174, 1003), // CanvasCaptureMediaStreamTrack
+    (175, 1005), // CanvasFilter
+    (176, 1006), // CanvasGradient
+    (177, 1007), // CanvasPattern
+    (178, 1008), // CanvasRenderingContext2D
+    (179, 1081), // CaptureController
+    (180, 1090), // CaretPosition
+    (181, 1093), // ChannelMergerNode
+    (182, 1094), // ChannelSplitterNode
+    (183, 1095), // ChapterInformation
+    (184, 1098), // CharacterBoundsUpdateEvent
+    (185, 1101), // CharacterData
+    (186, 1126), // Client
+    (187, 1131), // Clients
+    (188, 1135), // Clipboard
+    (189, 1143), // ClipboardChangeEvent
+    (190, 1146), // ClipboardEvent
+    (191, 1148), // ClipboardItem
+    (192, 1156), // CloseEvent
+    (193, 1160), // CloseWatcher
+    (195, 1166), // CommandEvent
+    (196, 1169), // Comment
+    (197, 1170), // CompositionEvent
+    (198, 1174), // CompressionStream
+    (199, 1177), // ConstantSourceNode
+    (200, 1179), // ContactAddress
+    (201, 1190), // ContactsManager
+    (202, 1192), // ContentIndex
+    (203, 1195), // ContentIndexEvent
+    (204, 1197), // ContentVisibilityAutoStateChangeEvent
+    (205, 1199), // ConvolverNode
+    (206, 1202), // CookieChangeEvent
+    (207, 1205), // CookieStore
+    (208, 1210), // CookieStoreManager
+    (209, 1213), // CountQueuingStrategy
+    (210, 1216), // Counter
+    (211, 1219), // CrashReportContext
+    (212, 1222), // CreateMonitor
+    (213, 1223), // Credential
+    (214, 1227), // CredentialsContainer
+    (215, 1231), // CropTarget
+    (216, 1233), // Crypto
+    (217, 1236), // CryptoKey
+    (218, 1240), // CustomElementRegistry
+    (219, 1248), // CustomEvent
+    (220, 1252), // CustomStateSet
+    (223, 1262), // DOMError
+    (224, 1264), // DOMException
+    (225, 1269), // DOMImplementation
+    (226, 1273), // DOMMatrix
+    (227, 1315), // DOMMatrixReadOnly
+    (229, 1365), // DOMParser
+    (230, 1367), // DOMPoint
+    (231, 1375), // DOMPointReadOnly
+    (232, 1385), // DOMQuad
+    (233, 1397), // DOMRect
+    (234, 1405), // DOMRectList
+    (235, 1407), // DOMRectReadOnly
+    (236, 1420), // DOMStringList
+    (238, 1423), // DOMTokenList
+    (239, 1440), // DataCue
+    (240, 1443), // DataTransfer
+    (241, 1457), // DataTransferItem
+    (242, 1463), // DataTransferItemList
+    (243, 1467), // DataView
+    (244, 1493), // Date
+    (246, 1545), // DecompressionStream
+    (247, 1548), // DedicatedWorkerGlobalScope
+    (248, 1556), // DelayNode
+    (249, 1558), // DelegatedInkTrailPresenter
+    (250, 1561), // DeprecationReportBody
+    (251, 1568), // DeviceMotionEvent
+    (252, 1575), // DeviceMotionEventAcceleration
+    (253, 1578), // DeviceMotionEventRotationRate
+    (254, 1581), // DeviceOrientationEvent
+    (255, 1588), // DevicePosture
+    (256, 1590), // DigitalCredential
+    (257, 1595), // Directory
+    (261, 1599), // DisposableStack
+    (262, 1607), // Document
+    (263, 1764), // DocumentFragment
+    (264, 1776), // DocumentPictureInPicture
+    (265, 1779), // DocumentPictureInPictureEvent
+    (266, 1781), // DocumentTimeline
+    (267, 1782), // DocumentType
+    (268, 1789), // DragEvent
+    (271, 1791), // DynamicsCompressorNode
+    (277, 1798), // EXT_disjoint_timer_query
+    (278, 1806), // EXT_disjoint_timer_query_webgl2
+    (287, 1807), // EditContext
+    (288, 1824), // Element
+    (289, 2064), // ElementInternals
+    (290, 2127), // EncodedAudioChunk
+    (291, 2133), // EncodedVideoChunk
+    (293, 2139), // Error
+    (294, 2152), // ErrorEvent
+    (295, 2158), // EvalError
+    (296, 2160), // Event
+    (297, 2181), // EventCounts
+    (298, 2189), // EventSource
+    (299, 2198), // EventTarget
+    (301, 2203), // ExtendableCookieChangeEvent
+    (302, 2206), // ExtendableEvent
+    (303, 2208), // ExtendableMessageEvent
+    (304, 2214), // External
+    (305, 2216), // EyeDropper
+    (306, 2219), // FeaturePolicy
+    (307, 2223), // FederatedCredential
+    (308, 2228), // Fence
+    (309, 2231), // FencedFrameConfig
+    (310, 2232), // FetchEvent
+    (311, 2240), // FetchLaterResult
+    (312, 2241), // File
+    (314, 2246), // FileList
+    (315, 2248), // FileReader
+    (316, 2264), // FileReaderSync
+    (317, 2270), // FileSystem
+    (318, 2272), // FileSystemDirectoryEntry
+    (319, 2276), // FileSystemDirectoryHandle
+    (320, 2284), // FileSystemDirectoryReader
+    (321, 2285), // FileSystemEntry
+    (322, 2296), // FileSystemFileEntry
+    (323, 2298), // FileSystemFileHandle
+    (324, 2301), // FileSystemHandle
+    (325, 2308), // FileSystemObserver
+    (326, 2311), // FileSystemSync
+    (327, 2313), // FileSystemSyncAccessHandle
+    (328, 2319), // FileSystemWritableFileStream
+    (329, 2322), // FinalizationRegistry
+    (330, 2325), // Float16Array
+    (331, 2326), // Float32Array
+    (332, 2327), // Float64Array
+    (333, 2328), // FocusEvent
+    (334, 2330), // FontData
+    (335, 2335), // FontFace
+    (336, 2352), // FontFaceSet
+    (337, 2371), // FontFaceSetLoadEvent
+    (338, 2374), // FormData
+    (339, 2387), // FormDataEvent
+    (341, 2389), // Function
+    (342, 2400), // GPU
+    (343, 2403), // GPUAdapter
+    (344, 2409), // GPUAdapterInfo
+    (345, 2416), // GPUBindGroup
+    (346, 2417), // GPUBindGroupLayout
+    (347, 2418), // GPUBuffer
+    (348, 2426), // GPUCanvasContext
+    (349, 2431), // GPUCommandBuffer
+    (350, 2432), // GPUCommandEncoder
+    (351, 2446), // GPUCompilationInfo
+    (352, 2447), // GPUCompilationMessage
+    (353, 2453), // GPUComputePassEncoder
+    (354, 2464), // GPUComputePipeline
+    (355, 2466), // GPUDevice
+    (356, 2491), // GPUDeviceLostInfo
+    (357, 2493), // GPUError
+    (358, 2494), // GPUExternalTexture
+    (359, 2495), // GPUInternalError
+    (360, 2496), // GPUOutOfMemoryError
+    (361, 2497), // GPUPipelineError
+    (362, 2499), // GPUPipelineLayout
+    (363, 2500), // GPUQuerySet
+    (364, 2504), // GPUQueue
+    (365, 2510), // GPURenderBundle
+    (366, 2511), // GPURenderBundleEncoder
+    (367, 2525), // GPURenderPassEncoder
+    (368, 2547), // GPURenderPipeline
+    (369, 2549), // GPUSampler
+    (370, 2550), // GPUShaderModule
+    (371, 2552), // GPUSupportedFeatures
+    (372, 2581), // GPUSupportedLimits
+    (373, 2618), // GPUTexture
+    (374, 2630), // GPUTextureView
+    (375, 2631), // GPUUncapturedErrorEvent
+    (376, 2633), // GPUValidationError
+    (377, 2634), // GainNode
+    (378, 2636), // Gamepad
+    (379, 2648), // GamepadButton
+    (380, 2651), // GamepadEvent
+    (381, 2653), // GamepadHapticActuator
+    (382, 2659), // GamepadPose
+    (383, 2667), // Generator
+    (384, 2670), // GeneratorFunction
+    (385, 2671), // Geolocation
+    (386, 2675), // GeolocationCoordinates
+    (387, 2684), // GeolocationPosition
+    (388, 2688), // GeolocationPositionError
+    (389, 2691), // GestureEvent
+    (390, 2703), // GravitySensor
+    (391, 2704), // Gyroscope
+    (392, 2708), // HID
+    (393, 2713), // HIDConnectionEvent
+    (394, 2716), // HIDDevice
+    (395, 2729), // HIDInputReportEvent
+    (396, 2733), // HMDVRDevice
+    (397, 2735), // HTMLAllCollection
+    (398, 2738), // HTMLAnchorElement
+    (399, 2768), // HTMLAreaElement
+    (400, 2794), // HTMLAudioElement
+    (401, 2795), // HTMLBRElement
+    (402, 2796), // HTMLBaseElement
+    (403, 2798), // HTMLBodyElement
+    (404, 2805), // HTMLButtonElement
+    (405, 2827), // HTMLCameraElement
+    (406, 2833), // HTMLCanvasElement
+    (407, 2847), // HTMLCollection
+    (408, 2850), // HTMLDListElement
+    (409, 2851), // HTMLDataElement
+    (410, 2852), // HTMLDataListElement
+    (411, 2853), // HTMLDetailsElement
+    (412, 2855), // HTMLDialogElement
+    (413, 2864), // HTMLDirectoryElement
+    (414, 2865), // HTMLDivElement
+    (416, 2866), // HTMLElement
+    (417, 2927), // HTMLEmbedElement
+    (418, 2934), // HTMLFencedFrameElement
+    (419, 2939), // HTMLFieldSetElement
+    (420, 2950), // HTMLFontElement
+    (421, 2953), // HTMLFormControlsCollection
+    (422, 2954), // HTMLFormElement
+    (423, 2975), // HTMLFrameElement
+    (424, 2985), // HTMLFrameSetElement
+    (425, 2987), // HTMLGeolocationElement
+    (426, 2999), // HTMLHRElement
+    (428, 3004), // HTMLHeadingElement
+    (429, 3005), // HTMLHtmlElement
+    (430, 3006), // HTMLIFrameElement
+    (431, 3033), // HTMLImageElement
+    (432, 3063), // HTMLInputElement
+    (433, 3130), // HTMLInstallElement
+    (434, 3136), // HTMLLIElement
+    (435, 3138), // HTMLLabelElement
+    (436, 3141), // HTMLLegendElement
+    (437, 3143), // HTMLLinkElement
+    (438, 3163), // HTMLMapElement
+    (439, 3165), // HTMLMarqueeElement
+    (440, 3178), // HTMLMediaElement
+    (441, 3252), // HTMLMenuElement
+    (442, 3253), // HTMLMetaElement
+    (443, 3258), // HTMLMeterElement
+    (444, 3265), // HTMLMicrophoneElement
+    (445, 3271), // HTMLModElement
+    (446, 3273), // HTMLModelElement
+    (447, 3280), // HTMLOListElement
+    (448, 3284), // HTMLObjectElement
+    (449, 3310), // HTMLOptGroupElement
+    (450, 3312), // HTMLOptionElement
+    (451, 3321), // HTMLOptionsCollection
+    (452, 3325), // HTMLOutputElement
+    (453, 3338), // HTMLParagraphElement
+    (454, 3339), // HTMLParamElement
+    (456, 3343), // HTMLPreElement
+    (457, 3344), // HTMLProgressElement
+    (458, 3348), // HTMLQuoteElement
+    (459, 3349), // HTMLScriptElement
+    (460, 3368), // HTMLSelectElement
+    (462, 3393), // HTMLSlotElement
+    (463, 3398), // HTMLSourceElement
+    (465, 3405), // HTMLStyleElement
+    (466, 3410), // HTMLTableCaptionElement
+    (467, 3411), // HTMLTableCellElement
+    (468, 3426), // HTMLTableColElement
+    (469, 3432), // HTMLTableElement
+    (470, 3455), // HTMLTableRowElement
+    (471, 3465), // HTMLTableSectionElement
+    (472, 3472), // HTMLTemplateElement
+    (473, 3481), // HTMLTextAreaElement
+    (474, 3513), // HTMLTimeElement
+    (475, 3514), // HTMLTitleElement
+    (476, 3515), // HTMLTrackElement
+    (477, 3523), // HTMLUListElement
+    (479, 3525), // HTMLUserMediaElement
+    (480, 3531), // HTMLVideoElement
+    (481, 3551), // HashChangeEvent
+    (482, 3554), // Headers
+    (483, 3568), // Highlight
+    (484, 3581), // HighlightRegistry
+    (485, 3593), // History
+    (488, 3601), // IDBCursor
+    (489, 3612), // IDBCursorWithValue
+    (490, 3614), // IDBDatabase
+    (491, 3625), // IDBFactory
+    (492, 3630), // IDBIndex
+    (493, 3646), // IDBKeyRange
+    (494, 3660), // IDBObjectStore
+    (495, 3681), // IDBOpenDBRequest
+    (496, 3684), // IDBRecord
+    (497, 3687), // IDBRequest
+    (498, 3695), // IDBTransaction
+    (499, 3707), // IDBVersionChangeEvent
+    (500, 3711), // IIRFilterNode
+    (501, 3713), // IdentityCredential
+    (502, 3718), // IdentityCredentialError
+    (503, 3721), // IdentityProvider
+    (504, 3727), // IdleDeadline
+    (505, 3729), // IdleDetector
+    (507, 3736), // ImageBitmap
+    (508, 3739), // ImageBitmapRenderingContext
+    (509, 3741), // ImageCapture
+    (510, 3747), // ImageData
+    (511, 3754), // ImageDecoder
+    (512, 3764), // ImageTrack
+    (513, 3768), // ImageTrackList
+    (515, 3772), // Ink
+    (516, 3773), // InputDeviceCapabilities
+    (517, 3775), // InputDeviceInfo
+    (518, 3776), // InputEvent
+    (519, 3782), // InstallEvent
+    (520, 3784), // InstallResultEvent
+    (522, 3786), // Int16Array
+    (523, 3787), // Int32Array
+    (524, 3788), // Int8Array
+    (525, 3789), // InteractionContentfulPaint
+    (526, 3794), // InterestEvent
+    (527, 3796), // InternalError
+    (528, 3797), // IntersectionObserver
+    (529, 3808), // IntersectionObserverEntry
+    (530, 3817), // InterventionReportBody
+    (531, 3823), // Intl
+    (533, 3836), // Iterator
+    (534, 3858), // JSON
+    (536, 3863), // Keyboard
+    (537, 3866), // KeyboardEvent
+    (538, 3881), // KeyboardLayoutMap
+    (539, 3889), // KeyframeEffect
+    (544, 3896), // LanguageDetector
+    (545, 3905), // LanguageModel
+    (546, 3918), // LargestContentfulPaint
+    (547, 3927), // LaunchParams
+    (548, 3929), // LaunchQueue
+    (549, 3930), // LayoutShift
+    (550, 3935), // LayoutShiftAttribution
+    (551, 3939), // LinearAccelerationSensor
+    (554, 3940), // Location
+    (555, 3954), // Lock
+    (556, 3956), // LockManager
+    (559, 3958), // MIDIAccess
+    (560, 3962), // MIDIConnectionEvent
+    (561, 3964), // MIDIInput
+    (562, 3965), // MIDIInputMap
+    (563, 3973), // MIDIMessageEvent
+    (564, 3975), // MIDIOutput
+    (565, 3977), // MIDIOutputMap
+    (566, 3985), // MIDIPort
+    (569, 3995), // ML
+    (570, 3996), // MLContext
+    (571, 4004), // MLGraph
+    (572, 4005), // MLGraphBuilder
+    (573, 4104), // MLOperand
+    (574, 4106), // MLTensor
+    (575, 4112), // Magnetometer
+    (576, 4116), // ManagedMediaSource
+    (577, 4120), // ManagedSourceBuffer
+    (578, 4121), // Map
+    (579, 4138), // Math
+    (580, 4183), // MathMLAnchorElement
+    (581, 4197), // MathMLElement
+    (582, 4205), // MediaCapabilities
+    (583, 4207), // MediaController
+    (584, 4222), // MediaDeviceInfo
+    (585, 4227), // MediaDevices
+    (586, 4234), // MediaElementAudioSourceNode
+    (587, 4236), // MediaEncryptedEvent
+    (588, 4239), // MediaError
+    (589, 4241), // MediaKeyMessageEvent
+    (590, 4244), // MediaKeySession
+    (591, 4255), // MediaKeyStatusMap
+    (592, 4263), // MediaKeySystemAccess
+    (593, 4266), // MediaKeys
+    (594, 4269), // MediaList
+    (595, 4275), // MediaMetadata
+    (596, 4281), // MediaQueryList
+    (597, 4287), // MediaQueryListEvent
+    (598, 4290), // MediaRecorder
+    (599, 4310), // MediaRecorderErrorEvent
+    (600, 4312), // MediaSession
+    (601, 4319), // MediaSource
+    (603, 4338), // MediaStream
+    (604, 4352), // MediaStreamAudioDestinationNode
+    (605, 4354), // MediaStreamAudioSourceNode
+    (606, 4356), // MediaStreamEvent
+    (607, 4358), // MediaStreamTrack
+    (608, 4378), // MediaStreamTrackAudioSourceNode
+    (609, 4379), // MediaStreamTrackAudioStats
+    (610, 4385), // MediaStreamTrackEvent
+    (611, 4387), // MediaStreamTrackGenerator
+    (612, 4389), // MediaStreamTrackHandle
+    (613, 4390), // MediaStreamTrackProcessor
+    (614, 4394), // MediaStreamTrackVideoStats
+    (615, 4398), // MerchantValidationEvent
+    (616, 4402), // MessageChannel
+    (617, 4405), // MessageEvent
+    (618, 4413), // MessagePort
+    (619, 4419), // Metadata
+    (620, 4421), // MimeType
+    (621, 4425), // MimeTypeArray
+    (622, 4428), // MouseEvent
+    (625, 4452), // MutationEvent
+    (626, 4458), // MutationObserver
+    (627, 4462), // MutationRecord
+    (628, 4471), // NDEFMessage
+    (629, 4474), // NDEFReader
+    (630, 4481), // NDEFReadingEvent
+    (631, 4485), // NDEFRecord
+    (634, 4494), // NamedNodeMap
+    (635, 4502), // NavigateEvent
+    (636, 4516), // Navigation
+    (637, 4532), // NavigationActivation
+    (638, 4535), // NavigationCurrentEntryChangeEvent
+    (639, 4538), // NavigationDestination
+    (640, 4544), // NavigationHistoryEntry
+    (641, 4551), // NavigationPrecommitController
+    (642, 4553), // NavigationPreloadManager
+    (643, 4557), // NavigationTransition
+    (644, 4562), // Navigator
+    (645, 4654), // NavigatorLogin
+    (646, 4655), // NavigatorManagedData
+    (647, 4657), // NavigatorUAData
+    (648, 4662), // NetworkInformation
+    (649, 4671), // Node
+    (650, 4701), // NodeIterator
+    (651, 4709), // NodeList
+    (652, 4716), // NotRestoredReasonDetails
+    (653, 4718), // NotRestoredReasons
+    (654, 4725), // Notification
+    (655, 4755), // NotificationEvent
+    (657, 4758), // Number
+    (659, 4779), // OES_draw_buffers_indexed
+    (667, 4786), // OES_vertex_array_object
+    (668, 4790), // OTPCredential
+    (669, 4791), // OVR_multiview2
+    (670, 4792), // Object
+    (671, 4828), // Observable
+    (672, 4850), // OfflineAudioCompletionEvent
+    (673, 4852), // OfflineAudioContext
+    (674, 4858), // OffscreenCanvas
+    (675, 4866), // OffscreenCanvasRenderingContext2D
+    (677, 4939), // OrientationSensor
+    (678, 4941), // Origin
+    (679, 4947), // OscillatorNode
+    (680, 4952), // OverconstrainedError
+    (683, 4954), // PageRevealEvent
+    (684, 4956), // PageSwapEvent
+    (685, 4959), // PageTransitionEvent
+    (686, 4961), // PaintRenderingContext2D
+    (687, 5001), // PaintSize
+    (688, 5003), // PaintWorkletGlobalScope
+    (689, 5005), // PannerNode
+    (690, 5022), // PasswordCredential
+    (691, 5026), // Path2D
+    (692, 5038), // PaymentAddress
+    (693, 5049), // PaymentManager
+    (694, 5052), // PaymentMethodChangeEvent
+    (695, 5055), // PaymentRequest
+    (696, 5071), // PaymentRequestEvent
+    (697, 5085), // PaymentRequestUpdateEvent
+    (698, 5088), // PaymentResponse
+    (699, 5100), // Performance
+    (700, 5119), // PerformanceContainerTiming
+    (701, 5128), // PerformanceElementTiming
+    (702, 5140), // PerformanceEntry
+    (703, 5147), // PerformanceEventTiming
+    (704, 5153), // PerformanceLongAnimationFrameTiming
+    (705, 5161), // PerformanceLongTaskTiming
+    (706, 5163), // PerformanceMark
+    (707, 5165), // PerformanceMeasure
+    (708, 5166), // PerformanceNavigation
+    (709, 5169), // PerformanceNavigationTiming
+    (710, 5184), // PerformanceObserver
+    (711, 5191), // PerformanceObserverEntryList
+    (712, 5194), // PerformancePaintTiming
+    (713, 5199), // PerformanceResourceTiming
+    (714, 5230), // PerformanceScriptTiming
+    (715, 5241), // PerformanceServerTiming
+    (716, 5245), // PerformanceSoftNavigation
+    (717, 5251), // PerformanceTiming
+    (718, 5273), // PerformanceTimingConfidence
+    (719, 5276), // PeriodicSyncEvent
+    (720, 5278), // PeriodicSyncManager
+    (721, 5281), // PeriodicWave
+    (722, 5282), // PermissionStatus
+    (723, 5285), // Permissions
+    (724, 5316), // PermissionsPolicy
+    (725, 5320), // PictureInPictureEvent
+    (726, 5322), // PictureInPictureWindow
+    (732, 5325), // Plugin
+    (733, 5331), // PluginArray
+    (735, 5335), // PointerEvent
+    (736, 5351), // PopStateEvent
+    (737, 5354), // PositionSensorVRDevice
+    (738, 5357), // PreferenceManager
+    (739, 5362), // PreferenceObject
+    (740, 5368), // Presentation
+    (741, 5370), // PresentationAvailability
+    (742, 5372), // PresentationConnection
+    (743, 5383), // PresentationConnectionAvailableEvent
+    (744, 5385), // PresentationConnectionCloseEvent
+    (745, 5388), // PresentationConnectionList
+    (746, 5390), // PresentationReceiver
+    (747, 5391), // PresentationRequest
+    (748, 5397), // PressureObserver
+    (749, 5404), // PressureRecord
+    (750, 5408), // ProcessingInstruction
+    (751, 5419), // Profiler
+    (752, 5423), // ProgressEvent
+    (753, 5428), // Promise
+    (754, 5444), // PromiseRejectionEvent
+    (755, 5447), // ProtectedAudience
+    (756, 5448), // Proxy
+    (757, 5450), // PublicKeyCredential
+    (758, 5471), // PushEvent
+    (759, 5474), // PushManager
+    (760, 5483), // PushMessageData
+    (761, 5488), // PushSubscription
+    (762, 5495), // PushSubscriptionChangeEvent
+    (763, 5498), // PushSubscriptionOptions
+    (766, 5500), // QuotaExceededError
+    (767, 5503), // RGBColor
+    (768, 5506), // RTCCertificate
+    (769, 5508), // RTCDTMFSender
+    (770, 5512), // RTCDTMFToneChangeEvent
+    (771, 5514), // RTCDataChannel
+    (772, 5537), // RTCDataChannelEvent
+    (773, 5539), // RTCDtlsTransport
+    (774, 5544), // RTCEncodedAudioFrame
+    (775, 5548), // RTCEncodedVideoFrame
+    (776, 5553), // RTCError
+    (777, 5561), // RTCErrorEvent
+    (778, 5564), // RTCIceCandidate
+    (779, 5582), // RTCIceCandidatePair
+    (780, 5584), // RTCIceTransport
+    (781, 5595), // RTCIdentityAssertion
+    (782, 5597), // RTCPeerConnection
+    (783, 5649), // RTCPeerConnectionIceErrorEvent
+    (784, 5656), // RTCPeerConnectionIceEvent
+    (785, 5659), // RTCRtpReceiver
+    (786, 5671), // RTCRtpScriptTransform
+    (787, 5672), // RTCRtpScriptTransformer
+    (788, 5677), // RTCRtpSender
+    (789, 5690), // RTCRtpTransceiver
+    (790, 5701), // RTCSctpTransport
+    (791, 5706), // RTCSessionDescription
+    (792, 5710), // RTCStatsReport
+    (793, 5732), // RTCTrackEvent
+    (794, 5737), // RTCTransformEvent
+    (795, 5738), // RadioNodeList
+    (796, 5739), // Range
+    (797, 5771), // RangeError
+    (798, 5773), // ReadableByteStreamController
+    (799, 5778), // ReadableStream
+    (800, 5790), // ReadableStreamBYOBReader
+    (801, 5795), // ReadableStreamBYOBRequest
+    (802, 5798), // ReadableStreamDefaultController
+    (803, 5802), // ReadableStreamDefaultReader
+    (804, 5807), // Rect
+    (805, 5811), // ReferenceError
+    (806, 5813), // Reflect
+    (807, 5826), // RegExp
+    (808, 5855), // RelativeOrientationSensor
+    (810, 5856), // RemotePlayback
+    (811, 5863), // Report
+    (812, 5867), // ReportBody
+    (813, 5868), // ReportingObserver
+    (814, 5873), // Request
+    (815, 5901), // ResizeObserver
+    (816, 5905), // ResizeObserverEntry
+    (817, 5910), // ResizeObserverSize
+    (818, 5912), // Response
+    (819, 5935), // RestrictionTarget
+    (822, 5937), // SVGAElement
+    (823, 5957), // SVGAngle
+    (827, 5963), // SVGAnimatedAngle
+    (828, 5965), // SVGAnimatedBoolean
+    (829, 5967), // SVGAnimatedEnumeration
+    (830, 5969), // SVGAnimatedInteger
+    (831, 5971), // SVGAnimatedLength
+    (832, 5973), // SVGAnimatedLengthList
+    (833, 5975), // SVGAnimatedNumber
+    (834, 5977), // SVGAnimatedNumberList
+    (835, 5979), // SVGAnimatedPreserveAspectRatio
+    (836, 5981), // SVGAnimatedRect
+    (837, 5983), // SVGAnimatedString
+    (838, 5985), // SVGAnimatedTransformList
+    (839, 5987), // SVGAnimationElement
+    (840, 6000), // SVGCircleElement
+    (841, 6003), // SVGClipPathElement
+    (842, 6005), // SVGComponentTransferFunctionElement
+    (846, 6012), // SVGElement
+    (847, 6025), // SVGEllipseElement
+    (848, 6029), // SVGFEBlendElement
+    (849, 6037), // SVGFEColorMatrixElement
+    (850, 6045), // SVGFEComponentTransferElement
+    (851, 6051), // SVGFECompositeElement
+    (852, 6063), // SVGFEConvolveMatrixElement
+    (853, 6080), // SVGFEDiffuseLightingElement
+    (854, 6090), // SVGFEDisplacementMapElement
+    (855, 6100), // SVGFEDistantLightElement
+    (856, 6102), // SVGFEDropShadowElement
+    (857, 6113), // SVGFEFloodElement
+    (862, 6118), // SVGFEGaussianBlurElement
+    (863, 6128), // SVGFEImageElement
+    (864, 6136), // SVGFEMergeElement
+    (865, 6141), // SVGFEMergeNodeElement
+    (866, 6142), // SVGFEMorphologyElement
+    (867, 6151), // SVGFEOffsetElement
+    (868, 6159), // SVGFEPointLightElement
+    (869, 6162), // SVGFESpecularLightingElement
+    (870, 6173), // SVGFESpotLightElement
+    (871, 6181), // SVGFETileElement
+    (872, 6187), // SVGFETurbulenceElement
+    (873, 6198), // SVGFilterElement
+    (874, 6205), // SVGForeignObjectElement
+    (876, 6209), // SVGGeometryElement
+    (877, 6214), // SVGGradientElement
+    (878, 6218), // SVGGraphicsElement
+    (879, 6224), // SVGImageElement
+    (880, 6233), // SVGLength
+    (881, 6239), // SVGLengthList
+    (882, 6248), // SVGLineElement
+    (883, 6252), // SVGLinearGradientElement
+    (884, 6256), // SVGMPathElement
+    (885, 6257), // SVGMarkerElement
+    (886, 6269), // SVGMaskElement
+    (888, 6275), // SVGNumber
+    (889, 6276), // SVGNumberList
+    (890, 6285), // SVGPathElement
+    (891, 6311), // SVGPatternElement
+    (892, 6321), // SVGPoint
+    (893, 6324), // SVGPointList
+    (894, 6333), // SVGPolygonElement
+    (895, 6335), // SVGPolylineElement
+    (896, 6337), // SVGPreserveAspectRatio
+    (897, 6339), // SVGRadialGradientElement
+    (898, 6345), // SVGRect
+    (899, 6349), // SVGRectElement
+    (900, 6355), // SVGSVGElement
+    (901, 6388), // SVGScriptElement
+    (903, 6393), // SVGStopElement
+    (904, 6394), // SVGStringList
+    (905, 6403), // SVGStyleElement
+    (907, 6408), // SVGSymbolElement
+    (909, 6410), // SVGTextContentElement
+    (911, 6421), // SVGTextPathElement
+    (912, 6426), // SVGTextPositioningElement
+    (914, 6431), // SVGTransform
+    (915, 6440), // SVGTransformList
+    (917, 6451), // SVGUseElement
+    (918, 6456), // SVGViewElement
+    (919, 6458), // Sanitizer
+    (920, 6471), // Scheduler
+    (921, 6473), // Scheduling
+    (922, 6474), // Screen
+    (923, 6490), // ScreenDetailed
+    (924, 6498), // ScreenDetails
+    (925, 6502), // ScreenOrientation
+    (926, 6507), // ScriptProcessorNode
+    (927, 6509), // ScrollTimeline
+    (928, 6512), // SecurityPolicyViolationEvent
+    (931, 6526), // Selection
+    (932, 6551), // Sensor
+    (933, 6559), // SensorErrorEvent
+    (934, 6561), // Serial
+    (935, 6563), // SerialPort
+    (936, 6574), // ServiceWorker
+    (937, 6580), // ServiceWorkerContainer
+    (938, 6590), // ServiceWorkerGlobalScope
+    (939, 6615), // ServiceWorkerRegistration
+    (940, 6633), // Set
+    (941, 6653), // ShadowRoot
+    (942, 6697), // SharedArrayBuffer
+    (943, 6704), // SharedStorage
+    (944, 6714), // SharedStorageAppendMethod
+    (945, 6715), // SharedStorageClearMethod
+    (946, 6716), // SharedStorageDeleteMethod
+    (948, 6717), // SharedStorageSetMethod
+    (949, 6718), // SharedStorageWorklet
+    (950, 6720), // SharedStorageWorkletGlobalScope
+    (951, 6723), // SharedWorker
+    (952, 6726), // SharedWorkerGlobalScope
+    (953, 6729), // SnapEvent
+    (954, 6732), // SourceBuffer
+    (955, 6752), // SourceBufferList
+    (956, 6755), // SpeechGrammar
+    (957, 6758), // SpeechGrammarList
+    (958, 6763), // SpeechRecognition
+    (959, 6790), // SpeechRecognitionAlternative
+    (960, 6792), // SpeechRecognitionErrorEvent
+    (961, 6795), // SpeechRecognitionEvent
+    (962, 6798), // SpeechRecognitionPhrase
+    (963, 6801), // SpeechRecognitionResult
+    (964, 6804), // SpeechRecognitionResultList
+    (965, 6806), // SpeechSynthesis
+    (966, 6815), // SpeechSynthesisErrorEvent
+    (967, 6817), // SpeechSynthesisEvent
+    (968, 6823), // SpeechSynthesisUtterance
+    (969, 6837), // SpeechSynthesisVoice
+    (970, 6842), // StaticRange
+    (971, 6848), // StereoPannerNode
+    (972, 6850), // Storage
+    (973, 6856), // StorageAccessHandle
+    (974, 6867), // StorageBucket
+    (975, 6876), // StorageBucketManager
+    (976, 6879), // StorageEvent
+    (977, 6886), // StorageManager
+    (978, 6890), // String
+    (979, 6947), // StyleMedia
+    (980, 6949), // StylePropertyMap
+    (981, 6953), // StylePropertyMapReadOnly
+    (982, 6962), // StyleSheet
+    (983, 6969), // StyleSheetList
+    (984, 6971), // SubmitEvent
+    (985, 6973), // Subscriber
+    (986, 6979), // SubtleCrypto
+    (987, 7000), // Summarizer
+    (988, 7016), // SuppressedError
+    (989, 7019), // Symbol
+    (990, 7041), // SyncEvent
+    (991, 7044), // SyncManager
+    (992, 7047), // SyntaxError
+    (993, 7049), // TaskAttributionTiming
+    (994, 7054), // TaskController
+    (995, 7056), // TaskPriorityChangeEvent
+    (996, 7058), // TaskSignal
+    (997, 7062), // Temporal
+    (998, 7071), // Text
+    (999, 7076), // TextDecoder
+    (1000, 7082), // TextDecoderStream
+    (1001, 7088), // TextEncoder
+    (1002, 7093), // TextEncoderStream
+    (1003, 7097), // TextEvent
+    (1004, 7099), // TextFormat
+    (1005, 7104), // TextFormatUpdateEvent
+    (1006, 7106), // TextMetrics
+    (1007, 7118), // TextTrack
+    (1008, 7130), // TextTrackCue
+    (1009, 7137), // TextTrackCueList
+    (1010, 7139), // TextTrackList
+    (1011, 7144), // TextUpdateEvent
+    (1012, 7150), // TimeEvent
+    (1013, 7153), // TimeRanges
+    (1014, 7156), // ToggleEvent
+    (1015, 7160), // Touch
+    (1016, 7176), // TouchEvent
+    (1017, 7184), // TouchList
+    (1018, 7186), // TrackEvent
+    (1019, 7188), // TransformStream
+    (1020, 7192), // TransformStreamDefaultController
+    (1021, 7196), // TransitionEvent
+    (1022, 7201), // Translator
+    (1023, 7212), // TreeWalker
+    (1024, 7223), // TrustedHTML
+    (1025, 7225), // TrustedHTMLParserOptions
+    (1026, 7227), // TrustedScript
+    (1027, 7229), // TrustedScriptURL
+    (1028, 7231), // TrustedTypePolicy
+    (1029, 7235), // TrustedTypePolicyFactory
+    (1030, 7244), // TypeError
+    (1031, 7246), // TypedArray
+    (1032, 7291), // UIEvent
+    (1033, 7297), // URIError
+    (1034, 7299), // URL
+    (1035, 7322), // URLPattern
+    (1036, 7334), // URLSearchParams
+    (1037, 7349), // USB
+    (1038, 7354), // USBAlternateInterface
+    (1039, 7362), // USBConfiguration
+    (1040, 7367), // USBConnectionEvent
+    (1041, 7370), // USBDevice
+    (1042, 7403), // USBEndpoint
+    (1043, 7409), // USBInTransferResult
+    (1044, 7413), // USBInterface
+    (1045, 7419), // USBIsochronousInTransferPacket
+    (1046, 7423), // USBIsochronousInTransferResult
+    (1047, 7427), // USBIsochronousOutTransferPacket
+    (1048, 7431), // USBIsochronousOutTransferResult
+    (1049, 7434), // USBOutTransferResult
+    (1051, 7438), // Uint16Array
+    (1052, 7439), // Uint32Array
+    (1053, 7440), // Uint8Array
+    (1054, 7447), // Uint8ClampedArray
+    (1055, 7448), // UserActivation
+    (1056, 7450), // VRDisplay
+    (1057, 7469), // VRDisplayCapabilities
+    (1058, 7474), // VRDisplayEvent
+    (1059, 7477), // VREyeParameters
+    (1060, 7483), // VRFieldOfView
+    (1061, 7487), // VRFrameData
+    (1062, 7494), // VRPose
+    (1063, 7500), // VRStageParameters
+    (1064, 7503), // VTTCue
+    (1065, 7515), // VTTRegion
+    (1066, 7524), // ValidityState
+    (1067, 7535), // VideoColorSpace
+    (1068, 7541), // VideoDecoder
+    (1069, 7552), // VideoEncoder
+    (1070, 7563), // VideoFrame
+    (1071, 7581), // VideoPlaybackQuality
+    (1072, 7586), // VideoTrack
+    (1073, 7592), // VideoTrackGenerator
+    (1074, 7596), // VideoTrackList
+    (1075, 7602), // ViewTimeline
+    (1076, 7606), // ViewTransition
+    (1077, 7613), // ViewTransitionTypeSet
+    (1078, 7623), // Viewport
+    (1079, 7624), // VirtualKeyboard
+    (1080, 7629), // VisibilityStateEntry
+    (1081, 7633), // VisualViewport
+    (1083, 7643), // WEBGL_compressed_texture_astc
+    (1090, 7644), // WEBGL_debug_shaders
+    (1092, 7645), // WEBGL_draw_buffers
+    (1093, 7646), // WEBGL_lose_context
+    (1094, 7648), // WEBGL_multi_draw
+    (1095, 7652), // WGSLLanguageFeatures
+    (1096, 7668), // WakeLock
+    (1097, 7669), // WakeLockSentinel
+    (1098, 7673), // WaveShaperNode
+    (1099, 7676), // WeakMap
+    (1100, 7684), // WeakRef
+    (1101, 7686), // WeakSet
+    (1102, 7691), // WebGL2RenderingContext
+    (1103, 7923), // WebGLActiveInfo
+    (1104, 7927), // WebGLBuffer
+    (1105, 7928), // WebGLContextEvent
+    (1106, 7931), // WebGLFramebuffer
+    (1108, 7932), // WebGLProgram
+    (1110, 7933), // WebGLRenderbuffer
+    (1111, 7934), // WebGLRenderingContext
+    (1113, 8079), // WebGLShader
+    (1114, 8080), // WebGLShaderPrecisionFormat
+    (1116, 8084), // WebGLTexture
+    (1119, 8085), // WebGLUniformLocation
+    (1122, 8086), // WebKitPoint
+    (1123, 8089), // WebSocket
+    (1124, 8105), // WebSocketError
+    (1125, 8108), // WebSocketStream
+    (1126, 8113), // WebTransport
+    (1127, 8136), // WebTransportBidirectionalStream
+    (1128, 8138), // WebTransportDatagramDuplexStream
+    (1129, 8149), // WebTransportDatagramsWritable
+    (1130, 8151), // WebTransportError
+    (1131, 8154), // WebTransportReceiveStream
+    (1132, 8155), // WebTransportSendGroup
+    (1133, 8156), // WebTransportSendStream
+    (1134, 8160), // WheelEvent
+    (1135, 8170), // Window
+    (1136, 8313), // WindowClient
+    (1137, 8318), // WindowControlsOverlay
+    (1138, 8321), // WindowControlsOverlayGeometryChangeEvent
+    (1139, 8324), // Worker
+    (1140, 8331), // WorkerGlobalScope
+    (1141, 8344), // WorkerLocation
+    (1142, 8354), // WorkerNavigator
+    (1143, 8379), // Worklet
+    (1145, 8381), // WritableStream
+    (1146, 8387), // WritableStreamDefaultController
+    (1147, 8389), // WritableStreamDefaultWriter
+    (1149, 8397), // XMLHttpRequest
+    (1151, 8428), // XMLHttpRequestUpload
+    (1152, 8435), // XMLSerializer
+    (1153, 8437), // XPathEvaluator
+    (1154, 8441), // XPathExpression
+    (1155, 8442), // XPathResult
+    (1156, 8451), // XRAnchor
+    (1157, 8454), // XRAnchorSet
+    (1158, 8461), // XRBoundedReferenceSpace
+    (1159, 8462), // XRCPUDepthInformation
+    (1160, 8464), // XRCamera
+    (1161, 8466), // XRCompositionLayer
+    (1162, 8474), // XRCubeLayer
+    (1163, 8477), // XRCylinderLayer
+    (1164, 8483), // XRDepthInformation
+    (1165, 8489), // XREquirectLayer
+    (1166, 8496), // XRFrame
+    (1167, 8511), // XRHand
+    (1168, 8518), // XRHitTestResult
+    (1169, 8520), // XRHitTestSource
+    (1170, 8521), // XRInputSource
+    (1171, 8529), // XRInputSourceArray
+    (1172, 8535), // XRInputSourceEvent
+    (1173, 8538), // XRInputSourcesChangeEvent
+    (1174, 8542), // XRJointPose
+    (1175, 8543), // XRJointSpace
+    (1177, 8544), // XRLayerEvent
+    (1178, 8546), // XRLightEstimate
+    (1179, 8549), // XRLightProbe
+    (1180, 8551), // XRMediaBinding
+    (1181, 8555), // XRPlane
+    (1182, 8560), // XRPlaneSet
+    (1183, 8567), // XRPose
+    (1184, 8571), // XRProjectionLayer
+    (1185, 8577), // XRQuadLayer
+    (1186, 8582), // XRRay
+    (1187, 8586), // XRReferenceSpace
+    (1188, 8588), // XRReferenceSpaceEvent
+    (1189, 8591), // XRRenderState
+    (1190, 8597), // XRRigidTransform
+    (1191, 8602), // XRSession
+    (1192, 8644), // XRSessionEvent
+    (1194, 8646), // XRSubImage
+    (1195, 8647), // XRSystem
+    (1196, 8650), // XRTransientInputHitTestResult
+    (1197, 8652), // XRTransientInputHitTestSource
+    (1198, 8653), // XRView
+    (1199, 8661), // XRViewerPose
+    (1200, 8662), // XRViewport
+    (1201, 8666), // XRVisibilityMaskChangeEvent
+    (1202, 8672), // XRWebGLBinding
+    (1203, 8686), // XRWebGLDepthInformation
+    (1204, 8689), // XRWebGLLayer
+    (1205, 8699), // XRWebGLSubImage
+    (1206, 8709), // XSLTProcessor
+    (1452, 8718), // atob
+    (1610, 8719), // btoa
+    (1634, 8720), // caches
+    (1756, 8727), // clearInterval
+    (1766, 8728), // clearTimeout
+    (1774, 8729), // clientInformation
+    (1891, 8821), // console
+    (1943, 8869), // cookieStore
+    (2030, 8879), // createImageBitmap
+    (2128, 8886), // crypto
+    (2159, 8889), // customElements
+    (2347, 8897), // document
+    (2349, 9087), // documentPictureInPicture
+    (2568, 9095), // external
+    (2607, 9097), // fetch
+    (2721, 9100), // frameElement
+    (3184, 9375), // history
+    (3251, 9383), // indexedDB
+    (3423, 9388), // isSecureContext
+    (3590, 9389), // localStorage
+    (3594, 9395), // location
+    (3596, 9409), // locationbar
+    (3792, 9410), // menubar
+    (3899, 9411), // navigation
+    (3904, 9432), // navigator
+    (4080, 9524), // parseInt
+    (4123, 9525), // performance
+    (4162, 9549), // personalbar
+    (4711, 9550), // scheduler
+    (4716, 9552), // screen
+    (4748, 9568), // scrollbars
+    (4801, 9569), // self
+    (4823, 9717), // sessionStorage
+    (4877, 9723), // setInterval
+    (4936, 9726), // setTimeout
+    (5069, 9729), // speechSynthesis
+    (5114, 9743), // statusbar
+    (5374, 9744), // toolbar
+    (5678, 9745), // visualViewport
+    (5741, 9760), // window
+];
+
+// Member name, feature; sorted by the name within an object.
+pub static MEMBER_ROWS: &[(u16, u16)] = &[
+    (2388, 1), // ANGLE_instanced_arrays.drawArraysInstancedANGLE
+    (2393, 2), // ANGLE_instanced_arrays.drawElementsInstancedANGLE
+    (5643, 3), // ANGLE_instanced_arrays.vertexAttribDivisorANGLE
+    (14, 5), // AbortController.AbortController
+    (1211, 6), // AbortController.abort
+    (4994, 8), // AbortController.signal
+    (15, 10), // AbortPaymentEvent.AbortPaymentEvent
+    (4610, 11), // AbortPaymentEvent.respondWith
+    (1211, 14), // AbortSignal.abort
+    (1212, 13), // AbortSignal.abort_event
+    (1213, 14), // AbortSignal.abort_static
+    (1214, 16), // AbortSignal.aborted
+    (1346, 17), // AbortSignal.any
+    (1347, 17), // AbortSignal.any_static
+    (4399, 18), // AbortSignal.reason
+    (5302, 19), // AbortSignal.throwIfAborted
+    (5319, 20), // AbortSignal.timeout
+    (5321, 20), // AbortSignal.timeout_static
+    (17, 22), // AbsoluteOrientationSensor.AbsoluteOrientationSensor
+    (1817, 24), // AbstractRange.collapsed
+    (2479, 25), // AbstractRange.endContainer
+    (2485, 26), // AbstractRange.endOffset
+    (5096, 27), // AbstractRange.startContainer
+    (5099, 28), // AbstractRange.startOffset
+    (19, 30), // Accelerometer.Accelerometer
+    (5772, 31), // Accelerometer.x
+    (5781, 32), // Accelerometer.y
+    (5786, 33), // Accelerometer.z
+    (21, 10253), // AggregateError.AggregateError
+    (2519, 10254), // AggregateError.errors
+    (4816, 10255), // AggregateError.serializable_object
+    (22, 35), // AmbientLightSensor.AmbientLightSensor
+    (3216, 36), // AmbientLightSensor.illuminance
+    (23, 38), // AnalyserNode.AnalyserNode
+    (2612, 39), // AnalyserNode.fftSize
+    (2735, 40), // AnalyserNode.frequencyBinCount
+    (2833, 41), // AnalyserNode.getByteFrequencyData
+    (2834, 42), // AnalyserNode.getByteTimeDomainData
+    (2904, 43), // AnalyserNode.getFloatFrequencyData
+    (2905, 44), // AnalyserNode.getFloatTimeDomainData
+    (3736, 45), // AnalyserNode.maxDecibels
+    (3815, 46), // AnalyserNode.minDecibels
+    (5031, 47), // AnalyserNode.smoothingTimeConstant
+    (24, 49), // Animation.Animation
+    (1653, 50), // Animation.cancel
+    (1661, 51), // Animation.cancel_event
+    (1835, 52), // Animation.commitStyles
+    (2152, 54), // Animation.currentTime
+    (2433, 55), // Animation.effect
+    (2635, 56), // Animation.finish
+    (2636, 57), // Animation.finish_event
+    (2637, 58), // Animation.finished
+    (3207, 59), // Animation.id
+    (4027, 60), // Animation.overallProgress
+    (4096, 61), // Animation.pause
+    (4118, 62), // Animation.pending
+    (4158, 63), // Animation.persist
+    (4183, 64), // Animation.play
+    (4185, 65), // Animation.playState
+    (4187, 66), // Animation.playbackRate
+    (4396, 67), // Animation.ready
+    (4510, 68), // Animation.remove_event
+    (4511, 69), // Animation.remove_filling_animation
+    (4539, 70), // Animation.replaceState
+    (4642, 71), // Animation.reverse
+    (5101, 72), // Animation.startTime
+    (5317, 73), // Animation.timeline
+    (5550, 74), // Animation.updatePlaybackRate
+    (2856, 76), // AnimationEffect.getComputedTiming
+    (3061, 77), // AnimationEffect.getTiming
+    (5558, 78), // AnimationEffect.updateTiming
+    (26, 80), // AnimationEvent.AnimationEvent
+    (1334, 81), // AnimationEvent.animation
+    (1335, 82), // AnimationEvent.animationName
+    (2438, 83), // AnimationEvent.elapsedTime
+    (4317, 84), // AnimationEvent.pseudoElement
+    (27, 86), // AnimationPlaybackEvent.AnimationPlaybackEvent
+    (2152, 87), // AnimationPlaybackEvent.currentTime
+    (5318, 88), // AnimationPlaybackEvent.timelineTime
+    (2152, 90), // AnimationTimeline.currentTime
+    (2413, 91), // AnimationTimeline.duration
+    (4, 10257), // Array.@@iterator
+    (9, 10258), // Array.@@species
+    (12, 10259), // Array.@@unscopables
+    (30, 10260), // Array.Array
+    (1448, 10261), // Array.at
+    (1862, 10262), // Array.concat
+    (1959, 10263), // Array.copyWithin
+    (2503, 10264), // Array.entries
+    (2528, 10265), // Array.every
+    (2620, 10266), // Array.fill
+    (2626, 10267), // Array.filter
+    (2630, 10268), // Array.find
+    (2631, 10269), // Array.findIndex
+    (2632, 10270), // Array.findLast
+    (2633, 10271), // Array.findLastIndex
+    (2650, 10272), // Array.flat
+    (2651, 10273), // Array.flatMap
+    (2692, 10274), // Array.forEach
+    (2736, 10275), // Array.from
+    (2737, 10276), // Array.fromAsync
+    (3237, 10277), // Array.includes
+    (3249, 10278), // Array.indexOf
+    (3360, 10279), // Array.isArray
+    (3456, 10280), // Array.join
+    (3486, 10281), // Array.keys
+    (3508, 10282), // Array.lastIndexOf
+    (3535, 10283), // Array.length
+    (3669, 10284), // Array.map
+    (3955, 10285), // Array.of
+    (4216, 10286), // Array.pop
+    (4322, 10287), // Array.push
+    (4420, 10288), // Array.reduce
+    (4429, 10289), // Array.reduceRight
+    (4642, 10290), // Array.reverse
+    (4974, 10291), // Array.shift
+    (5025, 10292), // Array.slice
+    (5040, 10293), // Array.some
+    (5041, 10294), // Array.sort
+    (5075, 10296), // Array.splice
+    (5344, 10297), // Array.toLocaleString
+    (5352, 10300), // Array.toReversed
+    (5353, 10301), // Array.toSorted
+    (5354, 10302), // Array.toSpliced
+    (5355, 10303), // Array.toString
+    (5532, 10304), // Array.unshift
+    (5622, 10305), // Array.values
+    (5745, 10306), // Array.with
+    (9, 10308), // ArrayBuffer.@@species
+    (31, 10309), // ArrayBuffer.ArrayBuffer
+    (1628, 10311), // ArrayBuffer.byteLength
+    (2280, 10312), // ArrayBuffer.detached
+    (3440, 10313), // ArrayBuffer.isView
+    (3724, 10314), // ArrayBuffer.maxByteLength
+    (4599, 10315), // ArrayBuffer.resizable
+    (4600, 10316), // ArrayBuffer.resize
+    (5025, 10317), // ArrayBuffer.slice
+    (5400, 10318), // ArrayBuffer.transfer
+    (5406, 10319), // ArrayBuffer.transferToFixedLength
+    (0, 10321), // AsyncDisposableStack.@@asyncDispose
+    (32, 10322), // AsyncDisposableStack.AsyncDisposableStack
+    (1279, 10323), // AsyncDisposableStack.adopt
+    (2201, 10324), // AsyncDisposableStack.defer
+    (2336, 10325), // AsyncDisposableStack.disposeAsync
+    (2338, 10326), // AsyncDisposableStack.disposed
+    (3848, 10327), // AsyncDisposableStack.move
+    (5584, 10328), // AsyncDisposableStack.use
+    (33, 10330), // AsyncFunction.AsyncFunction
+    (3917, 10333), // AsyncGenerator.next
+    (4638, 10334), // AsyncGenerator.return
+    (5301, 10335), // AsyncGenerator.throw
+    (35, 10337), // AsyncGeneratorFunction.AsyncGeneratorFunction
+    (0, 10340), // AsyncIterator.@@asyncDispose
+    (1, 10341), // AsyncIterator.@@asyncIterator
+    (37, 10343), // Atomics.Atomic_operations_on_non_shared_buffers
+    (1248, 10344), // Atomics.add
+    (1326, 10345), // Atomics.and
+    (1841, 10346), // Atomics.compareExchange
+    (2533, 10347), // Atomics.exchange
+    (3397, 10348), // Atomics.isLockFree
+    (3572, 10349), // Atomics.load
+    (3941, 10350), // Atomics.notify
+    (3997, 10351), // Atomics.or
+    (4096, 10352), // Atomics.pause
+    (5139, 10353), // Atomics.store
+    (5175, 10354), // Atomics.sub
+    (5698, 10355), // Atomics.wait
+    (5699, 10356), // Atomics.waitAsync
+    (5779, 10357), // Atomics.xor
+    (3588, 94), // Attr.localName
+    (3887, 95), // Attr.name
+    (3891, 96), // Attr.namespaceURI
+    (4035, 97), // Attr.ownerElement
+    (4250, 98), // Attr.prefix
+    (5066, 99), // Attr.specified
+    (5614, 100), // Attr.value
+    (41, 102), // AudioBuffer.AudioBuffer
+    (1951, 103), // AudioBuffer.copyFromChannel
+    (1958, 104), // AudioBuffer.copyToChannel
+    (2413, 105), // AudioBuffer.duration
+    (2841, 106), // AudioBuffer.getChannelData
+    (3535, 107), // AudioBuffer.length
+    (3945, 108), // AudioBuffer.numberOfChannels
+    (4696, 109), // AudioBuffer.sampleRate
+    (42, 111), // AudioBufferSourceNode.AudioBufferSourceNode
+    (1612, 112), // AudioBufferSourceNode.buffer
+    (2286, 113), // AudioBufferSourceNode.detune
+    (3617, 114), // AudioBufferSourceNode.loop
+    (3618, 115), // AudioBufferSourceNode.loopEnd
+    (3619, 116), // AudioBufferSourceNode.loopStart
+    (4187, 117), // AudioBufferSourceNode.playbackRate
+    (5095, 118), // AudioBufferSourceNode.start
+    (43, 120), // AudioContext.AudioContext
+    (1519, 124), // AudioContext.baseLatency
+    (1792, 125), // AudioContext.close
+    (2034, 126), // AudioContext.createMediaElementSource
+    (2036, 127), // AudioContext.createMediaStreamDestination
+    (2037, 128), // AudioContext.createMediaStreamSource
+    (2038, 129), // AudioContext.createMediaStreamTrackSource
+    (2517, 130), // AudioContext.error_event
+    (2964, 131), // AudioContext.getOutputTimestamp
+    (4025, 132), // AudioContext.outputLatency
+    (4189, 133), // AudioContext.playbackStats
+    (4633, 134), // AudioContext.resume
+    (4923, 135), // AudioContext.setSinkId
+    (5008, 136), // AudioContext.sinkId
+    (5009, 137), // AudioContext.sinkchange_event
+    (5214, 138), // AudioContext.suspend
+    (44, 140), // AudioData.AudioData
+    (1299, 141), // AudioData.allocationSize
+    (1788, 142), // AudioData.clone
+    (1792, 143), // AudioData.close
+    (1957, 144), // AudioData.copyTo
+    (2413, 145), // AudioData.duration
+    (2705, 146), // AudioData.format
+    (3945, 147), // AudioData.numberOfChannels
+    (3946, 148), // AudioData.numberOfFrames
+    (4696, 149), // AudioData.sampleRate
+    (5322, 150), // AudioData.timestamp
+    (45, 152), // AudioDecoder.AudioDecoder
+    (1792, 153), // AudioDecoder.close
+    (1876, 154), // AudioDecoder.configure
+    (2181, 155), // AudioDecoder.decode
+    (2183, 156), // AudioDecoder.decodeQueueSize
+    (2266, 157), // AudioDecoder.dequeue_event
+    (2656, 158), // AudioDecoder.flush
+    (3369, 159), // AudioDecoder.isConfigSupported
+    (3370, 159), // AudioDecoder.isConfigSupported_static
+    (4591, 160), // AudioDecoder.reset
+    (5106, 161), // AudioDecoder.state
+    (3725, 163), // AudioDestinationNode.maxChannelCount
+    (47, 165), // AudioEncoder.AudioEncoder
+    (1792, 166), // AudioEncoder.close
+    (1876, 167), // AudioEncoder.configure
+    (2266, 172), // AudioEncoder.dequeue_event
+    (2467, 173), // AudioEncoder.encode
+    (2469, 174), // AudioEncoder.encodeQueueSize
+    (2656, 175), // AudioEncoder.flush
+    (3369, 176), // AudioEncoder.isConfigSupported
+    (3370, 176), // AudioEncoder.isConfigSupported_static
+    (4591, 177), // AudioEncoder.reset
+    (5106, 178), // AudioEncoder.state
+    (2710, 180), // AudioListener.forwardX
+    (2711, 181), // AudioListener.forwardY
+    (2712, 182), // AudioListener.forwardZ
+    (4235, 183), // AudioListener.positionX
+    (4236, 184), // AudioListener.positionY
+    (4237, 185), // AudioListener.positionZ
+    (4895, 186), // AudioListener.setOrientation
+    (4902, 187), // AudioListener.setPosition
+    (5539, 188), // AudioListener.upX
+    (5540, 189), // AudioListener.upY
+    (5541, 190), // AudioListener.upZ
+    (1704, 192), // AudioNode.channelCount
+    (1705, 193), // AudioNode.channelCountMode
+    (1706, 194), // AudioNode.channelInterpretation
+    (1879, 195), // AudioNode.connect
+    (1919, 196), // AudioNode.context
+    (2323, 197), // AudioNode.disconnect
+    (3947, 200), // AudioNode.numberOfInputs
+    (3949, 201), // AudioNode.numberOfOutputs
+    (1488, 203), // AudioParam.automationRate
+    (1654, 204), // AudioParam.cancelAndHoldAtTime
+    (1658, 205), // AudioParam.cancelScheduledValues
+    (2199, 206), // AudioParam.defaultValue
+    (2554, 207), // AudioParam.exponentialRampToValueAtTime
+    (3561, 208), // AudioParam.linearRampToValueAtTime
+    (3768, 209), // AudioParam.maxValue
+    (3821, 210), // AudioParam.minValue
+    (4934, 211), // AudioParam.setTargetAtTime
+    (4950, 212), // AudioParam.setValueAtTime
+    (4951, 213), // AudioParam.setValueCurveAtTime
+    (5614, 214), // AudioParam.value
+    (4, 216), // AudioParamMap.@@iterator
+    (2503, 217), // AudioParamMap.entries
+    (2692, 218), // AudioParamMap.forEach
+    (2796, 219), // AudioParamMap.get
+    (3141, 220), // AudioParamMap.has
+    (3486, 221), // AudioParamMap.keys
+    (5011, 222), // AudioParamMap.size
+    (5622, 223), // AudioParamMap.values
+    (1499, 225), // AudioPlaybackStats.averageLatency
+    (3774, 226), // AudioPlaybackStats.maximumLatency
+    (3824, 227), // AudioPlaybackStats.minimumLatency
+    (4592, 228), // AudioPlaybackStats.resetLatency
+    (5341, 229), // AudioPlaybackStats.toJSON
+    (5378, 230), // AudioPlaybackStats.totalDuration
+    (5471, 231), // AudioPlaybackStats.underrunDuration
+    (5472, 232), // AudioPlaybackStats.underrunEvents
+    (53, 234), // AudioProcessingEvent.AudioProcessingEvent
+    (3286, 235), // AudioProcessingEvent.inputBuffer
+    (4023, 236), // AudioProcessingEvent.outputBuffer
+    (4190, 237), // AudioProcessingEvent.playbackTime
+    (2492, 239), // AudioScheduledSourceNode.ended_event
+    (5095, 240), // AudioScheduledSourceNode.start
+    (5129, 241), // AudioScheduledSourceNode.stop
+    (5106, 243), // AudioSession.state
+    (5107, 244), // AudioSession.statechange_event
+    (5443, 245), // AudioSession.type
+    (5443, 247), // AudioSinkInfo.type
+    (2461, 249), // AudioTrack.enabled
+    (3207, 250), // AudioTrack.id
+    (3489, 251), // AudioTrack.kind
+    (3494, 252), // AudioTrack.label
+    (3497, 253), // AudioTrack.language
+    (5046, 254), // AudioTrack.sourceBuffer
+    (1278, 256), // AudioTrackList.addtrack_event
+    (1700, 257), // AudioTrackList.change_event
+    (3064, 258), // AudioTrackList.getTrackById
+    (3535, 259), // AudioTrackList.length
+    (4517, 260), // AudioTrackList.removetrack_event
+    (4224, 262), // AudioWorklet.port
+    (2142, 264), // AudioWorkletGlobalScope.currentFrame
+    (2152, 265), // AudioWorkletGlobalScope.currentTime
+    (4224, 266), // AudioWorkletGlobalScope.port
+    (4452, 267), // AudioWorkletGlobalScope.registerProcessor
+    (4696, 268), // AudioWorkletGlobalScope.sampleRate
+    (61, 270), // AudioWorkletNode.AudioWorkletNode
+    (4063, 271), // AudioWorkletNode.parameters
+    (4224, 272), // AudioWorkletNode.port
+    (4291, 273), // AudioWorkletNode.processorerror_event
+    (62, 275), // AudioWorkletProcessor.AudioWorkletProcessor
+    (4224, 276), // AudioWorkletProcessor.port
+    (1479, 278), // AuthenticatorAssertionResponse.authenticatorData
+    (5003, 279), // AuthenticatorAssertionResponse.signature
+    (5594, 280), // AuthenticatorAssertionResponse.userHandle
+    (1458, 282), // AuthenticatorAttestationResponse.attestationObject
+    (2820, 283), // AuthenticatorAttestationResponse.getAuthenticatorData
+    (2992, 284), // AuthenticatorAttestationResponse.getPublicKey
+    (2993, 288), // AuthenticatorAttestationResponse.getPublicKeyAlgorithm
+    (3070, 289), // AuthenticatorAttestationResponse.getTransports
+    (1771, 291), // AuthenticatorResponse.clientDataJSON
+    (1485, 293), // AutofillEvent.autofillValues
+    (4444, 294), // AutofillEvent.refill
+    (68, 296), // BackgroundFetchEvent.BackgroundFetchEvent
+    (4456, 297), // BackgroundFetchEvent.registration
+    (2607, 299), // BackgroundFetchManager.fetch
+    (2796, 300), // BackgroundFetchManager.get
+    (2920, 301), // BackgroundFetchManager.getIds
+    (4549, 303), // BackgroundFetchRecord.request
+    (4615, 304), // BackgroundFetchRecord.responseReady
+    (1211, 306), // BackgroundFetchRegistration.abort
+    (2367, 307), // BackgroundFetchRegistration.downloadTotal
+    (2368, 308), // BackgroundFetchRegistration.downloaded
+    (2575, 309), // BackgroundFetchRegistration.failureReason
+    (3207, 310), // BackgroundFetchRegistration.id
+    (3703, 311), // BackgroundFetchRegistration.match
+    (3704, 312), // BackgroundFetchRegistration.matchAll
+    (4301, 313), // BackgroundFetchRegistration.progress_event
+    (4410, 314), // BackgroundFetchRegistration.recordsAvailable
+    (4627, 315), // BackgroundFetchRegistration.result
+    (5570, 316), // BackgroundFetchRegistration.uploadTotal
+    (5571, 317), // BackgroundFetchRegistration.uploaded
+    (72, 319), // BackgroundFetchUpdateUIEvent.BackgroundFetchUpdateUIEvent
+    (5559, 320), // BackgroundFetchUpdateUIEvent.updateUI
+    (5676, 322), // BarProp.visible
+    (74, 325), // BarcodeDetector.BarcodeDetector
+    (2283, 326), // BarcodeDetector.detect
+    (3049, 327), // BarcodeDetector.getSupportedFormats
+    (3050, 327), // BarcodeDetector.getSupportedFormats_static
+    (1472, 329), // BaseAudioContext.audioWorklet
+    (1984, 330), // BaseAudioContext.createAnalyser
+    (1993, 331), // BaseAudioContext.createBiquadFilter
+    (1994, 332), // BaseAudioContext.createBuffer
+    (1995, 333), // BaseAudioContext.createBufferSource
+    (1998, 334), // BaseAudioContext.createChannelMerger
+    (1999, 335), // BaseAudioContext.createChannelSplitter
+    (2005, 336), // BaseAudioContext.createConstantSource
+    (2009, 337), // BaseAudioContext.createConvolver
+    (2014, 338), // BaseAudioContext.createDelay
+    (2018, 339), // BaseAudioContext.createDynamicsCompressor
+    (2026, 340), // BaseAudioContext.createGain
+    (2029, 341), // BaseAudioContext.createIIRFilter
+    (2045, 342), // BaseAudioContext.createOscillator
+    (2046, 343), // BaseAudioContext.createPanner
+    (2048, 344), // BaseAudioContext.createPeriodicWave
+    (2094, 346), // BaseAudioContext.createScriptProcessor
+    (2100, 347), // BaseAudioContext.createStereoPanner
+    (2116, 348), // BaseAudioContext.createWaveShaper
+    (2152, 349), // BaseAudioContext.currentTime
+    (2182, 350), // BaseAudioContext.decodeAudioData
+    (2276, 352), // BaseAudioContext.destination
+    (3571, 353), // BaseAudioContext.listener
+    (4520, 354), // BaseAudioContext.renderQuantumSize
+    (4696, 355), // BaseAudioContext.sampleRate
+    (5106, 356), // BaseAudioContext.state
+    (5107, 358), // BaseAudioContext.statechange_event
+    (1720, 360), // BatteryManager.charging
+    (1721, 361), // BatteryManager.chargingTime
+    (1722, 362), // BatteryManager.chargingchange_event
+    (1723, 363), // BatteryManager.chargingtimechange_event
+    (2321, 364), // BatteryManager.dischargingTime
+    (2322, 365), // BatteryManager.dischargingtimechange_event
+    (3541, 366), // BatteryManager.level
+    (3542, 367), // BatteryManager.levelchange_event
+    (4769, 368), // BatteryManager.secure_context_required
+    (77, 370), // BeforeInstallPromptEvent.BeforeInstallPromptEvent
+    (4182, 371), // BeforeInstallPromptEvent.platforms
+    (4304, 372), // BeforeInstallPromptEvent.prompt
+    (5593, 373), // BeforeInstallPromptEvent.userChoice
+    (4640, 375), // BeforeUnloadEvent.returnValue
+    (5599, 376), // BeforeUnloadEvent.user_interaction
+    (79, 10359), // BigInt.BigInt
+    (1432, 10360), // BigInt.asIntN
+    (1433, 10361), // BigInt.asUintN
+    (5344, 10362), // BigInt.toLocaleString
+    (5355, 10365), // BigInt.toString
+    (5620, 10366), // BigInt.valueOf
+    (80, 10368), // BigInt64Array.BigInt64Array
+    (81, 10370), // BigUint64Array.BigUint64Array
+    (82, 378), // BiquadFilterNode.BiquadFilterNode
+    (764, 379), // BiquadFilterNode.Q
+    (2286, 380), // BiquadFilterNode.detune
+    (2734, 381), // BiquadFilterNode.frequency
+    (2771, 382), // BiquadFilterNode.gain
+    (2910, 383), // BiquadFilterNode.getFrequencyResponse
+    (5443, 384), // BiquadFilterNode.type
+    (83, 386), // Blob.Blob
+    (1428, 387), // Blob.arrayBuffer
+    (1630, 388), // Blob.bytes
+    (5011, 389), // Blob.size
+    (5025, 390), // Blob.slice
+    (5140, 391), // Blob.stream
+    (5282, 392), // Blob.text
+    (5288, 393), // Blob.textStream
+    (5443, 394), // Blob.type
+    (84, 396), // BlobEvent.BlobEvent
+    (2165, 397), // BlobEvent.data
+    (5316, 398), // BlobEvent.timecode
+    (2822, 400), // Bluetooth.getAvailability
+    (2877, 401), // Bluetooth.getDevices
+    (4556, 402), // Bluetooth.requestDevice
+    (1476, 406), // BluetoothCharacteristicProperties.authenticatedSignedWrites
+    (1608, 407), // BluetoothCharacteristicProperties.broadcast
+    (3252, 408), // BluetoothCharacteristicProperties.indicate
+    (3941, 409), // BluetoothCharacteristicProperties.notify
+    (4381, 410), // BluetoothCharacteristicProperties.read
+    (4477, 411), // BluetoothCharacteristicProperties.reliableWrite
+    (5759, 412), // BluetoothCharacteristicProperties.writableAuxiliaries
+    (5760, 413), // BluetoothCharacteristicProperties.write
+    (5769, 414), // BluetoothCharacteristicProperties.writeWithoutResponse
+    (2781, 416), // BluetoothDevice.gatt
+    (2782, 417), // BluetoothDevice.gattserverdisconnected_event
+    (3207, 418), // BluetoothDevice.id
+    (3887, 419), // BluetoothDevice.name
+    (1719, 421), // BluetoothRemoteGATTCharacteristic.characteristicvaluechanged_event
+    (2874, 422), // BluetoothRemoteGATTCharacteristic.getDescriptor
+    (2876, 423), // BluetoothRemoteGATTCharacteristic.getDescriptors
+    (4308, 424), // BluetoothRemoteGATTCharacteristic.properties
+    (4392, 425), // BluetoothRemoteGATTCharacteristic.readValue
+    (4819, 426), // BluetoothRemoteGATTCharacteristic.service
+    (5098, 427), // BluetoothRemoteGATTCharacteristic.startNotifications
+    (5131, 428), // BluetoothRemoteGATTCharacteristic.stopNotifications
+    (5604, 429), // BluetoothRemoteGATTCharacteristic.uuid
+    (5614, 430), // BluetoothRemoteGATTCharacteristic.value
+    (5766, 431), // BluetoothRemoteGATTCharacteristic.writeValue
+    (5767, 432), // BluetoothRemoteGATTCharacteristic.writeValueWithResponse
+    (5768, 433), // BluetoothRemoteGATTCharacteristic.writeValueWithoutResponse
+    (1718, 435), // BluetoothRemoteGATTDescriptor.characteristic
+    (4392, 436), // BluetoothRemoteGATTDescriptor.readValue
+    (5604, 437), // BluetoothRemoteGATTDescriptor.uuid
+    (5614, 438), // BluetoothRemoteGATTDescriptor.value
+    (5766, 439), // BluetoothRemoteGATTDescriptor.writeValue
+    (1879, 441), // BluetoothRemoteGATTServer.connect
+    (1883, 442), // BluetoothRemoteGATTServer.connected
+    (2287, 443), // BluetoothRemoteGATTServer.device
+    (2323, 444), // BluetoothRemoteGATTServer.disconnect
+    (2982, 445), // BluetoothRemoteGATTServer.getPrimaryService
+    (2983, 446), // BluetoothRemoteGATTServer.getPrimaryServices
+    (2287, 448), // BluetoothRemoteGATTService.device
+    (2843, 449), // BluetoothRemoteGATTService.getCharacteristic
+    (2845, 450), // BluetoothRemoteGATTService.getCharacteristics
+    (3405, 451), // BluetoothRemoteGATTService.isPrimary
+    (5604, 452), // BluetoothRemoteGATTService.uuid
+    (1665, 454), // BluetoothUUID.canonicalUUID
+    (1666, 454), // BluetoothUUID.canonicalUUID_static
+    (2843, 455), // BluetoothUUID.getCharacteristic
+    (2844, 455), // BluetoothUUID.getCharacteristic_static
+    (2874, 456), // BluetoothUUID.getDescriptor
+    (2875, 456), // BluetoothUUID.getDescriptor_static
+    (3025, 457), // BluetoothUUID.getService
+    (3026, 457), // BluetoothUUID.getService_static
+    (93, 10372), // Boolean.Boolean
+    (5355, 10373), // Boolean.toString
+    (5620, 10374), // Boolean.valueOf
+    (94, 459), // BroadcastChannel.BroadcastChannel
+    (1792, 460), // BroadcastChannel.close
+    (3796, 461), // BroadcastChannel.message_event
+    (3797, 462), // BroadcastChannel.messageerror_event
+    (3887, 463), // BroadcastChannel.name
+    (4238, 464), // BroadcastChannel.postMessage
+    (1788, 466), // BrowserCaptureMediaStreamTrack.clone
+    (2125, 467), // BrowserCaptureMediaStreamTrack.cropTo
+    (4626, 468), // BrowserCaptureMediaStreamTrack.restrictTo
+    (96, 470), // BufferedChangeEvent.BufferedChangeEvent
+    (1272, 471), // BufferedChangeEvent.addedRanges
+    (4514, 472), // BufferedChangeEvent.removedRanges
+    (97, 474), // ByteLengthQueuingStrategy.ByteLengthQueuingStrategy
+    (3179, 475), // ByteLengthQueuingStrategy.highWaterMark
+    (5011, 476), // ByteLengthQueuingStrategy.size
+    (1583, 479), // CSPViolationReportBody.blockedURL
+    (1830, 480), // CSPViolationReportBody.columnNumber
+    (2339, 481), // CSPViolationReportBody.disposition
+    (2351, 482), // CSPViolationReportBody.documentURL
+    (2435, 483), // CSPViolationReportBody.effectiveDirective
+    (3555, 484), // CSPViolationReportBody.lineNumber
+    (4012, 485), // CSPViolationReportBody.originalPolicy
+    (4442, 486), // CSPViolationReportBody.referrer
+    (4692, 487), // CSPViolationReportBody.sample
+    (5051, 488), // CSPViolationReportBody.sourceFile
+    (5111, 489), // CSPViolationReportBody.statusCode
+    (5341, 490), // CSPViolationReportBody.toJSON
+    (486, 492), // CSS.Hz
+    (487, 492), // CSS.Hz_static
+    (764, 493), // CSS.Q
+    (765, 493), // CSS.Q_static
+    (1670, 494), // CSS.cap
+    (1671, 494), // CSS.cap_static
+    (1692, 495), // CSS.ch
+    (1694, 495), // CSS.ch_static
+    (1802, 496), // CSS.cm
+    (1803, 496), // CSS.cm_static
+    (1970, 497), // CSS.cqb
+    (1971, 497), // CSS.cqb_static
+    (1972, 498), // CSS.cqh
+    (1973, 498), // CSS.cqh_static
+    (1974, 499), // CSS.cqi
+    (1975, 499), // CSS.cqi_static
+    (1976, 500), // CSS.cqmax
+    (1977, 500), // CSS.cqmax_static
+    (1978, 501), // CSS.cqmin
+    (1979, 501), // CSS.cqmin_static
+    (1980, 502), // CSS.cqw
+    (1981, 502), // CSS.cqw_static
+    (2207, 503), // CSS.deg
+    (2208, 503), // CSS.deg_static
+    (2370, 504), // CSS.dpcm
+    (2371, 504), // CSS.dpcm_static
+    (2372, 505), // CSS.dpi
+    (2373, 505), // CSS.dpi_static
+    (2374, 506), // CSS.dppx
+    (2375, 506), // CSS.dppx_static
+    (2415, 507), // CSS.dvb
+    (2416, 507), // CSS.dvb_static
+    (2417, 508), // CSS.dvh
+    (2418, 508), // CSS.dvh_static
+    (2419, 509), // CSS.dvi
+    (2420, 509), // CSS.dvi_static
+    (2421, 510), // CSS.dvmax
+    (2422, 510), // CSS.dvmax_static
+    (2423, 511), // CSS.dvmin
+    (2424, 511), // CSS.dvmin_static
+    (2425, 512), // CSS.dvw
+    (2426, 512), // CSS.dvw_static
+    (2447, 513), // CSS.em
+    (2450, 513), // CSS.em_static
+    (2520, 514), // CSS.escape
+    (2521, 514), // CSS.escape_static
+    (2529, 515), // CSS.ex
+    (2530, 515), // CSS.ex_static
+    (2715, 516), // CSS.fr
+    (2716, 516), // CSS.fr_static
+    (3110, 517), // CSS.grad
+    (3111, 517), // CSS.grad_static
+    (3180, 518), // CSS.highlights
+    (3182, 518), // CSS.highlights_static
+    (3196, 519), // CSS.ic
+    (3197, 519), // CSS.ic_static
+    (3231, 520), // CSS.in
+    (3235, 520), // CSS.in_static
+    (3468, 521), // CSS.kHz
+    (3469, 521), // CSS.kHz_static
+    (3543, 522), // CSS.lh
+    (3544, 522), // CSS.lh_static
+    (3633, 523), // CSS.lvb
+    (3634, 523), // CSS.lvb_static
+    (3635, 524), // CSS.lvh
+    (3636, 524), // CSS.lvh_static
+    (3637, 525), // CSS.lvi
+    (3638, 525), // CSS.lvi_static
+    (3639, 526), // CSS.lvmax
+    (3640, 526), // CSS.lvmax_static
+    (3641, 527), // CSS.lvmin
+    (3642, 527), // CSS.lvmin_static
+    (3643, 528), // CSS.lvw
+    (3644, 528), // CSS.lvw_static
+    (3829, 529), // CSS.mm
+    (3830, 529), // CSS.mm_static
+    (3872, 530), // CSS.ms
+    (3873, 530), // CSS.ms_static
+    (3944, 531), // CSS.number
+    (3951, 531), // CSS.number_static
+    (4059, 532), // CSS.paintWorklet
+    (4060, 532), // CSS.paintWorklet_static
+    (4114, 533), // CSS.pc
+    (4115, 533), // CSS.pc_static
+    (4121, 534), // CSS.percent
+    (4122, 534), // CSS.percent_static
+    (4318, 535), // CSS.pt
+    (4319, 535), // CSS.pt_static
+    (4331, 536), // CSS.px
+    (4332, 536), // CSS.px_static
+    (4354, 537), // CSS.rad
+    (4355, 537), // CSS.rad_static
+    (4377, 538), // CSS.rcap
+    (4378, 538), // CSS.rcap_static
+    (4379, 539), // CSS.rch
+    (4380, 539), // CSS.rch_static
+    (4453, 540), // CSS.registerProperty
+    (4454, 540), // CSS.registerProperty_static
+    (4480, 541), // CSS.rem
+    (4481, 541), // CSS.rem_static
+    (4648, 542), // CSS.rex
+    (4649, 542), // CSS.rex_static
+    (4650, 543), // CSS.ric
+    (4651, 543), // CSS.ric_static
+    (4657, 544), // CSS.rlh
+    (4658, 544), // CSS.rlh_static
+    (4689, 545), // CSS.s
+    (4690, 545), // CSS.s_static
+    (5205, 546), // CSS.supports
+    (5210, 546), // CSS.supports_static
+    (5217, 548), // CSS.svb
+    (5218, 548), // CSS.svb_static
+    (5220, 549), // CSS.svh
+    (5221, 549), // CSS.svh_static
+    (5222, 550), // CSS.svi
+    (5223, 550), // CSS.svi_static
+    (5224, 551), // CSS.svmax
+    (5225, 551), // CSS.svmax_static
+    (5226, 552), // CSS.svmin
+    (5227, 552), // CSS.svmin_static
+    (5228, 553), // CSS.svw
+    (5229, 553), // CSS.svw_static
+    (5440, 554), // CSS.turn
+    (5441, 554), // CSS.turn_static
+    (5626, 555), // CSS.vb
+    (5627, 555), // CSS.vb_static
+    (5652, 556), // CSS.vh
+    (5653, 556), // CSS.vh_static
+    (5654, 557), // CSS.vi
+    (5655, 557), // CSS.vi_static
+    (5680, 558), // CSS.vmax
+    (5681, 558), // CSS.vmax_static
+    (5682, 559), // CSS.vmin
+    (5683, 559), // CSS.vmin_static
+    (5695, 560), // CSS.vw
+    (5696, 560), // CSS.vw_static
+    (1335, 562), // CSSAnimation.animationName
+    (1863, 564), // CSSConditionRule.conditionText
+    (1864, 566), // CSSContainerRule.conditions
+    (1900, 567), // CSSContainerRule.containerName
+    (1901, 568), // CSSContainerRule.containerQuery
+    (1273, 570), // CSSCounterStyleRule.additiveSymbols
+    (2576, 571), // CSSCounterStyleRule.fallback
+    (3887, 572), // CSSCounterStyleRule.name
+    (3907, 573), // CSSCounterStyleRule.negative
+    (4045, 574), // CSSCounterStyleRule.pad
+    (4250, 575), // CSSCounterStyleRule.prefix
+    (4362, 576), // CSSCounterStyleRule.range
+    (5063, 577), // CSSCounterStyleRule.speakAs
+    (5192, 578), // CSSCounterStyleRule.suffix
+    (5233, 579), // CSSCounterStyleRule.symbols
+    (5239, 580), // CSSCounterStyleRule.system
+    (1434, 583), // CSSFontFaceDescriptors.ascent-override
+    (1435, 584), // CSSFontFaceDescriptors.ascentOverride
+    (2270, 585), // CSSFontFaceDescriptors.descent-override
+    (2271, 586), // CSSFontFaceDescriptors.descentOverride
+    (2665, 587), // CSSFontFaceDescriptors.font-display
+    (2666, 588), // CSSFontFaceDescriptors.font-family
+    (2667, 589), // CSSFontFaceDescriptors.font-feature-settings
+    (2668, 590), // CSSFontFaceDescriptors.font-language-override
+    (2669, 591), // CSSFontFaceDescriptors.font-stretch
+    (2670, 592), // CSSFontFaceDescriptors.font-style
+    (2671, 593), // CSSFontFaceDescriptors.font-variation-settings
+    (2672, 594), // CSSFontFaceDescriptors.font-weight
+    (2673, 595), // CSSFontFaceDescriptors.font-width
+    (2676, 596), // CSSFontFaceDescriptors.fontDisplay
+    (2677, 597), // CSSFontFaceDescriptors.fontFamily
+    (2678, 598), // CSSFontFaceDescriptors.fontFeatureSettings
+    (2680, 599), // CSSFontFaceDescriptors.fontLanguageOverride
+    (2681, 600), // CSSFontFaceDescriptors.fontStretch
+    (2682, 601), // CSSFontFaceDescriptors.fontStyle
+    (2684, 602), // CSSFontFaceDescriptors.fontVariationSettings
+    (2685, 603), // CSSFontFaceDescriptors.fontWeight
+    (2686, 604), // CSSFontFaceDescriptors.fontWidth
+    (3548, 605), // CSSFontFaceDescriptors.line-gap-override
+    (3552, 606), // CSSFontFaceDescriptors.lineGapOverride
+    (5012, 607), // CSSFontFaceDescriptors.size-adjust
+    (5013, 608), // CSSFontFaceDescriptors.sizeAdjust
+    (5083, 609), // CSSFontFaceDescriptors.src
+    (5476, 610), // CSSFontFaceDescriptors.unicode-range
+    (5477, 611), // CSSFontFaceDescriptors.unicodeRange
+    (5166, 613), // CSSFontFaceRule.style
+    (4, 616), // CSSFontFeatureValuesMap.@@iterator
+    (1744, 617), // CSSFontFeatureValuesMap.clear
+    (2212, 618), // CSSFontFeatureValuesMap.delete
+    (2503, 619), // CSSFontFeatureValuesMap.entries
+    (2692, 620), // CSSFontFeatureValuesMap.forEach
+    (2796, 621), // CSSFontFeatureValuesMap.get
+    (3141, 622), // CSSFontFeatureValuesMap.has
+    (3486, 623), // CSSFontFeatureValuesMap.keys
+    (4824, 624), // CSSFontFeatureValuesMap.set
+    (5011, 625), // CSSFontFeatureValuesMap.size
+    (5622, 626), // CSSFontFeatureValuesMap.values
+    (1341, 628), // CSSFontFeatureValuesRule.annotation
+    (1716, 629), // CSSFontFeatureValuesRule.characterVariant
+    (2677, 630), // CSSFontFeatureValuesRule.fontFamily
+    (4014, 631), // CSSFontFeatureValuesRule.ornaments
+    (5173, 632), // CSSFontFeatureValuesRule.styleset
+    (5174, 633), // CSSFontFeatureValuesRule.stylistic
+    (5230, 634), // CSSFontFeatureValuesRule.swash
+    (1521, 636), // CSSFontPaletteValuesRule.basePalette
+    (2677, 637), // CSSFontPaletteValuesRule.fontFamily
+    (3887, 638), // CSSFontPaletteValuesRule.name
+    (4030, 639), // CSSFontPaletteValuesRule.overrideColors
+    (5166, 641), // CSSFunctionDeclarations.style
+    (4627, 643), // CSSFunctionDescriptors.result
+    (2970, 645), // CSSFunctionRule.getParameters
+    (3887, 646), // CSSFunctionRule.name
+    (4639, 647), // CSSFunctionRule.returnType
+    (2131, 649), // CSSGroupingRule.cssRules
+    (2231, 650), // CSSGroupingRule.deleteRule
+    (3307, 651), // CSSGroupingRule.insertRule
+    (3188, 654), // CSSImportRule.href
+    (3520, 655), // CSSImportRule.layerName
+    (3780, 656), // CSSImportRule.media
+    (5170, 657), // CSSImportRule.styleSheet
+    (5208, 658), // CSSImportRule.supportsText
+    (3481, 660), // CSSKeyframeRule.keyText
+    (5166, 661), // CSSKeyframeRule.style
+    (1360, 663), // CSSKeyframesRule.appendRule
+    (2131, 664), // CSSKeyframesRule.cssRules
+    (2231, 665), // CSSKeyframesRule.deleteRule
+    (2634, 666), // CSSKeyframesRule.findRule
+    (3535, 667), // CSSKeyframesRule.length
+    (3887, 668), // CSSKeyframesRule.name
+    (119, 670), // CSSKeywordValue.CSSKeywordValue
+    (5614, 671), // CSSKeywordValue.value
+    (3887, 673), // CSSLayerBlockRule.name
+    (3888, 675), // CSSLayerStatementRule.nameList
+    (3887, 677), // CSSMarginRule.name
+    (5166, 678), // CSSMarginRule.style
+    (123, 680), // CSSMathClamp.CSSMathClamp
+    (3625, 681), // CSSMathClamp.lower
+    (5572, 682), // CSSMathClamp.upper
+    (5614, 683), // CSSMathClamp.value
+    (124, 685), // CSSMathInvert.CSSMathInvert
+    (5614, 686), // CSSMathInvert.value
+    (125, 688), // CSSMathMax.CSSMathMax
+    (5622, 689), // CSSMathMax.values
+    (126, 691), // CSSMathMin.CSSMathMin
+    (5622, 692), // CSSMathMin.values
+    (127, 694), // CSSMathNegate.CSSMathNegate
+    (5614, 695), // CSSMathNegate.value
+    (128, 697), // CSSMathProduct.CSSMathProduct
+    (5622, 698), // CSSMathProduct.values
+    (129, 700), // CSSMathSum.CSSMathSum
+    (5622, 701), // CSSMathSum.values
+    (3987, 703), // CSSMathValue.operator
+    (131, 705), // CSSMatrixComponent.CSSMatrixComponent
+    (3709, 706), // CSSMatrixComponent.matrix
+    (3707, 708), // CSSMediaRule.matches
+    (3780, 709), // CSSMediaRule.media
+    (3891, 711), // CSSNamespaceRule.namespaceURI
+    (4250, 712), // CSSNamespaceRule.prefix
+    (5166, 714), // CSSNestedDeclarations.style
+    (4, 716), // CSSNumericArray.@@iterator
+    (2503, 717), // CSSNumericArray.entries
+    (2692, 718), // CSSNumericArray.forEach
+    (3486, 719), // CSSNumericArray.keys
+    (3535, 720), // CSSNumericArray.length
+    (5622, 721), // CSSNumericArray.values
+    (1248, 723), // CSSNumericValue.add
+    (2341, 724), // CSSNumericValue.div
+    (2511, 725), // CSSNumericValue.equals
+    (3711, 726), // CSSNumericValue.max
+    (3809, 727), // CSSNumericValue.min
+    (3874, 728), // CSSNumericValue.mul
+    (4069, 729), // CSSNumericValue.parse
+    (4083, 729), // CSSNumericValue.parse_static
+    (5175, 730), // CSSNumericValue.sub
+    (5328, 731), // CSSNumericValue.to
+    (5357, 732), // CSSNumericValue.toSum
+    (5443, 733), // CSSNumericValue.type
+    (3673, 735), // CSSPageDescriptors.margin
+    (3677, 736), // CSSPageDescriptors.margin-bottom
+    (3681, 737), // CSSPageDescriptors.margin-left
+    (3682, 738), // CSSPageDescriptors.margin-right
+    (3683, 739), // CSSPageDescriptors.margin-top
+    (3687, 740), // CSSPageDescriptors.marginBottom
+    (3692, 741), // CSSPageDescriptors.marginLeft
+    (3693, 742), // CSSPageDescriptors.marginRight
+    (3694, 743), // CSSPageDescriptors.marginTop
+    (4048, 744), // CSSPageDescriptors.page-orientation
+    (4050, 745), // CSSPageDescriptors.pageOrientation
+    (5011, 746), // CSSPageDescriptors.size
+    (4799, 748), // CSSPageRule.selectorText
+    (5166, 749), // CSSPageRule.style
+    (139, 752), // CSSPerspective.CSSPerspective
+    (3535, 753), // CSSPerspective.length
+    (1292, 755), // CSSPositionTryDescriptors.align-self
+    (1293, 756), // CSSPositionTryDescriptors.alignSelf
+    (1580, 757), // CSSPositionTryDescriptors.block-size
+    (1581, 758), // CSSPositionTryDescriptors.blockSize
+    (1598, 759), // CSSPositionTryDescriptors.bottom
+    (3173, 760), // CSSPositionTryDescriptors.height
+    (3278, 761), // CSSPositionTryDescriptors.inline-size
+    (3279, 762), // CSSPositionTryDescriptors.inlineSize
+    (3308, 763), // CSSPositionTryDescriptors.inset
+    (3309, 764), // CSSPositionTryDescriptors.inset-block
+    (3310, 765), // CSSPositionTryDescriptors.inset-block-end
+    (3311, 766), // CSSPositionTryDescriptors.inset-block-start
+    (3312, 767), // CSSPositionTryDescriptors.inset-inline
+    (3313, 768), // CSSPositionTryDescriptors.inset-inline-end
+    (3314, 769), // CSSPositionTryDescriptors.inset-inline-start
+    (3315, 770), // CSSPositionTryDescriptors.insetBlock
+    (3316, 771), // CSSPositionTryDescriptors.insetBlockEnd
+    (3317, 772), // CSSPositionTryDescriptors.insetBlockStart
+    (3318, 773), // CSSPositionTryDescriptors.insetInline
+    (3319, 774), // CSSPositionTryDescriptors.insetInlineEnd
+    (3320, 775), // CSSPositionTryDescriptors.insetInlineStart
+    (3462, 776), // CSSPositionTryDescriptors.justify-self
+    (3463, 777), // CSSPositionTryDescriptors.justifySelf
+    (3530, 778), // CSSPositionTryDescriptors.left
+    (3673, 779), // CSSPositionTryDescriptors.margin
+    (3674, 780), // CSSPositionTryDescriptors.margin-block
+    (3675, 781), // CSSPositionTryDescriptors.margin-block-end
+    (3676, 782), // CSSPositionTryDescriptors.margin-block-start
+    (3677, 783), // CSSPositionTryDescriptors.margin-bottom
+    (3678, 784), // CSSPositionTryDescriptors.margin-inline
+    (3679, 785), // CSSPositionTryDescriptors.margin-inline-end
+    (3680, 786), // CSSPositionTryDescriptors.margin-inline-start
+    (3681, 787), // CSSPositionTryDescriptors.margin-left
+    (3682, 788), // CSSPositionTryDescriptors.margin-right
+    (3683, 789), // CSSPositionTryDescriptors.margin-top
+    (3684, 790), // CSSPositionTryDescriptors.marginBlock
+    (3685, 791), // CSSPositionTryDescriptors.marginBlockEnd
+    (3686, 792), // CSSPositionTryDescriptors.marginBlockStart
+    (3687, 793), // CSSPositionTryDescriptors.marginBottom
+    (3689, 794), // CSSPositionTryDescriptors.marginInline
+    (3690, 795), // CSSPositionTryDescriptors.marginInlineEnd
+    (3691, 796), // CSSPositionTryDescriptors.marginInlineStart
+    (3692, 797), // CSSPositionTryDescriptors.marginLeft
+    (3693, 798), // CSSPositionTryDescriptors.marginRight
+    (3694, 799), // CSSPositionTryDescriptors.marginTop
+    (3712, 800), // CSSPositionTryDescriptors.max-block-size
+    (3713, 801), // CSSPositionTryDescriptors.max-height
+    (3714, 802), // CSSPositionTryDescriptors.max-inline-size
+    (3715, 803), // CSSPositionTryDescriptors.max-width
+    (3722, 804), // CSSPositionTryDescriptors.maxBlockSize
+    (3740, 805), // CSSPositionTryDescriptors.maxHeight
+    (3742, 806), // CSSPositionTryDescriptors.maxInlineSize
+    (3772, 807), // CSSPositionTryDescriptors.maxWidth
+    (3810, 808), // CSSPositionTryDescriptors.min-block-size
+    (3811, 809), // CSSPositionTryDescriptors.min-height
+    (3812, 810), // CSSPositionTryDescriptors.min-inline-size
+    (3813, 811), // CSSPositionTryDescriptors.min-width
+    (3814, 812), // CSSPositionTryDescriptors.minBlockSize
+    (3816, 813), // CSSPositionTryDescriptors.minHeight
+    (3817, 814), // CSSPositionTryDescriptors.minInlineSize
+    (3822, 815), // CSSPositionTryDescriptors.minWidth
+    (4177, 816), // CSSPositionTryDescriptors.place-self
+    (4178, 817), // CSSPositionTryDescriptors.placeSelf
+    (4230, 818), // CSSPositionTryDescriptors.position-anchor
+    (4231, 819), // CSSPositionTryDescriptors.position-area
+    (4233, 820), // CSSPositionTryDescriptors.positionAnchor
+    (4234, 821), // CSSPositionTryDescriptors.positionArea
+    (4652, 822), // CSSPositionTryDescriptors.right
+    (5375, 823), // CSSPositionTryDescriptors.top
+    (5739, 824), // CSSPositionTryDescriptors.width
+    (3887, 826), // CSSPositionTryRule.name
+    (5166, 827), // CSSPositionTryRule.style
+    (142, 829), // CSSPositionValue.CSSPositionValue
+    (5772, 830), // CSSPositionValue.x
+    (5781, 831), // CSSPositionValue.y
+    (2862, 833), // CSSPrimitiveValue.getCounterValue
+    (2906, 834), // CSSPrimitiveValue.getFloatValue
+    (2998, 835), // CSSPrimitiveValue.getRGBColorValue
+    (3003, 836), // CSSPrimitiveValue.getRectValue
+    (3042, 837), // CSSPrimitiveValue.getStringValue
+    (4281, 838), // CSSPrimitiveValue.primitiveType
+    (4859, 839), // CSSPrimitiveValue.setFloatValue
+    (4933, 840), // CSSPrimitiveValue.setStringValue
+    (3257, 842), // CSSPropertyRule.inherits
+    (3273, 843), // CSSPropertyRule.initialValue
+    (3887, 844), // CSSPropertyRule.name
+    (5237, 845), // CSSPropertyRule.syntax
+    (2439, 847), // CSSPseudoElement.element
+    (4064, 848), // CSSPseudoElement.parent
+    (4316, 849), // CSSPseudoElement.pseudo
+    (5443, 850), // CSSPseudoElement.type
+    (146, 852), // CSSRotate.CSSRotate
+    (1327, 853), // CSSRotate.angle
+    (5772, 854), // CSSRotate.x
+    (5781, 855), // CSSRotate.y
+    (5786, 856), // CSSRotate.z
+    (2132, 858), // CSSRule.cssText
+    (4067, 859), // CSSRule.parentRule
+    (4068, 860), // CSSRule.parentStyleSheet
+    (5443, 861), // CSSRule.type
+    (3446, 863), // CSSRuleList.item
+    (3535, 864), // CSSRuleList.length
+    (149, 866), // CSSScale.CSSScale
+    (5772, 867), // CSSScale.x
+    (5781, 868), // CSSScale.y
+    (5786, 869), // CSSScale.z
+    (2478, 871), // CSSScopeRule.end
+    (5095, 872), // CSSScopeRule.start
+    (151, 874), // CSSSkew.CSSSkew
+    (1501, 875), // CSSSkew.ax
+    (1504, 876), // CSSSkew.ay
+    (152, 878), // CSSSkewX.CSSSkewX
+    (1501, 879), // CSSSkewX.ax
+    (153, 881), // CSSSkewY.CSSSkewY
+    (1504, 882), // CSSSkewY.ay
+    (4, 885), // CSSStyleDeclaration.@@iterator
+    (2130, 886), // CSSStyleDeclaration.cssFloat
+    (2132, 887), // CSSStyleDeclaration.cssText
+    (2987, 888), // CSSStyleDeclaration.getPropertyCSSValue
+    (2988, 889), // CSSStyleDeclaration.getPropertyPriority
+    (2990, 890), // CSSStyleDeclaration.getPropertyValue
+    (3446, 891), // CSSStyleDeclaration.item
+    (3535, 892), // CSSStyleDeclaration.length
+    (4067, 893), // CSSStyleDeclaration.parentRule
+    (4501, 894), // CSSStyleDeclaration.removeProperty
+    (4906, 895), // CSSStyleDeclaration.setProperty
+    (2130, 897), // CSSStyleProperties.cssFloat
+    (2131, 899), // CSSStyleRule.cssRules
+    (2231, 900), // CSSStyleRule.deleteRule
+    (3307, 901), // CSSStyleRule.insertRule
+    (4799, 902), // CSSStyleRule.selectorText
+    (5166, 903), // CSSStyleRule.style
+    (5168, 905), // CSSStyleRule.styleMap
+    (158, 907), // CSSStyleSheet.CSSStyleSheet
+    (1263, 909), // CSSStyleSheet.addRule
+    (2131, 910), // CSSStyleSheet.cssRules
+    (2231, 911), // CSSStyleSheet.deleteRule
+    (3307, 912), // CSSStyleSheet.insertRule
+    (4037, 914), // CSSStyleSheet.ownerRule
+    (4504, 915), // CSSStyleSheet.removeRule
+    (4532, 916), // CSSStyleSheet.replace
+    (4540, 917), // CSSStyleSheet.replaceSync
+    (4683, 918), // CSSStyleSheet.rules
+    (4069, 921), // CSSStyleValue.parse
+    (4070, 920), // CSSStyleValue.parseAll
+    (4071, 920), // CSSStyleValue.parseAll_static
+    (4083, 921), // CSSStyleValue.parse_static
+    (5355, 922), // CSSStyleValue.toString
+    (3707, 924), // CSSSupportsRule.matches
+    (3358, 926), // CSSTransformComponent.is2D
+    (5348, 927), // CSSTransformComponent.toMatrix
+    (5355, 928), // CSSTransformComponent.toString
+    (4, 930), // CSSTransformValue.@@iterator
+    (162, 931), // CSSTransformValue.CSSTransformValue
+    (2503, 932), // CSSTransformValue.entries
+    (2692, 933), // CSSTransformValue.forEach
+    (3358, 934), // CSSTransformValue.is2D
+    (3486, 935), // CSSTransformValue.keys
+    (3535, 936), // CSSTransformValue.length
+    (5348, 937), // CSSTransformValue.toMatrix
+    (5622, 938), // CSSTransformValue.values
+    (5416, 940), // CSSTransition.transitionProperty
+    (164, 942), // CSSTranslate.CSSTranslate
+    (5772, 943), // CSSTranslate.x
+    (5781, 944), // CSSTranslate.y
+    (5786, 945), // CSSTranslate.z
+    (165, 947), // CSSUnitValue.CSSUnitValue
+    (5516, 948), // CSSUnitValue.unit
+    (5614, 949), // CSSUnitValue.value
+    (4, 951), // CSSUnparsedValue.@@iterator
+    (166, 952), // CSSUnparsedValue.CSSUnparsedValue
+    (2503, 953), // CSSUnparsedValue.entries
+    (2692, 954), // CSSUnparsedValue.forEach
+    (3486, 955), // CSSUnparsedValue.keys
+    (3535, 956), // CSSUnparsedValue.length
+    (5622, 957), // CSSUnparsedValue.values
+    (2132, 959), // CSSValue.cssText
+    (2133, 960), // CSSValue.cssValueType
+    (3446, 962), // CSSValueList.item
+    (3535, 963), // CSSValueList.length
+    (169, 965), // CSSVariableReferenceValue.CSSVariableReferenceValue
+    (2576, 966), // CSSVariableReferenceValue.fallback
+    (5623, 967), // CSSVariableReferenceValue.variable
+    (3899, 969), // CSSViewTransitionRule.navigation
+    (5465, 970), // CSSViewTransitionRule.types
+    (1248, 972), // Cache.add
+    (1249, 973), // Cache.addAll
+    (2212, 974), // Cache.delete
+    (3486, 975), // Cache.keys
+    (3703, 976), // Cache.match
+    (3704, 977), // Cache.matchAll
+    (4329, 978), // Cache.put
+    (5754, 979), // Cache.worker_support
+    (2212, 981), // CacheStorage.delete
+    (3141, 982), // CacheStorage.has
+    (3486, 983), // CacheStorage.keys
+    (3703, 984), // CacheStorage.match
+    (3980, 985), // CacheStorage.open
+    (4769, 986), // CacheStorage.secure_context_required
+    (5754, 987), // CacheStorage.worker_support
+    (173, 989), // CanMakePaymentEvent.CanMakePaymentEvent
+    (4610, 990), // CanMakePaymentEvent.respondWith
+    (1669, 992), // CanvasCaptureMediaStreamTrack.canvas
+    (4558, 993), // CanvasCaptureMediaStreamTrack.requestFrame
+    (175, 995), // CanvasFilter.CanvasFilter
+    (1250, 997), // CanvasGradient.addColorStop
+    (4937, 999), // CanvasPattern.setTransform
+    (1368, 1002), // CanvasRenderingContext2D.arc
+    (1369, 1003), // CanvasRenderingContext2D.arcTo
+    (1542, 1004), // CanvasRenderingContext2D.beginPath
+    (1549, 1005), // CanvasRenderingContext2D.bezierCurveTo
+    (1669, 1006), // CanvasRenderingContext2D.canvas
+    (1763, 1007), // CanvasRenderingContext2D.clearRect
+    (1782, 1008), // CanvasRenderingContext2D.clip
+    (1794, 1010), // CanvasRenderingContext2D.closePath
+    (2004, 1011), // CanvasRenderingContext2D.createConicGradient
+    (2031, 1012), // CanvasRenderingContext2D.createImageData
+    (2033, 1013), // CanvasRenderingContext2D.createLinearGradient
+    (2047, 1014), // CanvasRenderingContext2D.createPattern
+    (2058, 1015), // CanvasRenderingContext2D.createRadialGradient
+    (2311, 1016), // CanvasRenderingContext2D.direction
+    (2394, 1017), // CanvasRenderingContext2D.drawFocusIfNeeded
+    (2395, 1019), // CanvasRenderingContext2D.drawImage
+    (2445, 1022), // CanvasRenderingContext2D.ellipse
+    (2620, 1023), // CanvasRenderingContext2D.fill
+    (2623, 1025), // CanvasRenderingContext2D.fillRect
+    (2624, 1026), // CanvasRenderingContext2D.fillStyle
+    (2625, 1027), // CanvasRenderingContext2D.fillText
+    (2626, 1028), // CanvasRenderingContext2D.filter
+    (2664, 1029), // CanvasRenderingContext2D.font
+    (2679, 1030), // CanvasRenderingContext2D.fontKerning
+    (2681, 1031), // CanvasRenderingContext2D.fontStretch
+    (2683, 1032), // CanvasRenderingContext2D.fontVariantCaps
+    (2860, 1033), // CanvasRenderingContext2D.getContextAttributes
+    (2921, 1034), // CanvasRenderingContext2D.getImageData
+    (2941, 1035), // CanvasRenderingContext2D.getLineDash
+    (3067, 1036), // CanvasRenderingContext2D.getTransform
+    (3102, 1037), // CanvasRenderingContext2D.globalAlpha
+    (3103, 1038), // CanvasRenderingContext2D.globalCompositeOperation
+    (3220, 1039), // CanvasRenderingContext2D.imageSmoothingEnabled
+    (3221, 1040), // CanvasRenderingContext2D.imageSmoothingQuality
+    (3373, 1041), // CanvasRenderingContext2D.isContextLost
+    (3401, 1042), // CanvasRenderingContext2D.isPointInPath
+    (3403, 1044), // CanvasRenderingContext2D.isPointInStroke
+    (3496, 1046), // CanvasRenderingContext2D.lang
+    (3540, 1047), // CanvasRenderingContext2D.letterSpacing
+    (3550, 1048), // CanvasRenderingContext2D.lineCap
+    (3551, 1049), // CanvasRenderingContext2D.lineDashOffset
+    (3553, 1050), // CanvasRenderingContext2D.lineJoin
+    (3557, 1051), // CanvasRenderingContext2D.lineTo
+    (3558, 1052), // CanvasRenderingContext2D.lineWidth
+    (3778, 1053), // CanvasRenderingContext2D.measureText
+    (3827, 1054), // CanvasRenderingContext2D.miterLimit
+    (3851, 1055), // CanvasRenderingContext2D.moveTo
+    (4330, 1056), // CanvasRenderingContext2D.putImageData
+    (4333, 1057), // CanvasRenderingContext2D.quadraticCurveTo
+    (4411, 1058), // CanvasRenderingContext2D.rect
+    (4591, 1059), // CanvasRenderingContext2D.reset
+    (4595, 1060), // CanvasRenderingContext2D.resetTransform
+    (4623, 1061), // CanvasRenderingContext2D.restore
+    (4665, 1062), // CanvasRenderingContext2D.rotate
+    (4676, 1063), // CanvasRenderingContext2D.roundRect
+    (4701, 1064), // CanvasRenderingContext2D.save
+    (4703, 1065), // CanvasRenderingContext2D.scale
+    (4881, 1066), // CanvasRenderingContext2D.setLineDash
+    (4937, 1067), // CanvasRenderingContext2D.setTransform
+    (4956, 1069), // CanvasRenderingContext2D.shadowBlur
+    (4957, 1070), // CanvasRenderingContext2D.shadowColor
+    (4958, 1071), // CanvasRenderingContext2D.shadowOffsetX
+    (4959, 1072), // CanvasRenderingContext2D.shadowOffsetY
+    (5161, 1073), // CanvasRenderingContext2D.stroke
+    (5162, 1075), // CanvasRenderingContext2D.strokeRect
+    (5163, 1076), // CanvasRenderingContext2D.strokeStyle
+    (5164, 1077), // CanvasRenderingContext2D.strokeText
+    (5283, 1078), // CanvasRenderingContext2D.textAlign
+    (5284, 1079), // CanvasRenderingContext2D.textBaseline
+    (5287, 1080), // CanvasRenderingContext2D.textRendering
+    (5409, 1081), // CanvasRenderingContext2D.transform
+    (5422, 1082), // CanvasRenderingContext2D.translate
+    (5748, 1083), // CanvasRenderingContext2D.wordSpacing
+    (179, 1085), // CaptureController.CaptureController
+    (2189, 1086), // CaptureController.decreaseZoomLevel
+    (2709, 1087), // CaptureController.forwardWheel
+    (3052, 1088), // CaptureController.getSupportedZoomLevels
+    (3243, 1089), // CaptureController.increaseZoomLevel
+    (4596, 1090), // CaptureController.resetZoomLevel
+    (4860, 1091), // CaptureController.setFocusBehavior
+    (5789, 1092), // CaptureController.zoomLevel
+    (5790, 1093), // CaptureController.zoomlevelchange_event
+    (2849, 1095), // CaretPosition.getClientRect
+    (3957, 1096), // CaretPosition.offset
+    (3960, 1097), // CaretPosition.offsetNode
+    (181, 1099), // ChannelMergerNode.ChannelMergerNode
+    (182, 1101), // ChannelSplitterNode.ChannelSplitterNode
+    (1430, 1103), // ChapterInformation.artwork
+    (5101, 1104), // ChapterInformation.startTime
+    (5326, 1105), // ChapterInformation.title
+    (184, 1107), // CharacterBoundsUpdateEvent.CharacterBoundsUpdateEvent
+    (4364, 1108), // CharacterBoundsUpdateEvent.rangeEnd
+    (4368, 1109), // CharacterBoundsUpdateEvent.rangeStart
+    (1283, 1111), // CharacterData.after
+    (1284, 1112), // CharacterData.afterHTML
+    (1285, 1113), // CharacterData.afterHTMLUnsafe
+    (1355, 1114), // CharacterData.appendData
+    (1526, 1115), // CharacterData.before
+    (1527, 1116), // CharacterData.beforeHTML
+    (1528, 1117), // CharacterData.beforeHTMLUnsafe
+    (2165, 1118), // CharacterData.data
+    (2217, 1119), // CharacterData.deleteData
+    (3302, 1120), // CharacterData.insertData
+    (3535, 1121), // CharacterData.length
+    (3918, 1122), // CharacterData.nextElementSibling
+    (4272, 1123), // CharacterData.previousElementSibling
+    (4484, 1124), // CharacterData.remove
+    (4536, 1125), // CharacterData.replaceData
+    (4542, 1126), // CharacterData.replaceWith
+    (4543, 1127), // CharacterData.replaceWithHTML
+    (4544, 1128), // CharacterData.replaceWithHTMLUnsafe
+    (5141, 1129), // CharacterData.streamAfterHTML
+    (5142, 1130), // CharacterData.streamAfterHTMLUnsafe
+    (5145, 1131), // CharacterData.streamBeforeHTML
+    (5146, 1132), // CharacterData.streamBeforeHTMLUnsafe
+    (5152, 1133), // CharacterData.streamReplaceWithHTML
+    (5153, 1134), // CharacterData.streamReplaceWithHTMLUnsafe
+    (5189, 1135), // CharacterData.substringData
+    (2723, 1137), // Client.frameType
+    (3207, 1138), // Client.id
+    (4238, 1139), // Client.postMessage
+    (5443, 1140), // Client.type
+    (5577, 1141), // Client.url
+    (1738, 1143), // Clients.claim
+    (2796, 1144), // Clients.get
+    (3704, 1145), // Clients.matchAll
+    (3983, 1147), // Clients.openWindow
+    (1786, 1149), // Clipboard.clipboardchange_event
+    (4381, 1150), // Clipboard.read
+    (4391, 1152), // Clipboard.readText
+    (5449, 1153), // Clipboard.type_image-png
+    (5460, 1154), // Clipboard.type_text-html
+    (5461, 1155), // Clipboard.type_text-plain
+    (5760, 1156), // Clipboard.write
+    (5763, 1157), // Clipboard.writeText
+    (189, 1159), // ClipboardChangeEvent.ClipboardChangeEvent
+    (1695, 1160), // ClipboardChangeEvent.changeId
+    (5465, 1161), // ClipboardChangeEvent.types
+    (190, 1163), // ClipboardEvent.ClipboardEvent
+    (1785, 1164), // ClipboardEvent.clipboardData
+    (191, 1166), // ClipboardItem.ClipboardItem
+    (3071, 1167), // ClipboardItem.getType
+    (4261, 1168), // ClipboardItem.presentationStyle
+    (5205, 1169), // ClipboardItem.supports
+    (5210, 1169), // ClipboardItem.supports_static
+    (5450, 1170), // ClipboardItem.type_image_svg_xml
+    (5463, 1171), // ClipboardItem.type_web
+    (5465, 1172), // ClipboardItem.types
+    (192, 1174), // CloseEvent.CloseEvent
+    (1805, 1175), // CloseEvent.code
+    (4399, 1176), // CloseEvent.reason
+    (5708, 1177), // CloseEvent.wasClean
+    (193, 1179), // CloseWatcher.CloseWatcher
+    (1661, 1180), // CloseWatcher.cancel_event
+    (1792, 1181), // CloseWatcher.close
+    (1795, 1182), // CloseWatcher.close_event
+    (2277, 1183), // CloseWatcher.destroy
+    (4554, 1184), // CloseWatcher.requestClose
+    (195, 1186), // CommandEvent.CommandEvent
+    (1831, 1187), // CommandEvent.command
+    (5045, 1188), // CommandEvent.source
+    (196, 1190), // Comment.Comment
+    (197, 1192), // CompositionEvent.CompositionEvent
+    (2165, 1193), // CompositionEvent.data
+    (3258, 1194), // CompositionEvent.initCompositionEvent
+    (3592, 1195), // CompositionEvent.locale
+    (198, 1197), // CompressionStream.CompressionStream
+    (4393, 1203), // CompressionStream.readable
+    (5758, 1204), // CompressionStream.writable
+    (199, 1206), // ConstantSourceNode.ConstantSourceNode
+    (3957, 1207), // ConstantSourceNode.offset
+    (1275, 1209), // ContactAddress.addressLine
+    (1737, 1210), // ContactAddress.city
+    (1968, 1211), // ContactAddress.country
+    (2249, 1212), // ContactAddress.dependentLocality
+    (4001, 1213), // ContactAddress.organization
+    (4163, 1214), // ContactAddress.phone
+    (4240, 1215), // ContactAddress.postalCode
+    (4404, 1216), // ContactAddress.recipient
+    (4447, 1217), // ContactAddress.region
+    (5042, 1218), // ContactAddress.sortingCode
+    (5341, 1219), // ContactAddress.toJSON
+    (2986, 1221), // ContactsManager.getProperties
+    (4778, 1222), // ContactsManager.select
+    (1248, 1224), // ContentIndex.add
+    (2212, 1225), // ContentIndex.delete
+    (2802, 1226), // ContentIndex.getAll
+    (203, 1228), // ContentIndexEvent.ContentIndexEvent
+    (3207, 1229), // ContentIndexEvent.id
+    (204, 1231), // ContentVisibilityAutoStateChangeEvent.ContentVisibilityAutoStateChangeEvent
+    (5024, 1232), // ContentVisibilityAutoStateChangeEvent.skipped
+    (205, 1234), // ConvolverNode.ConvolverNode
+    (1612, 1235), // ConvolverNode.buffer
+    (3935, 1236), // ConvolverNode.normalize
+    (206, 1238), // CookieChangeEvent.CookieChangeEvent
+    (1701, 1239), // CookieChangeEvent.changed
+    (2241, 1240), // CookieChangeEvent.deleted
+    (1700, 1242), // CookieStore.change_event
+    (2212, 1243), // CookieStore.delete
+    (2796, 1245), // CookieStore.get
+    (2802, 1254), // CookieStore.getAll
+    (4824, 1255), // CookieStore.set
+    (3046, 1259), // CookieStoreManager.getSubscriptions
+    (5184, 1260), // CookieStoreManager.subscribe
+    (5534, 1261), // CookieStoreManager.unsubscribe
+    (209, 1263), // CountQueuingStrategy.CountQueuingStrategy
+    (3179, 1264), // CountQueuingStrategy.highWaterMark
+    (5011, 1265), // CountQueuingStrategy.size
+    (3208, 1267), // Counter.identifier
+    (3570, 1268), // Counter.listStyle
+    (4812, 1269), // Counter.separator
+    (2212, 1271), // CrashReportContext.delete
+    (3274, 1272), // CrashReportContext.initialize
+    (4824, 1273), // CrashReportContext.set
+    (2369, 1275), // CreateMonitor.downloadprogress_event
+    (3207, 1277), // Credential.id
+    (3367, 1278), // Credential.isConditionalMediationAvailable
+    (3368, 1278), // Credential.isConditionalMediationAvailable_static
+    (5443, 1279), // Credential.type
+    (1983, 1281), // CredentialsContainer.create
+    (2796, 1299), // CredentialsContainer.get
+    (4271, 1316), // CredentialsContainer.preventSilentAccess
+    (5139, 1317), // CredentialsContainer.store
+    (2741, 1319), // CropTarget.fromElement
+    (2742, 1319), // CropTarget.fromElement_static
+    (2999, 1321), // Crypto.getRandomValues
+    (4360, 1322), // Crypto.randomUUID
+    (5190, 1323), // Crypto.subtle
+    (1290, 1326), // CryptoKey.algorithm
+    (2570, 1327), // CryptoKey.extractable
+    (5443, 1328), // CryptoKey.type
+    (5579, 1329), // CryptoKey.usages
+    (218, 1331), // CustomElementRegistry.CustomElementRegistry
+    (1623, 1332), // CustomElementRegistry.builtin_element_support
+    (2202, 1333), // CustomElementRegistry.define
+    (2796, 1337), // CustomElementRegistry.get
+    (2952, 1338), // CustomElementRegistry.getName
+    (3274, 1339), // CustomElementRegistry.initialize
+    (5567, 1340), // CustomElementRegistry.upgrade
+    (5735, 1341), // CustomElementRegistry.whenDefined
+    (219, 1344), // CustomEvent.CustomEvent
+    (2281, 1345), // CustomEvent.detail
+    (3259, 1346), // CustomEvent.initCustomEvent
+    (5754, 1347), // CustomEvent.worker_support
+    (4, 1349), // CustomStateSet.@@iterator
+    (1248, 1350), // CustomStateSet.add
+    (1744, 1351), // CustomStateSet.clear
+    (2212, 1352), // CustomStateSet.delete
+    (2503, 1353), // CustomStateSet.entries
+    (2692, 1354), // CustomStateSet.forEach
+    (3141, 1355), // CustomStateSet.has
+    (3486, 1356), // CustomStateSet.keys
+    (5011, 1357), // CustomStateSet.size
+    (5622, 1358), // CustomStateSet.values
+    (3794, 1360), // DOMError.message
+    (3887, 1361), // DOMError.name
+    (224, 1363), // DOMException.DOMException
+    (1805, 1364), // DOMException.code
+    (3794, 1365), // DOMException.message
+    (3887, 1366), // DOMException.name
+    (4816, 1367), // DOMException.serializable_object
+    (2015, 1369), // DOMImplementation.createDocument
+    (2017, 1370), // DOMImplementation.createDocumentType
+    (2028, 1371), // DOMImplementation.createHTMLDocument
+    (3148, 1372), // DOMImplementation.hasFeature
+    (226, 1374), // DOMMatrix.DOMMatrix
+    (1208, 1375), // DOMMatrix.a
+    (1507, 1376), // DOMMatrix.b
+    (1632, 1377), // DOMMatrix.c
+    (2164, 1378), // DOMMatrix.d
+    (2429, 1379), // DOMMatrix.e
+    (2572, 1380), // DOMMatrix.f
+    (2744, 1381), // DOMMatrix.fromFloat32Array
+    (2745, 1381), // DOMMatrix.fromFloat32Array_static
+    (2746, 1382), // DOMMatrix.fromFloat64Array
+    (2747, 1382), // DOMMatrix.fromFloat64Array_static
+    (2749, 1383), // DOMMatrix.fromMatrix
+    (2750, 1383), // DOMMatrix.fromMatrix_static
+    (3354, 1384), // DOMMatrix.invertSelf
+    (3645, 1385), // DOMMatrix.m11
+    (3646, 1386), // DOMMatrix.m12
+    (3647, 1387), // DOMMatrix.m13
+    (3648, 1388), // DOMMatrix.m14
+    (3649, 1389), // DOMMatrix.m21
+    (3650, 1390), // DOMMatrix.m22
+    (3651, 1391), // DOMMatrix.m23
+    (3652, 1392), // DOMMatrix.m24
+    (3653, 1393), // DOMMatrix.m31
+    (3654, 1394), // DOMMatrix.m32
+    (3655, 1395), // DOMMatrix.m33
+    (3656, 1396), // DOMMatrix.m34
+    (3657, 1397), // DOMMatrix.m41
+    (3658, 1398), // DOMMatrix.m42
+    (3659, 1399), // DOMMatrix.m43
+    (3660, 1400), // DOMMatrix.m44
+    (3883, 1401), // DOMMatrix.multiplySelf
+    (4244, 1402), // DOMMatrix.preMultiplySelf
+    (4667, 1403), // DOMMatrix.rotateAxisAngleSelf
+    (4669, 1404), // DOMMatrix.rotateFromVectorSelf
+    (4670, 1405), // DOMMatrix.rotateSelf
+    (4705, 1406), // DOMMatrix.scale3dSelf
+    (4707, 1407), // DOMMatrix.scaleSelf
+    (4885, 1408), // DOMMatrix.setMatrixValue
+    (5018, 1409), // DOMMatrix.skewXSelf
+    (5020, 1410), // DOMMatrix.skewYSelf
+    (5423, 1411), // DOMMatrix.translateSelf
+    (5754, 1412), // DOMMatrix.worker_support
+    (227, 1414), // DOMMatrixReadOnly.DOMMatrixReadOnly
+    (1208, 1415), // DOMMatrixReadOnly.a
+    (1507, 1416), // DOMMatrixReadOnly.b
+    (1632, 1417), // DOMMatrixReadOnly.c
+    (2164, 1418), // DOMMatrixReadOnly.d
+    (2429, 1419), // DOMMatrixReadOnly.e
+    (2572, 1420), // DOMMatrixReadOnly.f
+    (2653, 1421), // DOMMatrixReadOnly.flipX
+    (2654, 1422), // DOMMatrixReadOnly.flipY
+    (2744, 1423), // DOMMatrixReadOnly.fromFloat32Array
+    (2745, 1423), // DOMMatrixReadOnly.fromFloat32Array_static
+    (2746, 1424), // DOMMatrixReadOnly.fromFloat64Array
+    (2747, 1424), // DOMMatrixReadOnly.fromFloat64Array_static
+    (2749, 1425), // DOMMatrixReadOnly.fromMatrix
+    (2750, 1425), // DOMMatrixReadOnly.fromMatrix_static
+    (3353, 1426), // DOMMatrixReadOnly.inverse
+    (3358, 1427), // DOMMatrixReadOnly.is2D
+    (3391, 1428), // DOMMatrixReadOnly.isIdentity
+    (3645, 1429), // DOMMatrixReadOnly.m11
+    (3646, 1430), // DOMMatrixReadOnly.m12
+    (3647, 1431), // DOMMatrixReadOnly.m13
+    (3648, 1432), // DOMMatrixReadOnly.m14
+    (3649, 1433), // DOMMatrixReadOnly.m21
+    (3650, 1434), // DOMMatrixReadOnly.m22
+    (3651, 1435), // DOMMatrixReadOnly.m23
+    (3652, 1436), // DOMMatrixReadOnly.m24
+    (3653, 1437), // DOMMatrixReadOnly.m31
+    (3654, 1438), // DOMMatrixReadOnly.m32
+    (3655, 1439), // DOMMatrixReadOnly.m33
+    (3656, 1440), // DOMMatrixReadOnly.m34
+    (3657, 1441), // DOMMatrixReadOnly.m41
+    (3658, 1442), // DOMMatrixReadOnly.m42
+    (3659, 1443), // DOMMatrixReadOnly.m43
+    (3660, 1444), // DOMMatrixReadOnly.m44
+    (3882, 1445), // DOMMatrixReadOnly.multiply
+    (4665, 1446), // DOMMatrixReadOnly.rotate
+    (4666, 1447), // DOMMatrixReadOnly.rotateAxisAngle
+    (4668, 1448), // DOMMatrixReadOnly.rotateFromVector
+    (4703, 1449), // DOMMatrixReadOnly.scale
+    (4704, 1450), // DOMMatrixReadOnly.scale3d
+    (4706, 1451), // DOMMatrixReadOnly.scaleNonUniform
+    (5017, 1452), // DOMMatrixReadOnly.skewX
+    (5019, 1453), // DOMMatrixReadOnly.skewY
+    (5336, 1454), // DOMMatrixReadOnly.toFloat32Array
+    (5337, 1455), // DOMMatrixReadOnly.toFloat64Array
+    (5341, 1456), // DOMMatrixReadOnly.toJSON
+    (5355, 1457), // DOMMatrixReadOnly.toString
+    (5411, 1458), // DOMMatrixReadOnly.transformPoint
+    (5422, 1459), // DOMMatrixReadOnly.translate
+    (5754, 1460), // DOMMatrixReadOnly.worker_support
+    (229, 1462), // DOMParser.DOMParser
+    (4075, 1463), // DOMParser.parseFromString
+    (230, 1469), // DOMPoint.DOMPoint
+    (2751, 1470), // DOMPoint.fromPoint
+    (2752, 1470), // DOMPoint.fromPoint_static
+    (5697, 1471), // DOMPoint.w
+    (5754, 1472), // DOMPoint.worker_support
+    (5772, 1473), // DOMPoint.x
+    (5781, 1474), // DOMPoint.y
+    (5786, 1475), // DOMPoint.z
+    (231, 1477), // DOMPointReadOnly.DOMPointReadOnly
+    (2751, 1478), // DOMPointReadOnly.fromPoint
+    (2752, 1478), // DOMPointReadOnly.fromPoint_static
+    (3710, 1479), // DOMPointReadOnly.matrixTransform
+    (5341, 1480), // DOMPointReadOnly.toJSON
+    (5697, 1481), // DOMPointReadOnly.w
+    (5754, 1482), // DOMPointReadOnly.worker_support
+    (5772, 1483), // DOMPointReadOnly.x
+    (5781, 1484), // DOMPointReadOnly.y
+    (5786, 1485), // DOMPointReadOnly.z
+    (232, 1487), // DOMQuad.DOMQuad
+    (2753, 1488), // DOMQuad.fromQuad
+    (2754, 1488), // DOMQuad.fromQuad_static
+    (2755, 1489), // DOMQuad.fromRect
+    (2756, 1489), // DOMQuad.fromRect_static
+    (2829, 1490), // DOMQuad.getBounds
+    (4039, 1491), // DOMQuad.p1
+    (4040, 1492), // DOMQuad.p2
+    (4041, 1493), // DOMQuad.p3
+    (4042, 1494), // DOMQuad.p4
+    (5341, 1495), // DOMQuad.toJSON
+    (5754, 1496), // DOMQuad.worker_support
+    (233, 1498), // DOMRect.DOMRect
+    (2755, 1499), // DOMRect.fromRect
+    (2756, 1499), // DOMRect.fromRect_static
+    (3173, 1500), // DOMRect.height
+    (5739, 1501), // DOMRect.width
+    (5754, 1502), // DOMRect.worker_support
+    (5772, 1503), // DOMRect.x
+    (5781, 1504), // DOMRect.y
+    (3446, 1506), // DOMRectList.item
+    (3535, 1507), // DOMRectList.length
+    (235, 1509), // DOMRectReadOnly.DOMRectReadOnly
+    (1598, 1510), // DOMRectReadOnly.bottom
+    (2755, 1511), // DOMRectReadOnly.fromRect
+    (2756, 1511), // DOMRectReadOnly.fromRect_static
+    (3173, 1512), // DOMRectReadOnly.height
+    (3530, 1513), // DOMRectReadOnly.left
+    (4652, 1514), // DOMRectReadOnly.right
+    (5341, 1515), // DOMRectReadOnly.toJSON
+    (5375, 1516), // DOMRectReadOnly.top
+    (5739, 1517), // DOMRectReadOnly.width
+    (5754, 1518), // DOMRectReadOnly.worker_support
+    (5772, 1519), // DOMRectReadOnly.x
+    (5781, 1520), // DOMRectReadOnly.y
+    (1906, 1522), // DOMStringList.contains
+    (3446, 1523), // DOMStringList.item
+    (3535, 1524), // DOMStringList.length
+    (4, 1527), // DOMTokenList.@@iterator
+    (1248, 1528), // DOMTokenList.add
+    (1906, 1530), // DOMTokenList.contains
+    (2503, 1531), // DOMTokenList.entries
+    (2692, 1532), // DOMTokenList.forEach
+    (3446, 1533), // DOMTokenList.item
+    (3486, 1534), // DOMTokenList.keys
+    (3535, 1535), // DOMTokenList.length
+    (4484, 1536), // DOMTokenList.remove
+    (4509, 1538), // DOMTokenList.remove_duplicates
+    (4532, 1539), // DOMTokenList.replace
+    (5205, 1541), // DOMTokenList.supports
+    (5355, 1542), // DOMTokenList.toString
+    (5364, 1543), // DOMTokenList.toggle
+    (5434, 1545), // DOMTokenList.trim_whitespace
+    (5614, 1546), // DOMTokenList.value
+    (5622, 1547), // DOMTokenList.values
+    (239, 1549), // DataCue.DataCue
+    (5443, 1550), // DataCue.type
+    (5614, 1551), // DataCue.value
+    (240, 1553), // DataTransfer.DataTransfer
+    (1252, 1554), // DataTransfer.addElement
+    (1752, 1555), // DataTransfer.clearData
+    (2406, 1556), // DataTransfer.dropEffect
+    (2434, 1557), // DataTransfer.effectAllowed
+    (2618, 1558), // DataTransfer.files
+    (2868, 1559), // DataTransfer.getData
+    (3447, 1560), // DataTransfer.items
+    (3856, 1561), // DataTransfer.mozCursor
+    (3870, 1562), // DataTransfer.mozSourceNode
+    (3871, 1563), // DataTransfer.mozUserCancelled
+    (4847, 1564), // DataTransfer.setData
+    (4850, 1565), // DataTransfer.setDragImage
+    (5465, 1566), // DataTransfer.types
+    (2808, 1568), // DataTransferItem.getAsFile
+    (2809, 1569), // DataTransferItem.getAsFileSystemHandle
+    (2810, 1570), // DataTransferItem.getAsString
+    (3489, 1571), // DataTransferItem.kind
+    (5443, 1572), // DataTransferItem.type
+    (5720, 1573), // DataTransferItem.webkitGetAsEntry
+    (1248, 1575), // DataTransferItemList.add
+    (1744, 1576), // DataTransferItemList.clear
+    (3535, 1577), // DataTransferItemList.length
+    (4484, 1578), // DataTransferItemList.remove
+    (243, 10376), // DataView.DataView
+    (1612, 10378), // DataView.buffer
+    (1628, 10379), // DataView.byteLength
+    (1629, 10380), // DataView.byteOffset
+    (2825, 10381), // DataView.getBigInt64
+    (2826, 10382), // DataView.getBigUint64
+    (2901, 10383), // DataView.getFloat16
+    (2902, 10384), // DataView.getFloat32
+    (2903, 10385), // DataView.getFloat64
+    (2927, 10386), // DataView.getInt16
+    (2928, 10387), // DataView.getInt32
+    (2929, 10388), // DataView.getInt8
+    (3080, 10389), // DataView.getUint16
+    (3081, 10390), // DataView.getUint32
+    (3082, 10391), // DataView.getUint8
+    (4833, 10392), // DataView.setBigInt64
+    (4834, 10393), // DataView.setBigUint64
+    (4856, 10394), // DataView.setFloat16
+    (4857, 10395), // DataView.setFloat32
+    (4858, 10396), // DataView.setFloat64
+    (4874, 10397), // DataView.setInt16
+    (4875, 10398), // DataView.setInt32
+    (4876, 10399), // DataView.setInt8
+    (4946, 10400), // DataView.setUint16
+    (4947, 10401), // DataView.setUint32
+    (4948, 10402), // DataView.setUint8
+    (11, 10404), // Date.@@toPrimitive
+    (244, 10405), // Date.Date
+    (1050, 10406), // Date.UTC
+    (2869, 10408), // Date.getDate
+    (2870, 10409), // Date.getDay
+    (2911, 10410), // Date.getFullYear
+    (2918, 10411), // Date.getHours
+    (2948, 10412), // Date.getMilliseconds
+    (2949, 10413), // Date.getMinutes
+    (2951, 10414), // Date.getMonth
+    (3019, 10415), // Date.getSeconds
+    (3059, 10416), // Date.getTime
+    (3060, 10417), // Date.getTimezoneOffset
+    (3072, 10418), // Date.getUTCDate
+    (3073, 10419), // Date.getUTCDay
+    (3074, 10420), // Date.getUTCFullYear
+    (3075, 10421), // Date.getUTCHours
+    (3076, 10422), // Date.getUTCMilliseconds
+    (3077, 10423), // Date.getUTCMinutes
+    (3078, 10424), // Date.getUTCMonth
+    (3079, 10425), // Date.getUTCSeconds
+    (3100, 10426), // Date.getYear
+    (3942, 10427), // Date.now
+    (4069, 10428), // Date.parse
+    (4849, 10430), // Date.setDate
+    (4864, 10431), // Date.setFullYear
+    (4869, 10432), // Date.setHours
+    (4888, 10433), // Date.setMilliseconds
+    (4889, 10434), // Date.setMinutes
+    (4890, 10435), // Date.setMonth
+    (4918, 10436), // Date.setSeconds
+    (4935, 10437), // Date.setTime
+    (4939, 10438), // Date.setUTCDate
+    (4940, 10439), // Date.setUTCFullYear
+    (4941, 10440), // Date.setUTCHours
+    (4942, 10441), // Date.setUTCMilliseconds
+    (4943, 10442), // Date.setUTCMinutes
+    (4944, 10443), // Date.setUTCMonth
+    (4945, 10444), // Date.setUTCSeconds
+    (4954, 10445), // Date.setYear
+    (5333, 10446), // Date.toDateString
+    (5338, 10447), // Date.toGMTString
+    (5340, 10448), // Date.toISOString
+    (5341, 10449), // Date.toJSON
+    (5342, 10450), // Date.toLocaleDateString
+    (5344, 10454), // Date.toLocaleString
+    (5345, 10458), // Date.toLocaleTimeString
+    (5355, 10462), // Date.toString
+    (5358, 10463), // Date.toTemporalInstant
+    (5359, 10464), // Date.toTimeString
+    (5361, 10465), // Date.toUTCString
+    (5620, 10466), // Date.valueOf
+    (246, 1580), // DecompressionStream.DecompressionStream
+    (4393, 1586), // DecompressionStream.readable
+    (5758, 1587), // DecompressionStream.writable
+    (1655, 1589), // DedicatedWorkerGlobalScope.cancelAnimationFrame
+    (1792, 1590), // DedicatedWorkerGlobalScope.close
+    (3796, 1591), // DedicatedWorkerGlobalScope.message_event
+    (3797, 1592), // DedicatedWorkerGlobalScope.messageerror_event
+    (3887, 1593), // DedicatedWorkerGlobalScope.name
+    (4238, 1594), // DedicatedWorkerGlobalScope.postMessage
+    (4553, 1595), // DedicatedWorkerGlobalScope.requestAnimationFrame
+    (4681, 1596), // DedicatedWorkerGlobalScope.rtctransform_event
+    (248, 1598), // DelayNode.DelayNode
+    (2210, 1599), // DelayNode.delayTime
+    (2546, 1601), // DelegatedInkTrailPresenter.expectedImprovement
+    (4260, 1602), // DelegatedInkTrailPresenter.presentationArea
+    (5549, 1603), // DelegatedInkTrailPresenter.updateInkTrailStartPoint
+    (1345, 1605), // DeprecationReportBody.anticipatedRemoval
+    (1830, 1606), // DeprecationReportBody.columnNumber
+    (3207, 1607), // DeprecationReportBody.id
+    (3555, 1608), // DeprecationReportBody.lineNumber
+    (3794, 1609), // DeprecationReportBody.message
+    (5051, 1610), // DeprecationReportBody.sourceFile
+    (5341, 1611), // DeprecationReportBody.toJSON
+    (251, 1613), // DeviceMotionEvent.DeviceMotionEvent
+    (1218, 1614), // DeviceMotionEvent.acceleration
+    (1219, 1615), // DeviceMotionEvent.accelerationIncludingGravity
+    (3347, 1616), // DeviceMotionEvent.interval
+    (4568, 1617), // DeviceMotionEvent.requestPermission
+    (4569, 1617), // DeviceMotionEvent.requestPermission_static
+    (4673, 1618), // DeviceMotionEvent.rotationRate
+    (5772, 1620), // DeviceMotionEventAcceleration.x
+    (5781, 1621), // DeviceMotionEventAcceleration.y
+    (5786, 1622), // DeviceMotionEventAcceleration.z
+    (1308, 1624), // DeviceMotionEventRotationRate.alpha
+    (1548, 1625), // DeviceMotionEventRotationRate.beta
+    (2775, 1626), // DeviceMotionEventRotationRate.gamma
+    (254, 1628), // DeviceOrientationEvent.DeviceOrientationEvent
+    (1217, 1629), // DeviceOrientationEvent.absolute
+    (1308, 1630), // DeviceOrientationEvent.alpha
+    (1548, 1631), // DeviceOrientationEvent.beta
+    (2775, 1632), // DeviceOrientationEvent.gamma
+    (4568, 1633), // DeviceOrientationEvent.requestPermission
+    (4569, 1633), // DeviceOrientationEvent.requestPermission_static
+    (1700, 1635), // DevicePosture.change_event
+    (5443, 1636), // DevicePosture.type
+    (2165, 1638), // DigitalCredential.data
+    (4313, 1639), // DigitalCredential.protocol
+    (5341, 1640), // DigitalCredential.toJSON
+    (5590, 1641), // DigitalCredential.userAgentAllowsProtocol
+    (5591, 1641), // DigitalCredential.userAgentAllowsProtocol_static
+    (2898, 1643), // Directory.getFiles
+    (2899, 1644), // Directory.getFilesAndDirectories
+    (3887, 1645), // Directory.name
+    (4088, 1646), // Directory.path
+    (2, 10468), // DisposableStack.@@dispose
+    (261, 10469), // DisposableStack.DisposableStack
+    (1279, 10470), // DisposableStack.adopt
+    (2201, 10471), // DisposableStack.defer
+    (2335, 10472), // DisposableStack.dispose
+    (2338, 10473), // DisposableStack.disposed
+    (3848, 10474), // DisposableStack.move
+    (5584, 10475), // DisposableStack.use
+    (222, 1650), // Document.DOMContentLoaded_event
+    (262, 1651), // Document.Document
+    (1034, 1652), // Document.URL
+    (1235, 1653), // Document.activeElement
+    (1239, 1654), // Document.activeViewTransition
+    (1280, 1655), // Document.adoptNode
+    (1281, 1656), // Document.adoptedStyleSheets
+    (1287, 1658), // Document.afterscriptexecute_event
+    (1294, 1659), // Document.alinkColor
+    (1295, 1660), // Document.all
+    (1325, 1661), // Document.anchors
+    (1351, 1662), // Document.append
+    (1364, 1663), // Document.applets
+    (1407, 1664), // Document.ariaNotify
+    (1533, 1665), // Document.beforescriptexecute_event
+    (1550, 1666), // Document.bgColor
+    (1591, 1667), // Document.body
+    (1609, 1668), // Document.browsingTopics
+    (1675, 1669), // Document.captureEvents
+    (1679, 1670), // Document.caretPositionFromPoint
+    (1680, 1672), // Document.caretRangeFromPoint
+    (1715, 1673), // Document.characterSet
+    (1732, 1674), // Document.childElementCount
+    (1734, 1675), // Document.children
+    (1744, 1676), // Document.clear
+    (1792, 1677), // Document.close
+    (1844, 1678), // Document.compatMode
+    (1915, 1679), // Document.contentType
+    (1941, 1680), // Document.cookie
+    (1987, 1681), // Document.createAttribute
+    (1988, 1683), // Document.createAttributeNS
+    (1996, 1685), // Document.createCDATASection
+    (2001, 1686), // Document.createComment
+    (2016, 1687), // Document.createDocumentFragment
+    (2019, 1688), // Document.createElement
+    (2020, 1693), // Document.createElementNS
+    (2023, 1698), // Document.createEvent
+    (2024, 1699), // Document.createExpression
+    (2039, 1700), // Document.createNSResolver
+    (2040, 1701), // Document.createNodeIterator
+    (2051, 1702), // Document.createProcessingInstruction
+    (2059, 1703), // Document.createRange
+    (2106, 1704), // Document.createTextNode
+    (2108, 1705), // Document.createTouch
+    (2109, 1706), // Document.createTouchList
+    (2111, 1707), // Document.createTreeWalker
+    (2149, 1709), // Document.currentScript
+    (2158, 1710), // Document.customElementRegistry
+    (2200, 1711), // Document.defaultView
+    (2274, 1712), // Document.designMode
+    (2308, 1713), // Document.dir
+    (2346, 1714), // Document.doctype
+    (2348, 1715), // Document.documentElement
+    (2350, 1716), // Document.documentURI
+    (2358, 1717), // Document.domain
+    (2440, 1718), // Document.elementFromPoint
+    (2443, 1719), // Document.elementsFromPoint
+    (2451, 1720), // Document.embeds
+    (2459, 1721), // Document.enableStyleSheetsForSet
+    (2524, 1722), // Document.evaluate
+    (2535, 1723), // Document.execCommand
+    (2538, 1731), // Document.exitFullscreen
+    (2539, 1733), // Document.exitPictureInPicture
+    (2540, 1734), // Document.exitPointerLock
+    (2580, 1735), // Document.featurePolicy
+    (2613, 1736), // Document.fgColor
+    (2643, 1737), // Document.firstElementChild
+    (2689, 1738), // Document.fonts
+    (2707, 1739), // Document.forms
+    (2717, 1740), // Document.fragmentDirective
+    (2733, 1741), // Document.freeze_event
+    (2764, 1742), // Document.fullscreen
+    (2765, 1743), // Document.fullscreenElement
+    (2766, 1744), // Document.fullscreenEnabled
+    (2767, 1745), // Document.fullscreenchange_event
+    (2768, 1746), // Document.fullscreenerror_event
+    (2807, 1747), // Document.getAnimations
+    (2830, 1748), // Document.getBoxQuads
+    (2882, 1749), // Document.getElementById
+    (2883, 1750), // Document.getElementsByClassName
+    (2884, 1751), // Document.getElementsByName
+    (2885, 1752), // Document.getElementsByTagName
+    (2886, 1753), // Document.getElementsByTagNameNS
+    (3023, 1754), // Document.getSelection
+    (3149, 1755), // Document.hasFocus
+    (3158, 1756), // Document.hasPrivateToken
+    (3160, 1757), // Document.hasRedemptionRecord
+    (3162, 1758), // Document.hasStorageAccess
+    (3164, 1759), // Document.hasUnpartitionedCookieAccess
+    (3168, 1760), // Document.head
+    (3175, 1761), // Document.hidden
+    (3223, 1762), // Document.images
+    (3224, 1763), // Document.implementation
+    (3227, 1764), // Document.importNode
+    (3505, 1765), // Document.lastElementChild
+    (3511, 1766), // Document.lastModified
+    (3515, 1767), // Document.lastStyleSheetSet
+    (3566, 1768), // Document.linkColor
+    (3568, 1769), // Document.links
+    (3594, 1770), // Document.location
+    (3849, 1771), // Document.moveBefore
+    (3869, 1772), // Document.mozSetImageElement
+    (3980, 1773), // Document.open
+    (4076, 1777), // Document.parseHTML
+    (4077, 1774), // Document.parseHTMLUnsafe
+    (4078, 1774), // Document.parseHTMLUnsafe_static
+    (4079, 1777), // Document.parseHTML_static
+    (4166, 1778), // Document.pictureInPictureElement
+    (4167, 1779), // Document.pictureInPictureEnabled
+    (4194, 1780), // Document.plugins
+    (4197, 1781), // Document.pointerLockElement
+    (4203, 1782), // Document.pointerlockchange_event
+    (4204, 1783), // Document.pointerlockerror_event
+    (4249, 1784), // Document.preferredStyleSheetSet
+    (4254, 1785), // Document.prepend
+    (4257, 1786), // Document.prerendering
+    (4258, 1787), // Document.prerenderingchange_event
+    (4338, 1788), // Document.queryCommandEnabled
+    (4339, 1789), // Document.queryCommandIndeterm
+    (4340, 1790), // Document.queryCommandState
+    (4341, 1791), // Document.queryCommandSupported
+    (4342, 1792), // Document.queryCommandValue
+    (4347, 1793), // Document.querySelector
+    (4348, 1794), // Document.querySelectorAll
+    (4397, 1795), // Document.readyState
+    (4398, 1796), // Document.readystatechange_event
+    (4442, 1797), // Document.referrer
+    (4468, 1798), // Document.releaseCapture
+    (4469, 1799), // Document.releaseEvents
+    (4535, 1800), // Document.replaceChildren
+    (4580, 1801), // Document.requestStorageAccess
+    (4581, 1817), // Document.requestStorageAccessFor
+    (4636, 1818), // Document.resume_event
+    (4663, 1819), // Document.rootElement
+    (4725, 1820), // Document.scripts
+    (4747, 1821), // Document.scroll_event
+    (4749, 1822), // Document.scrollend_event
+    (4751, 1823), // Document.scrollingElement
+    (4752, 1824), // Document.scrollsnapchange_event
+    (4753, 1825), // Document.scrollsnapchanging_event
+    (4770, 1826), // Document.securitypolicyviolation_event
+    (4791, 1827), // Document.selectedStyleSheetSet
+    (4798, 1828), // Document.selectionchange_event
+    (5102, 1829), // Document.startViewTransition
+    (5171, 1834), // Document.styleSheetSets
+    (5172, 1835), // Document.styleSheets
+    (5317, 1836), // Document.timeline
+    (5326, 1837), // Document.title
+    (5673, 1838), // Document.visibilityState
+    (5674, 1839), // Document.visibilitychange_event
+    (5679, 1840), // Document.vlinkColor
+    (5709, 1841), // Document.wasDiscarded
+    (5760, 1842), // Document.write
+    (5770, 1844), // Document.writeln
+    (5776, 1846), // Document.xmlEncoding
+    (5777, 1847), // Document.xmlStandalone
+    (5778, 1848), // Document.xmlVersion
+    (263, 1850), // DocumentFragment.DocumentFragment
+    (1351, 1851), // DocumentFragment.append
+    (1732, 1852), // DocumentFragment.childElementCount
+    (1734, 1853), // DocumentFragment.children
+    (2643, 1854), // DocumentFragment.firstElementChild
+    (2882, 1855), // DocumentFragment.getElementById
+    (3505, 1856), // DocumentFragment.lastElementChild
+    (3849, 1857), // DocumentFragment.moveBefore
+    (4254, 1858), // DocumentFragment.prepend
+    (4347, 1859), // DocumentFragment.querySelector
+    (4348, 1860), // DocumentFragment.querySelectorAll
+    (4535, 1861), // DocumentFragment.replaceChildren
+    (2500, 1863), // DocumentPictureInPicture.enter_event
+    (4585, 1864), // DocumentPictureInPicture.requestWindow
+    (5741, 1867), // DocumentPictureInPicture.window
+    (265, 1869), // DocumentPictureInPictureEvent.DocumentPictureInPictureEvent
+    (5741, 1870), // DocumentPictureInPictureEvent.window
+    (266, 1872), // DocumentTimeline.DocumentTimeline
+    (1283, 1874), // DocumentType.after
+    (1526, 1875), // DocumentType.before
+    (3887, 1876), // DocumentType.name
+    (4320, 1877), // DocumentType.publicId
+    (4484, 1878), // DocumentType.remove
+    (4542, 1879), // DocumentType.replaceWith
+    (5240, 1880), // DocumentType.systemId
+    (268, 1882), // DragEvent.DragEvent
+    (2166, 1883), // DragEvent.dataTransfer
+    (271, 1885), // DynamicsCompressorNode.DynamicsCompressorNode
+    (1457, 1886), // DynamicsCompressorNode.attack
+    (3490, 1887), // DynamicsCompressorNode.knee
+    (4372, 1888), // DynamicsCompressorNode.ratio
+    (4435, 1889), // DynamicsCompressorNode.reduction
+    (4467, 1890), // DynamicsCompressorNode.release
+    (5299, 1891), // DynamicsCompressorNode.threshold
+    (1544, 1896), // EXT_disjoint_timer_query.beginQueryEXT
+    (2056, 1897), // EXT_disjoint_timer_query.createQueryEXT
+    (2228, 1898), // EXT_disjoint_timer_query.deleteQueryEXT
+    (2487, 1899), // EXT_disjoint_timer_query.endQueryEXT
+    (2995, 1900), // EXT_disjoint_timer_query.getQueryEXT
+    (2996, 1901), // EXT_disjoint_timer_query.getQueryObjectEXT
+    (3409, 1902), // EXT_disjoint_timer_query.isQueryEXT
+    (4343, 1903), // EXT_disjoint_timer_query.queryCounterEXT
+    (4343, 1905), // EXT_disjoint_timer_query_webgl2.queryCounterEXT
+    (287, 1915), // EditContext.EditContext
+    (1456, 1916), // EditContext.attachedElements
+    (1713, 1917), // EditContext.characterBounds
+    (1714, 1918), // EditContext.characterBoundsRangeStart
+    (1717, 1919), // EditContext.characterboundsupdate_event
+    (1854, 1920), // EditContext.compositionend_event
+    (1855, 1921), // EditContext.compositionstart_event
+    (4796, 1922), // EditContext.selectionEnd
+    (4797, 1923), // EditContext.selectionStart
+    (5282, 1924), // EditContext.text
+    (5290, 1925), // EditContext.textformatupdate_event
+    (5291, 1926), // EditContext.textupdate_event
+    (5545, 1927), // EditContext.updateCharacterBounds
+    (5547, 1928), // EditContext.updateControlBounds
+    (5554, 1929), // EditContext.updateSelection
+    (5555, 1930), // EditContext.updateSelectionBounds
+    (5557, 1931), // EditContext.updateText
+    (221, 1933), // Element.DOMActivate_event
+    (228, 1934), // Element.DOMMouseScroll_event
+    (624, 1935), // Element.MozMousePixelScroll_event
+    (1239, 1936), // Element.activeViewTransition
+    (1283, 1937), // Element.after
+    (1284, 1938), // Element.afterHTML
+    (1285, 1939), // Element.afterHTMLUnsafe
+    (1287, 1940), // Element.afterscriptexecute_event
+    (1331, 1941), // Element.animate
+    (1336, 1950), // Element.animationcancel_event
+    (1337, 1951), // Element.animationend_event
+    (1338, 1952), // Element.animationiteration_event
+    (1340, 1953), // Element.animationstart_event
+    (1351, 1954), // Element.append
+    (1356, 1955), // Element.appendHTML
+    (1357, 1956), // Element.appendHTMLUnsafe
+    (1376, 1957), // Element.ariaActiveDescendantElement
+    (1377, 1958), // Element.ariaAtomic
+    (1378, 1959), // Element.ariaAutoComplete
+    (1379, 1960), // Element.ariaBrailleLabel
+    (1380, 1961), // Element.ariaBrailleRoleDescription
+    (1381, 1962), // Element.ariaBusy
+    (1382, 1963), // Element.ariaChecked
+    (1383, 1964), // Element.ariaColCount
+    (1384, 1965), // Element.ariaColIndex
+    (1385, 1966), // Element.ariaColIndexText
+    (1386, 1967), // Element.ariaColSpan
+    (1387, 1968), // Element.ariaControlsElements
+    (1388, 1969), // Element.ariaCurrent
+    (1389, 1970), // Element.ariaDescribedByElements
+    (1390, 1971), // Element.ariaDescription
+    (1391, 1972), // Element.ariaDetailsElements
+    (1392, 1973), // Element.ariaDisabled
+    (1393, 1974), // Element.ariaErrorMessageElements
+    (1394, 1975), // Element.ariaExpanded
+    (1395, 1976), // Element.ariaFlowToElements
+    (1396, 1977), // Element.ariaHasPopup
+    (1397, 1978), // Element.ariaHidden
+    (1398, 1979), // Element.ariaInvalid
+    (1399, 1980), // Element.ariaKeyShortcuts
+    (1400, 1981), // Element.ariaLabel
+    (1401, 1982), // Element.ariaLabelledByElements
+    (1402, 1983), // Element.ariaLevel
+    (1403, 1984), // Element.ariaLive
+    (1404, 1985), // Element.ariaModal
+    (1405, 1986), // Element.ariaMultiLine
+    (1406, 1987), // Element.ariaMultiSelectable
+    (1407, 1988), // Element.ariaNotify
+    (1408, 1989), // Element.ariaOrientation
+    (1409, 1990), // Element.ariaOwnsElements
+    (1410, 1991), // Element.ariaPlaceholder
+    (1411, 1992), // Element.ariaPosInSet
+    (1412, 1993), // Element.ariaPressed
+    (1413, 1994), // Element.ariaReadOnly
+    (1414, 1995), // Element.ariaRelevant
+    (1415, 1996), // Element.ariaRequired
+    (1416, 1997), // Element.ariaRoleDescription
+    (1417, 1998), // Element.ariaRowCount
+    (1418, 1999), // Element.ariaRowIndex
+    (1419, 2000), // Element.ariaRowIndexText
+    (1420, 2001), // Element.ariaRowSpan
+    (1421, 2002), // Element.ariaSelected
+    (1422, 2003), // Element.ariaSetSize
+    (1423, 2004), // Element.ariaSort
+    (1424, 2005), // Element.ariaValueMax
+    (1425, 2006), // Element.ariaValueMin
+    (1426, 2007), // Element.ariaValueNow
+    (1427, 2008), // Element.ariaValueText
+    (1444, 2009), // Element.assignedSlot
+    (1455, 2010), // Element.attachShadow
+    (1464, 2016), // Element.attributes
+    (1490, 2017), // Element.auxclick_event
+    (1526, 2019), // Element.before
+    (1527, 2020), // Element.beforeHTML
+    (1528, 2021), // Element.beforeHTMLUnsafe
+    (1529, 2022), // Element.beforeinput_event
+    (1531, 2023), // Element.beforematch_event
+    (1533, 2024), // Element.beforescriptexecute_event
+    (1536, 2025), // Element.beforexrselect_event
+    (1590, 2026), // Element.blur_event
+    (1730, 2027), // Element.checkVisibility
+    (1732, 2033), // Element.childElementCount
+    (1734, 2034), // Element.children
+    (1742, 2035), // Element.classList
+    (1743, 2036), // Element.className
+    (1770, 2037), // Element.click_event
+    (1772, 2039), // Element.clientHeight
+    (1775, 2040), // Element.clientLeft
+    (1776, 2041), // Element.clientTop
+    (1778, 2042), // Element.clientWidth
+    (1799, 2043), // Element.closest
+    (1854, 2044), // Element.compositionend_event
+    (1855, 2045), // Element.compositionstart_event
+    (1856, 2046), // Element.compositionupdate_event
+    (1861, 2047), // Element.computedStyleMap
+    (1918, 2048), // Element.contentvisibilityautostatechange_event
+    (1923, 2049), // Element.contextmenu_event
+    (1960, 2051), // Element.copy_event
+    (2139, 2052), // Element.currentCSSZoom
+    (2158, 2053), // Element.customElementRegistry
+    (2161, 2054), // Element.cut_event
+    (2175, 2055), // Element.dblclick_event
+    (2441, 2056), // Element.elementTiming
+    (2643, 2057), // Element.firstElementChild
+    (2660, 2058), // Element.focus_event
+    (2662, 2059), // Element.focusin_event
+    (2663, 2060), // Element.focusout_event
+    (2767, 2061), // Element.fullscreenchange_event
+    (2768, 2062), // Element.fullscreenerror_event
+    (2793, 2063), // Element.gesturechange_event
+    (2794, 2064), // Element.gestureend_event
+    (2795, 2065), // Element.gesturestart_event
+    (2807, 2066), // Element.getAnimations
+    (2813, 2069), // Element.getAttribute
+    (2814, 2070), // Element.getAttributeNS
+    (2815, 2071), // Element.getAttributeNames
+    (2816, 2072), // Element.getAttributeNode
+    (2817, 2073), // Element.getAttributeNodeNS
+    (2828, 2074), // Element.getBoundingClientRect
+    (2830, 2075), // Element.getBoxQuads
+    (2850, 2076), // Element.getClientRects
+    (2883, 2077), // Element.getElementsByClassName
+    (2885, 2078), // Element.getElementsByTagName
+    (2886, 2080), // Element.getElementsByTagNameNS
+    (2913, 2082), // Element.getHTML
+    (3107, 2084), // Element.gotpointercapture_event
+    (3142, 2085), // Element.hasAttribute
+    (3143, 2086), // Element.hasAttributeNS
+    (3144, 2087), // Element.hasAttributes
+    (3156, 2088), // Element.hasPointerCapture
+    (3207, 2089), // Element.id
+    (3281, 2090), // Element.innerHTML
+    (3292, 2093), // Element.input_event
+    (3296, 2094), // Element.insertAdjacentElement
+    (3297, 2095), // Element.insertAdjacentHTML
+    (3298, 2097), // Element.insertAdjacentText
+    (3484, 2098), // Element.keydown_event
+    (3485, 2099), // Element.keypress_event
+    (3488, 2100), // Element.keyup_event
+    (3505, 2101), // Element.lastElementChild
+    (3588, 2102), // Element.localName
+    (3623, 2103), // Element.lostpointercapture_event
+    (3707, 2104), // Element.matches
+    (3840, 2105), // Element.mousedown_event
+    (3841, 2106), // Element.mouseenter_event
+    (3842, 2107), // Element.mouseleave_event
+    (3843, 2108), // Element.mousemove_event
+    (3844, 2109), // Element.mouseout_event
+    (3845, 2110), // Element.mouseover_event
+    (3846, 2111), // Element.mouseup_event
+    (3847, 2112), // Element.mousewheel_event
+    (3849, 2113), // Element.moveBefore
+    (3891, 2114), // Element.namespaceURI
+    (3918, 2115), // Element.nextElementSibling
+    (4016, 2116), // Element.outerHTML
+    (4084, 2119), // Element.part
+    (4087, 2120), // Element.paste_event
+    (4199, 2121), // Element.pointercancel_event
+    (4200, 2122), // Element.pointerdown_event
+    (4201, 2123), // Element.pointerenter_event
+    (4202, 2124), // Element.pointerleave_event
+    (4205, 2125), // Element.pointermove_event
+    (4206, 2126), // Element.pointerout_event
+    (4207, 2127), // Element.pointerover_event
+    (4208, 2128), // Element.pointerrawupdate_event
+    (4209, 2129), // Element.pointerup_event
+    (4250, 2130), // Element.prefix
+    (4254, 2131), // Element.prepend
+    (4255, 2132), // Element.prependHTML
+    (4256, 2133), // Element.prependHTMLUnsafe
+    (4272, 2134), // Element.previousElementSibling
+    (4316, 2135), // Element.pseudo
+    (4347, 2136), // Element.querySelector
+    (4348, 2137), // Element.querySelectorAll
+    (4472, 2138), // Element.releasePointerCapture
+    (4484, 2139), // Element.remove
+    (4487, 2140), // Element.removeAttribute
+    (4488, 2141), // Element.removeAttributeNS
+    (4489, 2142), // Element.removeAttributeNode
+    (4535, 2143), // Element.replaceChildren
+    (4542, 2144), // Element.replaceWith
+    (4543, 2145), // Element.replaceWithHTML
+    (4544, 2146), // Element.replaceWithHTMLUnsafe
+    (4559, 2147), // Element.requestFullscreen
+    (4572, 2153), // Element.requestPointerLock
+    (4659, 2155), // Element.role
+    (4726, 2156), // Element.scroll
+    (4728, 2161), // Element.scrollBy
+    (4732, 2166), // Element.scrollHeight
+    (4733, 2167), // Element.scrollIntoView
+    (4734, 2173), // Element.scrollIntoViewIfNeeded
+    (4735, 2174), // Element.scrollLeft
+    (4736, 2175), // Element.scrollLeftMax
+    (4741, 2176), // Element.scrollTo
+    (4742, 2181), // Element.scrollTop
+    (4743, 2182), // Element.scrollTopMax
+    (4744, 2183), // Element.scrollWidth
+    (4747, 2184), // Element.scroll_event
+    (4749, 2185), // Element.scrollend_event
+    (4752, 2186), // Element.scrollsnapchange_event
+    (4753, 2187), // Element.scrollsnapchanging_event
+    (4770, 2188), // Element.securitypolicyviolation_event
+    (4827, 2189), // Element.setAttribute
+    (4828, 2192), // Element.setAttributeNS
+    (4829, 2194), // Element.setAttributeNode
+    (4830, 2195), // Element.setAttributeNodeNS
+    (4838, 2197), // Element.setCapture
+    (4865, 2198), // Element.setHTML
+    (4866, 2199), // Element.setHTMLUnsafe
+    (4901, 2203), // Element.setPointerCapture
+    (4960, 2204), // Element.shadowRoot
+    (5027, 2205), // Element.slot
+    (5102, 2206), // Element.startViewTransition
+    (5141, 2207), // Element.streamAfterHTML
+    (5142, 2208), // Element.streamAfterHTMLUnsafe
+    (5143, 2209), // Element.streamAppendHTML
+    (5144, 2210), // Element.streamAppendHTMLUnsafe
+    (5145, 2211), // Element.streamBeforeHTML
+    (5146, 2212), // Element.streamBeforeHTMLUnsafe
+    (5148, 2213), // Element.streamHTML
+    (5149, 2214), // Element.streamHTMLUnsafe
+    (5150, 2215), // Element.streamPrependHTML
+    (5151, 2216), // Element.streamPrependHTMLUnsafe
+    (5152, 2217), // Element.streamReplaceWithHTML
+    (5153, 2218), // Element.streamReplaceWithHTMLUnsafe
+    (5250, 2219), // Element.tagName
+    (5365, 2220), // Element.toggleAttribute
+    (5383, 2222), // Element.touchcancel_event
+    (5385, 2223), // Element.touchend_event
+    (5387, 2224), // Element.touchmove_event
+    (5388, 2225), // Element.touchstart_event
+    (5418, 2226), // Element.transitioncancel_event
+    (5419, 2227), // Element.transitionend_event
+    (5420, 2228), // Element.transitionrun_event
+    (5421, 2229), // Element.transitionstart_event
+    (5723, 2230), // Element.webkitmouseforcechanged_event
+    (5724, 2231), // Element.webkitmouseforcedown_event
+    (5725, 2232), // Element.webkitmouseforceup_event
+    (5726, 2233), // Element.webkitmouseforcewillbegin_event
+    (5733, 2234), // Element.wheel_event
+    (1376, 2236), // ElementInternals.ariaActiveDescendantElement
+    (1377, 2237), // ElementInternals.ariaAtomic
+    (1378, 2238), // ElementInternals.ariaAutoComplete
+    (1379, 2239), // ElementInternals.ariaBrailleLabel
+    (1380, 2240), // ElementInternals.ariaBrailleRoleDescription
+    (1381, 2241), // ElementInternals.ariaBusy
+    (1382, 2242), // ElementInternals.ariaChecked
+    (1383, 2243), // ElementInternals.ariaColCount
+    (1384, 2244), // ElementInternals.ariaColIndex
+    (1385, 2245), // ElementInternals.ariaColIndexText
+    (1386, 2246), // ElementInternals.ariaColSpan
+    (1387, 2247), // ElementInternals.ariaControlsElements
+    (1388, 2248), // ElementInternals.ariaCurrent
+    (1389, 2249), // ElementInternals.ariaDescribedByElements
+    (1390, 2250), // ElementInternals.ariaDescription
+    (1391, 2251), // ElementInternals.ariaDetailsElements
+    (1392, 2252), // ElementInternals.ariaDisabled
+    (1393, 2253), // ElementInternals.ariaErrorMessageElements
+    (1394, 2254), // ElementInternals.ariaExpanded
+    (1395, 2255), // ElementInternals.ariaFlowToElements
+    (1396, 2256), // ElementInternals.ariaHasPopup
+    (1397, 2257), // ElementInternals.ariaHidden
+    (1398, 2258), // ElementInternals.ariaInvalid
+    (1399, 2259), // ElementInternals.ariaKeyShortcuts
+    (1400, 2260), // ElementInternals.ariaLabel
+    (1401, 2261), // ElementInternals.ariaLabelledByElements
+    (1402, 2262), // ElementInternals.ariaLevel
+    (1403, 2263), // ElementInternals.ariaLive
+    (1404, 2264), // ElementInternals.ariaModal
+    (1405, 2265), // ElementInternals.ariaMultiLine
+    (1406, 2266), // ElementInternals.ariaMultiSelectable
+    (1408, 2267), // ElementInternals.ariaOrientation
+    (1409, 2268), // ElementInternals.ariaOwnsElements
+    (1410, 2269), // ElementInternals.ariaPlaceholder
+    (1411, 2270), // ElementInternals.ariaPosInSet
+    (1412, 2271), // ElementInternals.ariaPressed
+    (1413, 2272), // ElementInternals.ariaReadOnly
+    (1414, 2273), // ElementInternals.ariaRelevant
+    (1415, 2274), // ElementInternals.ariaRequired
+    (1416, 2275), // ElementInternals.ariaRoleDescription
+    (1417, 2276), // ElementInternals.ariaRowCount
+    (1418, 2277), // ElementInternals.ariaRowIndex
+    (1419, 2278), // ElementInternals.ariaRowIndexText
+    (1420, 2279), // ElementInternals.ariaRowSpan
+    (1421, 2280), // ElementInternals.ariaSelected
+    (1422, 2281), // ElementInternals.ariaSetSize
+    (1423, 2282), // ElementInternals.ariaSort
+    (1424, 2283), // ElementInternals.ariaValueMax
+    (1425, 2284), // ElementInternals.ariaValueMin
+    (1426, 2285), // ElementInternals.ariaValueNow
+    (1427, 2286), // ElementInternals.ariaValueText
+    (1729, 2287), // ElementInternals.checkValidity
+    (2698, 2288), // ElementInternals.form
+    (3495, 2289), // ElementInternals.labels
+    (4548, 2290), // ElementInternals.reportValidity
+    (4659, 2291), // ElementInternals.role
+    (4861, 2292), // ElementInternals.setFormValue
+    (4949, 2293), // ElementInternals.setValidity
+    (4960, 2294), // ElementInternals.shadowRoot
+    (5108, 2295), // ElementInternals.states
+    (5610, 2296), // ElementInternals.validationMessage
+    (5613, 2297), // ElementInternals.validity
+    (5740, 2298), // ElementInternals.willValidate
+    (290, 2300), // EncodedAudioChunk.EncodedAudioChunk
+    (1628, 2301), // EncodedAudioChunk.byteLength
+    (1957, 2302), // EncodedAudioChunk.copyTo
+    (2413, 2303), // EncodedAudioChunk.duration
+    (5322, 2304), // EncodedAudioChunk.timestamp
+    (5443, 2305), // EncodedAudioChunk.type
+    (291, 2307), // EncodedVideoChunk.EncodedVideoChunk
+    (1628, 2308), // EncodedVideoChunk.byteLength
+    (1957, 2309), // EncodedVideoChunk.copyTo
+    (2413, 2310), // EncodedVideoChunk.duration
+    (5322, 2311), // EncodedVideoChunk.timestamp
+    (5443, 2312), // EncodedVideoChunk.type
+    (293, 10477), // Error.Error
+    (1676, 10481), // Error.captureStackTrace
+    (1683, 10482), // Error.cause
+    (1830, 10483), // Error.columnNumber
+    (2616, 10484), // Error.fileName
+    (3379, 10485), // Error.isError
+    (3555, 10486), // Error.lineNumber
+    (3794, 10487), // Error.message
+    (3887, 10488), // Error.name
+    (4816, 10489), // Error.serializable_object
+    (5089, 10490), // Error.stack
+    (5090, 10491), // Error.stackTraceLimit
+    (5355, 10492), // Error.toString
+    (294, 2315), // ErrorEvent.ErrorEvent
+    (1819, 2316), // ErrorEvent.colno
+    (2513, 2317), // ErrorEvent.error
+    (2617, 2318), // ErrorEvent.filename
+    (3563, 2319), // ErrorEvent.lineno
+    (3794, 2320), // ErrorEvent.message
+    (295, 10494), // EvalError.EvalError
+    (4816, 10495), // EvalError.serializable_object
+    (296, 2322), // Event.Event
+    (1611, 2323), // Event.bubbles
+    (1656, 2324), // Event.cancelBubble
+    (1662, 2325), // Event.cancelable
+    (1851, 2326), // Event.composed
+    (1852, 2327), // Event.composedPath
+    (2151, 2328), // Event.currentTarget
+    (2196, 2329), // Event.defaultPrevented
+    (2527, 2330), // Event.eventPhase
+    (2551, 2331), // Event.explicitOriginalTarget
+    (3262, 2332), // Event.initEvent
+    (3432, 2333), // Event.isTrusted
+    (4013, 2334), // Event.originalTarget
+    (4269, 2335), // Event.preventDefault
+    (4640, 2336), // Event.returnValue
+    (5084, 2337), // Event.srcElement
+    (5130, 2338), // Event.stopImmediatePropagation
+    (5132, 2339), // Event.stopPropagation
+    (5259, 2340), // Event.target
+    (5313, 2341), // Event.timeStamp
+    (5443, 2342), // Event.type
+    (4, 2344), // EventCounts.@@iterator
+    (2503, 2345), // EventCounts.entries
+    (2692, 2346), // EventCounts.forEach
+    (2796, 2347), // EventCounts.get
+    (3141, 2348), // EventCounts.has
+    (3486, 2349), // EventCounts.keys
+    (5011, 2350), // EventCounts.size
+    (5622, 2351), // EventCounts.values
+    (298, 2353), // EventSource.EventSource
+    (1792, 2355), // EventSource.close
+    (2517, 2356), // EventSource.error_event
+    (3796, 2357), // EventSource.message_event
+    (3984, 2358), // EventSource.open_event
+    (4397, 2359), // EventSource.readyState
+    (5577, 2360), // EventSource.url
+    (5746, 2361), // EventSource.withCredentials
+    (5754, 2362), // EventSource.worker_support
+    (299, 2364), // EventTarget.EventTarget
+    (1253, 2365), // EventTarget.addEventListener
+    (2327, 2374), // EventTarget.dispatchEvent
+    (4494, 2375), // EventTarget.removeEventListener
+    (5734, 2378), // EventTarget.when
+    (301, 2380), // ExtendableCookieChangeEvent.ExtendableCookieChangeEvent
+    (1701, 2381), // ExtendableCookieChangeEvent.changed
+    (2241, 2383), // ExtendableCookieChangeEvent.deleted
+    (302, 2386), // ExtendableEvent.ExtendableEvent
+    (5701, 2387), // ExtendableEvent.waitUntil
+    (303, 2390), // ExtendableMessageEvent.ExtendableMessageEvent
+    (2165, 2391), // ExtendableMessageEvent.data
+    (3506, 2392), // ExtendableMessageEvent.lastEventId
+    (4010, 2393), // ExtendableMessageEvent.origin
+    (4227, 2394), // ExtendableMessageEvent.ports
+    (5045, 2395), // ExtendableMessageEvent.source
+    (20, 2397), // External.AddSearchProvider
+    (532, 2398), // External.IsSearchProviderInstalled
+    (305, 2400), // EyeDropper.EyeDropper
+    (3980, 2401), // EyeDropper.open
+    (4769, 2402), // EyeDropper.secure_context_required
+    (1306, 2404), // FeaturePolicy.allowedFeatures
+    (1307, 2405), // FeaturePolicy.allowsFeature
+    (2604, 2406), // FeaturePolicy.features
+    (2806, 2407), // FeaturePolicy.getAllowlistForFeature
+    (307, 2409), // FederatedCredential.FederatedCredential
+    (3206, 2410), // FederatedCredential.iconURL
+    (3887, 2411), // FederatedCredential.name
+    (4313, 2412), // FederatedCredential.protocol
+    (4315, 2413), // FederatedCredential.provider
+    (2958, 2415), // Fence.getNestedConfigs
+    (4546, 2416), // Fence.reportEvent
+    (4910, 2417), // Fence.setReportEventDataForAutomaticBeacons
+    (4921, 2419), // FencedFrameConfig.setSharedStorageContext
+    (310, 2421), // FetchEvent.FetchEvent
+    (1773, 2422), // FetchEvent.clientId
+    (3135, 2423), // FetchEvent.handled
+    (3411, 2424), // FetchEvent.isReload
+    (4252, 2425), // FetchEvent.preloadResponse
+    (4549, 2426), // FetchEvent.request
+    (4610, 2427), // FetchEvent.respondWith
+    (4631, 2430), // FetchEvent.resultingClientId
+    (1230, 2432), // FetchLaterResult.activated
+    (312, 2434), // File.File
+    (3511, 2435), // File.lastModified
+    (3512, 2436), // File.lastModifiedDate
+    (3887, 2437), // File.name
+    (5721, 2438), // File.webkitRelativePath
+    (3446, 2441), // FileList.item
+    (3535, 2442), // FileList.length
+    (315, 2444), // FileReader.FileReader
+    (1211, 2445), // FileReader.abort
+    (1212, 2446), // FileReader.abort_event
+    (2513, 2447), // FileReader.error
+    (2517, 2448), // FileReader.error_event
+    (3576, 2449), // FileReader.load_event
+    (3580, 2450), // FileReader.loadend_event
+    (3585, 2451), // FileReader.loadstart_event
+    (4301, 2452), // FileReader.progress_event
+    (4382, 2453), // FileReader.readAsArrayBuffer
+    (4383, 2454), // FileReader.readAsBinaryString
+    (4384, 2455), // FileReader.readAsDataURL
+    (4385, 2456), // FileReader.readAsText
+    (4397, 2457), // FileReader.readyState
+    (4627, 2458), // FileReader.result
+    (5754, 2459), // FileReader.worker_support
+    (316, 2461), // FileReaderSync.FileReaderSync
+    (4382, 2462), // FileReaderSync.readAsArrayBuffer
+    (4383, 2463), // FileReaderSync.readAsBinaryString
+    (4384, 2464), // FileReaderSync.readAsDataURL
+    (4385, 2465), // FileReaderSync.readAsText
+    (5754, 2466), // FileReaderSync.worker_support
+    (3887, 2468), // FileSystem.name
+    (4661, 2469), // FileSystem.root
+    (2060, 2471), // FileSystemDirectoryEntry.createReader
+    (2879, 2472), // FileSystemDirectoryEntry.getDirectory
+    (2896, 2473), // FileSystemDirectoryEntry.getFile
+    (4503, 2474), // FileSystemDirectoryEntry.removeRecursively
+    (1, 2476), // FileSystemDirectoryHandle.@@asyncIterator
+    (2503, 2477), // FileSystemDirectoryHandle.entries
+    (2880, 2478), // FileSystemDirectoryHandle.getDirectoryHandle
+    (2897, 2479), // FileSystemDirectoryHandle.getFileHandle
+    (3486, 2480), // FileSystemDirectoryHandle.keys
+    (4493, 2481), // FileSystemDirectoryHandle.removeEntry
+    (4604, 2482), // FileSystemDirectoryHandle.resolve
+    (5622, 2483), // FileSystemDirectoryHandle.values
+    (4387, 2485), // FileSystemDirectoryReader.readEntries
+    (1957, 2487), // FileSystemEntry.copyTo
+    (2619, 2488), // FileSystemEntry.filesystem
+    (2761, 2489), // FileSystemEntry.fullPath
+    (2947, 2490), // FileSystemEntry.getMetadata
+    (2971, 2491), // FileSystemEntry.getParent
+    (3375, 2492), // FileSystemEntry.isDirectory
+    (3383, 2493), // FileSystemEntry.isFile
+    (3851, 2494), // FileSystemEntry.moveTo
+    (3887, 2495), // FileSystemEntry.name
+    (4484, 2496), // FileSystemEntry.remove
+    (5360, 2497), // FileSystemEntry.toURL
+    (2119, 2499), // FileSystemFileEntry.createWriter
+    (2615, 2500), // FileSystemFileEntry.file
+    (2101, 2502), // FileSystemFileHandle.createSyncAccessHandle
+    (2118, 2504), // FileSystemFileHandle.createWritable
+    (2896, 2506), // FileSystemFileHandle.getFile
+    (3415, 2508), // FileSystemHandle.isSameEntry
+    (3489, 2509), // FileSystemHandle.kind
+    (3848, 2510), // FileSystemHandle.move
+    (3887, 2511), // FileSystemHandle.name
+    (4346, 2512), // FileSystemHandle.queryPermission
+    (4484, 2513), // FileSystemHandle.remove
+    (4568, 2514), // FileSystemHandle.requestPermission
+    (325, 2516), // FileSystemObserver.FileSystemObserver
+    (2323, 2517), // FileSystemObserver.disconnect
+    (3954, 2518), // FileSystemObserver.observe
+    (3887, 2520), // FileSystemSync.name
+    (4661, 2521), // FileSystemSync.root
+    (1792, 2523), // FileSystemSyncAccessHandle.close
+    (2656, 2525), // FileSystemSyncAccessHandle.flush
+    (3035, 2527), // FileSystemSyncAccessHandle.getSize
+    (4381, 2529), // FileSystemSyncAccessHandle.read
+    (5437, 2530), // FileSystemSyncAccessHandle.truncate
+    (5760, 2532), // FileSystemSyncAccessHandle.write
+    (4772, 2534), // FileSystemWritableFileStream.seek
+    (5437, 2535), // FileSystemWritableFileStream.truncate
+    (5760, 2536), // FileSystemWritableFileStream.write
+    (329, 10497), // FinalizationRegistry.FinalizationRegistry
+    (4450, 10498), // FinalizationRegistry.register
+    (5529, 10500), // FinalizationRegistry.unregister
+    (330, 10503), // Float16Array.Float16Array
+    (331, 10505), // Float32Array.Float32Array
+    (332, 10509), // Float64Array.Float64Array
+    (333, 2538), // FocusEvent.FocusEvent
+    (4465, 2539), // FocusEvent.relatedTarget
+    (1578, 2541), // FontData.blob
+    (2577, 2542), // FontData.family
+    (2760, 2543), // FontData.fullName
+    (4242, 2544), // FontData.postscriptName
+    (5166, 2545), // FontData.style
+    (335, 2547), // FontFace.FontFace
+    (1435, 2548), // FontFace.ascentOverride
+    (2271, 2549), // FontFace.descentOverride
+    (2330, 2550), // FontFace.display
+    (2577, 2551), // FontFace.family
+    (2581, 2552), // FontFace.featureSettings
+    (3552, 2553), // FontFace.lineGapOverride
+    (3572, 2554), // FontFace.load
+    (3577, 2555), // FontFace.loaded
+    (5110, 2556), // FontFace.status
+    (5157, 2557), // FontFace.stretch
+    (5166, 2558), // FontFace.style
+    (5477, 2559), // FontFace.unicodeRange
+    (5624, 2560), // FontFace.variant
+    (5625, 2561), // FontFace.variationSettings
+    (5727, 2562), // FontFace.weight
+    (5754, 2563), // FontFace.worker_support
+    (4, 2565), // FontFaceSet.@@iterator
+    (336, 2566), // FontFaceSet.FontFaceSet
+    (1248, 2567), // FontFaceSet.add
+    (1725, 2568), // FontFaceSet.check
+    (1744, 2569), // FontFaceSet.clear
+    (2212, 2570), // FontFaceSet.delete
+    (2503, 2571), // FontFaceSet.entries
+    (2692, 2572), // FontFaceSet.forEach
+    (3141, 2573), // FontFaceSet.has
+    (3486, 2574), // FontFaceSet.keys
+    (3572, 2575), // FontFaceSet.load
+    (3582, 2576), // FontFaceSet.loading_event
+    (3583, 2577), // FontFaceSet.loadingdone_event
+    (3584, 2578), // FontFaceSet.loadingerror_event
+    (4396, 2579), // FontFaceSet.ready
+    (5011, 2580), // FontFaceSet.size
+    (5110, 2581), // FontFaceSet.status
+    (5622, 2582), // FontFaceSet.values
+    (5754, 2583), // FontFaceSet.worker_support
+    (337, 2585), // FontFaceSetLoadEvent.FontFaceSetLoadEvent
+    (2688, 2586), // FontFaceSetLoadEvent.fontfaces
+    (5754, 2587), // FontFaceSetLoadEvent.worker_support
+    (4, 2589), // FormData.@@iterator
+    (338, 2590), // FormData.FormData
+    (1351, 2592), // FormData.append
+    (2212, 2594), // FormData.delete
+    (2503, 2595), // FormData.entries
+    (2692, 2596), // FormData.forEach
+    (2796, 2597), // FormData.get
+    (2802, 2598), // FormData.getAll
+    (3141, 2599), // FormData.has
+    (3486, 2600), // FormData.keys
+    (4824, 2601), // FormData.set
+    (5622, 2602), // FormData.values
+    (5754, 2603), // FormData.worker_support
+    (339, 2605), // FormDataEvent.FormDataEvent
+    (2700, 2606), // FormDataEvent.formData
+    (3, 10513), // Function.@@hasInstance
+    (341, 10514), // Function.Function
+    (1366, 10516), // Function.apply
+    (1375, 10518), // Function.arguments
+    (1554, 10519), // Function.bind
+    (1635, 10520), // Function.call
+    (1636, 10521), // Function.caller
+    (2333, 10522), // Function.displayName
+    (3535, 10523), // Function.length
+    (3887, 10525), // Function.name
+    (5355, 10528), // Function.toString
+    (2981, 2609), // GPU.getPreferredCanvasFormat
+    (4550, 2610), // GPU.requestAdapter
+    (5728, 2613), // GPU.wgslLanguageFeatures
+    (2604, 2615), // GPUAdapter.features
+    (3255, 2616), // GPUAdapter.info
+    (3382, 2617), // GPUAdapter.isFallbackAdapter
+    (3546, 2618), // GPUAdapter.limits
+    (4551, 2619), // GPUAdapter.requestAdapterInfo
+    (4556, 2620), // GPUAdapter.requestDevice
+    (1370, 2624), // GPUAdapterInfo.architecture
+    (2272, 2625), // GPUAdapterInfo.description
+    (2287, 2626), // GPUAdapterInfo.device
+    (3382, 2627), // GPUAdapterInfo.isFallbackAdapter
+    (5177, 2628), // GPUAdapterInfo.subgroupMaxSize
+    (5178, 2629), // GPUAdapterInfo.subgroupMinSize
+    (5628, 2630), // GPUAdapterInfo.vendor
+    (3494, 2632), // GPUBindGroup.label
+    (3494, 2634), // GPUBindGroupLayout.label
+    (2277, 2636), // GPUBuffer.destroy
+    (2946, 2637), // GPUBuffer.getMappedRange
+    (3494, 2638), // GPUBuffer.label
+    (3670, 2639), // GPUBuffer.mapAsync
+    (3671, 2640), // GPUBuffer.mapState
+    (5011, 2641), // GPUBuffer.size
+    (5523, 2642), // GPUBuffer.unmap
+    (5578, 2643), // GPUBuffer.usage
+    (1669, 2645), // GPUCanvasContext.canvas
+    (1876, 2646), // GPUCanvasContext.configure
+    (2857, 2648), // GPUCanvasContext.getConfiguration
+    (2866, 2649), // GPUCanvasContext.getCurrentTexture
+    (5467, 2650), // GPUCanvasContext.unconfigure
+    (3494, 2652), // GPUCommandBuffer.label
+    (1537, 2654), // GPUCommandEncoder.beginComputePass
+    (1545, 2656), // GPUCommandEncoder.beginRenderPass
+    (1746, 2661), // GPUCommandEncoder.clearBuffer
+    (1948, 2662), // GPUCommandEncoder.copyBufferToBuffer
+    (1949, 2664), // GPUCommandEncoder.copyBufferToTexture
+    (1955, 2665), // GPUCommandEncoder.copyTextureToBuffer
+    (1956, 2666), // GPUCommandEncoder.copyTextureToTexture
+    (2635, 2667), // GPUCommandEncoder.finish
+    (3303, 2668), // GPUCommandEncoder.insertDebugMarker
+    (3494, 2669), // GPUCommandEncoder.label
+    (4217, 2670), // GPUCommandEncoder.popDebugGroup
+    (4323, 2671), // GPUCommandEncoder.pushDebugGroup
+    (4606, 2672), // GPUCommandEncoder.resolveQuerySet
+    (5765, 2673), // GPUCommandEncoder.writeTimestamp
+    (3798, 2675), // GPUCompilationInfo.messages
+    (3535, 2677), // GPUCompilationMessage.length
+    (3554, 2678), // GPUCompilationMessage.lineNum
+    (3556, 2679), // GPUCompilationMessage.linePos
+    (3794, 2680), // GPUCompilationMessage.message
+    (3957, 2681), // GPUCompilationMessage.offset
+    (5443, 2682), // GPUCompilationMessage.type
+    (2328, 2684), // GPUComputePassEncoder.dispatchWorkgroups
+    (2329, 2685), // GPUComputePassEncoder.dispatchWorkgroupsIndirect
+    (2478, 2686), // GPUComputePassEncoder.end
+    (3303, 2687), // GPUComputePassEncoder.insertDebugMarker
+    (3494, 2688), // GPUComputePassEncoder.label
+    (4217, 2689), // GPUComputePassEncoder.popDebugGroup
+    (4323, 2690), // GPUComputePassEncoder.pushDebugGroup
+    (4835, 2691), // GPUComputePassEncoder.setBindGroup
+    (4872, 2693), // GPUComputePassEncoder.setImmediates
+    (4900, 2694), // GPUComputePassEncoder.setPipeline
+    (5765, 2695), // GPUComputePassEncoder.writeTimestamp
+    (2827, 2697), // GPUComputePipeline.getBindGroupLayout
+    (3494, 2698), // GPUComputePipeline.label
+    (1247, 2700), // GPUDevice.adapterInfo
+    (1991, 2701), // GPUDevice.createBindGroup
+    (1992, 2705), // GPUDevice.createBindGroupLayout
+    (1994, 2708), // GPUDevice.createBuffer
+    (2000, 2709), // GPUDevice.createCommandEncoder
+    (2002, 2710), // GPUDevice.createComputePipeline
+    (2003, 2712), // GPUDevice.createComputePipelineAsync
+    (2049, 2714), // GPUDevice.createPipelineLayout
+    (2057, 2716), // GPUDevice.createQuerySet
+    (2061, 2718), // GPUDevice.createRenderBundleEncoder
+    (2062, 2719), // GPUDevice.createRenderPipeline
+    (2063, 2726), // GPUDevice.createRenderPipelineAsync
+    (2092, 2733), // GPUDevice.createSampler
+    (2099, 2734), // GPUDevice.createShaderModule
+    (2107, 2735), // GPUDevice.createTexture
+    (2277, 2739), // GPUDevice.destroy
+    (2604, 2740), // GPUDevice.features
+    (3225, 2741), // GPUDevice.importExternalTexture
+    (3494, 2744), // GPUDevice.label
+    (3546, 2745), // GPUDevice.limits
+    (3622, 2746), // GPUDevice.lost
+    (4218, 2747), // GPUDevice.popErrorScope
+    (4324, 2748), // GPUDevice.pushErrorScope
+    (4349, 2749), // GPUDevice.queue
+    (5466, 2750), // GPUDevice.uncapturederror_event
+    (3794, 2752), // GPUDeviceLostInfo.message
+    (4399, 2753), // GPUDeviceLostInfo.reason
+    (3794, 2755), // GPUError.message
+    (3494, 2757), // GPUExternalTexture.label
+    (359, 2759), // GPUInternalError.GPUInternalError
+    (360, 2761), // GPUOutOfMemoryError.GPUOutOfMemoryError
+    (361, 2763), // GPUPipelineError.GPUPipelineError
+    (4399, 2765), // GPUPipelineError.reason
+    (3494, 2767), // GPUPipelineLayout.label
+    (1964, 2769), // GPUQuerySet.count
+    (2277, 2770), // GPUQuerySet.destroy
+    (3494, 2771), // GPUQuerySet.label
+    (5443, 2772), // GPUQuerySet.type
+    (1950, 2775), // GPUQueue.copyExternalImageToTexture
+    (3494, 2778), // GPUQueue.label
+    (3973, 2779), // GPUQueue.onSubmittedWorkDone
+    (5180, 2780), // GPUQueue.submit
+    (5761, 2782), // GPUQueue.writeBuffer
+    (5764, 2783), // GPUQueue.writeTexture
+    (3494, 2785), // GPURenderBundle.label
+    (2385, 2787), // GPURenderBundleEncoder.draw
+    (2396, 2788), // GPURenderBundleEncoder.drawIndexed
+    (2397, 2789), // GPURenderBundleEncoder.drawIndexedIndirect
+    (2398, 2790), // GPURenderBundleEncoder.drawIndirect
+    (2635, 2791), // GPURenderBundleEncoder.finish
+    (3303, 2792), // GPURenderBundleEncoder.insertDebugMarker
+    (3494, 2793), // GPURenderBundleEncoder.label
+    (4217, 2794), // GPURenderBundleEncoder.popDebugGroup
+    (4323, 2795), // GPURenderBundleEncoder.pushDebugGroup
+    (4835, 2796), // GPURenderBundleEncoder.setBindGroup
+    (4872, 2798), // GPURenderBundleEncoder.setImmediates
+    (4873, 2799), // GPURenderBundleEncoder.setIndexBuffer
+    (4900, 2800), // GPURenderBundleEncoder.setPipeline
+    (4952, 2801), // GPURenderBundleEncoder.setVertexBuffer
+    (1541, 2804), // GPURenderPassEncoder.beginOcclusionQuery
+    (2385, 2805), // GPURenderPassEncoder.draw
+    (2396, 2806), // GPURenderPassEncoder.drawIndexed
+    (2397, 2807), // GPURenderPassEncoder.drawIndexedIndirect
+    (2398, 2808), // GPURenderPassEncoder.drawIndirect
+    (2478, 2809), // GPURenderPassEncoder.end
+    (2483, 2810), // GPURenderPassEncoder.endOcclusionQuery
+    (2536, 2811), // GPURenderPassEncoder.executeBundles
+    (3303, 2812), // GPURenderPassEncoder.insertDebugMarker
+    (3494, 2813), // GPURenderPassEncoder.label
+    (4217, 2814), // GPURenderPassEncoder.popDebugGroup
+    (4323, 2815), // GPURenderPassEncoder.pushDebugGroup
+    (4835, 2816), // GPURenderPassEncoder.setBindGroup
+    (4836, 2818), // GPURenderPassEncoder.setBlendConstant
+    (4872, 2819), // GPURenderPassEncoder.setImmediates
+    (4873, 2820), // GPURenderPassEncoder.setIndexBuffer
+    (4900, 2821), // GPURenderPassEncoder.setPipeline
+    (4916, 2822), // GPURenderPassEncoder.setScissorRect
+    (4931, 2823), // GPURenderPassEncoder.setStencilReference
+    (4952, 2824), // GPURenderPassEncoder.setVertexBuffer
+    (4953, 2826), // GPURenderPassEncoder.setViewport
+    (5765, 2827), // GPURenderPassEncoder.writeTimestamp
+    (2827, 2829), // GPURenderPipeline.getBindGroupLayout
+    (3494, 2830), // GPURenderPipeline.label
+    (3494, 2832), // GPUSampler.label
+    (2852, 2834), // GPUShaderModule.getCompilationInfo
+    (3494, 2835), // GPUShaderModule.label
+    (4, 2837), // GPUSupportedFeatures.@@iterator
+    (2503, 2838), // GPUSupportedFeatures.entries
+    (2582, 2839), // GPUSupportedFeatures.feature_bgra8unorm-storage
+    (2583, 2840), // GPUSupportedFeatures.feature_clip-distances
+    (2584, 2841), // GPUSupportedFeatures.feature_core-features-and-limits
+    (2585, 2842), // GPUSupportedFeatures.feature_depth-clip-control
+    (2586, 2843), // GPUSupportedFeatures.feature_depth32float-stencil8
+    (2587, 2844), // GPUSupportedFeatures.feature_dual-source-blending
+    (2588, 2845), // GPUSupportedFeatures.feature_float32-blendable
+    (2589, 2846), // GPUSupportedFeatures.feature_float32-filterable
+    (2590, 2847), // GPUSupportedFeatures.feature_indirect-first-instance
+    (2591, 2848), // GPUSupportedFeatures.feature_primitive-index
+    (2592, 2849), // GPUSupportedFeatures.feature_rg11b10ufloat-renderable
+    (2593, 2850), // GPUSupportedFeatures.feature_shader-f16
+    (2594, 2851), // GPUSupportedFeatures.feature_subgroups
+    (2595, 2853), // GPUSupportedFeatures.feature_texture-component-swizzle
+    (2596, 2854), // GPUSupportedFeatures.feature_texture-compression-astc
+    (2597, 2855), // GPUSupportedFeatures.feature_texture-compression-astc-sliced-3d
+    (2598, 2856), // GPUSupportedFeatures.feature_texture-compression-bc
+    (2599, 2857), // GPUSupportedFeatures.feature_texture-compression-bc-sliced-3d
+    (2600, 2858), // GPUSupportedFeatures.feature_texture-compression-etc2
+    (2601, 2859), // GPUSupportedFeatures.feature_texture-formats-tier1
+    (2602, 2860), // GPUSupportedFeatures.feature_texture-formats-tier2
+    (2603, 2861), // GPUSupportedFeatures.feature_timestamp-query
+    (2692, 2862), // GPUSupportedFeatures.forEach
+    (3141, 2863), // GPUSupportedFeatures.has
+    (3486, 2864), // GPUSupportedFeatures.keys
+    (5011, 2865), // GPUSupportedFeatures.size
+    (5622, 2866), // GPUSupportedFeatures.values
+    (3719, 2868), // GPUSupportedLimits.maxBindGroups
+    (3720, 2869), // GPUSupportedLimits.maxBindGroupsPlusVertexBuffers
+    (3721, 2870), // GPUSupportedLimits.maxBindingsPerBindGroup
+    (3723, 2871), // GPUSupportedLimits.maxBufferSize
+    (3727, 2872), // GPUSupportedLimits.maxColorAttachmentBytesPerSample
+    (3728, 2873), // GPUSupportedLimits.maxColorAttachments
+    (3729, 2874), // GPUSupportedLimits.maxComputeInvocationsPerWorkgroup
+    (3730, 2875), // GPUSupportedLimits.maxComputeWorkgroupSizeX
+    (3731, 2876), // GPUSupportedLimits.maxComputeWorkgroupSizeY
+    (3732, 2877), // GPUSupportedLimits.maxComputeWorkgroupSizeZ
+    (3733, 2878), // GPUSupportedLimits.maxComputeWorkgroupStorageSize
+    (3734, 2879), // GPUSupportedLimits.maxComputeWorkgroupsPerDimension
+    (3738, 2880), // GPUSupportedLimits.maxDynamicStorageBuffersPerPipelineLayout
+    (3739, 2881), // GPUSupportedLimits.maxDynamicUniformBuffersPerPipelineLayout
+    (3741, 2882), // GPUSupportedLimits.maxImmediateSize
+    (3743, 2883), // GPUSupportedLimits.maxInterStageShaderComponents
+    (3744, 2884), // GPUSupportedLimits.maxInterStageShaderVariables
+    (3752, 2885), // GPUSupportedLimits.maxSampledTexturesPerShaderStage
+    (3753, 2886), // GPUSupportedLimits.maxSamplersPerShaderStage
+    (3754, 2887), // GPUSupportedLimits.maxStorageBufferBindingSize
+    (3755, 2888), // GPUSupportedLimits.maxStorageBuffersInFragmentStage
+    (3756, 2889), // GPUSupportedLimits.maxStorageBuffersInVertexStage
+    (3757, 2890), // GPUSupportedLimits.maxStorageBuffersPerShaderStage
+    (3758, 2891), // GPUSupportedLimits.maxStorageTexturesInFragmentStage
+    (3759, 2892), // GPUSupportedLimits.maxStorageTexturesInVertexStage
+    (3760, 2893), // GPUSupportedLimits.maxStorageTexturesPerShaderStage
+    (3761, 2894), // GPUSupportedLimits.maxTextureArrayLayers
+    (3762, 2895), // GPUSupportedLimits.maxTextureDimension1D
+    (3763, 2896), // GPUSupportedLimits.maxTextureDimension2D
+    (3764, 2897), // GPUSupportedLimits.maxTextureDimension3D
+    (3766, 2898), // GPUSupportedLimits.maxUniformBufferBindingSize
+    (3767, 2899), // GPUSupportedLimits.maxUniformBuffersPerShaderStage
+    (3769, 2900), // GPUSupportedLimits.maxVertexAttributes
+    (3770, 2901), // GPUSupportedLimits.maxVertexBufferArrayStride
+    (3771, 2902), // GPUSupportedLimits.maxVertexBuffers
+    (3819, 2903), // GPUSupportedLimits.minStorageBufferOffsetAlignment
+    (3820, 2904), // GPUSupportedLimits.minUniformBufferOffsetAlignment
+    (2115, 2906), // GPUTexture.createView
+    (2258, 2911), // GPUTexture.depthOrArrayLayers
+    (2277, 2912), // GPUTexture.destroy
+    (2307, 2913), // GPUTexture.dimension
+    (2705, 2914), // GPUTexture.format
+    (3173, 2916), // GPUTexture.height
+    (3494, 2917), // GPUTexture.label
+    (3825, 2918), // GPUTexture.mipLevelCount
+    (4693, 2919), // GPUTexture.sampleCount
+    (5294, 2920), // GPUTexture.textureBindingViewDimension
+    (5578, 2921), // GPUTexture.usage
+    (5739, 2923), // GPUTexture.width
+    (3494, 2925), // GPUTextureView.label
+    (375, 2927), // GPUUncapturedErrorEvent.GPUUncapturedErrorEvent
+    (2513, 2928), // GPUUncapturedErrorEvent.error
+    (376, 2930), // GPUValidationError.GPUValidationError
+    (377, 2932), // GainNode.GainNode
+    (2771, 2933), // GainNode.gain
+    (1502, 2935), // Gamepad.axes
+    (1625, 2936), // Gamepad.buttons
+    (1883, 2937), // Gamepad.connected
+    (2332, 2938), // Gamepad.displayId
+    (3132, 2939), // Gamepad.hand
+    (3137, 2940), // Gamepad.hapticActuators
+    (3207, 2941), // Gamepad.id
+    (3247, 2942), // Gamepad.index
+    (3672, 2943), // Gamepad.mapping
+    (4228, 2944), // Gamepad.pose
+    (5322, 2945), // Gamepad.timestamp
+    (5657, 2946), // Gamepad.vibrationActuator
+    (4266, 2948), // GamepadButton.pressed
+    (5384, 2949), // GamepadButton.touched
+    (5614, 2950), // GamepadButton.value
+    (380, 2952), // GamepadEvent.GamepadEvent
+    (2772, 2953), // GamepadEvent.gamepad
+    (1648, 2955), // GamepadHapticActuator.canPlayEffectType
+    (2437, 2956), // GamepadHapticActuator.effects
+    (4184, 2958), // GamepadHapticActuator.playEffect
+    (4321, 2962), // GamepadHapticActuator.pulse
+    (4591, 2963), // GamepadHapticActuator.reset
+    (5443, 2964), // GamepadHapticActuator.type
+    (1328, 2966), // GamepadPose.angularAcceleration
+    (1329, 2967), // GamepadPose.angularVelocity
+    (3152, 2968), // GamepadPose.hasOrientation
+    (3157, 2969), // GamepadPose.hasPosition
+    (3560, 2970), // GamepadPose.linearAcceleration
+    (3562, 2971), // GamepadPose.linearVelocity
+    (4005, 2972), // GamepadPose.orientation
+    (4229, 2973), // GamepadPose.position
+    (3917, 10531), // Generator.next
+    (4638, 10532), // Generator.return
+    (5301, 10533), // Generator.throw
+    (384, 10535), // GeneratorFunction.GeneratorFunction
+    (1767, 2975), // Geolocation.clearWatch
+    (2865, 2976), // Geolocation.getCurrentPosition
+    (4769, 2977), // Geolocation.secure_context_required
+    (5712, 2978), // Geolocation.watchPosition
+    (1224, 2980), // GeolocationCoordinates.accuracy
+    (1315, 2981), // GeolocationCoordinates.altitude
+    (1316, 2982), // GeolocationCoordinates.altitudeAccuracy
+    (3170, 2983), // GeolocationCoordinates.heading
+    (3517, 2984), // GeolocationCoordinates.latitude
+    (3612, 2985), // GeolocationCoordinates.longitude
+    (4769, 2986), // GeolocationCoordinates.secure_context_required
+    (5072, 2987), // GeolocationCoordinates.speed
+    (5341, 2988), // GeolocationCoordinates.toJSON
+    (1946, 2990), // GeolocationPosition.coords
+    (4769, 2991), // GeolocationPosition.secure_context_required
+    (5322, 2992), // GeolocationPosition.timestamp
+    (5341, 2993), // GeolocationPosition.toJSON
+    (1805, 2995), // GeolocationPositionError.code
+    (3794, 2996), // GeolocationPositionError.message
+    (4769, 2997), // GeolocationPositionError.secure_context_required
+    (1311, 2999), // GestureEvent.altKey
+    (1779, 3000), // GestureEvent.clientX
+    (1780, 3001), // GestureEvent.clientY
+    (2134, 3002), // GestureEvent.ctrlKey
+    (3263, 3003), // GestureEvent.initGestureEvent
+    (3799, 3004), // GestureEvent.metaKey
+    (4671, 3005), // GestureEvent.rotation
+    (4703, 3006), // GestureEvent.scale
+    (4720, 3007), // GestureEvent.screenX
+    (4721, 3008), // GestureEvent.screenY
+    (4975, 3009), // GestureEvent.shiftKey
+    (5259, 3010), // GestureEvent.target
+    (390, 3012), // GravitySensor.GravitySensor
+    (391, 3014), // Gyroscope.Gyroscope
+    (5772, 3015), // Gyroscope.x
+    (5781, 3016), // Gyroscope.y
+    (5786, 3017), // Gyroscope.z
+    (1882, 3019), // HID.connect_event
+    (2324, 3020), // HID.disconnect_event
+    (2877, 3021), // HID.getDevices
+    (4556, 3022), // HID.requestDevice
+    (5754, 3023), // HID.worker_support
+    (393, 3025), // HIDConnectionEvent.HIDConnectionEvent
+    (2287, 3026), // HIDConnectionEvent.device
+    (5754, 3027), // HIDConnectionEvent.worker_support
+    (1792, 3029), // HIDDevice.close
+    (1818, 3030), // HIDDevice.collections
+    (2697, 3031), // HIDDevice.forget
+    (3293, 3032), // HIDDevice.inputreport_event
+    (3980, 3033), // HIDDevice.open
+    (3985, 3034), // HIDDevice.opened
+    (4293, 3035), // HIDDevice.productId
+    (4294, 3036), // HIDDevice.productName
+    (4401, 3037), // HIDDevice.receiveFeatureReport
+    (4805, 3038), // HIDDevice.sendFeatureReport
+    (4809, 3039), // HIDDevice.sendReport
+    (5629, 3040), // HIDDevice.vendorId
+    (5754, 3041), // HIDDevice.worker_support
+    (2165, 3043), // HIDInputReportEvent.data
+    (2287, 3044), // HIDInputReportEvent.device
+    (4547, 3045), // HIDInputReportEvent.reportId
+    (5754, 3046), // HIDInputReportEvent.worker_support
+    (2895, 3048), // HMDVRDevice.getEyeParameters
+    (4855, 3049), // HMDVRDevice.setFieldOfView
+    (3446, 3051), // HTMLAllCollection.item
+    (3535, 3052), // HTMLAllCollection.length
+    (3889, 3053), // HTMLAllCollection.namedItem
+    (1466, 3055), // HTMLAnchorElement.attributionSourceId
+    (1467, 3056), // HTMLAnchorElement.attributionSrc
+    (1724, 3057), // HTMLAnchorElement.charset
+    (1946, 3058), // HTMLAnchorElement.coords
+    (2365, 3059), // HTMLAnchorElement.download
+    (3165, 3060), // HTMLAnchorElement.hash
+    (3185, 3061), // HTMLAnchorElement.host
+    (3187, 3062), // HTMLAnchorElement.hostname
+    (3188, 3063), // HTMLAnchorElement.href
+    (3189, 3064), // HTMLAnchorElement.hrefTranslate
+    (3190, 3065), // HTMLAnchorElement.hreflang
+    (3333, 3066), // HTMLAnchorElement.interestForElement
+    (3887, 3067), // HTMLAnchorElement.name
+    (4010, 3068), // HTMLAnchorElement.origin
+    (4086, 3069), // HTMLAnchorElement.password
+    (4090, 3070), // HTMLAnchorElement.pathname
+    (4170, 3071), // HTMLAnchorElement.ping
+    (4224, 3072), // HTMLAnchorElement.port
+    (4313, 3073), // HTMLAnchorElement.protocol
+    (4443, 3074), // HTMLAnchorElement.referrerPolicy
+    (4460, 3078), // HTMLAnchorElement.rel
+    (4461, 3079), // HTMLAnchorElement.relList
+    (4641, 3080), // HTMLAnchorElement.rev
+    (4762, 3081), // HTMLAnchorElement.search
+    (4968, 3082), // HTMLAnchorElement.shape
+    (5259, 3083), // HTMLAnchorElement.target
+    (5282, 3084), // HTMLAnchorElement.text
+    (5355, 3085), // HTMLAnchorElement.toString
+    (5443, 3086), // HTMLAnchorElement.type
+    (5600, 3087), // HTMLAnchorElement.username
+    (1310, 3089), // HTMLAreaElement.alt
+    (1467, 3090), // HTMLAreaElement.attributionSrc
+    (1946, 3091), // HTMLAreaElement.coords
+    (2365, 3092), // HTMLAreaElement.download
+    (3165, 3093), // HTMLAreaElement.hash
+    (3185, 3094), // HTMLAreaElement.host
+    (3187, 3095), // HTMLAreaElement.hostname
+    (3188, 3096), // HTMLAreaElement.href
+    (3190, 3097), // HTMLAreaElement.hreflang
+    (3333, 3098), // HTMLAreaElement.interestForElement
+    (3922, 3099), // HTMLAreaElement.noHref
+    (4010, 3100), // HTMLAreaElement.origin
+    (4086, 3101), // HTMLAreaElement.password
+    (4090, 3102), // HTMLAreaElement.pathname
+    (4170, 3103), // HTMLAreaElement.ping
+    (4224, 3104), // HTMLAreaElement.port
+    (4313, 3105), // HTMLAreaElement.protocol
+    (4443, 3106), // HTMLAreaElement.referrerPolicy
+    (4460, 3110), // HTMLAreaElement.rel
+    (4461, 3111), // HTMLAreaElement.relList
+    (4762, 3112), // HTMLAreaElement.search
+    (4968, 3113), // HTMLAreaElement.shape
+    (5259, 3114), // HTMLAreaElement.target
+    (5355, 3115), // HTMLAreaElement.toString
+    (5443, 3116), // HTMLAreaElement.type
+    (5600, 3117), // HTMLAreaElement.username
+    (40, 3119), // HTMLAudioElement.Audio
+    (1744, 3121), // HTMLBRElement.clear
+    (3188, 3123), // HTMLBaseElement.href
+    (5259, 3126), // HTMLBaseElement.target
+    (1209, 3128), // HTMLBodyElement.aLink
+    (1509, 3129), // HTMLBodyElement.background
+    (1550, 3130), // HTMLBodyElement.bgColor
+    (3565, 3131), // HTMLBodyElement.link
+    (4009, 3132), // HTMLBodyElement.orientationchange_event
+    (5282, 3133), // HTMLBodyElement.text
+    (5606, 3134), // HTMLBodyElement.vLink
+    (1729, 3136), // HTMLButtonElement.checkValidity
+    (1831, 3137), // HTMLButtonElement.command
+    (1832, 3139), // HTMLButtonElement.commandForElement
+    (2318, 3141), // HTMLButtonElement.disabled
+    (2698, 3142), // HTMLButtonElement.form
+    (2699, 3143), // HTMLButtonElement.formAction
+    (2701, 3144), // HTMLButtonElement.formEnctype
+    (2702, 3145), // HTMLButtonElement.formMethod
+    (2703, 3146), // HTMLButtonElement.formNoValidate
+    (2704, 3147), // HTMLButtonElement.formTarget
+    (3333, 3148), // HTMLButtonElement.interestForElement
+    (3495, 3149), // HTMLButtonElement.labels
+    (3887, 3150), // HTMLButtonElement.name
+    (4220, 3151), // HTMLButtonElement.popoverTargetAction
+    (4221, 3152), // HTMLButtonElement.popoverTargetElement
+    (4548, 3154), // HTMLButtonElement.reportValidity
+    (4846, 3155), // HTMLButtonElement.setCustomValidity
+    (5443, 3156), // HTMLButtonElement.type
+    (5610, 3157), // HTMLButtonElement.validationMessage
+    (5613, 3158), // HTMLButtonElement.validity
+    (5614, 3159), // HTMLButtonElement.value
+    (5740, 3160), // HTMLButtonElement.willValidate
+    (1661, 3162), // HTMLCameraElement.cancel_event
+    (2513, 3163), // HTMLCameraElement.error
+    (2517, 3164), // HTMLCameraElement.error_event
+    (4843, 3165), // HTMLCameraElement.setConstraints
+    (5391, 3166), // HTMLCameraElement.track
+    (5393, 3167), // HTMLCameraElement.track_event
+    (1677, 3169), // HTMLCanvasElement.captureStream
+    (1922, 3170), // HTMLCanvasElement.contextlost_event
+    (1925, 3171), // HTMLCanvasElement.contextrestored_event
+    (2859, 3172), // HTMLCanvasElement.getContext
+    (3173, 3192), // HTMLCanvasElement.height
+    (3864, 3193), // HTMLCanvasElement.mozOpaque
+    (3868, 3194), // HTMLCanvasElement.mozPrintCallback
+    (5331, 3195), // HTMLCanvasElement.toBlob
+    (5332, 3200), // HTMLCanvasElement.toDataURL
+    (5401, 3204), // HTMLCanvasElement.transferControlToOffscreen
+    (5714, 3205), // HTMLCanvasElement.webglcontextcreationerror_event
+    (5715, 3206), // HTMLCanvasElement.webglcontextlost_event
+    (5716, 3207), // HTMLCanvasElement.webglcontextrestored_event
+    (5739, 3208), // HTMLCanvasElement.width
+    (3446, 3210), // HTMLCollection.item
+    (3535, 3211), // HTMLCollection.length
+    (3889, 3212), // HTMLCollection.namedItem
+    (1838, 3214), // HTMLDListElement.compact
+    (5614, 3216), // HTMLDataElement.value
+    (3989, 3218), // HTMLDataListElement.options
+    (3887, 3220), // HTMLDetailsElement.name
+    (3980, 3221), // HTMLDetailsElement.open
+    (1661, 3223), // HTMLDialogElement.cancel_event
+    (1792, 3224), // HTMLDialogElement.close
+    (1795, 3225), // HTMLDialogElement.close_event
+    (1798, 3226), // HTMLDialogElement.closedBy
+    (3980, 3227), // HTMLDialogElement.open
+    (4554, 3228), // HTMLDialogElement.requestClose
+    (4640, 3229), // HTMLDialogElement.returnValue
+    (4982, 3230), // HTMLDialogElement.show
+    (4984, 3231), // HTMLDialogElement.showModal
+    (1838, 3233), // HTMLDirectoryElement.compact
+    (1291, 3235), // HTMLDivElement.align
+    (1222, 3238), // HTMLElement.accessKey
+    (1223, 3239), // HTMLElement.accessKeyLabel
+    (1321, 3240), // HTMLElement.anchorElement
+    (1453, 3241), // HTMLElement.attachInternals
+    (1463, 3242), // HTMLElement.attributeStyleMap
+    (1482, 3243), // HTMLElement.autocapitalize
+    (1484, 3244), // HTMLElement.autocorrect
+    (1486, 3245), // HTMLElement.autofocus
+    (1534, 3246), // HTMLElement.beforetoggle_event
+    (1589, 3249), // HTMLElement.blur
+    (1700, 3250), // HTMLElement.change_event
+    (1769, 3251), // HTMLElement.click
+    (1833, 3252), // HTMLElement.command_event
+    (1903, 3253), // HTMLElement.containerTiming
+    (1904, 3254), // HTMLElement.containerTimingIgnore
+    (1911, 3255), // HTMLElement.contentEditable
+    (2172, 3257), // HTMLElement.dataset
+    (2308, 3258), // HTMLElement.dir
+    (2376, 3259), // HTMLElement.drag_event
+    (2377, 3260), // HTMLElement.dragend_event
+    (2378, 3261), // HTMLElement.dragenter_event
+    (2379, 3262), // HTMLElement.dragexit_event
+    (2380, 3263), // HTMLElement.draggable
+    (2381, 3264), // HTMLElement.dragleave_event
+    (2382, 3265), // HTMLElement.dragover_event
+    (2383, 3266), // HTMLElement.dragstart_event
+    (2407, 3267), // HTMLElement.drop_event
+    (2432, 3268), // HTMLElement.editContext
+    (2499, 3269), // HTMLElement.enterKeyHint
+    (2517, 3270), // HTMLElement.error_event
+    (2657, 3271), // HTMLElement.focus
+    (3171, 3274), // HTMLElement.headingOffset
+    (3172, 3275), // HTMLElement.headingReset
+    (3175, 3276), // HTMLElement.hidden
+    (3177, 3277), // HTMLElement.hidePopover
+    (3254, 3278), // HTMLElement.inert
+    (3283, 3280), // HTMLElement.innerText
+    (3287, 3281), // HTMLElement.inputMode
+    (3335, 3282), // HTMLElement.interest_event
+    (3372, 3283), // HTMLElement.isContentEditable
+    (3496, 3284), // HTMLElement.lang
+    (3576, 3285), // HTMLElement.load_event
+    (3621, 3286), // HTMLElement.loseinterest_event
+    (3933, 3287), // HTMLElement.nonce
+    (3958, 3288), // HTMLElement.offsetHeight
+    (3959, 3289), // HTMLElement.offsetLeft
+    (3961, 3290), // HTMLElement.offsetParent
+    (3962, 3291), // HTMLElement.offsetTop
+    (3963, 3292), // HTMLElement.offsetWidth
+    (4018, 3293), // HTMLElement.outerText
+    (4219, 3294), // HTMLElement.popover
+    (4988, 3296), // HTMLElement.showPopover
+    (5073, 3299), // HTMLElement.spellcheck
+    (5166, 3300), // HTMLElement.style
+    (5245, 3302), // HTMLElement.tabIndex
+    (5326, 3303), // HTMLElement.title
+    (5366, 3304), // HTMLElement.togglePopover
+    (5367, 3310), // HTMLElement.toggle_event
+    (5422, 3315), // HTMLElement.translate
+    (5672, 3316), // HTMLElement.virtualKeyboardPolicy
+    (5771, 3317), // HTMLElement.writingSuggestions
+    (1291, 3319), // HTMLEmbedElement.align
+    (3015, 3320), // HTMLEmbedElement.getSVGDocument
+    (3173, 3321), // HTMLEmbedElement.height
+    (3887, 3322), // HTMLEmbedElement.name
+    (5083, 3323), // HTMLEmbedElement.src
+    (5443, 3324), // HTMLEmbedElement.type
+    (5739, 3325), // HTMLEmbedElement.width
+    (1300, 3327), // HTMLFencedFrameElement.allow
+    (1869, 3328), // HTMLFencedFrameElement.config
+    (3173, 3329), // HTMLFencedFrameElement.height
+    (4699, 3330), // HTMLFencedFrameElement.sandbox
+    (5739, 3331), // HTMLFencedFrameElement.width
+    (1729, 3333), // HTMLFieldSetElement.checkValidity
+    (2318, 3334), // HTMLFieldSetElement.disabled
+    (2442, 3335), // HTMLFieldSetElement.elements
+    (2698, 3337), // HTMLFieldSetElement.form
+    (3887, 3338), // HTMLFieldSetElement.name
+    (4548, 3339), // HTMLFieldSetElement.reportValidity
+    (4846, 3340), // HTMLFieldSetElement.setCustomValidity
+    (5443, 3341), // HTMLFieldSetElement.type
+    (5610, 3342), // HTMLFieldSetElement.validationMessage
+    (5613, 3343), // HTMLFieldSetElement.validity
+    (5740, 3344), // HTMLFieldSetElement.willValidate
+    (1820, 3346), // HTMLFontElement.color
+    (2574, 3347), // HTMLFontElement.face
+    (5011, 3348), // HTMLFontElement.size
+    (3889, 3350), // HTMLFormControlsCollection.namedItem
+    (1221, 3352), // HTMLFormElement.acceptCharset
+    (1227, 3353), // HTMLFormElement.action
+    (1483, 3354), // HTMLFormElement.autocomplete
+    (1729, 3355), // HTMLFormElement.checkValidity
+    (2442, 3356), // HTMLFormElement.elements
+    (2473, 3357), // HTMLFormElement.encoding
+    (2477, 3358), // HTMLFormElement.enctype
+    (2706, 3359), // HTMLFormElement.formdata_event
+    (3535, 3360), // HTMLFormElement.length
+    (3801, 3361), // HTMLFormElement.method
+    (3887, 3362), // HTMLFormElement.name
+    (3926, 3363), // HTMLFormElement.noValidate
+    (4460, 3364), // HTMLFormElement.rel
+    (4461, 3365), // HTMLFormElement.relList
+    (4548, 3366), // HTMLFormElement.reportValidity
+    (4582, 3367), // HTMLFormElement.requestSubmit
+    (4591, 3368), // HTMLFormElement.reset
+    (4597, 3369), // HTMLFormElement.reset_event
+    (5180, 3370), // HTMLFormElement.submit
+    (5182, 3371), // HTMLFormElement.submit_event
+    (5259, 3372), // HTMLFormElement.target
+    (1910, 3374), // HTMLFrameElement.contentDocument
+    (1916, 3375), // HTMLFrameElement.contentWindow
+    (2719, 3376), // HTMLFrameElement.frameBorder
+    (3611, 3377), // HTMLFrameElement.longDesc
+    (3688, 3378), // HTMLFrameElement.marginHeight
+    (3695, 3379), // HTMLFrameElement.marginWidth
+    (3887, 3380), // HTMLFrameElement.name
+    (3924, 3381), // HTMLFrameElement.noResize
+    (4750, 3382), // HTMLFrameElement.scrolling
+    (5083, 3383), // HTMLFrameElement.src
+    (1829, 3385), // HTMLFrameSetElement.cols
+    (4679, 3386), // HTMLFrameSetElement.rows
+    (1487, 3388), // HTMLGeolocationElement.autolocate
+    (2513, 3389), // HTMLGeolocationElement.error
+    (3272, 3390), // HTMLGeolocationElement.initialPermissionStatus
+    (3349, 3391), // HTMLGeolocationElement.invalidReason
+    (3437, 3392), // HTMLGeolocationElement.isValid
+    (3595, 3393), // HTMLGeolocationElement.location_event
+    (4128, 3394), // HTMLGeolocationElement.permissionStatus
+    (4229, 3395), // HTMLGeolocationElement.position
+    (4306, 3396), // HTMLGeolocationElement.promptaction_event
+    (4307, 3397), // HTMLGeolocationElement.promptdismiss_event
+    (5612, 3398), // HTMLGeolocationElement.validationstatuschange_event
+    (5710, 3399), // HTMLGeolocationElement.watch
+    (1291, 3401), // HTMLHRElement.align
+    (1820, 3402), // HTMLHRElement.color
+    (3925, 3403), // HTMLHRElement.noShade
+    (5011, 3404), // HTMLHRElement.size
+    (5739, 3405), // HTMLHRElement.width
+    (1291, 3408), // HTMLHeadingElement.align
+    (5632, 3410), // HTMLHtmlElement.version
+    (1246, 3412), // HTMLIFrameElement.adAuctionHeaders
+    (1291, 3413), // HTMLIFrameElement.align
+    (1300, 3414), // HTMLIFrameElement.allow
+    (1303, 3415), // HTMLIFrameElement.allowFullscreen
+    (1304, 3416), // HTMLIFrameElement.allowPaymentRequest
+    (1609, 3417), // HTMLIFrameElement.browsingTopics
+    (1910, 3418), // HTMLIFrameElement.contentDocument
+    (1916, 3419), // HTMLIFrameElement.contentWindow
+    (2122, 3420), // HTMLIFrameElement.credentialless
+    (2129, 3421), // HTMLIFrameElement.csp
+    (2580, 3422), // HTMLIFrameElement.featurePolicy
+    (2719, 3423), // HTMLIFrameElement.frameBorder
+    (3015, 3424), // HTMLIFrameElement.getSVGDocument
+    (3173, 3425), // HTMLIFrameElement.height
+    (3581, 3426), // HTMLIFrameElement.loading
+    (3611, 3427), // HTMLIFrameElement.longDesc
+    (3688, 3428), // HTMLIFrameElement.marginHeight
+    (3695, 3429), // HTMLIFrameElement.marginWidth
+    (3887, 3430), // HTMLIFrameElement.name
+    (4286, 3431), // HTMLIFrameElement.privateToken
+    (4443, 3432), // HTMLIFrameElement.referrerPolicy
+    (4699, 3436), // HTMLIFrameElement.sandbox
+    (4750, 3437), // HTMLIFrameElement.scrolling
+    (4972, 3438), // HTMLIFrameElement.sharedStorageWritable
+    (5083, 3439), // HTMLIFrameElement.src
+    (5086, 3440), // HTMLIFrameElement.srcdoc
+    (5739, 3442), // HTMLIFrameElement.width
+    (506, 3444), // HTMLImageElement.Image
+    (1291, 3445), // HTMLImageElement.align
+    (1310, 3446), // HTMLImageElement.alt
+    (1467, 3447), // HTMLImageElement.attributionSrc
+    (1596, 3448), // HTMLImageElement.border
+    (1847, 3449), // HTMLImageElement.complete
+    (2126, 3450), // HTMLImageElement.crossOrigin
+    (2150, 3451), // HTMLImageElement.currentSrc
+    (2181, 3452), // HTMLImageElement.decode
+    (2187, 3453), // HTMLImageElement.decoding
+    (2609, 3454), // HTMLImageElement.fetchPriority
+    (3173, 3455), // HTMLImageElement.height
+    (3191, 3456), // HTMLImageElement.hspace
+    (3398, 3457), // HTMLImageElement.isMap
+    (3581, 3458), // HTMLImageElement.loading
+    (3611, 3459), // HTMLImageElement.longDesc
+    (3630, 3460), // HTMLImageElement.lowsrc
+    (3887, 3461), // HTMLImageElement.name
+    (3893, 3462), // HTMLImageElement.naturalHeight
+    (3894, 3463), // HTMLImageElement.naturalWidth
+    (4443, 3464), // HTMLImageElement.referrerPolicy
+    (4972, 3468), // HTMLImageElement.sharedStorageWritable
+    (5016, 3469), // HTMLImageElement.sizes
+    (5083, 3471), // HTMLImageElement.src
+    (5088, 3472), // HTMLImageElement.srcset
+    (5586, 3473), // HTMLImageElement.useMap
+    (5694, 3474), // HTMLImageElement.vspace
+    (5739, 3475), // HTMLImageElement.width
+    (5772, 3476), // HTMLImageElement.x
+    (5781, 3477), // HTMLImageElement.y
+    (1220, 3479), // HTMLInputElement.accept
+    (1291, 3480), // HTMLInputElement.align
+    (1308, 3481), // HTMLInputElement.alpha
+    (1310, 3482), // HTMLInputElement.alt
+    (1483, 3483), // HTMLInputElement.autocomplete
+    (1661, 3484), // HTMLInputElement.cancel_event
+    (1674, 3485), // HTMLInputElement.capture
+    (1729, 3486), // HTMLInputElement.checkValidity
+    (1731, 3487), // HTMLInputElement.checked
+    (1825, 3488), // HTMLInputElement.colorSpace
+    (2192, 3489), // HTMLInputElement.defaultChecked
+    (2199, 3490), // HTMLInputElement.defaultValue
+    (2309, 3491), // HTMLInputElement.dirName
+    (2318, 3492), // HTMLInputElement.disabled
+    (2618, 3493), // HTMLInputElement.files
+    (2698, 3494), // HTMLInputElement.form
+    (2699, 3495), // HTMLInputElement.formAction
+    (2701, 3496), // HTMLInputElement.formEnctype
+    (2702, 3497), // HTMLInputElement.formMethod
+    (2703, 3498), // HTMLInputElement.formNoValidate
+    (2704, 3499), // HTMLInputElement.formTarget
+    (3173, 3500), // HTMLInputElement.height
+    (3244, 3501), // HTMLInputElement.incremental
+    (3246, 3502), // HTMLInputElement.indeterminate
+    (3350, 3503), // HTMLInputElement.invalid_event
+    (3495, 3504), // HTMLInputElement.labels
+    (3569, 3505), // HTMLInputElement.list
+    (3711, 3506), // HTMLInputElement.max
+    (3746, 3507), // HTMLInputElement.maxLength
+    (3809, 3508), // HTMLInputElement.min
+    (3818, 3509), // HTMLInputElement.minLength
+    (3881, 3510), // HTMLInputElement.multiple
+    (3887, 3511), // HTMLInputElement.name
+    (4091, 3512), // HTMLInputElement.pattern
+    (4179, 3513), // HTMLInputElement.placeholder
+    (4220, 3514), // HTMLInputElement.popoverTargetAction
+    (4221, 3515), // HTMLInputElement.popoverTargetElement
+    (4388, 3517), // HTMLInputElement.readOnly
+    (4548, 3518), // HTMLInputElement.reportValidity
+    (4588, 3519), // HTMLInputElement.required
+    (4764, 3520), // HTMLInputElement.search_event
+    (4778, 3521), // HTMLInputElement.select
+    (4787, 3522), // HTMLInputElement.select_event
+    (4795, 3523), // HTMLInputElement.selectionDirection
+    (4796, 3524), // HTMLInputElement.selectionEnd
+    (4797, 3525), // HTMLInputElement.selectionStart
+    (4798, 3526), // HTMLInputElement.selectionchange_event
+    (4846, 3527), // HTMLInputElement.setCustomValidity
+    (4908, 3528), // HTMLInputElement.setRangeText
+    (4919, 3529), // HTMLInputElement.setSelectionRange
+    (4987, 3530), // HTMLInputElement.showPicker
+    (5011, 3540), // HTMLInputElement.size
+    (5083, 3541), // HTMLInputElement.src
+    (5123, 3542), // HTMLInputElement.step
+    (5124, 3543), // HTMLInputElement.stepDown
+    (5126, 3544), // HTMLInputElement.stepUp
+    (5443, 3545), // HTMLInputElement.type
+    (5586, 3546), // HTMLInputElement.useMap
+    (5610, 3547), // HTMLInputElement.validationMessage
+    (5613, 3548), // HTMLInputElement.validity
+    (5614, 3549), // HTMLInputElement.value
+    (5615, 3550), // HTMLInputElement.valueAsDate
+    (5616, 3551), // HTMLInputElement.valueAsNumber
+    (5719, 3552), // HTMLInputElement.webkitEntries
+    (5722, 3553), // HTMLInputElement.webkitdirectory
+    (5739, 3554), // HTMLInputElement.width
+    (5740, 3555), // HTMLInputElement.willValidate
+    (3326, 3557), // HTMLInstallElement.installresult_event
+    (3349, 3558), // HTMLInstallElement.invalidReason
+    (3437, 3559), // HTMLInstallElement.isValid
+    (3665, 3560), // HTMLInstallElement.manifest
+    (3666, 3561), // HTMLInstallElement.manifestId
+    (5612, 3562), // HTMLInstallElement.validationstatuschange_event
+    (5443, 3564), // HTMLLIElement.type
+    (5614, 3565), // HTMLLIElement.value
+    (1930, 3567), // HTMLLabelElement.control
+    (2698, 3568), // HTMLLabelElement.form
+    (3192, 3569), // HTMLLabelElement.htmlFor
+    (1291, 3571), // HTMLLegendElement.align
+    (2698, 3572), // HTMLLegendElement.form
+    (1431, 3574), // HTMLLinkElement.as
+    (1585, 3575), // HTMLLinkElement.blocking
+    (1724, 3576), // HTMLLinkElement.charset
+    (2126, 3577), // HTMLLinkElement.crossOrigin
+    (2318, 3578), // HTMLLinkElement.disabled
+    (2609, 3579), // HTMLLinkElement.fetchPriority
+    (3188, 3580), // HTMLLinkElement.href
+    (3190, 3581), // HTMLLinkElement.hreflang
+    (3219, 3582), // HTMLLinkElement.imageSizes
+    (3222, 3583), // HTMLLinkElement.imageSrcset
+    (3328, 3584), // HTMLLinkElement.integrity
+    (3780, 3585), // HTMLLinkElement.media
+    (4443, 3586), // HTMLLinkElement.referrerPolicy
+    (4460, 3590), // HTMLLinkElement.rel
+    (4461, 3591), // HTMLLinkElement.relList
+    (4641, 3592), // HTMLLinkElement.rev
+    (4973, 3593), // HTMLLinkElement.sheet
+    (5016, 3594), // HTMLLinkElement.sizes
+    (5259, 3595), // HTMLLinkElement.target
+    (5443, 3596), // HTMLLinkElement.type
+    (1372, 3598), // HTMLMapElement.areas
+    (3887, 3599), // HTMLMapElement.name
+    (1547, 3601), // HTMLMarqueeElement.behavior
+    (1550, 3602), // HTMLMarqueeElement.bgColor
+    (2311, 3603), // HTMLMarqueeElement.direction
+    (3173, 3604), // HTMLMarqueeElement.height
+    (3191, 3605), // HTMLMarqueeElement.hspace
+    (3617, 3606), // HTMLMarqueeElement.loop
+    (4727, 3607), // HTMLMarqueeElement.scrollAmount
+    (4731, 3608), // HTMLMarqueeElement.scrollDelay
+    (5095, 3609), // HTMLMarqueeElement.start
+    (5129, 3610), // HTMLMarqueeElement.stop
+    (5435, 3611), // HTMLMarqueeElement.trueSpeed
+    (5694, 3612), // HTMLMarqueeElement.vspace
+    (5739, 3613), // HTMLMarqueeElement.width
+    (1212, 3615), // HTMLMediaElement.abort_event
+    (1267, 3616), // HTMLMediaElement.addTextTrack
+    (1471, 3617), // HTMLMediaElement.audioTracks
+    (1489, 3618), // HTMLMediaElement.autoplay
+    (1616, 3619), // HTMLMediaElement.buffered
+    (1649, 3620), // HTMLMediaElement.canPlayType
+    (1667, 3621), // HTMLMediaElement.canplay_event
+    (1668, 3622), // HTMLMediaElement.canplaythrough_event
+    (1677, 3623), // HTMLMediaElement.captureStream
+    (1933, 3624), // HTMLMediaElement.controller
+    (1935, 3625), // HTMLMediaElement.controls
+    (1936, 3626), // HTMLMediaElement.controlsList
+    (2126, 3627), // HTMLMediaElement.crossOrigin
+    (2150, 3628), // HTMLMediaElement.currentSrc
+    (2152, 3629), // HTMLMediaElement.currentTime
+    (2193, 3630), // HTMLMediaElement.defaultMuted
+    (2194, 3631), // HTMLMediaElement.defaultPlaybackRate
+    (2316, 3632), // HTMLMediaElement.disableRemotePlayback
+    (2413, 3633), // HTMLMediaElement.duration
+    (2414, 3634), // HTMLMediaElement.durationchange_event
+    (2452, 3635), // HTMLMediaElement.emptied_event
+    (2476, 3636), // HTMLMediaElement.encrypted_event
+    (2491, 3637), // HTMLMediaElement.ended
+    (2492, 3638), // HTMLMediaElement.ended_event
+    (2513, 3639), // HTMLMediaElement.error
+    (2517, 3640), // HTMLMediaElement.error_event
+    (2578, 3641), // HTMLMediaElement.fastSeek
+    (3036, 3642), // HTMLMediaElement.getStartDate
+    (3572, 3643), // HTMLMediaElement.load
+    (3578, 3644), // HTMLMediaElement.loadeddata_event
+    (3579, 3645), // HTMLMediaElement.loadedmetadata_event
+    (3581, 3646), // HTMLMediaElement.loading
+    (3585, 3647), // HTMLMediaElement.loadstart_event
+    (3617, 3648), // HTMLMediaElement.loop
+    (3784, 3649), // HTMLMediaElement.mediaGroup
+    (3785, 3650), // HTMLMediaElement.mediaKeys
+    (3854, 3651), // HTMLMediaElement.mozAudioCaptured
+    (3855, 3652), // HTMLMediaElement.mozCaptureStreamUntilEnded
+    (3858, 3653), // HTMLMediaElement.mozFragmentEnd
+    (3860, 3654), // HTMLMediaElement.mozGetMetadata
+    (3885, 3655), // HTMLMediaElement.muted
+    (3910, 3656), // HTMLMediaElement.networkState
+    (4096, 3657), // HTMLMediaElement.pause
+    (4102, 3658), // HTMLMediaElement.pause_event
+    (4103, 3659), // HTMLMediaElement.paused
+    (4183, 3660), // HTMLMediaElement.play
+    (4186, 3662), // HTMLMediaElement.play_event
+    (4187, 3663), // HTMLMediaElement.playbackRate
+    (4191, 3665), // HTMLMediaElement.played
+    (4192, 3666), // HTMLMediaElement.playing_event
+    (4251, 3667), // HTMLMediaElement.preload
+    (4265, 3668), // HTMLMediaElement.preservesPitch
+    (4301, 3669), // HTMLMediaElement.progress_event
+    (4371, 3670), // HTMLMediaElement.ratechange_event
+    (4397, 3671), // HTMLMediaElement.readyState
+    (4482, 3672), // HTMLMediaElement.remote
+    (4773, 3673), // HTMLMediaElement.seekable
+    (4774, 3674), // HTMLMediaElement.seeked_event
+    (4775, 3675), // HTMLMediaElement.seeking
+    (4776, 3676), // HTMLMediaElement.seeking_event
+    (4886, 3677), // HTMLMediaElement.setMediaKeys
+    (4923, 3678), // HTMLMediaElement.setSinkId
+    (5008, 3679), // HTMLMediaElement.sinkId
+    (5083, 3680), // HTMLMediaElement.src
+    (5085, 3681), // HTMLMediaElement.srcObject
+    (5093, 3682), // HTMLMediaElement.stalled_event
+    (5216, 3683), // HTMLMediaElement.suspend_event
+    (5289, 3684), // HTMLMediaElement.textTracks
+    (5324, 3685), // HTMLMediaElement.timeupdate_event
+    (5660, 3686), // HTMLMediaElement.videoTracks
+    (5687, 3687), // HTMLMediaElement.volume
+    (5688, 3688), // HTMLMediaElement.volumechange_event
+    (5703, 3689), // HTMLMediaElement.waiting_event
+    (5704, 3690), // HTMLMediaElement.waitingforkey_event
+    (1838, 3692), // HTMLMenuElement.compact
+    (1908, 3694), // HTMLMetaElement.content
+    (3193, 3695), // HTMLMetaElement.httpEquiv
+    (3780, 3696), // HTMLMetaElement.media
+    (3887, 3697), // HTMLMetaElement.name
+    (4713, 3698), // HTMLMetaElement.scheme
+    (3178, 3700), // HTMLMeterElement.high
+    (3495, 3701), // HTMLMeterElement.labels
+    (3624, 3702), // HTMLMeterElement.low
+    (3711, 3703), // HTMLMeterElement.max
+    (3809, 3704), // HTMLMeterElement.min
+    (3988, 3705), // HTMLMeterElement.optimum
+    (5614, 3706), // HTMLMeterElement.value
+    (1661, 3708), // HTMLMicrophoneElement.cancel_event
+    (2513, 3709), // HTMLMicrophoneElement.error
+    (2517, 3710), // HTMLMicrophoneElement.error_event
+    (4843, 3711), // HTMLMicrophoneElement.setConstraints
+    (5391, 3712), // HTMLMicrophoneElement.track
+    (5393, 3713), // HTMLMicrophoneElement.track_event
+    (1736, 3715), // HTMLModElement.cite
+    (2173, 3716), // HTMLModElement.dateTime
+    (1602, 3718), // HTMLModelElement.boundingBoxCenter
+    (1603, 3719), // HTMLModelElement.boundingBoxExtents
+    (2502, 3720), // HTMLModelElement.entityTransform
+    (2508, 3721), // HTMLModelElement.environmentMap
+    (2509, 3722), // HTMLModelElement.environmentMapReady
+    (4396, 3723), // HTMLModelElement.ready
+    (5091, 3724), // HTMLModelElement.stageMode
+    (1838, 3726), // HTMLOListElement.compact
+    (4643, 3727), // HTMLOListElement.reversed
+    (5095, 3728), // HTMLOListElement.start
+    (5443, 3729), // HTMLOListElement.type
+    (1291, 3731), // HTMLObjectElement.align
+    (1371, 3732), // HTMLObjectElement.archive
+    (1596, 3733), // HTMLObjectElement.border
+    (1729, 3734), // HTMLObjectElement.checkValidity
+    (1805, 3735), // HTMLObjectElement.code
+    (1806, 3736), // HTMLObjectElement.codeBase
+    (1808, 3737), // HTMLObjectElement.codeType
+    (1910, 3738), // HTMLObjectElement.contentDocument
+    (1916, 3739), // HTMLObjectElement.contentWindow
+    (2165, 3740), // HTMLObjectElement.data
+    (2180, 3741), // HTMLObjectElement.declare
+    (2698, 3742), // HTMLObjectElement.form
+    (3015, 3743), // HTMLObjectElement.getSVGDocument
+    (3173, 3744), // HTMLObjectElement.height
+    (3191, 3745), // HTMLObjectElement.hspace
+    (3887, 3746), // HTMLObjectElement.name
+    (4548, 3747), // HTMLObjectElement.reportValidity
+    (4846, 3748), // HTMLObjectElement.setCustomValidity
+    (5094, 3749), // HTMLObjectElement.standby
+    (5443, 3750), // HTMLObjectElement.type
+    (5586, 3751), // HTMLObjectElement.useMap
+    (5610, 3752), // HTMLObjectElement.validationMessage
+    (5613, 3753), // HTMLObjectElement.validity
+    (5694, 3754), // HTMLObjectElement.vspace
+    (5739, 3755), // HTMLObjectElement.width
+    (5740, 3756), // HTMLObjectElement.willValidate
+    (2318, 3758), // HTMLOptGroupElement.disabled
+    (3494, 3759), // HTMLOptGroupElement.label
+    (676, 3761), // HTMLOptionElement.Option
+    (2198, 3762), // HTMLOptionElement.defaultSelected
+    (2318, 3763), // HTMLOptionElement.disabled
+    (2698, 3764), // HTMLOptionElement.form
+    (3247, 3765), // HTMLOptionElement.index
+    (3494, 3766), // HTMLOptionElement.label
+    (4788, 3767), // HTMLOptionElement.selected
+    (5282, 3768), // HTMLOptionElement.text
+    (5614, 3769), // HTMLOptionElement.value
+    (1248, 3771), // HTMLOptionsCollection.add
+    (3535, 3772), // HTMLOptionsCollection.length
+    (4484, 3773), // HTMLOptionsCollection.remove
+    (4789, 3774), // HTMLOptionsCollection.selectedIndex
+    (1729, 3776), // HTMLOutputElement.checkValidity
+    (2199, 3777), // HTMLOutputElement.defaultValue
+    (2698, 3778), // HTMLOutputElement.form
+    (3192, 3779), // HTMLOutputElement.htmlFor
+    (3495, 3780), // HTMLOutputElement.labels
+    (3887, 3781), // HTMLOutputElement.name
+    (4548, 3782), // HTMLOutputElement.reportValidity
+    (4846, 3783), // HTMLOutputElement.setCustomValidity
+    (5443, 3784), // HTMLOutputElement.type
+    (5610, 3785), // HTMLOutputElement.validationMessage
+    (5613, 3786), // HTMLOutputElement.validity
+    (5614, 3787), // HTMLOutputElement.value
+    (5740, 3788), // HTMLOutputElement.willValidate
+    (1291, 3790), // HTMLParagraphElement.align
+    (3887, 3792), // HTMLParamElement.name
+    (5443, 3793), // HTMLParamElement.type
+    (5614, 3794), // HTMLParamElement.value
+    (5621, 3795), // HTMLParamElement.valueType
+    (5739, 3798), // HTMLPreElement.width
+    (3495, 3800), // HTMLProgressElement.labels
+    (3711, 3801), // HTMLProgressElement.max
+    (4229, 3802), // HTMLProgressElement.position
+    (5614, 3803), // HTMLProgressElement.value
+    (1736, 3805), // HTMLQuoteElement.cite
+    (1445, 3807), // HTMLScriptElement.async
+    (1467, 3808), // HTMLScriptElement.attributionSrc
+    (1585, 3809), // HTMLScriptElement.blocking
+    (1724, 3810), // HTMLScriptElement.charset
+    (2126, 3811), // HTMLScriptElement.crossOrigin
+    (2201, 3812), // HTMLScriptElement.defer
+    (2525, 3813), // HTMLScriptElement.event
+    (2609, 3814), // HTMLScriptElement.fetchPriority
+    (3192, 3815), // HTMLScriptElement.htmlFor
+    (3283, 3816), // HTMLScriptElement.innerText
+    (3328, 3818), // HTMLScriptElement.integrity
+    (3923, 3819), // HTMLScriptElement.noModule
+    (4443, 3820), // HTMLScriptElement.referrerPolicy
+    (5083, 3824), // HTMLScriptElement.src
+    (5205, 3826), // HTMLScriptElement.supports
+    (5210, 3826), // HTMLScriptElement.supports_static
+    (5282, 3827), // HTMLScriptElement.text
+    (5285, 3829), // HTMLScriptElement.textContent
+    (5443, 3831), // HTMLScriptElement.type
+    (1248, 3833), // HTMLSelectElement.add
+    (1483, 3835), // HTMLSelectElement.autocomplete
+    (1729, 3836), // HTMLSelectElement.checkValidity
+    (2318, 3837), // HTMLSelectElement.disabled
+    (2698, 3838), // HTMLSelectElement.form
+    (3446, 3839), // HTMLSelectElement.item
+    (3495, 3840), // HTMLSelectElement.labels
+    (3535, 3841), // HTMLSelectElement.length
+    (3881, 3842), // HTMLSelectElement.multiple
+    (3887, 3843), // HTMLSelectElement.name
+    (3889, 3844), // HTMLSelectElement.namedItem
+    (3989, 3845), // HTMLSelectElement.options
+    (4484, 3846), // HTMLSelectElement.remove
+    (4548, 3847), // HTMLSelectElement.reportValidity
+    (4588, 3848), // HTMLSelectElement.required
+    (4789, 3849), // HTMLSelectElement.selectedIndex
+    (4790, 3850), // HTMLSelectElement.selectedOptions
+    (4846, 3851), // HTMLSelectElement.setCustomValidity
+    (4987, 3852), // HTMLSelectElement.showPicker
+    (5011, 3853), // HTMLSelectElement.size
+    (5443, 3854), // HTMLSelectElement.type
+    (5610, 3855), // HTMLSelectElement.validationMessage
+    (5613, 3856), // HTMLSelectElement.validity
+    (5614, 3857), // HTMLSelectElement.value
+    (5740, 3858), // HTMLSelectElement.willValidate
+    (1441, 3861), // HTMLSlotElement.assign
+    (1442, 3862), // HTMLSlotElement.assignedElements
+    (1443, 3863), // HTMLSlotElement.assignedNodes
+    (3887, 3864), // HTMLSlotElement.name
+    (5029, 3865), // HTMLSlotElement.slotchange_event
+    (3173, 3867), // HTMLSourceElement.height
+    (3780, 3868), // HTMLSourceElement.media
+    (5016, 3869), // HTMLSourceElement.sizes
+    (5083, 3870), // HTMLSourceElement.src
+    (5088, 3871), // HTMLSourceElement.srcset
+    (5443, 3872), // HTMLSourceElement.type
+    (5739, 3873), // HTMLSourceElement.width
+    (1585, 3876), // HTMLStyleElement.blocking
+    (2318, 3877), // HTMLStyleElement.disabled
+    (3780, 3878), // HTMLStyleElement.media
+    (4973, 3879), // HTMLStyleElement.sheet
+    (5443, 3880), // HTMLStyleElement.type
+    (1291, 3882), // HTMLTableCaptionElement.align
+    (1210, 3884), // HTMLTableCellElement.abbr
+    (1291, 3885), // HTMLTableCellElement.align
+    (1503, 3886), // HTMLTableCellElement.axis
+    (1550, 3887), // HTMLTableCellElement.bgColor
+    (1686, 3888), // HTMLTableCellElement.cellIndex
+    (1692, 3889), // HTMLTableCellElement.ch
+    (1693, 3890), // HTMLTableCellElement.chOff
+    (1813, 3891), // HTMLTableCellElement.colSpan
+    (3169, 3892), // HTMLTableCellElement.headers
+    (3173, 3893), // HTMLTableCellElement.height
+    (3927, 3894), // HTMLTableCellElement.noWrap
+    (4678, 3895), // HTMLTableCellElement.rowSpan
+    (4715, 3896), // HTMLTableCellElement.scope
+    (5605, 3897), // HTMLTableCellElement.vAlign
+    (5739, 3898), // HTMLTableCellElement.width
+    (1291, 3900), // HTMLTableColElement.align
+    (1692, 3901), // HTMLTableColElement.ch
+    (1693, 3902), // HTMLTableColElement.chOff
+    (5061, 3903), // HTMLTableColElement.span
+    (5605, 3904), // HTMLTableColElement.vAlign
+    (5739, 3905), // HTMLTableColElement.width
+    (1291, 3907), // HTMLTableElement.align
+    (1550, 3908), // HTMLTableElement.bgColor
+    (1596, 3909), // HTMLTableElement.border
+    (1673, 3910), // HTMLTableElement.caption
+    (1687, 3911), // HTMLTableElement.cellPadding
+    (1688, 3912), // HTMLTableElement.cellSpacing
+    (1997, 3913), // HTMLTableElement.createCaption
+    (2102, 3914), // HTMLTableElement.createTBody
+    (2103, 3915), // HTMLTableElement.createTFoot
+    (2104, 3916), // HTMLTableElement.createTHead
+    (2214, 3917), // HTMLTableElement.deleteCaption
+    (2230, 3918), // HTMLTableElement.deleteRow
+    (2235, 3919), // HTMLTableElement.deleteTFoot
+    (2236, 3920), // HTMLTableElement.deleteTHead
+    (2718, 3921), // HTMLTableElement.frame
+    (3306, 3922), // HTMLTableElement.insertRow
+    (4679, 3923), // HTMLTableElement.rows
+    (4683, 3924), // HTMLTableElement.rules
+    (5197, 3925), // HTMLTableElement.summary
+    (5242, 3926), // HTMLTableElement.tBodies
+    (5243, 3927), // HTMLTableElement.tFoot
+    (5244, 3928), // HTMLTableElement.tHead
+    (5739, 3929), // HTMLTableElement.width
+    (1291, 3931), // HTMLTableRowElement.align
+    (1550, 3932), // HTMLTableRowElement.bgColor
+    (1689, 3933), // HTMLTableRowElement.cells
+    (1692, 3934), // HTMLTableRowElement.ch
+    (1693, 3935), // HTMLTableRowElement.chOff
+    (2215, 3936), // HTMLTableRowElement.deleteCell
+    (3300, 3937), // HTMLTableRowElement.insertCell
+    (4677, 3940), // HTMLTableRowElement.rowIndex
+    (4765, 3941), // HTMLTableRowElement.sectionRowIndex
+    (5605, 3942), // HTMLTableRowElement.vAlign
+    (1291, 3944), // HTMLTableSectionElement.align
+    (1692, 3945), // HTMLTableSectionElement.ch
+    (1693, 3946), // HTMLTableSectionElement.chOff
+    (2230, 3947), // HTMLTableSectionElement.deleteRow
+    (3306, 3948), // HTMLTableSectionElement.insertRow
+    (4679, 3949), // HTMLTableSectionElement.rows
+    (5605, 3950), // HTMLTableSectionElement.vAlign
+    (1908, 3952), // HTMLTemplateElement.content
+    (3192, 3953), // HTMLTemplateElement.htmlFor
+    (4961, 3954), // HTMLTemplateElement.shadowRootClonable
+    (4962, 3955), // HTMLTemplateElement.shadowRootCustomElementRegistry
+    (4963, 3956), // HTMLTemplateElement.shadowRootDelegatesFocus
+    (4964, 3957), // HTMLTemplateElement.shadowRootMode
+    (4965, 3958), // HTMLTemplateElement.shadowRootReferenceTarget
+    (4966, 3959), // HTMLTemplateElement.shadowRootSerializable
+    (4967, 3960), // HTMLTemplateElement.shadowRootSlotAssignment
+    (1483, 3962), // HTMLTextAreaElement.autocomplete
+    (1729, 3963), // HTMLTextAreaElement.checkValidity
+    (1829, 3964), // HTMLTextAreaElement.cols
+    (2199, 3965), // HTMLTextAreaElement.defaultValue
+    (2309, 3966), // HTMLTextAreaElement.dirName
+    (2318, 3967), // HTMLTextAreaElement.disabled
+    (2698, 3968), // HTMLTextAreaElement.form
+    (3495, 3969), // HTMLTextAreaElement.labels
+    (3746, 3970), // HTMLTextAreaElement.maxLength
+    (3818, 3971), // HTMLTextAreaElement.minLength
+    (3887, 3972), // HTMLTextAreaElement.name
+    (4179, 3973), // HTMLTextAreaElement.placeholder
+    (4388, 3974), // HTMLTextAreaElement.readOnly
+    (4548, 3975), // HTMLTextAreaElement.reportValidity
+    (4588, 3976), // HTMLTextAreaElement.required
+    (4679, 3977), // HTMLTextAreaElement.rows
+    (4778, 3978), // HTMLTextAreaElement.select
+    (4787, 3979), // HTMLTextAreaElement.select_event
+    (4795, 3980), // HTMLTextAreaElement.selectionDirection
+    (4796, 3981), // HTMLTextAreaElement.selectionEnd
+    (4797, 3982), // HTMLTextAreaElement.selectionStart
+    (4798, 3983), // HTMLTextAreaElement.selectionchange_event
+    (4846, 3984), // HTMLTextAreaElement.setCustomValidity
+    (4908, 3985), // HTMLTextAreaElement.setRangeText
+    (4919, 3986), // HTMLTextAreaElement.setSelectionRange
+    (5286, 3987), // HTMLTextAreaElement.textLength
+    (5443, 3988), // HTMLTextAreaElement.type
+    (5610, 3989), // HTMLTextAreaElement.validationMessage
+    (5613, 3990), // HTMLTextAreaElement.validity
+    (5614, 3991), // HTMLTextAreaElement.value
+    (5740, 3992), // HTMLTextAreaElement.willValidate
+    (5756, 3993), // HTMLTextAreaElement.wrap
+    (2173, 3995), // HTMLTimeElement.dateTime
+    (5282, 3997), // HTMLTitleElement.text
+    (2135, 3999), // HTMLTrackElement.cuechange_event
+    (2191, 4000), // HTMLTrackElement.default
+    (3489, 4001), // HTMLTrackElement.kind
+    (3494, 4002), // HTMLTrackElement.label
+    (4397, 4003), // HTMLTrackElement.readyState
+    (5083, 4004), // HTMLTrackElement.src
+    (5087, 4005), // HTMLTrackElement.srclang
+    (5391, 4006), // HTMLTrackElement.track
+    (1838, 4008), // HTMLUListElement.compact
+    (5443, 4009), // HTMLUListElement.type
+    (1661, 4012), // HTMLUserMediaElement.cancel_event
+    (2513, 4013), // HTMLUserMediaElement.error
+    (2517, 4014), // HTMLUserMediaElement.error_event
+    (4843, 4015), // HTMLUserMediaElement.setConstraints
+    (5140, 4016), // HTMLUserMediaElement.stream
+    (5154, 4017), // HTMLUserMediaElement.stream_event
+    (1659, 4019), // HTMLVideoElement.cancelVideoFrameCallback
+    (2315, 4020), // HTMLVideoElement.disablePictureInPicture
+    (2501, 4021), // HTMLVideoElement.enterpictureinpicture_event
+    (3093, 4022), // HTMLVideoElement.getVideoPlaybackQuality
+    (3173, 4023), // HTMLVideoElement.height
+    (3529, 4024), // HTMLVideoElement.leavepictureinpicture_event
+    (3857, 4025), // HTMLVideoElement.mozDecodedFrames
+    (3859, 4026), // HTMLVideoElement.mozFrameDelay
+    (3861, 4027), // HTMLVideoElement.mozHasAudio
+    (3865, 4028), // HTMLVideoElement.mozPaintedFrames
+    (3866, 4029), // HTMLVideoElement.mozParsedFrames
+    (3867, 4030), // HTMLVideoElement.mozPresentedFrames
+    (4193, 4031), // HTMLVideoElement.playsInline
+    (4241, 4032), // HTMLVideoElement.poster
+    (4571, 4033), // HTMLVideoElement.requestPictureInPicture
+    (4583, 4034), // HTMLVideoElement.requestVideoFrameCallback
+    (4603, 4035), // HTMLVideoElement.resize_event
+    (5659, 4036), // HTMLVideoElement.videoHeight
+    (5661, 4037), // HTMLVideoElement.videoWidth
+    (5739, 4038), // HTMLVideoElement.width
+    (481, 4040), // HashChangeEvent.HashChangeEvent
+    (3913, 4041), // HashChangeEvent.newURL
+    (3969, 4042), // HashChangeEvent.oldURL
+    (4, 4044), // Headers.@@iterator
+    (482, 4045), // Headers.Headers
+    (1351, 4046), // Headers.append
+    (2212, 4047), // Headers.delete
+    (2503, 4048), // Headers.entries
+    (2692, 4049), // Headers.forEach
+    (2796, 4050), // Headers.get
+    (3027, 4051), // Headers.getSetCookie
+    (3141, 4052), // Headers.has
+    (3450, 4053), // Headers.iterate_combined_duplicates
+    (3451, 4054), // Headers.iterate_lexicographically
+    (3486, 4055), // Headers.keys
+    (4824, 4056), // Headers.set
+    (5622, 4057), // Headers.values
+    (4, 4059), // Highlight.@@iterator
+    (483, 4060), // Highlight.Highlight
+    (1248, 4061), // Highlight.add
+    (1744, 4062), // Highlight.clear
+    (2212, 4063), // Highlight.delete
+    (2503, 4064), // Highlight.entries
+    (2692, 4065), // Highlight.forEach
+    (3141, 4066), // Highlight.has
+    (3486, 4067), // Highlight.keys
+    (4284, 4068), // Highlight.priority
+    (5011, 4069), // Highlight.size
+    (5443, 4070), // Highlight.type
+    (5622, 4071), // Highlight.values
+    (4, 4073), // HighlightRegistry.@@iterator
+    (1744, 4074), // HighlightRegistry.clear
+    (2212, 4075), // HighlightRegistry.delete
+    (2503, 4076), // HighlightRegistry.entries
+    (2692, 4077), // HighlightRegistry.forEach
+    (2796, 4078), // HighlightRegistry.get
+    (3141, 4079), // HighlightRegistry.has
+    (3181, 4080), // HighlightRegistry.highlightsFromPoint
+    (3486, 4081), // HighlightRegistry.keys
+    (4824, 4082), // HighlightRegistry.set
+    (5011, 4083), // HighlightRegistry.size
+    (5622, 4084), // HighlightRegistry.values
+    (1508, 4086), // History.back
+    (2708, 4087), // History.forward
+    (3106, 4088), // History.go
+    (3535, 4089), // History.length
+    (4326, 4090), // History.pushState
+    (4539, 4092), // History.replaceState
+    (4740, 4094), // History.scrollRestoration
+    (5106, 4095), // History.state
+    (1282, 4097), // IDBCursor.advance
+    (1926, 4098), // IDBCursor.continue
+    (1927, 4099), // IDBCursor.continuePrimaryKey
+    (2212, 4100), // IDBCursor.delete
+    (2311, 4101), // IDBCursor.direction
+    (3474, 4102), // IDBCursor.key
+    (4278, 4104), // IDBCursor.primaryKey
+    (4549, 4105), // IDBCursor.request
+    (5045, 4106), // IDBCursor.source
+    (5542, 4107), // IDBCursor.update
+    (5754, 4108), // IDBCursor.worker_support
+    (5614, 4110), // IDBCursorWithValue.value
+    (5754, 4111), // IDBCursorWithValue.worker_support
+    (1212, 4113), // IDBDatabase.abort_event
+    (1792, 4114), // IDBDatabase.close
+    (1795, 4115), // IDBDatabase.close_event
+    (2041, 4116), // IDBDatabase.createObjectStore
+    (2223, 4117), // IDBDatabase.deleteObjectStore
+    (3887, 4118), // IDBDatabase.name
+    (3953, 4119), // IDBDatabase.objectStoreNames
+    (5397, 4120), // IDBDatabase.transaction
+    (5632, 4122), // IDBDatabase.version
+    (5633, 4123), // IDBDatabase.versionchange_event
+    (5754, 4124), // IDBDatabase.worker_support
+    (1804, 4126), // IDBFactory.cmp
+    (2169, 4127), // IDBFactory.databases
+    (2218, 4128), // IDBFactory.deleteDatabase
+    (3980, 4129), // IDBFactory.open
+    (5754, 4130), // IDBFactory.worker_support
+    (1964, 4132), // IDBIndex.count
+    (2796, 4133), // IDBIndex.get
+    (2802, 4134), // IDBIndex.getAll
+    (2803, 4137), // IDBIndex.getAllKeys
+    (2804, 4140), // IDBIndex.getAllRecords
+    (2935, 4141), // IDBIndex.getKey
+    (3361, 4142), // IDBIndex.isAutoLocale
+    (3478, 4143), // IDBIndex.keyPath
+    (3592, 4144), // IDBIndex.locale
+    (3879, 4145), // IDBIndex.multiEntry
+    (3887, 4146), // IDBIndex.name
+    (3952, 4148), // IDBIndex.objectStore
+    (3981, 4149), // IDBIndex.openCursor
+    (3982, 4150), // IDBIndex.openKeyCursor
+    (5515, 4151), // IDBIndex.unique
+    (5754, 4152), // IDBIndex.worker_support
+    (1599, 4154), // IDBKeyRange.bound
+    (1600, 4154), // IDBKeyRange.bound_static
+    (3237, 4155), // IDBKeyRange.includes
+    (3625, 4156), // IDBKeyRange.lower
+    (3626, 4157), // IDBKeyRange.lowerBound
+    (3627, 4157), // IDBKeyRange.lowerBound_static
+    (3628, 4158), // IDBKeyRange.lowerOpen
+    (3975, 4159), // IDBKeyRange.only
+    (3976, 4159), // IDBKeyRange.only_static
+    (5572, 4160), // IDBKeyRange.upper
+    (5573, 4161), // IDBKeyRange.upperBound
+    (5574, 4161), // IDBKeyRange.upperBound_static
+    (5575, 4162), // IDBKeyRange.upperOpen
+    (5754, 4163), // IDBKeyRange.worker_support
+    (1248, 4165), // IDBObjectStore.add
+    (1481, 4166), // IDBObjectStore.autoIncrement
+    (1744, 4167), // IDBObjectStore.clear
+    (1964, 4168), // IDBObjectStore.count
+    (2032, 4169), // IDBObjectStore.createIndex
+    (2212, 4171), // IDBObjectStore.delete
+    (2221, 4172), // IDBObjectStore.deleteIndex
+    (2796, 4173), // IDBObjectStore.get
+    (2802, 4174), // IDBObjectStore.getAll
+    (2803, 4177), // IDBObjectStore.getAllKeys
+    (2804, 4180), // IDBObjectStore.getAllRecords
+    (2935, 4181), // IDBObjectStore.getKey
+    (3247, 4182), // IDBObjectStore.index
+    (3248, 4183), // IDBObjectStore.indexNames
+    (3478, 4184), // IDBObjectStore.keyPath
+    (3887, 4185), // IDBObjectStore.name
+    (3981, 4187), // IDBObjectStore.openCursor
+    (3982, 4188), // IDBObjectStore.openKeyCursor
+    (4329, 4189), // IDBObjectStore.put
+    (5397, 4190), // IDBObjectStore.transaction
+    (5754, 4191), // IDBObjectStore.worker_support
+    (1584, 4193), // IDBOpenDBRequest.blocked_event
+    (5568, 4194), // IDBOpenDBRequest.upgradeneeded_event
+    (5754, 4195), // IDBOpenDBRequest.worker_support
+    (3474, 4197), // IDBRecord.key
+    (4278, 4198), // IDBRecord.primaryKey
+    (5614, 4199), // IDBRecord.value
+    (2513, 4201), // IDBRequest.error
+    (2517, 4204), // IDBRequest.error_event
+    (4397, 4205), // IDBRequest.readyState
+    (4627, 4206), // IDBRequest.result
+    (5045, 4207), // IDBRequest.source
+    (5191, 4208), // IDBRequest.success_event
+    (5397, 4209), // IDBRequest.transaction
+    (5754, 4210), // IDBRequest.worker_support
+    (1211, 4212), // IDBTransaction.abort
+    (1212, 4213), // IDBTransaction.abort_event
+    (1834, 4214), // IDBTransaction.commit
+    (1848, 4215), // IDBTransaction.complete_event
+    (2174, 4216), // IDBTransaction.db
+    (2412, 4217), // IDBTransaction.durability
+    (2513, 4218), // IDBTransaction.error
+    (2517, 4220), // IDBTransaction.error_event
+    (3832, 4221), // IDBTransaction.mode
+    (3952, 4222), // IDBTransaction.objectStore
+    (3953, 4223), // IDBTransaction.objectStoreNames
+    (5754, 4224), // IDBTransaction.worker_support
+    (499, 4226), // IDBVersionChangeEvent.IDBVersionChangeEvent
+    (3916, 4227), // IDBVersionChangeEvent.newVersion
+    (3971, 4228), // IDBVersionChangeEvent.oldVersion
+    (5754, 4229), // IDBVersionChangeEvent.worker_support
+    (500, 4231), // IIRFilterNode.IIRFilterNode
+    (2910, 4232), // IIRFilterNode.getFrequencyResponse
+    (1870, 4234), // IdentityCredential.configURL
+    (2323, 4235), // IdentityCredential.disconnect
+    (2325, 4235), // IdentityCredential.disconnect_static
+    (3362, 4236), // IdentityCredential.isAutoSelected
+    (5368, 4237), // IdentityCredential.token
+    (502, 4239), // IdentityCredentialError.IdentityCredentialError
+    (2513, 4240), // IdentityCredentialError.error
+    (5577, 4241), // IdentityCredentialError.url
+    (1792, 4243), // IdentityProvider.close
+    (1796, 4243), // IdentityProvider.close_static
+    (3087, 4244), // IdentityProvider.getUserInfo
+    (3088, 4244), // IdentityProvider.getUserInfo_static
+    (4604, 4245), // IdentityProvider.resolve
+    (4607, 4245), // IdentityProvider.resolve_static
+    (2303, 4247), // IdleDeadline.didTimeout
+    (5312, 4248), // IdleDeadline.timeRemaining
+    (505, 4250), // IdleDetector.IdleDetector
+    (1700, 4251), // IdleDetector.change_event
+    (4568, 4252), // IdleDetector.requestPermission
+    (4569, 4252), // IdleDetector.requestPermission_static
+    (4718, 4253), // IdleDetector.screenState
+    (5095, 4254), // IdleDetector.start
+    (5597, 4255), // IdleDetector.userState
+    (1792, 4257), // ImageBitmap.close
+    (3173, 4258), // ImageBitmap.height
+    (5739, 4259), // ImageBitmap.width
+    (1669, 4261), // ImageBitmapRenderingContext.canvas
+    (5402, 4262), // ImageBitmapRenderingContext.transferFromImageBitmap
+    (509, 4264), // ImageCapture.ImageCapture
+    (2975, 4265), // ImageCapture.getPhotoCapabilities
+    (2976, 4266), // ImageCapture.getPhotoSettings
+    (3109, 4267), // ImageCapture.grabFrame
+    (5253, 4268), // ImageCapture.takePhoto
+    (5391, 4269), // ImageCapture.track
+    (510, 4271), // ImageData.ImageData
+    (1825, 4275), // ImageData.colorSpace
+    (2165, 4276), // ImageData.data
+    (3173, 4277), // ImageData.height
+    (4175, 4278), // ImageData.pixelFormat
+    (5739, 4279), // ImageData.width
+    (5754, 4280), // ImageData.worker_support
+    (511, 4282), // ImageDecoder.ImageDecoder
+    (1792, 4283), // ImageDecoder.close
+    (1847, 4284), // ImageDecoder.complete
+    (1849, 4285), // ImageDecoder.completed
+    (2181, 4286), // ImageDecoder.decode
+    (3433, 4287), // ImageDecoder.isTypeSupported
+    (3434, 4287), // ImageDecoder.isTypeSupported_static
+    (4591, 4288), // ImageDecoder.reset
+    (5396, 4289), // ImageDecoder.tracks
+    (5443, 4290), // ImageDecoder.type
+    (1332, 4292), // ImageTrack.animated
+    (2720, 4293), // ImageTrack.frameCount
+    (4531, 4294), // ImageTrack.repetitionCount
+    (4788, 4295), // ImageTrack.selected
+    (3535, 4297), // ImageTrackList.length
+    (4396, 4298), // ImageTrackList.ready
+    (4789, 4299), // ImageTrackList.selectedIndex
+    (4792, 4300), // ImageTrackList.selectedTrack
+    (4575, 4302), // Ink.requestPresenter
+    (516, 4304), // InputDeviceCapabilities.InputDeviceCapabilities
+    (2638, 4305), // InputDeviceCapabilities.firesTouchEvents
+    (2838, 4307), // InputDeviceInfo.getCapabilities
+    (518, 4309), // InputEvent.InputEvent
+    (2165, 4310), // InputEvent.data
+    (2166, 4311), // InputEvent.dataTransfer
+    (3056, 4312), // InputEvent.getTargetRanges
+    (3291, 4313), // InputEvent.inputType
+    (3365, 4315), // InputEvent.isComposing
+    (519, 4317), // InstallEvent.InstallEvent
+    (1262, 4318), // InstallEvent.addRoutes
+    (520, 4320), // InstallResultEvent.InstallResultEvent
+    (4627, 4321), // InstallResultEvent.result
+    (522, 10539), // Int16Array.Int16Array
+    (523, 10543), // Int32Array.Int32Array
+    (524, 10547), // Int8Array.Int8Array
+    (3330, 4323), // InteractionContentfulPaint.interactionId
+    (3500, 4324), // InteractionContentfulPaint.largestContentfulPaint
+    (4058, 4325), // InteractionContentfulPaint.paintTime
+    (4262, 4326), // InteractionContentfulPaint.presentationTime
+    (5341, 4327), // InteractionContentfulPaint.toJSON
+    (526, 4329), // InterestEvent.InterestEvent
+    (5045, 4330), // InterestEvent.source
+    (527, 10551), // InternalError.InternalError
+    (528, 4332), // IntersectionObserver.IntersectionObserver
+    (2209, 4335), // IntersectionObserver.delay
+    (2323, 4336), // IntersectionObserver.disconnect
+    (3954, 4337), // IntersectionObserver.observe
+    (4661, 4338), // IntersectionObserver.root
+    (4664, 4339), // IntersectionObserver.rootMargin
+    (4737, 4340), // IntersectionObserver.scrollMargin
+    (5254, 4341), // IntersectionObserver.takeRecords
+    (5300, 4342), // IntersectionObserver.thresholds
+    (5392, 4343), // IntersectionObserver.trackVisibility
+    (5525, 4344), // IntersectionObserver.unobserve
+    (529, 4346), // IntersectionObserverEntry.IntersectionObserverEntry
+    (1604, 4347), // IntersectionObserverEntry.boundingClientRect
+    (3344, 4348), // IntersectionObserverEntry.intersectionRatio
+    (3345, 4349), // IntersectionObserverEntry.intersectionRect
+    (3396, 4350), // IntersectionObserverEntry.isIntersecting
+    (3441, 4351), // IntersectionObserverEntry.isVisible
+    (4662, 4352), // IntersectionObserverEntry.rootBounds
+    (5259, 4353), // IntersectionObserverEntry.target
+    (5306, 4354), // IntersectionObserverEntry.time
+    (1830, 4356), // InterventionReportBody.columnNumber
+    (3207, 4357), // InterventionReportBody.id
+    (3555, 4358), // InterventionReportBody.lineNumber
+    (3794, 4359), // InterventionReportBody.message
+    (5051, 4360), // InterventionReportBody.sourceFile
+    (5341, 4361), // InterventionReportBody.toJSON
+    (194, 10553), // Intl.Collator
+    (245, 10565), // Intl.DateTimeFormat
+    (260, 10589), // Intl.DisplayNames
+    (270, 10594), // Intl.DurationFormat
+    (552, 10600), // Intl.ListFormat
+    (553, 10606), // Intl.Locale
+    (658, 10630), // Intl.NumberFormat
+    (734, 10665), // Intl.PluralRules
+    (809, 10676), // Intl.RelativeTimeFormat
+    (929, 10686), // Intl.Segmenter
+    (930, 10691), // Intl.Segments
+    (2837, 10694), // Intl.getCanonicalLocales
+    (5204, 10695), // Intl.supportedValuesOf
+    (2, 10704), // Iterator.@@dispose
+    (4, 10705), // Iterator.@@iterator
+    (533, 10706), // Iterator.Iterator
+    (1735, 10707), // Iterator.chunks
+    (1862, 10708), // Iterator.concat
+    (2405, 10709), // Iterator.drop
+    (2528, 10710), // Iterator.every
+    (2626, 10711), // Iterator.filter
+    (2630, 10712), // Iterator.find
+    (2651, 10713), // Iterator.flatMap
+    (2692, 10714), // Iterator.forEach
+    (2736, 10715), // Iterator.from
+    (3237, 10716), // Iterator.includes
+    (3456, 10717), // Iterator.join
+    (3669, 10718), // Iterator.map
+    (4420, 10719), // Iterator.reduce
+    (5040, 10720), // Iterator.some
+    (5252, 10721), // Iterator.take
+    (5329, 10722), // Iterator.toArray
+    (5744, 10723), // Iterator.windows
+    (5787, 10724), // Iterator.zip
+    (5788, 10725), // Iterator.zipKeyed
+    (3410, 10727), // JSON.isRawJSON
+    (3461, 10728), // JSON.json_superset
+    (4069, 10729), // JSON.parse
+    (4375, 10731), // JSON.rawJSON
+    (5160, 10732), // JSON.stringify
+    (2939, 4364), // Keyboard.getLayoutMap
+    (3597, 4365), // Keyboard.lock
+    (5521, 4366), // Keyboard.unlock
+    (537, 4368), // KeyboardEvent.KeyboardEvent
+    (1311, 4369), // KeyboardEvent.altKey
+    (1709, 4370), // KeyboardEvent.charCode
+    (1805, 4371), // KeyboardEvent.code
+    (2134, 4372), // KeyboardEvent.ctrlKey
+    (2950, 4373), // KeyboardEvent.getModifierState
+    (3264, 4386), // KeyboardEvent.initKeyboardEvent
+    (3365, 4387), // KeyboardEvent.isComposing
+    (3474, 4388), // KeyboardEvent.key
+    (3475, 4392), // KeyboardEvent.keyCode
+    (3477, 4393), // KeyboardEvent.keyIdentifier
+    (3594, 4394), // KeyboardEvent.location
+    (3799, 4395), // KeyboardEvent.metaKey
+    (4529, 4396), // KeyboardEvent.repeat
+    (4975, 4397), // KeyboardEvent.shiftKey
+    (4, 4399), // KeyboardLayoutMap.@@iterator
+    (2503, 4400), // KeyboardLayoutMap.entries
+    (2692, 4401), // KeyboardLayoutMap.forEach
+    (2796, 4402), // KeyboardLayoutMap.get
+    (3141, 4403), // KeyboardLayoutMap.has
+    (3486, 4404), // KeyboardLayoutMap.keys
+    (5011, 4405), // KeyboardLayoutMap.size
+    (5622, 4406), // KeyboardLayoutMap.values
+    (539, 4408), // KeyframeEffect.KeyframeEffect
+    (1853, 4409), // KeyframeEffect.composite
+    (2936, 4410), // KeyframeEffect.getKeyframes
+    (3452, 4411), // KeyframeEffect.iterationComposite
+    (4317, 4412), // KeyframeEffect.pseudoElement
+    (4880, 4413), // KeyframeEffect.setKeyframes
+    (5259, 4414), // KeyframeEffect.target
+    (1495, 4416), // LanguageDetector.availability
+    (1496, 4416), // LanguageDetector.availability_static
+    (1983, 4417), // LanguageDetector.create
+    (2120, 4417), // LanguageDetector.create_static
+    (2277, 4418), // LanguageDetector.destroy
+    (2283, 4419), // LanguageDetector.detect
+    (2547, 4420), // LanguageDetector.expectedInputLanguages
+    (3288, 4421), // LanguageDetector.inputQuota
+    (3777, 4422), // LanguageDetector.measureInputUsage
+    (1351, 4424), // LanguageModel.append
+    (1495, 4425), // LanguageModel.availability
+    (1496, 4425), // LanguageModel.availability_static
+    (1788, 4426), // LanguageModel.clone
+    (1920, 4427), // LanguageModel.contextUsage
+    (1921, 4428), // LanguageModel.contextWindow
+    (1924, 4429), // LanguageModel.contextoverflow_event
+    (1983, 4430), // LanguageModel.create
+    (2120, 4430), // LanguageModel.create_static
+    (2277, 4431), // LanguageModel.destroy
+    (3776, 4432), // LanguageModel.measureContextUsage
+    (4304, 4433), // LanguageModel.prompt
+    (4305, 4434), // LanguageModel.promptStreaming
+    (2439, 4436), // LargestContentfulPaint.element
+    (3207, 4437), // LargestContentfulPaint.id
+    (3575, 4438), // LargestContentfulPaint.loadTime
+    (4058, 4439), // LargestContentfulPaint.paintTime
+    (4262, 4440), // LargestContentfulPaint.presentationTime
+    (4523, 4441), // LargestContentfulPaint.renderTime
+    (5011, 4443), // LargestContentfulPaint.size
+    (5341, 4444), // LargestContentfulPaint.toJSON
+    (5577, 4445), // LargestContentfulPaint.url
+    (2618, 4447), // LaunchParams.files
+    (5266, 4448), // LaunchParams.targetURL
+    (4844, 4450), // LaunchQueue.setConsumer
+    (3131, 4452), // LayoutShift.hadRecentInput
+    (3509, 4453), // LayoutShift.lastInputTime
+    (5058, 4454), // LayoutShift.sources
+    (5341, 4455), // LayoutShift.toJSON
+    (5614, 4456), // LayoutShift.value
+    (2145, 4458), // LayoutShiftAttribution.currentRect
+    (3928, 4459), // LayoutShiftAttribution.node
+    (4275, 4460), // LayoutShiftAttribution.previousRect
+    (5341, 4461), // LayoutShiftAttribution.toJSON
+    (551, 4463), // LinearAccelerationSensor.LinearAccelerationSensor
+    (1319, 4465), // Location.ancestorOrigins
+    (1441, 4466), // Location.assign
+    (3165, 4467), // Location.hash
+    (3185, 4468), // Location.host
+    (3187, 4469), // Location.hostname
+    (3188, 4470), // Location.href
+    (4010, 4471), // Location.origin
+    (4090, 4472), // Location.pathname
+    (4224, 4473), // Location.port
+    (4313, 4474), // Location.protocol
+    (4478, 4475), // Location.reload
+    (4532, 4476), // Location.replace
+    (4762, 4477), // Location.search
+    (5355, 4478), // Location.toString
+    (3832, 4480), // Lock.mode
+    (3887, 4481), // Lock.name
+    (4337, 4483), // LockManager.query
+    (4549, 4484), // LockManager.request
+    (3294, 4486), // MIDIAccess.inputs
+    (4026, 4487), // MIDIAccess.outputs
+    (5107, 4488), // MIDIAccess.statechange_event
+    (5238, 4489), // MIDIAccess.sysexEnabled
+    (560, 4491), // MIDIConnectionEvent.MIDIConnectionEvent
+    (4224, 4492), // MIDIConnectionEvent.port
+    (3806, 4494), // MIDIInput.midimessage_event
+    (4, 4496), // MIDIInputMap.@@iterator
+    (2503, 4497), // MIDIInputMap.entries
+    (2692, 4498), // MIDIInputMap.forEach
+    (2796, 4499), // MIDIInputMap.get
+    (3141, 4500), // MIDIInputMap.has
+    (3486, 4501), // MIDIInputMap.keys
+    (5011, 4502), // MIDIInputMap.size
+    (5622, 4503), // MIDIInputMap.values
+    (563, 4505), // MIDIMessageEvent.MIDIMessageEvent
+    (2165, 4506), // MIDIMessageEvent.data
+    (1744, 4508), // MIDIOutput.clear
+    (4803, 4509), // MIDIOutput.send
+    (4, 4511), // MIDIOutputMap.@@iterator
+    (2503, 4512), // MIDIOutputMap.entries
+    (2692, 4513), // MIDIOutputMap.forEach
+    (2796, 4514), // MIDIOutputMap.get
+    (3141, 4515), // MIDIOutputMap.has
+    (3486, 4516), // MIDIOutputMap.keys
+    (5011, 4517), // MIDIOutputMap.size
+    (5622, 4518), // MIDIOutputMap.values
+    (1792, 4520), // MIDIPort.close
+    (1885, 4521), // MIDIPort.connection
+    (3207, 4522), // MIDIPort.id
+    (3667, 4523), // MIDIPort.manufacturer
+    (3887, 4524), // MIDIPort.name
+    (3980, 4525), // MIDIPort.open
+    (5106, 4526), // MIDIPort.state
+    (5107, 4527), // MIDIPort.statechange_event
+    (5443, 4528), // MIDIPort.type
+    (5632, 4529), // MIDIPort.version
+    (2007, 4531), // ML.createContext
+    (2006, 4533), // MLContext.createConstantTensor
+    (2105, 4534), // MLContext.createTensor
+    (2277, 4535), // MLContext.destroy
+    (2326, 4536), // MLContext.dispatch
+    (3622, 4537), // MLContext.lost
+    (3977, 4538), // MLContext.opSupportLimits
+    (4390, 4539), // MLContext.readTensor
+    (5762, 4540), // MLContext.writeTensor
+    (2277, 4542), // MLGraph.destroy
+    (572, 4544), // MLGraphBuilder.MLGraphBuilder
+    (1216, 4545), // MLGraphBuilder.abs
+    (1248, 4546), // MLGraphBuilder.add
+    (1373, 4547), // MLGraphBuilder.argMax
+    (1374, 4548), // MLGraphBuilder.argMin
+    (1500, 4549), // MLGraphBuilder.averagePool2d
+    (1524, 4550), // MLGraphBuilder.batchNormalization
+    (1621, 4551), // MLGraphBuilder.build
+    (1681, 4552), // MLGraphBuilder.cast
+    (1685, 4553), // MLGraphBuilder.ceil
+    (1741, 4554), // MLGraphBuilder.clamp
+    (1862, 4555), // MLGraphBuilder.concat
+    (1893, 4556), // MLGraphBuilder.constant
+    (1937, 4557), // MLGraphBuilder.conv2d
+    (1938, 4558), // MLGraphBuilder.convTranspose2d
+    (1962, 4559), // MLGraphBuilder.cos
+    (2138, 4560), // MLGraphBuilder.cumulativeSum
+    (2265, 4561), // MLGraphBuilder.dequantizeLinear
+    (2341, 4562), // MLGraphBuilder.div
+    (2446, 4563), // MLGraphBuilder.elu
+    (2510, 4564), // MLGraphBuilder.equal
+    (2512, 4565), // MLGraphBuilder.erf
+    (2543, 4566), // MLGraphBuilder.exp
+    (2544, 4567), // MLGraphBuilder.expand
+    (2655, 4568), // MLGraphBuilder.floor
+    (2776, 4569), // MLGraphBuilder.gather
+    (2777, 4570), // MLGraphBuilder.gatherElements
+    (2778, 4571), // MLGraphBuilder.gatherND
+    (2783, 4572), // MLGraphBuilder.gelu
+    (2784, 4573), // MLGraphBuilder.gemm
+    (3115, 4574), // MLGraphBuilder.greater
+    (3116, 4575), // MLGraphBuilder.greaterOrEqual
+    (3129, 4576), // MLGraphBuilder.gru
+    (3130, 4577), // MLGraphBuilder.gruCell
+    (3138, 4578), // MLGraphBuilder.hardSigmoid
+    (3139, 4579), // MLGraphBuilder.hardSwish
+    (3209, 4580), // MLGraphBuilder.identity
+    (3285, 4581), // MLGraphBuilder.input
+    (3327, 4582), // MLGraphBuilder.instanceNormalization
+    (3392, 4583), // MLGraphBuilder.isInfinite
+    (3399, 4584), // MLGraphBuilder.isNaN
+    (3493, 4585), // MLGraphBuilder.l2Pool2d
+    (3521, 4586), // MLGraphBuilder.layerNormalization
+    (3527, 4587), // MLGraphBuilder.leakyRelu
+    (3538, 4588), // MLGraphBuilder.lesser
+    (3539, 4589), // MLGraphBuilder.lesserOrEqual
+    (3559, 4590), // MLGraphBuilder.linear
+    (3601, 4591), // MLGraphBuilder.log
+    (3606, 4592), // MLGraphBuilder.logicalAnd
+    (3607, 4593), // MLGraphBuilder.logicalNot
+    (3608, 4594), // MLGraphBuilder.logicalOr
+    (3609, 4595), // MLGraphBuilder.logicalXor
+    (3631, 4596), // MLGraphBuilder.lstm
+    (3632, 4597), // MLGraphBuilder.lstmCell
+    (3708, 4598), // MLGraphBuilder.matmul
+    (3711, 4599), // MLGraphBuilder.max
+    (3749, 4600), // MLGraphBuilder.maxPool2d
+    (3809, 4601), // MLGraphBuilder.min
+    (3874, 4602), // MLGraphBuilder.mul
+    (3906, 4603), // MLGraphBuilder.neg
+    (3936, 4604), // MLGraphBuilder.notEqual
+    (4045, 4605), // MLGraphBuilder.pad
+    (4243, 4606), // MLGraphBuilder.pow
+    (4253, 4607), // MLGraphBuilder.prelu
+    (4335, 4608), // MLGraphBuilder.quantizeLinear
+    (4405, 4609), // MLGraphBuilder.reciprocal
+    (4421, 4610), // MLGraphBuilder.reduceL1
+    (4422, 4611), // MLGraphBuilder.reduceL2
+    (4423, 4612), // MLGraphBuilder.reduceLogSum
+    (4424, 4613), // MLGraphBuilder.reduceLogSumExp
+    (4425, 4614), // MLGraphBuilder.reduceMax
+    (4426, 4615), // MLGraphBuilder.reduceMean
+    (4427, 4616), // MLGraphBuilder.reduceMin
+    (4428, 4617), // MLGraphBuilder.reduceProduct
+    (4430, 4618), // MLGraphBuilder.reduceSum
+    (4431, 4619), // MLGraphBuilder.reduceSumSquare
+    (4479, 4620), // MLGraphBuilder.relu
+    (4590, 4621), // MLGraphBuilder.resample2d
+    (4598, 4622), // MLGraphBuilder.reshape
+    (4642, 4623), // MLGraphBuilder.reverse
+    (4675, 4624), // MLGraphBuilder.roundEven
+    (4709, 4625), // MLGraphBuilder.scatterElements
+    (4710, 4626), // MLGraphBuilder.scatterND
+    (4992, 4627), // MLGraphBuilder.sigmoid
+    (4993, 4628), // MLGraphBuilder.sign
+    (5005, 4629), // MLGraphBuilder.sin
+    (5025, 4630), // MLGraphBuilder.slice
+    (5037, 4631), // MLGraphBuilder.softmax
+    (5038, 4632), // MLGraphBuilder.softplus
+    (5039, 4633), // MLGraphBuilder.softsign
+    (5076, 4634), // MLGraphBuilder.split
+    (5079, 4635), // MLGraphBuilder.sqrt
+    (5175, 4636), // MLGraphBuilder.sub
+    (5256, 4637), // MLGraphBuilder.tan
+    (5258, 4638), // MLGraphBuilder.tanh
+    (5303, 4639), // MLGraphBuilder.tile
+    (5426, 4640), // MLGraphBuilder.transpose
+    (5428, 4641), // MLGraphBuilder.triangular
+    (5736, 4642), // MLGraphBuilder.where
+    (2167, 4644), // MLOperand.dataType
+    (4968, 4645), // MLOperand.shape
+    (1893, 4647), // MLTensor.constant
+    (2167, 4648), // MLTensor.dataType
+    (2277, 4649), // MLTensor.destroy
+    (4393, 4650), // MLTensor.readable
+    (4968, 4651), // MLTensor.shape
+    (5758, 4652), // MLTensor.writable
+    (575, 4654), // Magnetometer.Magnetometer
+    (5772, 4655), // Magnetometer.x
+    (5781, 4656), // Magnetometer.y
+    (5786, 4657), // Magnetometer.z
+    (576, 4659), // ManagedMediaSource.ManagedMediaSource
+    (2497, 4660), // ManagedMediaSource.endstreaming_event
+    (5105, 4661), // ManagedMediaSource.startstreaming_event
+    (5155, 4662), // ManagedMediaSource.streaming
+    (1620, 4664), // ManagedSourceBuffer.bufferedchange_event
+    (4, 10735), // Map.@@iterator
+    (9, 10736), // Map.@@species
+    (578, 10737), // Map.Map
+    (1744, 10740), // Map.clear
+    (2212, 10741), // Map.delete
+    (2503, 10742), // Map.entries
+    (2692, 10743), // Map.forEach
+    (2796, 10744), // Map.get
+    (2962, 10745), // Map.getOrInsert
+    (2963, 10746), // Map.getOrInsertComputed
+    (3120, 10747), // Map.groupBy
+    (3141, 10748), // Map.has
+    (3482, 10749), // Map.key_equality_for_zeros
+    (3486, 10750), // Map.keys
+    (4824, 10751), // Map.set
+    (5011, 10752), // Map.size
+    (5622, 10753), // Map.values
+    (272, 10755), // Math.E
+    (540, 10756), // Math.LN10
+    (541, 10757), // Math.LN2
+    (542, 10758), // Math.LOG10E
+    (543, 10759), // Math.LOG2E
+    (681, 10760), // Math.PI
+    (820, 10761), // Math.SQRT1_2
+    (821, 10762), // Math.SQRT2
+    (1216, 10763), // Math.abs
+    (1225, 10764), // Math.acos
+    (1226, 10765), // Math.acosh
+    (1436, 10766), // Math.asin
+    (1437, 10767), // Math.asinh
+    (1449, 10768), // Math.atan
+    (1450, 10769), // Math.atan2
+    (1451, 10770), // Math.atanh
+    (1684, 10771), // Math.cbrt
+    (1685, 10772), // Math.ceil
+    (1801, 10773), // Math.clz32
+    (1962, 10774), // Math.cos
+    (1963, 10775), // Math.cosh
+    (2543, 10776), // Math.exp
+    (2552, 10777), // Math.expm1
+    (2573, 10778), // Math.f16round
+    (2655, 10779), // Math.floor
+    (2759, 10780), // Math.fround
+    (3195, 10781), // Math.hypot
+    (3230, 10782), // Math.imul
+    (3601, 10783), // Math.log
+    (3602, 10784), // Math.log10
+    (3603, 10785), // Math.log1p
+    (3604, 10786), // Math.log2
+    (3711, 10787), // Math.max
+    (3809, 10788), // Math.min
+    (4243, 10789), // Math.pow
+    (4359, 10790), // Math.random
+    (4674, 10791), // Math.round
+    (4993, 10792), // Math.sign
+    (5005, 10793), // Math.sin
+    (5007, 10794), // Math.sinh
+    (5079, 10795), // Math.sqrt
+    (5194, 10796), // Math.sumPrecise
+    (5256, 10797), // Math.tan
+    (5258, 10798), // Math.tanh
+    (5436, 10799), // Math.trunc
+    (3165, 4666), // MathMLAnchorElement.hash
+    (3185, 4667), // MathMLAnchorElement.host
+    (3187, 4668), // MathMLAnchorElement.hostname
+    (3188, 4669), // MathMLAnchorElement.href
+    (3190, 4670), // MathMLAnchorElement.hreflang
+    (4010, 4671), // MathMLAnchorElement.origin
+    (4086, 4672), // MathMLAnchorElement.password
+    (4090, 4673), // MathMLAnchorElement.pathname
+    (4224, 4674), // MathMLAnchorElement.port
+    (4313, 4675), // MathMLAnchorElement.protocol
+    (4762, 4676), // MathMLAnchorElement.search
+    (5259, 4677), // MathMLAnchorElement.target
+    (5443, 4678), // MathMLAnchorElement.type
+    (5600, 4679), // MathMLAnchorElement.username
+    (1463, 4681), // MathMLElement.attributeStyleMap
+    (1486, 4682), // MathMLElement.autofocus
+    (1589, 4683), // MathMLElement.blur
+    (2172, 4684), // MathMLElement.dataset
+    (2657, 4685), // MathMLElement.focus
+    (3933, 4686), // MathMLElement.nonce
+    (5166, 4687), // MathMLElement.style
+    (5245, 4689), // MathMLElement.tabIndex
+    (2188, 4691), // MediaCapabilities.decodingInfo
+    (2474, 4696), // MediaCapabilities.encodingInfo
+    (583, 4702), // MediaController.MediaController
+    (1616, 4703), // MediaController.buffered
+    (2152, 4704), // MediaController.currentTime
+    (2194, 4705), // MediaController.defaultPlaybackRate
+    (2413, 4706), // MediaController.duration
+    (3885, 4707), // MediaController.muted
+    (4096, 4708), // MediaController.pause
+    (4103, 4709), // MediaController.paused
+    (4183, 4710), // MediaController.play
+    (4187, 4711), // MediaController.playbackRate
+    (4188, 4712), // MediaController.playbackState
+    (4191, 4713), // MediaController.played
+    (4773, 4714), // MediaController.seekable
+    (5527, 4715), // MediaController.unpause
+    (5687, 4716), // MediaController.volume
+    (2289, 4718), // MediaDeviceInfo.deviceId
+    (3125, 4719), // MediaDeviceInfo.groupId
+    (3489, 4720), // MediaDeviceInfo.kind
+    (3494, 4721), // MediaDeviceInfo.label
+    (5341, 4722), // MediaDeviceInfo.toJSON
+    (2299, 4724), // MediaDevices.devicechange_event
+    (2506, 4725), // MediaDevices.enumerateDevices
+    (2881, 4726), // MediaDevices.getDisplayMedia
+    (3047, 4735), // MediaDevices.getSupportedConstraints
+    (3089, 4751), // MediaDevices.getUserMedia
+    (4781, 4754), // MediaDevices.selectAudioOutput
+    (4839, 4755), // MediaDevices.setCaptureHandleConfig
+    (586, 4757), // MediaElementAudioSourceNode.MediaElementAudioSourceNode
+    (3783, 4758), // MediaElementAudioSourceNode.mediaElement
+    (587, 4760), // MediaEncryptedEvent.MediaEncryptedEvent
+    (3260, 4761), // MediaEncryptedEvent.initData
+    (3261, 4762), // MediaEncryptedEvent.initDataType
+    (1805, 4764), // MediaError.code
+    (3794, 4765), // MediaError.message
+    (589, 4767), // MediaKeyMessageEvent.MediaKeyMessageEvent
+    (3794, 4768), // MediaKeyMessageEvent.message
+    (3795, 4769), // MediaKeyMessageEvent.messageType
+    (1792, 4771), // MediaKeySession.close
+    (1797, 4772), // MediaKeySession.closed
+    (2548, 4773), // MediaKeySession.expiration
+    (2790, 4774), // MediaKeySession.generateRequest
+    (3479, 4775), // MediaKeySession.keyStatuses
+    (3487, 4776), // MediaKeySession.keystatuseschange_event
+    (3572, 4777), // MediaKeySession.load
+    (3796, 4778), // MediaKeySession.message_event
+    (4484, 4779), // MediaKeySession.remove
+    (4822, 4780), // MediaKeySession.sessionId
+    (5542, 4781), // MediaKeySession.update
+    (4, 4783), // MediaKeyStatusMap.@@iterator
+    (2503, 4784), // MediaKeyStatusMap.entries
+    (2692, 4785), // MediaKeyStatusMap.forEach
+    (2796, 4786), // MediaKeyStatusMap.get
+    (3141, 4787), // MediaKeyStatusMap.has
+    (3486, 4788), // MediaKeyStatusMap.keys
+    (5011, 4789), // MediaKeyStatusMap.size
+    (5622, 4790), // MediaKeyStatusMap.values
+    (2035, 4792), // MediaKeySystemAccess.createMediaKeys
+    (2857, 4793), // MediaKeySystemAccess.getConfiguration
+    (3480, 4794), // MediaKeySystemAccess.keySystem
+    (2097, 4796), // MediaKeys.createSession
+    (3041, 4797), // MediaKeys.getStatusForPolicy
+    (4920, 4798), // MediaKeys.setServerCertificate
+    (1359, 4800), // MediaList.appendMedium
+    (2222, 4801), // MediaList.deleteMedium
+    (3446, 4802), // MediaList.item
+    (3535, 4803), // MediaList.length
+    (3788, 4804), // MediaList.mediaText
+    (5355, 4805), // MediaList.toString
+    (595, 4807), // MediaMetadata.MediaMetadata
+    (1288, 4808), // MediaMetadata.album
+    (1429, 4809), // MediaMetadata.artist
+    (1430, 4810), // MediaMetadata.artwork
+    (1707, 4811), // MediaMetadata.chapterInfo
+    (5326, 4812), // MediaMetadata.title
+    (300, 4814), // MediaQueryList.EventTarget_inheritance
+    (1258, 4815), // MediaQueryList.addListener
+    (1700, 4816), // MediaQueryList.change_event
+    (3707, 4817), // MediaQueryList.matches
+    (3780, 4818), // MediaQueryList.media
+    (4496, 4819), // MediaQueryList.removeListener
+    (597, 4821), // MediaQueryListEvent.MediaQueryListEvent
+    (3707, 4822), // MediaQueryListEvent.matches
+    (3780, 4823), // MediaQueryListEvent.media
+    (598, 4825), // MediaRecorder.MediaRecorder
+    (1468, 4827), // MediaRecorder.audioBitrateMode
+    (1469, 4828), // MediaRecorder.audioBitsPerSecond
+    (2168, 4829), // MediaRecorder.dataavailable_event
+    (2517, 4830), // MediaRecorder.error_event
+    (3433, 4831), // MediaRecorder.isTypeSupported
+    (3434, 4831), // MediaRecorder.isTypeSupported_static
+    (3807, 4832), // MediaRecorder.mimeType
+    (4096, 4833), // MediaRecorder.pause
+    (4102, 4834), // MediaRecorder.pause_event
+    (4555, 4835), // MediaRecorder.requestData
+    (4633, 4836), // MediaRecorder.resume
+    (4636, 4837), // MediaRecorder.resume_event
+    (5095, 4838), // MediaRecorder.start
+    (5103, 4839), // MediaRecorder.start_event
+    (5106, 4840), // MediaRecorder.state
+    (5129, 4841), // MediaRecorder.stop
+    (5133, 4842), // MediaRecorder.stop_event
+    (5140, 4843), // MediaRecorder.stream
+    (5658, 4844), // MediaRecorder.videoBitsPerSecond
+    (599, 4846), // MediaRecorderErrorEvent.MediaRecorderErrorEvent
+    (2513, 4847), // MediaRecorderErrorEvent.error
+    (3800, 4849), // MediaSession.metadata
+    (4188, 4850), // MediaSession.playbackState
+    (4825, 4851), // MediaSession.setActionHandler
+    (4837, 4869), // MediaSession.setCameraActive
+    (4887, 4870), // MediaSession.setMicrophoneActive
+    (4903, 4871), // MediaSession.setPositionState
+    (4917, 4872), // MediaSession.setScreenshareActive
+    (601, 4874), // MediaSource.MediaSource
+    (1236, 4875), // MediaSource.activeSourceBuffers
+    (1264, 4876), // MediaSource.addSourceBuffer
+    (1638, 4877), // MediaSource.canConstructInDedicatedWorker
+    (1639, 4877), // MediaSource.canConstructInDedicatedWorker_static
+    (1757, 4878), // MediaSource.clearLiveSeekableRange
+    (2413, 4879), // MediaSource.duration
+    (2484, 4880), // MediaSource.endOfStream
+    (3134, 4881), // MediaSource.handle
+    (3433, 4882), // MediaSource.isTypeSupported
+    (3434, 4882), // MediaSource.isTypeSupported_static
+    (4397, 4883), // MediaSource.readyState
+    (4505, 4884), // MediaSource.removeSourceBuffer
+    (4882, 4885), // MediaSource.setLiveSeekableRange
+    (5047, 4886), // MediaSource.sourceBuffers
+    (5055, 4887), // MediaSource.sourceclose_event
+    (5056, 4888), // MediaSource.sourceended_event
+    (5057, 4889), // MediaSource.sourceopen_event
+    (5754, 4890), // MediaSource.worker_support
+    (603, 4893), // MediaStream.MediaStream
+    (1233, 4894), // MediaStream.active
+    (1240, 4895), // MediaStream.active_event
+    (1268, 4896), // MediaStream.addTrack
+    (1278, 4897), // MediaStream.addtrack_event
+    (1788, 4898), // MediaStream.clone
+    (2819, 4899), // MediaStream.getAudioTracks
+    (3064, 4900), // MediaStream.getTrackById
+    (3065, 4901), // MediaStream.getTracks
+    (3094, 4902), // MediaStream.getVideoTracks
+    (3207, 4903), // MediaStream.id
+    (3236, 4904), // MediaStream.inactive_event
+    (4507, 4905), // MediaStream.removeTrack
+    (4517, 4906), // MediaStream.removetrack_event
+    (604, 4908), // MediaStreamAudioDestinationNode.MediaStreamAudioDestinationNode
+    (5140, 4909), // MediaStreamAudioDestinationNode.stream
+    (605, 4911), // MediaStreamAudioSourceNode.MediaStreamAudioSourceNode
+    (3787, 4912), // MediaStreamAudioSourceNode.mediaStream
+    (606, 4914), // MediaStreamEvent.MediaStreamEvent
+    (5140, 4915), // MediaStreamEvent.stream
+    (1367, 4917), // MediaStreamTrack.applyConstraints
+    (1678, 4940), // MediaStreamTrack.capturehandlechange_event
+    (1788, 4941), // MediaStreamTrack.clone
+    (1874, 4942), // MediaStreamTrack.configurationchange_event
+    (1913, 4943), // MediaStreamTrack.contentHint
+    (2461, 4944), // MediaStreamTrack.enabled
+    (2492, 4945), // MediaStreamTrack.ended_event
+    (2838, 4946), // MediaStreamTrack.getCapabilities
+    (2840, 4947), // MediaStreamTrack.getCaptureHandle
+    (2858, 4948), // MediaStreamTrack.getConstraints
+    (3028, 4949), // MediaStreamTrack.getSettings
+    (3207, 4951), // MediaStreamTrack.id
+    (3489, 4952), // MediaStreamTrack.kind
+    (3494, 4953), // MediaStreamTrack.label
+    (3884, 4954), // MediaStreamTrack.mute_event
+    (3885, 4955), // MediaStreamTrack.muted
+    (4397, 4956), // MediaStreamTrack.readyState
+    (5109, 4957), // MediaStreamTrack.stats
+    (5129, 4958), // MediaStreamTrack.stop
+    (5524, 4959), // MediaStreamTrack.unmute_event
+    (608, 4961), // MediaStreamTrackAudioSourceNode.MediaStreamTrackAudioSourceNode
+    (1499, 4963), // MediaStreamTrackAudioStats.averageLatency
+    (3516, 4964), // MediaStreamTrackAudioStats.latency
+    (3774, 4965), // MediaStreamTrackAudioStats.maximumLatency
+    (3824, 4966), // MediaStreamTrackAudioStats.minimumLatency
+    (4592, 4967), // MediaStreamTrackAudioStats.resetLatency
+    (5341, 4968), // MediaStreamTrackAudioStats.toJSON
+    (610, 4970), // MediaStreamTrackEvent.MediaStreamTrackEvent
+    (5391, 4971), // MediaStreamTrackEvent.track
+    (611, 4973), // MediaStreamTrackGenerator.MediaStreamTrackGenerator
+    (5758, 4974), // MediaStreamTrackGenerator.writable
+    (612, 4976), // MediaStreamTrackHandle.MediaStreamTrackHandle
+    (613, 4978), // MediaStreamTrackProcessor.MediaStreamTrackProcessor
+    (2320, 4979), // MediaStreamTrackProcessor.discardedFrames
+    (4393, 4980), // MediaStreamTrackProcessor.readable
+    (5380, 4981), // MediaStreamTrackProcessor.totalFrames
+    (2242, 4983), // MediaStreamTrackVideoStats.deliveredFrames
+    (2320, 4984), // MediaStreamTrackVideoStats.discardedFrames
+    (5341, 4985), // MediaStreamTrackVideoStats.toJSON
+    (5380, 4986), // MediaStreamTrackVideoStats.totalFrames
+    (615, 4988), // MerchantValidationEvent.MerchantValidationEvent
+    (1847, 4989), // MerchantValidationEvent.complete
+    (3804, 4990), // MerchantValidationEvent.methodName
+    (5611, 4991), // MerchantValidationEvent.validationURL
+    (616, 4993), // MessageChannel.MessageChannel
+    (4225, 4994), // MessageChannel.port1
+    (4226, 4995), // MessageChannel.port2
+    (617, 4997), // MessageEvent.MessageEvent
+    (2165, 4998), // MessageEvent.data
+    (3265, 4999), // MessageEvent.initMessageEvent
+    (3506, 5000), // MessageEvent.lastEventId
+    (4010, 5001), // MessageEvent.origin
+    (4227, 5002), // MessageEvent.ports
+    (5045, 5003), // MessageEvent.source
+    (5588, 5004), // MessageEvent.userActivation
+    (1792, 5006), // MessagePort.close
+    (3796, 5007), // MessagePort.message_event
+    (3797, 5008), // MessagePort.messageerror_event
+    (4238, 5009), // MessagePort.postMessage
+    (5095, 5011), // MessagePort.start
+    (5754, 5012), // MessagePort.worker_support
+    (3833, 5014), // Metadata.modificationTime
+    (5011, 5015), // Metadata.size
+    (2272, 5017), // MimeType.description
+    (2463, 5018), // MimeType.enabledPlugin
+    (5193, 5019), // MimeType.suffixes
+    (5443, 5020), // MimeType.type
+    (3446, 5022), // MimeTypeArray.item
+    (3535, 5023), // MimeTypeArray.length
+    (3889, 5024), // MimeTypeArray.namedItem
+    (622, 5026), // MouseEvent.MouseEvent
+    (1311, 5027), // MouseEvent.altKey
+    (1624, 5028), // MouseEvent.button
+    (1625, 5029), // MouseEvent.buttons
+    (1779, 5030), // MouseEvent.clientX
+    (1780, 5031), // MouseEvent.clientY
+    (2134, 5032), // MouseEvent.ctrlKey
+    (2950, 5033), // MouseEvent.getModifierState
+    (3266, 5035), // MouseEvent.initMouseEvent
+    (3522, 5036), // MouseEvent.layerX
+    (3523, 5037), // MouseEvent.layerY
+    (3799, 5038), // MouseEvent.metaKey
+    (3852, 5039), // MouseEvent.movementX
+    (3853, 5040), // MouseEvent.movementY
+    (3964, 5041), // MouseEvent.offsetX
+    (3965, 5042), // MouseEvent.offsetY
+    (4052, 5043), // MouseEvent.pageX
+    (4053, 5044), // MouseEvent.pageY
+    (4465, 5045), // MouseEvent.relatedTarget
+    (4720, 5047), // MouseEvent.screenX
+    (4721, 5048), // MouseEvent.screenY
+    (4975, 5049), // MouseEvent.shiftKey
+    (5772, 5050), // MouseEvent.x
+    (5781, 5051), // MouseEvent.y
+    (1459, 5054), // MutationEvent.attrChange
+    (1460, 5055), // MutationEvent.attrName
+    (3267, 5056), // MutationEvent.initMutationEvent
+    (3914, 5057), // MutationEvent.newValue
+    (4268, 5058), // MutationEvent.prevValue
+    (4463, 5059), // MutationEvent.relatedNode
+    (626, 5061), // MutationObserver.MutationObserver
+    (2323, 5062), // MutationObserver.disconnect
+    (3954, 5063), // MutationObserver.observe
+    (5254, 5064), // MutationObserver.takeRecords
+    (1271, 5066), // MutationRecord.addedNodes
+    (1461, 5067), // MutationRecord.attributeName
+    (1462, 5068), // MutationRecord.attributeNamespace
+    (3921, 5069), // MutationRecord.nextSibling
+    (3970, 5070), // MutationRecord.oldValue
+    (4276, 5071), // MutationRecord.previousSibling
+    (4513, 5072), // MutationRecord.removedNodes
+    (5259, 5073), // MutationRecord.target
+    (5443, 5074), // MutationRecord.type
+    (628, 5076), // NDEFMessage.NDEFMessage
+    (4409, 5077), // NDEFMessage.records
+    (4769, 5078), // NDEFMessage.secure_context_required
+    (629, 5080), // NDEFReader.NDEFReader
+    (3661, 5081), // NDEFReader.makeReadOnly
+    (4394, 5082), // NDEFReader.reading_event
+    (4395, 5083), // NDEFReader.readingerror_event
+    (4708, 5084), // NDEFReader.scan
+    (4769, 5085), // NDEFReader.secure_context_required
+    (5760, 5086), // NDEFReader.write
+    (630, 5088), // NDEFReadingEvent.NDEFReadingEvent
+    (3794, 5089), // NDEFReadingEvent.message
+    (4769, 5090), // NDEFReadingEvent.secure_context_required
+    (4814, 5091), // NDEFReadingEvent.serialNumber
+    (631, 5093), // NDEFRecord.NDEFRecord
+    (2165, 5094), // NDEFRecord.data
+    (2473, 5095), // NDEFRecord.encoding
+    (3207, 5096), // NDEFRecord.id
+    (3496, 5097), // NDEFRecord.lang
+    (3789, 5098), // NDEFRecord.mediaType
+    (4408, 5099), // NDEFRecord.recordType
+    (4769, 5100), // NDEFRecord.secure_context_required
+    (5351, 5101), // NDEFRecord.toRecords
+    (2953, 5103), // NamedNodeMap.getNamedItem
+    (2954, 5104), // NamedNodeMap.getNamedItemNS
+    (3446, 5105), // NamedNodeMap.item
+    (3535, 5106), // NamedNodeMap.length
+    (4497, 5107), // NamedNodeMap.removeNamedItem
+    (4498, 5108), // NamedNodeMap.removeNamedItemNS
+    (4891, 5109), // NamedNodeMap.setNamedItem
+    (4892, 5110), // NamedNodeMap.setNamedItemNS
+    (635, 5112), // NavigateEvent.NavigateEvent
+    (1643, 5113), // NavigateEvent.canIntercept
+    (2276, 5114), // NavigateEvent.destination
+    (2366, 5115), // NavigateEvent.downloadRequest
+    (2700, 5116), // NavigateEvent.formData
+    (3163, 5117), // NavigateEvent.hasUAVisualTransition
+    (3166, 5118), // NavigateEvent.hashChange
+    (3255, 5119), // NavigateEvent.info
+    (3332, 5120), // NavigateEvent.intercept
+    (3903, 5122), // NavigateEvent.navigationType
+    (4726, 5123), // NavigateEvent.scroll
+    (4994, 5124), // NavigateEvent.signal
+    (5050, 5125), // NavigateEvent.sourceElement
+    (5596, 5126), // NavigateEvent.userInitiated
+    (1231, 5128), // Navigation.activation
+    (1508, 5129), // Navigation.back
+    (1640, 5130), // Navigation.canGoBack
+    (1641, 5131), // Navigation.canGoForward
+    (2141, 5132), // Navigation.currentEntry
+    (2155, 5133), // Navigation.currententrychange_event
+    (2503, 5134), // Navigation.entries
+    (2708, 5135), // Navigation.forward
+    (3895, 5136), // Navigation.navigate
+    (3896, 5137), // Navigation.navigate_event
+    (3897, 5138), // Navigation.navigateerror_event
+    (3898, 5139), // Navigation.navigatesuccess_event
+    (4478, 5140), // Navigation.reload
+    (5415, 5141), // Navigation.transition
+    (5427, 5142), // Navigation.traverseTo
+    (5548, 5143), // Navigation.updateCurrentEntry
+    (2504, 5145), // NavigationActivation.entry
+    (2736, 5146), // NavigationActivation.from
+    (3903, 5147), // NavigationActivation.navigationType
+    (638, 5149), // NavigationCurrentEntryChangeEvent.NavigationCurrentEntryChangeEvent
+    (2736, 5150), // NavigationCurrentEntryChangeEvent.from
+    (3903, 5151), // NavigationCurrentEntryChangeEvent.navigationType
+    (3039, 5153), // NavigationDestination.getState
+    (3207, 5154), // NavigationDestination.id
+    (3247, 5155), // NavigationDestination.index
+    (3474, 5156), // NavigationDestination.key
+    (4691, 5157), // NavigationDestination.sameDocument
+    (5577, 5158), // NavigationDestination.url
+    (2337, 5160), // NavigationHistoryEntry.dispose_event
+    (3039, 5161), // NavigationHistoryEntry.getState
+    (3207, 5162), // NavigationHistoryEntry.id
+    (3247, 5163), // NavigationHistoryEntry.index
+    (3474, 5164), // NavigationHistoryEntry.key
+    (4691, 5165), // NavigationHistoryEntry.sameDocument
+    (5577, 5166), // NavigationHistoryEntry.url
+    (1256, 5168), // NavigationPrecommitController.addHandler
+    (4413, 5169), // NavigationPrecommitController.redirect
+    (2314, 5171), // NavigationPreloadManager.disable
+    (2457, 5172), // NavigationPreloadManager.enable
+    (3039, 5173), // NavigationPreloadManager.getState
+    (4868, 5174), // NavigationPreloadManager.setHeaderValue
+    (1836, 5176), // NavigationTransition.committed
+    (2637, 5177), // NavigationTransition.finished
+    (2736, 5178), // NavigationTransition.from
+    (3903, 5179), // NavigationTransition.navigationType
+    (5328, 5180), // NavigationTransition.to
+    (1238, 5182), // Navigator.activeVRDisplays
+    (1245, 5184), // Navigator.adAuctionComponents
+    (1348, 5185), // Navigator.appCodeName
+    (1349, 5186), // Navigator.appName
+    (1350, 5187), // Navigator.appVersion
+    (1470, 5188), // Navigator.audioSession
+    (1477, 5189), // Navigator.authentication
+    (1588, 5190), // Navigator.bluetooth
+    (1622, 5191), // Navigator.buildID
+    (1644, 5192), // Navigator.canLoadAdAuctionFencedFrame
+    (1651, 5193), // Navigator.canShare
+    (1745, 5196), // Navigator.clearAppBadge
+    (1760, 5197), // Navigator.clearOriginJoinedAdInterestGroups
+    (1784, 5198), // Navigator.clipboard
+    (1885, 5199), // Navigator.connection
+    (1898, 5200), // Navigator.contacts
+    (1942, 5201), // Navigator.cookieEnabled
+    (1969, 5202), // Navigator.cpuPerformance
+    (1989, 5203), // Navigator.createAuctionNonce
+    (2123, 5204), // Navigator.credentials
+    (2250, 5205), // Navigator.deprecatedReplaceInURN
+    (2251, 5206), // Navigator.deprecatedRunAdAuctionEnforcesKAnonymity
+    (2290, 5207), // Navigator.deviceMemory
+    (2293, 5208), // Navigator.devicePosture
+    (2343, 5209), // Navigator.doNotTrack
+    (2791, 5210), // Navigator.geolocation
+    (2821, 5212), // Navigator.getAutoplayPolicy
+    (2824, 5213), // Navigator.getBattery
+    (2912, 5215), // Navigator.getGamepads
+    (2926, 5216), // Navigator.getInstalledRelatedApps
+    (2930, 5217), // Navigator.getInterestGroupAdAuctionData
+    (3089, 5218), // Navigator.getUserMedia
+    (3090, 5219), // Navigator.getVRDisplays
+    (3104, 5220), // Navigator.globalPrivacyControl
+    (3108, 5221), // Navigator.gpu
+    (3140, 5222), // Navigator.hardwareConcurrency
+    (3174, 5223), // Navigator.hid
+    (3277, 5224), // Navigator.ink
+    (3322, 5225), // Navigator.install
+    (3454, 5226), // Navigator.javaEnabled
+    (3457, 5227), // Navigator.joinAdInterestGroup
+    (3483, 5228), // Navigator.keyboard
+    (3497, 5229), // Navigator.language
+    (3499, 5230), // Navigator.languages
+    (3528, 5231), // Navigator.leaveAdInterestGroup
+    (3600, 5232), // Navigator.locks
+    (3610, 5233), // Navigator.login
+    (3663, 5234), // Navigator.managed
+    (3765, 5235), // Navigator.maxTouchPoints
+    (3781, 5236), // Navigator.mediaCapabilities
+    (3782, 5237), // Navigator.mediaDevices
+    (3786, 5239), // Navigator.mediaSession
+    (3808, 5240), // Navigator.mimeTypes
+    (3828, 5242), // Navigator.ml
+    (3972, 5243), // Navigator.onLine
+    (4015, 5244), // Navigator.oscpu
+    (4116, 5245), // Navigator.pdfViewerEnabled
+    (4157, 5246), // Navigator.permissions
+    (4181, 5247), // Navigator.platform
+    (4194, 5248), // Navigator.plugins
+    (4247, 5250), // Navigator.preferences
+    (4259, 5251), // Navigator.presentation
+    (4292, 5252), // Navigator.product
+    (4295, 5253), // Navigator.productSub
+    (4311, 5254), // Navigator.protectedAudience
+    (4455, 5255), // Navigator.registerProtocolHandler
+    (4565, 5290), // Navigator.requestMIDIAccess
+    (4566, 5292), // Navigator.requestMediaKeySystemAccess
+    (4685, 5293), // Navigator.runAdAuction
+    (4712, 5294), // Navigator.scheduling
+    (4804, 5295), // Navigator.sendBeacon
+    (4813, 5296), // Navigator.serial
+    (4820, 5297), // Navigator.serviceWorker
+    (4826, 5298), // Navigator.setAppBadge
+    (4969, 5299), // Navigator.share
+    (5135, 5302), // Navigator.storage
+    (5137, 5303), // Navigator.storageBuckets
+    (5251, 5304), // Navigator.taintEnabled
+    (5530, 5305), // Navigator.unregisterProtocolHandler
+    (5543, 5306), // Navigator.updateAdInterestGroups
+    (5580, 5307), // Navigator.usb
+    (5588, 5308), // Navigator.userActivation
+    (5589, 5309), // Navigator.userAgent
+    (5592, 5310), // Navigator.userAgentData
+    (5628, 5312), // Navigator.vendor
+    (5630, 5313), // Navigator.vendorSub
+    (5656, 5314), // Navigator.vibrate
+    (5671, 5315), // Navigator.virtualKeyboard
+    (5705, 5316), // Navigator.wakeLock
+    (5713, 5317), // Navigator.webdriver
+    (5743, 5318), // Navigator.windowControlsOverlay
+    (5780, 5319), // Navigator.xr
+    (4929, 5321), // NavigatorLogin.setStatus
+    (2945, 5323), // NavigatorManagedData.getManagedConfiguration
+    (3664, 5324), // NavigatorManagedData.managedconfigurationchange_event
+    (1607, 5326), // NavigatorUAData.brands
+    (2915, 5327), // NavigatorUAData.getHighEntropyValues
+    (3831, 5328), // NavigatorUAData.mobile
+    (4181, 5329), // NavigatorUAData.platform
+    (5341, 5330), // NavigatorUAData.toJSON
+    (1700, 5332), // NetworkInformation.change_event
+    (2363, 5333), // NetworkInformation.downlink
+    (2364, 5334), // NetworkInformation.downlinkMax
+    (2436, 5335), // NetworkInformation.effectiveType
+    (4682, 5336), // NetworkInformation.rtt
+    (4702, 5337), // NetworkInformation.saveData
+    (5443, 5338), // NetworkInformation.type
+    (5464, 5339), // NetworkInformation.typechange_event
+    (5754, 5340), // NetworkInformation.worker_support
+    (1354, 5342), // Node.appendChild
+    (1522, 5343), // Node.baseURI
+    (1733, 5344), // Node.childNodes
+    (1790, 5345), // Node.cloneNode
+    (1840, 5346), // Node.compareDocumentPosition
+    (1906, 5347), // Node.contains
+    (2642, 5348), // Node.firstChild
+    (3013, 5349), // Node.getRootNode
+    (3146, 5350), // Node.hasChildNodes
+    (3299, 5351), // Node.insertBefore
+    (3371, 5352), // Node.isConnected
+    (3374, 5353), // Node.isDefaultNamespace
+    (3378, 5354), // Node.isEqualNode
+    (3416, 5355), // Node.isSameNode
+    (3504, 5356), // Node.lastChild
+    (3614, 5357), // Node.lookupNamespaceURI
+    (3615, 5358), // Node.lookupPrefix
+    (3921, 5359), // Node.nextSibling
+    (3929, 5360), // Node.nodeName
+    (3930, 5361), // Node.nodeType
+    (3931, 5362), // Node.nodeValue
+    (3935, 5363), // Node.normalize
+    (4034, 5364), // Node.ownerDocument
+    (4065, 5365), // Node.parentElement
+    (4066, 5366), // Node.parentNode
+    (4276, 5367), // Node.previousSibling
+    (4490, 5368), // Node.removeChild
+    (4534, 5369), // Node.replaceChild
+    (4800, 5370), // Node.selectstart_event
+    (5285, 5371), // Node.textContent
+    (2278, 5373), // NodeIterator.detach
+    (2626, 5374), // NodeIterator.filter
+    (3920, 5375), // NodeIterator.nextNode
+    (4195, 5376), // NodeIterator.pointerBeforeReferenceNode
+    (4273, 5377), // NodeIterator.previousNode
+    (4439, 5378), // NodeIterator.referenceNode
+    (4661, 5379), // NodeIterator.root
+    (5729, 5380), // NodeIterator.whatToShow
+    (4, 5382), // NodeList.@@iterator
+    (2503, 5383), // NodeList.entries
+    (2692, 5384), // NodeList.forEach
+    (3446, 5385), // NodeList.item
+    (3486, 5386), // NodeList.keys
+    (3535, 5387), // NodeList.length
+    (5622, 5388), // NodeList.values
+    (4399, 5390), // NotRestoredReasonDetails.reason
+    (5341, 5393), // NotRestoredReasonDetails.toJSON
+    (1734, 5395), // NotRestoredReasons.children
+    (3207, 5396), // NotRestoredReasons.id
+    (3887, 5397), // NotRestoredReasons.name
+    (4400, 5398), // NotRestoredReasons.reasons
+    (5083, 5399), // NotRestoredReasons.src
+    (5341, 5400), // NotRestoredReasons.toJSON
+    (5577, 5401), // NotRestoredReasons.url
+    (654, 5403), // Notification.Notification
+    (1228, 5404), // Notification.actions
+    (1516, 5405), // Notification.badge
+    (1591, 5406), // Notification.body
+    (1770, 5407), // Notification.click_event
+    (1792, 5408), // Notification.close
+    (1795, 5409), // Notification.close_event
+    (2165, 5410), // Notification.data
+    (2308, 5411), // Notification.dir
+    (2517, 5412), // Notification.error_event
+    (3205, 5413), // Notification.icon
+    (3217, 5414), // Notification.image
+    (3496, 5415), // Notification.lang
+    (3716, 5416), // Notification.maxActions
+    (3717, 5416), // Notification.maxActions_static
+    (3895, 5417), // Notification.navigate
+    (4126, 5418), // Notification.permission
+    (4152, 5418), // Notification.permission_static
+    (4528, 5419), // Notification.renotify
+    (4568, 5420), // Notification.requestPermission
+    (4569, 5420), // Notification.requestPermission_static
+    (4587, 5422), // Notification.requireInteraction
+    (4769, 5423), // Notification.secure_context_required
+    (4990, 5424), // Notification.show_event
+    (5004, 5425), // Notification.silent
+    (5249, 5426), // Notification.tag
+    (5322, 5427), // Notification.timestamp
+    (5326, 5428), // Notification.title
+    (5656, 5429), // Notification.vibrate
+    (5754, 5430), // Notification.worker_support
+    (655, 5432), // NotificationEvent.NotificationEvent
+    (1227, 5433), // NotificationEvent.action
+    (3938, 5434), // NotificationEvent.notification
+    (273, 10802), // Number.EPSILON
+    (557, 10803), // Number.MAX_SAFE_INTEGER
+    (558, 10804), // Number.MAX_VALUE
+    (567, 10805), // Number.MIN_SAFE_INTEGER
+    (568, 10806), // Number.MIN_VALUE
+    (632, 10807), // Number.NEGATIVE_INFINITY
+    (633, 10808), // Number.NaN
+    (657, 10809), // Number.Number
+    (682, 10810), // Number.POSITIVE_INFINITY
+    (3385, 10811), // Number.isFinite
+    (3394, 10812), // Number.isInteger
+    (3399, 10813), // Number.isNaN
+    (3414, 10814), // Number.isSafeInteger
+    (4074, 10815), // Number.parseFloat
+    (4080, 10816), // Number.parseInt
+    (5334, 10817), // Number.toExponential
+    (5335, 10818), // Number.toFixed
+    (5344, 10819), // Number.toLocaleString
+    (5349, 10822), // Number.toPrecision
+    (5355, 10823), // Number.toString
+    (5620, 10824), // Number.valueOf
+    (1569, 5436), // OES_draw_buffers_indexed.blendEquationSeparateiOES
+    (1570, 5437), // OES_draw_buffers_indexed.blendEquationiOES
+    (1573, 5438), // OES_draw_buffers_indexed.blendFuncSeparateiOES
+    (1574, 5439), // OES_draw_buffers_indexed.blendFunciOES
+    (1823, 5440), // OES_draw_buffers_indexed.colorMaskiOES
+    (2319, 5441), // OES_draw_buffers_indexed.disableiOES
+    (2464, 5442), // OES_draw_buffers_indexed.enableiOES
+    (1565, 5451), // OES_vertex_array_object.bindVertexArrayOES
+    (2114, 5452), // OES_vertex_array_object.createVertexArrayOES
+    (2240, 5453), // OES_vertex_array_object.deleteVertexArrayOES
+    (3439, 5454), // OES_vertex_array_object.isVertexArrayOES
+    (1805, 5456), // OTPCredential.code
+    (2729, 5458), // OVR_multiview2.framebufferTextureMultiviewOVR
+    (670, 10826), // Object.Object
+    (1441, 10827), // Object.assign
+    (1896, 10828), // Object.constructor
+    (1983, 10829), // Object.create
+    (2203, 10830), // Object.defineGetter
+    (2204, 10831), // Object.defineProperties
+    (2205, 10832), // Object.defineProperty
+    (2206, 10833), // Object.defineSetter
+    (2503, 10834), // Object.entries
+    (2732, 10835), // Object.freeze
+    (2743, 10836), // Object.fromEntries
+    (2965, 10837), // Object.getOwnPropertyDescriptor
+    (2966, 10838), // Object.getOwnPropertyDescriptors
+    (2967, 10839), // Object.getOwnPropertyNames
+    (2968, 10840), // Object.getOwnPropertySymbols
+    (2991, 10841), // Object.getPrototypeOf
+    (3120, 10842), // Object.groupBy
+    (3153, 10843), // Object.hasOwn
+    (3154, 10844), // Object.hasOwnProperty
+    (3357, 10845), // Object.is
+    (3381, 10846), // Object.isExtensible
+    (3388, 10847), // Object.isFrozen
+    (3407, 10848), // Object.isPrototypeOf
+    (3422, 10849), // Object.isSealed
+    (3486, 10850), // Object.keys
+    (3613, 10851), // Object.lookupGetter
+    (3616, 10852), // Object.lookupSetter
+    (4270, 10853), // Object.preventExtensions
+    (4309, 10855), // Object.propertyIsEnumerable
+    (4312, 10856), // Object.proto
+    (4761, 10857), // Object.seal
+    (4907, 10858), // Object.setPrototypeOf
+    (5344, 10859), // Object.toLocaleString
+    (5355, 10860), // Object.toString
+    (5620, 10861), // Object.valueOf
+    (5622, 10862), // Object.values
+    (671, 5460), // Observable.Observable
+    (1682, 5461), // Observable.catch
+    (2405, 5462), // Observable.drop
+    (2528, 5463), // Observable.every
+    (2626, 5464), // Observable.filter
+    (2629, 5465), // Observable.finally
+    (2630, 5466), // Observable.find
+    (2639, 5467), // Observable.first
+    (2651, 5468), // Observable.flatMap
+    (2692, 5469), // Observable.forEach
+    (2736, 5470), // Observable.from
+    (2757, 5470), // Observable.from_static
+    (3321, 5471), // Observable.inspect
+    (3501, 5472), // Observable.last
+    (3669, 5473), // Observable.map
+    (4420, 5474), // Observable.reduce
+    (5040, 5475), // Observable.some
+    (5184, 5476), // Observable.subscribe
+    (5231, 5477), // Observable.switchMap
+    (5252, 5478), // Observable.take
+    (5255, 5479), // Observable.takeUntil
+    (5329, 5480), // Observable.toArray
+    (672, 5482), // OfflineAudioCompletionEvent.OfflineAudioCompletionEvent
+    (4527, 5483), // OfflineAudioCompletionEvent.renderedBuffer
+    (673, 5485), // OfflineAudioContext.OfflineAudioContext
+    (1848, 5487), // OfflineAudioContext.complete_event
+    (3535, 5488), // OfflineAudioContext.length
+    (4633, 5489), // OfflineAudioContext.resume
+    (5100, 5490), // OfflineAudioContext.startRendering
+    (5214, 5492), // OfflineAudioContext.suspend
+    (674, 5494), // OffscreenCanvas.OffscreenCanvas
+    (1922, 5495), // OffscreenCanvas.contextlost_event
+    (1925, 5496), // OffscreenCanvas.contextrestored_event
+    (1939, 5497), // OffscreenCanvas.convertToBlob
+    (2859, 5499), // OffscreenCanvas.getContext
+    (3173, 5505), // OffscreenCanvas.height
+    (5407, 5506), // OffscreenCanvas.transferToImageBitmap
+    (5739, 5507), // OffscreenCanvas.width
+    (1368, 5509), // OffscreenCanvasRenderingContext2D.arc
+    (1369, 5510), // OffscreenCanvasRenderingContext2D.arcTo
+    (1542, 5511), // OffscreenCanvasRenderingContext2D.beginPath
+    (1549, 5512), // OffscreenCanvasRenderingContext2D.bezierCurveTo
+    (1669, 5513), // OffscreenCanvasRenderingContext2D.canvas
+    (1763, 5514), // OffscreenCanvasRenderingContext2D.clearRect
+    (1782, 5515), // OffscreenCanvasRenderingContext2D.clip
+    (1794, 5516), // OffscreenCanvasRenderingContext2D.closePath
+    (1834, 5517), // OffscreenCanvasRenderingContext2D.commit
+    (2004, 5518), // OffscreenCanvasRenderingContext2D.createConicGradient
+    (2031, 5519), // OffscreenCanvasRenderingContext2D.createImageData
+    (2033, 5520), // OffscreenCanvasRenderingContext2D.createLinearGradient
+    (2047, 5521), // OffscreenCanvasRenderingContext2D.createPattern
+    (2058, 5522), // OffscreenCanvasRenderingContext2D.createRadialGradient
+    (2311, 5523), // OffscreenCanvasRenderingContext2D.direction
+    (2395, 5524), // OffscreenCanvasRenderingContext2D.drawImage
+    (2445, 5525), // OffscreenCanvasRenderingContext2D.ellipse
+    (2620, 5526), // OffscreenCanvasRenderingContext2D.fill
+    (2623, 5527), // OffscreenCanvasRenderingContext2D.fillRect
+    (2624, 5528), // OffscreenCanvasRenderingContext2D.fillStyle
+    (2625, 5529), // OffscreenCanvasRenderingContext2D.fillText
+    (2626, 5530), // OffscreenCanvasRenderingContext2D.filter
+    (2664, 5531), // OffscreenCanvasRenderingContext2D.font
+    (2679, 5532), // OffscreenCanvasRenderingContext2D.fontKerning
+    (2681, 5533), // OffscreenCanvasRenderingContext2D.fontStretch
+    (2683, 5534), // OffscreenCanvasRenderingContext2D.fontVariantCaps
+    (2860, 5535), // OffscreenCanvasRenderingContext2D.getContextAttributes
+    (2921, 5536), // OffscreenCanvasRenderingContext2D.getImageData
+    (2941, 5537), // OffscreenCanvasRenderingContext2D.getLineDash
+    (3067, 5538), // OffscreenCanvasRenderingContext2D.getTransform
+    (3102, 5539), // OffscreenCanvasRenderingContext2D.globalAlpha
+    (3103, 5540), // OffscreenCanvasRenderingContext2D.globalCompositeOperation
+    (3220, 5541), // OffscreenCanvasRenderingContext2D.imageSmoothingEnabled
+    (3221, 5542), // OffscreenCanvasRenderingContext2D.imageSmoothingQuality
+    (3373, 5543), // OffscreenCanvasRenderingContext2D.isContextLost
+    (3401, 5544), // OffscreenCanvasRenderingContext2D.isPointInPath
+    (3403, 5545), // OffscreenCanvasRenderingContext2D.isPointInStroke
+    (3496, 5546), // OffscreenCanvasRenderingContext2D.lang
+    (3540, 5547), // OffscreenCanvasRenderingContext2D.letterSpacing
+    (3550, 5548), // OffscreenCanvasRenderingContext2D.lineCap
+    (3551, 5549), // OffscreenCanvasRenderingContext2D.lineDashOffset
+    (3553, 5550), // OffscreenCanvasRenderingContext2D.lineJoin
+    (3557, 5551), // OffscreenCanvasRenderingContext2D.lineTo
+    (3558, 5552), // OffscreenCanvasRenderingContext2D.lineWidth
+    (3778, 5553), // OffscreenCanvasRenderingContext2D.measureText
+    (3827, 5554), // OffscreenCanvasRenderingContext2D.miterLimit
+    (3851, 5555), // OffscreenCanvasRenderingContext2D.moveTo
+    (4330, 5556), // OffscreenCanvasRenderingContext2D.putImageData
+    (4333, 5557), // OffscreenCanvasRenderingContext2D.quadraticCurveTo
+    (4411, 5558), // OffscreenCanvasRenderingContext2D.rect
+    (4591, 5559), // OffscreenCanvasRenderingContext2D.reset
+    (4595, 5560), // OffscreenCanvasRenderingContext2D.resetTransform
+    (4623, 5561), // OffscreenCanvasRenderingContext2D.restore
+    (4665, 5562), // OffscreenCanvasRenderingContext2D.rotate
+    (4676, 5563), // OffscreenCanvasRenderingContext2D.roundRect
+    (4701, 5564), // OffscreenCanvasRenderingContext2D.save
+    (4703, 5565), // OffscreenCanvasRenderingContext2D.scale
+    (4881, 5566), // OffscreenCanvasRenderingContext2D.setLineDash
+    (4937, 5567), // OffscreenCanvasRenderingContext2D.setTransform
+    (4956, 5568), // OffscreenCanvasRenderingContext2D.shadowBlur
+    (4957, 5569), // OffscreenCanvasRenderingContext2D.shadowColor
+    (4958, 5570), // OffscreenCanvasRenderingContext2D.shadowOffsetX
+    (4959, 5571), // OffscreenCanvasRenderingContext2D.shadowOffsetY
+    (5161, 5572), // OffscreenCanvasRenderingContext2D.stroke
+    (5162, 5573), // OffscreenCanvasRenderingContext2D.strokeRect
+    (5163, 5574), // OffscreenCanvasRenderingContext2D.strokeStyle
+    (5164, 5575), // OffscreenCanvasRenderingContext2D.strokeText
+    (5283, 5576), // OffscreenCanvasRenderingContext2D.textAlign
+    (5284, 5577), // OffscreenCanvasRenderingContext2D.textBaseline
+    (5287, 5578), // OffscreenCanvasRenderingContext2D.textRendering
+    (5409, 5579), // OffscreenCanvasRenderingContext2D.transform
+    (5422, 5580), // OffscreenCanvasRenderingContext2D.translate
+    (5748, 5581), // OffscreenCanvasRenderingContext2D.wordSpacing
+    (4223, 5583), // OrientationSensor.populateMatrix
+    (4336, 5584), // OrientationSensor.quaternion
+    (678, 5586), // Origin.Origin
+    (2736, 5587), // Origin.from
+    (2757, 5587), // Origin.from_static
+    (3417, 5588), // Origin.isSameOrigin
+    (3418, 5589), // Origin.isSameSite
+    (3979, 5590), // Origin.opaque
+    (679, 5592), // OscillatorNode.OscillatorNode
+    (2286, 5593), // OscillatorNode.detune
+    (2734, 5594), // OscillatorNode.frequency
+    (4899, 5595), // OscillatorNode.setPeriodicWave
+    (5443, 5596), // OscillatorNode.type
+    (680, 5598), // OverconstrainedError.OverconstrainedError
+    (1894, 5599), // OverconstrainedError.constraint
+    (683, 5601), // PageRevealEvent.PageRevealEvent
+    (5664, 5602), // PageRevealEvent.viewTransition
+    (684, 5604), // PageSwapEvent.PageSwapEvent
+    (1231, 5605), // PageSwapEvent.activation
+    (5664, 5606), // PageSwapEvent.viewTransition
+    (685, 5608), // PageTransitionEvent.PageTransitionEvent
+    (4159, 5609), // PageTransitionEvent.persisted
+    (1542, 5611), // PaintRenderingContext2D.beginPath
+    (1763, 5612), // PaintRenderingContext2D.clearRect
+    (1782, 5613), // PaintRenderingContext2D.clip
+    (2033, 5614), // PaintRenderingContext2D.createLinearGradient
+    (2047, 5615), // PaintRenderingContext2D.createPattern
+    (2058, 5616), // PaintRenderingContext2D.createRadialGradient
+    (2395, 5617), // PaintRenderingContext2D.drawImage
+    (2620, 5618), // PaintRenderingContext2D.fill
+    (2623, 5619), // PaintRenderingContext2D.fillRect
+    (2624, 5620), // PaintRenderingContext2D.fillStyle
+    (2626, 5621), // PaintRenderingContext2D.filter
+    (2941, 5622), // PaintRenderingContext2D.getLineDash
+    (3067, 5623), // PaintRenderingContext2D.getTransform
+    (3102, 5624), // PaintRenderingContext2D.globalAlpha
+    (3103, 5625), // PaintRenderingContext2D.globalCompositeOperation
+    (3220, 5626), // PaintRenderingContext2D.imageSmoothingEnabled
+    (3221, 5627), // PaintRenderingContext2D.imageSmoothingQuality
+    (3401, 5628), // PaintRenderingContext2D.isPointInPath
+    (3403, 5629), // PaintRenderingContext2D.isPointInStroke
+    (3550, 5630), // PaintRenderingContext2D.lineCap
+    (3551, 5631), // PaintRenderingContext2D.lineDashOffset
+    (3553, 5632), // PaintRenderingContext2D.lineJoin
+    (3558, 5633), // PaintRenderingContext2D.lineWidth
+    (3827, 5634), // PaintRenderingContext2D.miterLimit
+    (4595, 5635), // PaintRenderingContext2D.resetTransform
+    (4623, 5636), // PaintRenderingContext2D.restore
+    (4665, 5637), // PaintRenderingContext2D.rotate
+    (4701, 5638), // PaintRenderingContext2D.save
+    (4703, 5639), // PaintRenderingContext2D.scale
+    (4881, 5640), // PaintRenderingContext2D.setLineDash
+    (4937, 5641), // PaintRenderingContext2D.setTransform
+    (4956, 5642), // PaintRenderingContext2D.shadowBlur
+    (4957, 5643), // PaintRenderingContext2D.shadowColor
+    (4958, 5644), // PaintRenderingContext2D.shadowOffsetX
+    (4959, 5645), // PaintRenderingContext2D.shadowOffsetY
+    (5161, 5646), // PaintRenderingContext2D.stroke
+    (5162, 5647), // PaintRenderingContext2D.strokeRect
+    (5163, 5648), // PaintRenderingContext2D.strokeStyle
+    (5409, 5649), // PaintRenderingContext2D.transform
+    (5422, 5650), // PaintRenderingContext2D.translate
+    (3173, 5652), // PaintSize.height
+    (5739, 5653), // PaintSize.width
+    (2292, 5655), // PaintWorkletGlobalScope.devicePixelRatio
+    (4451, 5656), // PaintWorkletGlobalScope.registerPaint
+    (689, 5658), // PannerNode.PannerNode
+    (1865, 5659), // PannerNode.coneInnerAngle
+    (1866, 5660), // PannerNode.coneOuterAngle
+    (1867, 5661), // PannerNode.coneOuterGain
+    (2340, 5662), // PannerNode.distanceModel
+    (3737, 5663), // PannerNode.maxDistance
+    (4006, 5664), // PannerNode.orientationX
+    (4007, 5665), // PannerNode.orientationY
+    (4008, 5666), // PannerNode.orientationZ
+    (4062, 5667), // PannerNode.panningModel
+    (4235, 5668), // PannerNode.positionX
+    (4236, 5669), // PannerNode.positionY
+    (4237, 5670), // PannerNode.positionZ
+    (4436, 5671), // PannerNode.refDistance
+    (4660, 5672), // PannerNode.rolloffFactor
+    (4895, 5673), // PannerNode.setOrientation
+    (4902, 5674), // PannerNode.setPosition
+    (690, 5676), // PasswordCredential.PasswordCredential
+    (3206, 5677), // PasswordCredential.iconURL
+    (3887, 5678), // PasswordCredential.name
+    (4086, 5679), // PasswordCredential.password
+    (691, 5681), // Path2D.Path2D
+    (1260, 5682), // Path2D.addPath
+    (1368, 5683), // Path2D.arc
+    (1369, 5684), // Path2D.arcTo
+    (1549, 5685), // Path2D.bezierCurveTo
+    (1794, 5686), // Path2D.closePath
+    (2445, 5687), // Path2D.ellipse
+    (3557, 5688), // Path2D.lineTo
+    (3851, 5689), // Path2D.moveTo
+    (4333, 5690), // Path2D.quadraticCurveTo
+    (4411, 5691), // Path2D.rect
+    (4676, 5692), // Path2D.roundRect
+    (1275, 5694), // PaymentAddress.addressLine
+    (1737, 5695), // PaymentAddress.city
+    (1968, 5696), // PaymentAddress.country
+    (2249, 5697), // PaymentAddress.dependentLocality
+    (4001, 5698), // PaymentAddress.organization
+    (4163, 5699), // PaymentAddress.phone
+    (4240, 5700), // PaymentAddress.postalCode
+    (4404, 5701), // PaymentAddress.recipient
+    (4447, 5702), // PaymentAddress.region
+    (5042, 5703), // PaymentAddress.sortingCode
+    (5341, 5704), // PaymentAddress.toJSON
+    (2458, 5706), // PaymentManager.enableDelegations
+    (4769, 5707), // PaymentManager.secure_context_required
+    (5595, 5708), // PaymentManager.userHint
+    (694, 5710), // PaymentMethodChangeEvent.PaymentMethodChangeEvent
+    (3803, 5711), // PaymentMethodChangeEvent.methodDetails
+    (3804, 5712), // PaymentMethodChangeEvent.methodName
+    (695, 5714), // PaymentRequest.PaymentRequest
+    (1211, 5716), // PaymentRequest.abort
+    (1645, 5717), // PaymentRequest.canMakePayment
+    (3020, 5718), // PaymentRequest.getSecurePaymentConfirmationCapabilities
+    (3021, 5718), // PaymentRequest.getSecurePaymentConfirmationCapabilities_static
+    (3207, 5719), // PaymentRequest.id
+    (3793, 5720), // PaymentRequest.merchantvalidation_event
+    (4112, 5721), // PaymentRequest.paymentmethodchange_event
+    (4767, 5722), // PaymentRequest.securePaymentConfirmationAvailability
+    (4768, 5722), // PaymentRequest.securePaymentConfirmationAvailability_static
+    (4976, 5723), // PaymentRequest.shippingAddress
+    (4977, 5724), // PaymentRequest.shippingOption
+    (4979, 5725), // PaymentRequest.shippingType
+    (4980, 5726), // PaymentRequest.shippingaddresschange_event
+    (4981, 5727), // PaymentRequest.shippingoptionchange_event
+    (4982, 5728), // PaymentRequest.show
+    (696, 5730), // PaymentRequestEvent.PaymentRequestEvent
+    (1696, 5731), // PaymentRequestEvent.changePaymentMethod
+    (1697, 5732), // PaymentRequestEvent.changeShippingAddress
+    (1698, 5733), // PaymentRequestEvent.changeShippingOption
+    (3802, 5734), // PaymentRequestEvent.methodData
+    (3834, 5735), // PaymentRequestEvent.modifiers
+    (3983, 5736), // PaymentRequestEvent.openWindow
+    (4109, 5737), // PaymentRequestEvent.paymentOptions
+    (4110, 5738), // PaymentRequestEvent.paymentRequestId
+    (4111, 5739), // PaymentRequestEvent.paymentRequestOrigin
+    (4610, 5740), // PaymentRequestEvent.respondWith
+    (4978, 5741), // PaymentRequestEvent.shippingOptions
+    (5376, 5742), // PaymentRequestEvent.topOrigin
+    (5377, 5743), // PaymentRequestEvent.total
+    (697, 5745), // PaymentRequestUpdateEvent.PaymentRequestUpdateEvent
+    (4769, 5746), // PaymentRequestUpdateEvent.secure_context_required
+    (5561, 5747), // PaymentRequestUpdateEvent.updateWith
+    (1847, 5749), // PaymentResponse.complete
+    (2282, 5750), // PaymentResponse.details
+    (3804, 5751), // PaymentResponse.methodName
+    (4104, 5752), // PaymentResponse.payerEmail
+    (4105, 5753), // PaymentResponse.payerName
+    (4106, 5754), // PaymentResponse.payerPhone
+    (4107, 5755), // PaymentResponse.payerdetailchange_event
+    (4562, 5756), // PaymentResponse.requestId
+    (4637, 5757), // PaymentResponse.retry
+    (4976, 5758), // PaymentResponse.shippingAddress
+    (4977, 5759), // PaymentResponse.shippingOption
+    (5341, 5760), // PaymentResponse.toJSON
+    (1758, 5762), // Performance.clearMarks
+    (1759, 5763), // Performance.clearMeasures
+    (1764, 5764), // Performance.clearResourceTimings
+    (2526, 5765), // Performance.eventCounts
+    (2889, 5766), // Performance.getEntries
+    (2890, 5767), // Performance.getEntriesByName
+    (2891, 5768), // Performance.getEntriesByType
+    (3329, 5769), // Performance.interactionCount
+    (3696, 5770), // Performance.mark
+    (3775, 5774), // Performance.measure
+    (3779, 5778), // Performance.measureUserAgentSpecificMemory
+    (3791, 5779), // Performance.memory
+    (3899, 5780), // Performance.navigation
+    (3942, 5781), // Performance.now
+    (4608, 5782), // Performance.resourcetimingbufferfull_event
+    (4913, 5783), // Performance.setResourceTimingBufferSize
+    (5311, 5784), // Performance.timeOrigin
+    (5325, 5785), // Performance.timing
+    (5341, 5786), // Performance.toJSON
+    (2645, 5788), // PerformanceContainerTiming.firstRenderTime
+    (3208, 5789), // PerformanceContainerTiming.identifier
+    (3345, 5790), // PerformanceContainerTiming.intersectionRect
+    (3513, 5791), // PerformanceContainerTiming.lastPaintedElement
+    (4058, 5792), // PerformanceContainerTiming.paintTime
+    (4262, 5793), // PerformanceContainerTiming.presentationTime
+    (4663, 5794), // PerformanceContainerTiming.rootElement
+    (5011, 5795), // PerformanceContainerTiming.size
+    (5341, 5796), // PerformanceContainerTiming.toJSON
+    (2439, 5798), // PerformanceElementTiming.element
+    (3207, 5799), // PerformanceElementTiming.id
+    (3208, 5800), // PerformanceElementTiming.identifier
+    (3345, 5801), // PerformanceElementTiming.intersectionRect
+    (3575, 5802), // PerformanceElementTiming.loadTime
+    (3893, 5803), // PerformanceElementTiming.naturalHeight
+    (3894, 5804), // PerformanceElementTiming.naturalWidth
+    (4058, 5805), // PerformanceElementTiming.paintTime
+    (4262, 5806), // PerformanceElementTiming.presentationTime
+    (4523, 5807), // PerformanceElementTiming.renderTime
+    (5341, 5809), // PerformanceElementTiming.toJSON
+    (5577, 5810), // PerformanceElementTiming.url
+    (2413, 5812), // PerformanceEntry.duration
+    (2505, 5813), // PerformanceEntry.entryType
+    (3887, 5814), // PerformanceEntry.name
+    (3900, 5815), // PerformanceEntry.navigationId
+    (5101, 5816), // PerformanceEntry.startTime
+    (5341, 5817), // PerformanceEntry.toJSON
+    (5754, 5818), // PerformanceEntry.worker_support
+    (1662, 5820), // PerformanceEventTiming.cancelable
+    (3330, 5821), // PerformanceEventTiming.interactionId
+    (4289, 5822), // PerformanceEventTiming.processingEnd
+    (4290, 5823), // PerformanceEventTiming.processingStart
+    (5259, 5824), // PerformanceEventTiming.target
+    (5341, 5825), // PerformanceEventTiming.toJSON
+    (1586, 5827), // PerformanceLongAnimationFrameTiming.blockingDuration
+    (2646, 5828), // PerformanceLongAnimationFrameTiming.firstUIEventTimestamp
+    (4058, 5829), // PerformanceLongAnimationFrameTiming.paintTime
+    (4262, 5830), // PerformanceLongAnimationFrameTiming.presentationTime
+    (4521, 5831), // PerformanceLongAnimationFrameTiming.renderStart
+    (4725, 5832), // PerformanceLongAnimationFrameTiming.scripts
+    (5167, 5833), // PerformanceLongAnimationFrameTiming.styleAndLayoutStart
+    (5341, 5834), // PerformanceLongAnimationFrameTiming.toJSON
+    (1465, 5836), // PerformanceLongTaskTiming.attribution
+    (5341, 5837), // PerformanceLongTaskTiming.toJSON
+    (706, 5839), // PerformanceMark.PerformanceMark
+    (2281, 5840), // PerformanceMark.detail
+    (2281, 5842), // PerformanceMeasure.detail
+    (4414, 5844), // PerformanceNavigation.redirectCount
+    (5341, 5845), // PerformanceNavigation.toJSON
+    (5443, 5846), // PerformanceNavigation.type
+    (1232, 5848), // PerformanceNavigationTiming.activationStart
+    (1868, 5849), // PerformanceNavigationTiming.confidence
+    (2124, 5850), // PerformanceNavigationTiming.criticalCHRestart
+    (2352, 5851), // PerformanceNavigationTiming.domComplete
+    (2353, 5852), // PerformanceNavigationTiming.domContentLoadedEventEnd
+    (2354, 5853), // PerformanceNavigationTiming.domContentLoadedEventStart
+    (2355, 5854), // PerformanceNavigationTiming.domInteractive
+    (3573, 5855), // PerformanceNavigationTiming.loadEventEnd
+    (3574, 5856), // PerformanceNavigationTiming.loadEventStart
+    (3937, 5857), // PerformanceNavigationTiming.notRestoredReasons
+    (4414, 5858), // PerformanceNavigationTiming.redirectCount
+    (5341, 5859), // PerformanceNavigationTiming.toJSON
+    (5443, 5860), // PerformanceNavigationTiming.type
+    (5518, 5861), // PerformanceNavigationTiming.unloadEventEnd
+    (5519, 5862), // PerformanceNavigationTiming.unloadEventStart
+    (710, 5864), // PerformanceObserver.PerformanceObserver
+    (2323, 5866), // PerformanceObserver.disconnect
+    (3954, 5867), // PerformanceObserver.observe
+    (5201, 5868), // PerformanceObserver.supportedEntryTypes
+    (5202, 5868), // PerformanceObserver.supportedEntryTypes_static
+    (5254, 5869), // PerformanceObserver.takeRecords
+    (5754, 5870), // PerformanceObserver.worker_support
+    (2889, 5872), // PerformanceObserverEntryList.getEntries
+    (2890, 5873), // PerformanceObserverEntryList.getEntriesByName
+    (2891, 5874), // PerformanceObserverEntryList.getEntriesByType
+    (2640, 5876), // PerformancePaintTiming.first-contentful-paint
+    (2641, 5877), // PerformancePaintTiming.first-paint
+    (4058, 5878), // PerformancePaintTiming.paintTime
+    (4262, 5879), // PerformancePaintTiming.presentationTime
+    (5341, 5880), // PerformancePaintTiming.toJSON
+    (1880, 5882), // PerformanceResourceTiming.connectEnd
+    (1881, 5883), // PerformanceResourceTiming.connectStart
+    (1912, 5884), // PerformanceResourceTiming.contentEncoding
+    (1915, 5885), // PerformanceResourceTiming.contentType
+    (2186, 5886), // PerformanceResourceTiming.decodedBodySize
+    (2243, 5887), // PerformanceResourceTiming.deliveryType
+    (2359, 5889), // PerformanceResourceTiming.domainLookupEnd
+    (2360, 5890), // PerformanceResourceTiming.domainLookupStart
+    (2472, 5891), // PerformanceResourceTiming.encodedBodySize
+    (2610, 5892), // PerformanceResourceTiming.fetchStart
+    (2628, 5893), // PerformanceResourceTiming.finalResponseHeadersStart
+    (2644, 5894), // PerformanceResourceTiming.firstInterimResponseStart
+    (3276, 5895), // PerformanceResourceTiming.initiatorType
+    (3919, 5896), // PerformanceResourceTiming.nextHopProtocol
+    (4415, 5897), // PerformanceResourceTiming.redirectEnd
+    (4416, 5898), // PerformanceResourceTiming.redirectStart
+    (4518, 5899), // PerformanceResourceTiming.renderBlockingStatus
+    (4579, 5900), // PerformanceResourceTiming.requestStart
+    (4613, 5901), // PerformanceResourceTiming.responseEnd
+    (4616, 5902), // PerformanceResourceTiming.responseStart
+    (4617, 5903), // PerformanceResourceTiming.responseStatus
+    (4766, 5904), // PerformanceResourceTiming.secureConnectionStart
+    (4818, 5905), // PerformanceResourceTiming.serverTiming
+    (5341, 5906), // PerformanceResourceTiming.toJSON
+    (5405, 5907), // PerformanceResourceTiming.transferSize
+    (5749, 5908), // PerformanceResourceTiming.workerCacheLookupStart
+    (5750, 5909), // PerformanceResourceTiming.workerFinalRouterSource
+    (5751, 5910), // PerformanceResourceTiming.workerMatchedRouterSource
+    (5752, 5911), // PerformanceResourceTiming.workerRouterEvaluationStart
+    (5753, 5912), // PerformanceResourceTiming.workerStart
+    (5754, 5913), // PerformanceResourceTiming.worker_support
+    (2537, 5915), // PerformanceScriptTiming.executionStart
+    (2696, 5916), // PerformanceScriptTiming.forcedStyleAndLayoutDuration
+    (3355, 5917), // PerformanceScriptTiming.invoker
+    (3356, 5918), // PerformanceScriptTiming.invokerType
+    (4099, 5919), // PerformanceScriptTiming.pauseDuration
+    (5049, 5920), // PerformanceScriptTiming.sourceCharPosition
+    (5052, 5921), // PerformanceScriptTiming.sourceFunctionName
+    (5054, 5922), // PerformanceScriptTiming.sourceURL
+    (5341, 5923), // PerformanceScriptTiming.toJSON
+    (5741, 5924), // PerformanceScriptTiming.window
+    (5742, 5925), // PerformanceScriptTiming.windowAttribution
+    (2272, 5927), // PerformanceServerTiming.description
+    (2413, 5928), // PerformanceServerTiming.duration
+    (3887, 5929), // PerformanceServerTiming.name
+    (5341, 5930), // PerformanceServerTiming.toJSON
+    (2937, 5932), // PerformanceSoftNavigation.getLargestInteractionContentfulPaint
+    (3330, 5933), // PerformanceSoftNavigation.interactionId
+    (3903, 5934), // PerformanceSoftNavigation.navigationType
+    (4058, 5935), // PerformanceSoftNavigation.paintTime
+    (4262, 5936), // PerformanceSoftNavigation.presentationTime
+    (5341, 5937), // PerformanceSoftNavigation.toJSON
+    (1880, 5939), // PerformanceTiming.connectEnd
+    (1881, 5940), // PerformanceTiming.connectStart
+    (2352, 5941), // PerformanceTiming.domComplete
+    (2353, 5942), // PerformanceTiming.domContentLoadedEventEnd
+    (2354, 5943), // PerformanceTiming.domContentLoadedEventStart
+    (2355, 5944), // PerformanceTiming.domInteractive
+    (2356, 5945), // PerformanceTiming.domLoading
+    (2359, 5946), // PerformanceTiming.domainLookupEnd
+    (2360, 5947), // PerformanceTiming.domainLookupStart
+    (2610, 5948), // PerformanceTiming.fetchStart
+    (3573, 5949), // PerformanceTiming.loadEventEnd
+    (3574, 5950), // PerformanceTiming.loadEventStart
+    (3902, 5951), // PerformanceTiming.navigationStart
+    (4415, 5952), // PerformanceTiming.redirectEnd
+    (4416, 5953), // PerformanceTiming.redirectStart
+    (4579, 5954), // PerformanceTiming.requestStart
+    (4613, 5955), // PerformanceTiming.responseEnd
+    (4616, 5956), // PerformanceTiming.responseStart
+    (4766, 5957), // PerformanceTiming.secureConnectionStart
+    (5341, 5958), // PerformanceTiming.toJSON
+    (5518, 5959), // PerformanceTiming.unloadEventEnd
+    (5519, 5960), // PerformanceTiming.unloadEventStart
+    (4361, 5962), // PerformanceTimingConfidence.randomizedTriggerRate
+    (5341, 5963), // PerformanceTimingConfidence.toJSON
+    (5614, 5964), // PerformanceTimingConfidence.value
+    (719, 5966), // PeriodicSyncEvent.PeriodicSyncEvent
+    (5249, 5967), // PeriodicSyncEvent.tag
+    (3055, 5969), // PeriodicSyncManager.getTags
+    (4450, 5970), // PeriodicSyncManager.register
+    (5529, 5971), // PeriodicSyncManager.unregister
+    (721, 5973), // PeriodicWave.PeriodicWave
+    (1700, 5975), // PermissionStatus.change_event
+    (3887, 5976), // PermissionStatus.name
+    (5106, 5977), // PermissionStatus.state
+    (4129, 5979), // Permissions.permission_accelerometer
+    (4130, 5980), // Permissions.permission_accessibility-events
+    (4131, 5981), // Permissions.permission_ambient-light-sensor
+    (4132, 5982), // Permissions.permission_background-sync
+    (4133, 5983), // Permissions.permission_camera
+    (4134, 5984), // Permissions.permission_captured-surface-control
+    (4135, 5985), // Permissions.permission_clipboard-read
+    (4136, 5986), // Permissions.permission_clipboard-write
+    (4137, 5987), // Permissions.permission_geolocation
+    (4138, 5988), // Permissions.permission_gyroscope
+    (4139, 5989), // Permissions.permission_local-fonts
+    (4140, 5990), // Permissions.permission_local-network
+    (4141, 5991), // Permissions.permission_local-network-access
+    (4142, 5992), // Permissions.permission_loopback-network
+    (4143, 5993), // Permissions.permission_magnetometer
+    (4144, 5994), // Permissions.permission_microphone
+    (4145, 5995), // Permissions.permission_midi
+    (4146, 5996), // Permissions.permission_notifications
+    (4147, 5997), // Permissions.permission_payment-handler
+    (4148, 5998), // Permissions.permission_periodic-background-sync
+    (4149, 5999), // Permissions.permission_persistent-storage
+    (4150, 6000), // Permissions.permission_push
+    (4151, 6001), // Permissions.permission_screen-wake-lock
+    (4153, 6002), // Permissions.permission_storage-access
+    (4154, 6003), // Permissions.permission_top-level-storage-access
+    (4155, 6004), // Permissions.permission_web-app-installation
+    (4156, 6005), // Permissions.permission_window-management
+    (4337, 6006), // Permissions.query
+    (4549, 6007), // Permissions.request
+    (4552, 6008), // Permissions.requestAll
+    (4645, 6009), // Permissions.revoke
+    (1306, 6011), // PermissionsPolicy.allowedFeatures
+    (1307, 6012), // PermissionsPolicy.allowsFeature
+    (2604, 6013), // PermissionsPolicy.features
+    (2806, 6014), // PermissionsPolicy.getAllowlistForFeature
+    (725, 6016), // PictureInPictureEvent.PictureInPictureEvent
+    (4168, 6017), // PictureInPictureEvent.pictureInPictureWindow
+    (3173, 6019), // PictureInPictureWindow.height
+    (4603, 6020), // PictureInPictureWindow.resize_event
+    (5739, 6021), // PictureInPictureWindow.width
+    (2272, 6023), // Plugin.description
+    (2617, 6024), // Plugin.filename
+    (3446, 6025), // Plugin.item
+    (3535, 6026), // Plugin.length
+    (3887, 6027), // Plugin.name
+    (3889, 6028), // Plugin.namedItem
+    (3446, 6030), // PluginArray.item
+    (3535, 6031), // PluginArray.length
+    (3889, 6032), // PluginArray.namedItem
+    (4446, 6033), // PluginArray.refresh
+    (735, 6035), // PointerEvent.PointerEvent
+    (1317, 6038), // PointerEvent.altitudeAngle
+    (1506, 6039), // PointerEvent.azimuthAngle
+    (2851, 6040), // PointerEvent.getCoalescedEvents
+    (2980, 6041), // PointerEvent.getPredictedEvents
+    (3173, 6042), // PointerEvent.height
+    (3405, 6043), // PointerEvent.isPrimary
+    (4161, 6044), // PointerEvent.persistentDeviceId
+    (4196, 6045), // PointerEvent.pointerId
+    (4198, 6046), // PointerEvent.pointerType
+    (4267, 6048), // PointerEvent.pressure
+    (5257, 6049), // PointerEvent.tangentialPressure
+    (5304, 6050), // PointerEvent.tiltX
+    (5305, 6051), // PointerEvent.tiltY
+    (5442, 6052), // PointerEvent.twist
+    (5739, 6053), // PointerEvent.width
+    (736, 6055), // PopStateEvent.PopStateEvent
+    (3163, 6056), // PopStateEvent.hasUAVisualTransition
+    (5106, 6057), // PopStateEvent.state
+    (2923, 6059), // PositionSensorVRDevice.getImmediateState
+    (3039, 6060), // PositionSensorVRDevice.getState
+    (4594, 6061), // PositionSensorVRDevice.resetSensor
+    (1824, 6063), // PreferenceManager.colorScheme
+    (1929, 6064), // PreferenceManager.contrast
+    (4432, 6065), // PreferenceManager.reducedData
+    (4433, 6066), // PreferenceManager.reducedMotion
+    (4434, 6067), // PreferenceManager.reducedTransparency
+    (1700, 6069), // PreferenceObject.change_event
+    (1761, 6070), // PreferenceObject.clearOverride
+    (4029, 6071), // PreferenceObject.override
+    (4567, 6072), // PreferenceObject.requestOverride
+    (5608, 6073), // PreferenceObject.validValues
+    (5614, 6074), // PreferenceObject.value
+    (2197, 6076), // Presentation.defaultRequest
+    (4403, 6077), // Presentation.receiver
+    (1700, 6079), // PresentationAvailability.change_event
+    (5614, 6080), // PresentationAvailability.value
+    (1553, 6082), // PresentationConnection.binaryType
+    (1792, 6083), // PresentationConnection.close
+    (1795, 6084), // PresentationConnection.close_event
+    (1882, 6085), // PresentationConnection.connect_event
+    (3207, 6086), // PresentationConnection.id
+    (3796, 6087), // PresentationConnection.message_event
+    (4803, 6088), // PresentationConnection.send
+    (5106, 6089), // PresentationConnection.state
+    (5271, 6090), // PresentationConnection.terminate
+    (5272, 6091), // PresentationConnection.terminate_event
+    (5577, 6092), // PresentationConnection.url
+    (743, 6094), // PresentationConnectionAvailableEvent.PresentationConnectionAvailableEvent
+    (1885, 6095), // PresentationConnectionAvailableEvent.connection
+    (744, 6097), // PresentationConnectionCloseEvent.PresentationConnectionCloseEvent
+    (3794, 6098), // PresentationConnectionCloseEvent.message
+    (4399, 6099), // PresentationConnectionCloseEvent.reason
+    (1888, 6101), // PresentationConnectionList.connectionavailable_event
+    (1889, 6102), // PresentationConnectionList.connections
+    (1886, 6104), // PresentationReceiver.connectionList
+    (747, 6106), // PresentationRequest.PresentationRequest
+    (1888, 6107), // PresentationRequest.connectionavailable_event
+    (2822, 6108), // PresentationRequest.getAvailability
+    (4407, 6109), // PresentationRequest.reconnect
+    (4769, 6110), // PresentationRequest.secure_context_required
+    (5095, 6111), // PresentationRequest.start
+    (748, 6113), // PressureObserver.PressureObserver
+    (2323, 6114), // PressureObserver.disconnect
+    (3491, 6115), // PressureObserver.knownSources
+    (3492, 6115), // PressureObserver.knownSources_static
+    (3954, 6116), // PressureObserver.observe
+    (5254, 6117), // PressureObserver.takeRecords
+    (5525, 6118), // PressureObserver.unobserve
+    (5045, 6120), // PressureRecord.source
+    (5106, 6121), // PressureRecord.state
+    (5306, 6122), // PressureRecord.time
+    (5341, 6123), // PressureRecord.toJSON
+    (2344, 6125), // ProcessingInstruction.doc_html
+    (2345, 6126), // ProcessingInstruction.doc_xml
+    (2813, 6127), // ProcessingInstruction.getAttribute
+    (2815, 6128), // ProcessingInstruction.getAttributeNames
+    (3142, 6129), // ProcessingInstruction.hasAttribute
+    (3144, 6130), // ProcessingInstruction.hasAttributes
+    (4487, 6131), // ProcessingInstruction.removeAttribute
+    (4827, 6132), // ProcessingInstruction.setAttribute
+    (4973, 6133), // ProcessingInstruction.sheet
+    (5259, 6134), // ProcessingInstruction.target
+    (5365, 6135), // ProcessingInstruction.toggleAttribute
+    (751, 6137), // Profiler.Profiler
+    (4695, 6138), // Profiler.sampleInterval
+    (5129, 6139), // Profiler.stop
+    (5134, 6140), // Profiler.stopped
+    (752, 6142), // ProgressEvent.ProgressEvent
+    (3537, 6144), // ProgressEvent.lengthComputable
+    (3577, 6145), // ProgressEvent.loaded
+    (5377, 6146), // ProgressEvent.total
+    (5754, 6147), // ProgressEvent.worker_support
+    (9, 10864), // Promise.@@species
+    (753, 10865), // Promise.Promise
+    (1295, 10866), // Promise.all
+    (1296, 10867), // Promise.allKeyed
+    (1297, 10868), // Promise.allSettled
+    (1298, 10869), // Promise.allSettledKeyed
+    (1346, 10870), // Promise.any
+    (1682, 10871), // Promise.catch
+    (2629, 10872), // Promise.finally
+    (3245, 10873), // Promise.incumbent_settings_object_tracking
+    (4353, 10874), // Promise.race
+    (4458, 10875), // Promise.reject
+    (4604, 10876), // Promise.resolve
+    (5298, 10877), // Promise.then
+    (5439, 10878), // Promise.try
+    (5747, 10879), // Promise.withResolvers
+    (754, 6149), // PromiseRejectionEvent.PromiseRejectionEvent
+    (4303, 6150), // PromiseRejectionEvent.promise
+    (4399, 6151), // PromiseRejectionEvent.reason
+    (4344, 6153), // ProtectedAudience.queryFeatureSupport
+    (756, 10881), // Proxy.Proxy
+    (4644, 10895), // Proxy.revocable
+    (1478, 6155), // PublicKeyCredential.authenticatorAttachment
+    (2846, 6156), // PublicKeyCredential.getClientCapabilities
+    (2847, 6156), // PublicKeyCredential.getClientCapabilities_static
+    (2848, 6157), // PublicKeyCredential.getClientExtensionResults
+    (3367, 6158), // PublicKeyCredential.isConditionalMediationAvailable
+    (3368, 6158), // PublicKeyCredential.isConditionalMediationAvailable_static
+    (3435, 6159), // PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable
+    (3436, 6159), // PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable_static
+    (4072, 6160), // PublicKeyCredential.parseCreationOptionsFromJSON
+    (4073, 6160), // PublicKeyCredential.parseCreationOptionsFromJSON_static
+    (4081, 6161), // PublicKeyCredential.parseRequestOptionsFromJSON
+    (4082, 6161), // PublicKeyCredential.parseRequestOptionsFromJSON_static
+    (4374, 6162), // PublicKeyCredential.rawId
+    (4612, 6163), // PublicKeyCredential.response
+    (4995, 6164), // PublicKeyCredential.signalAllAcceptedCredentials
+    (4996, 6164), // PublicKeyCredential.signalAllAcceptedCredentials_static
+    (4997, 6165), // PublicKeyCredential.signalCurrentUserDetails
+    (4998, 6165), // PublicKeyCredential.signalCurrentUserDetails_static
+    (4999, 6166), // PublicKeyCredential.signalUnknownCredential
+    (5000, 6166), // PublicKeyCredential.signalUnknownCredential_static
+    (5341, 6167), // PublicKeyCredential.toJSON
+    (758, 6169), // PushEvent.PushEvent
+    (2165, 6170), // PushEvent.data
+    (3938, 6171), // PushEvent.notification
+    (3045, 6173), // PushManager.getSubscription
+    (3155, 6174), // PushManager.hasPermission
+    (4127, 6175), // PushManager.permissionState
+    (4450, 6176), // PushManager.register
+    (4457, 6177), // PushManager.registrations
+    (5184, 6178), // PushManager.subscribe
+    (5199, 6179), // PushManager.supportedContentEncodings
+    (5200, 6179), // PushManager.supportedContentEncodings_static
+    (5529, 6180), // PushManager.unregister
+    (1428, 6182), // PushMessageData.arrayBuffer
+    (1578, 6183), // PushMessageData.blob
+    (1630, 6184), // PushMessageData.bytes
+    (3459, 6185), // PushMessageData.json
+    (5282, 6186), // PushMessageData.text
+    (2493, 6188), // PushSubscription.endpoint
+    (2549, 6189), // PushSubscription.expirationTime
+    (2935, 6190), // PushSubscription.getKey
+    (3989, 6191), // PushSubscription.options
+    (5185, 6192), // PushSubscription.subscriptionId
+    (5341, 6193), // PushSubscription.toJSON
+    (5534, 6194), // PushSubscription.unsubscribe
+    (762, 6196), // PushSubscriptionChangeEvent.PushSubscriptionChangeEvent
+    (3912, 6197), // PushSubscriptionChangeEvent.newSubscription
+    (3968, 6198), // PushSubscriptionChangeEvent.oldSubscription
+    (1365, 6200), // PushSubscriptionOptions.applicationServerKey
+    (5598, 6201), // PushSubscriptionOptions.userVisibleOnly
+    (766, 6203), // QuotaExceededError.QuotaExceededError
+    (4351, 6204), // QuotaExceededError.quota
+    (4586, 6205), // QuotaExceededError.requested
+    (1587, 6207), // RGBColor.blue
+    (3117, 6208), // RGBColor.green
+    (4412, 6209), // RGBColor.red
+    (2550, 6211), // RTCCertificate.expires
+    (2900, 6212), // RTCCertificate.getFingerprints
+    (1642, 6214), // RTCDTMFSender.canInsertDTMF
+    (3301, 6215), // RTCDTMFSender.insertDTMF
+    (5370, 6216), // RTCDTMFSender.toneBuffer
+    (5371, 6217), // RTCDTMFSender.tonechange_event
+    (770, 6219), // RTCDTMFToneChangeEvent.RTCDTMFToneChangeEvent
+    (5369, 6220), // RTCDTMFToneChangeEvent.tone
+    (1553, 6222), // RTCDataChannel.binaryType
+    (1617, 6225), // RTCDataChannel.bufferedAmount
+    (1618, 6226), // RTCDataChannel.bufferedAmountLowThreshold
+    (1619, 6227), // RTCDataChannel.bufferedamountlow_event
+    (1792, 6228), // RTCDataChannel.close
+    (1795, 6229), // RTCDataChannel.close_event
+    (1800, 6230), // RTCDataChannel.closing_event
+    (2517, 6231), // RTCDataChannel.error_event
+    (3207, 6232), // RTCDataChannel.id
+    (3494, 6233), // RTCDataChannel.label
+    (3748, 6234), // RTCDataChannel.maxPacketLifeTime
+    (3751, 6235), // RTCDataChannel.maxRetransmits
+    (3796, 6236), // RTCDataChannel.message_event
+    (3908, 6237), // RTCDataChannel.negotiated
+    (3984, 6238), // RTCDataChannel.open_event
+    (4000, 6239), // RTCDataChannel.ordered
+    (4284, 6240), // RTCDataChannel.priority
+    (4313, 6241), // RTCDataChannel.protocol
+    (4397, 6242), // RTCDataChannel.readyState
+    (4476, 6243), // RTCDataChannel.reliable
+    (4756, 6244), // RTCDataChannel.sctp_sdp_21
+    (4803, 6245), // RTCDataChannel.send
+    (5408, 6246), // RTCDataChannel.transferable
+    (772, 6248), // RTCDataChannelEvent.RTCDataChannelEvent
+    (1703, 6249), // RTCDataChannelEvent.channel
+    (2517, 6251), // RTCDtlsTransport.error_event
+    (3008, 6252), // RTCDtlsTransport.getRemoteCertificates
+    (3200, 6253), // RTCDtlsTransport.iceTransport
+    (5106, 6254), // RTCDtlsTransport.state
+    (5107, 6255), // RTCDtlsTransport.statechange_event
+    (774, 6257), // RTCEncodedAudioFrame.RTCEncodedAudioFrame
+    (2165, 6267), // RTCEncodedAudioFrame.data
+    (2947, 6268), // RTCEncodedAudioFrame.getMetadata
+    (5322, 6278), // RTCEncodedAudioFrame.timestamp
+    (775, 6280), // RTCEncodedVideoFrame.RTCEncodedVideoFrame
+    (2165, 6293), // RTCEncodedVideoFrame.data
+    (2947, 6294), // RTCEncodedVideoFrame.getMetadata
+    (5322, 6307), // RTCEncodedVideoFrame.timestamp
+    (5443, 6308), // RTCEncodedVideoFrame.type
+    (776, 6310), // RTCError.RTCError
+    (2515, 6311), // RTCError.errorDetail
+    (3194, 6313), // RTCError.httpRequestStatusCode
+    (4402, 6314), // RTCError.receivedAlert
+    (4755, 6315), // RTCError.sctpCauseCode
+    (4758, 6316), // RTCError.sdpLineNumber
+    (4811, 6317), // RTCError.sentAlert
+    (5754, 6318), // RTCError.worker_support
+    (777, 6320), // RTCErrorEvent.RTCErrorEvent
+    (2513, 6321), // RTCErrorEvent.error
+    (5754, 6322), // RTCErrorEvent.worker_support
+    (778, 6324), // RTCIceCandidate.RTCIceCandidate
+    (1274, 6325), // RTCIceCandidate.address
+    (1663, 6326), // RTCIceCandidate.candidate
+    (1850, 6327), // RTCIceCandidate.component
+    (2713, 6328), // RTCIceCandidate.foundation
+    (4224, 6329), // RTCIceCandidate.port
+    (4284, 6330), // RTCIceCandidate.priority
+    (4313, 6331), // RTCIceCandidate.protocol
+    (4462, 6332), // RTCIceCandidate.relatedAddress
+    (4464, 6333), // RTCIceCandidate.relatedPort
+    (4466, 6334), // RTCIceCandidate.relayProtocol
+    (4759, 6335), // RTCIceCandidate.sdpMLineIndex
+    (4760, 6336), // RTCIceCandidate.sdpMid
+    (5269, 6337), // RTCIceCandidate.tcpType
+    (5341, 6338), // RTCIceCandidate.toJSON
+    (5443, 6339), // RTCIceCandidate.type
+    (5577, 6340), // RTCIceCandidate.url
+    (5601, 6341), // RTCIceCandidate.usernameFragment
+    (3586, 6343), // RTCIceCandidatePair.local
+    (4482, 6344), // RTCIceCandidatePair.remote
+    (2779, 6346), // RTCIceTransport.gatheringState
+    (2780, 6347), // RTCIceTransport.gatheringstatechange_event
+    (2942, 6348), // RTCIceTransport.getLocalCandidates
+    (2943, 6349), // RTCIceTransport.getLocalParameters
+    (3007, 6350), // RTCIceTransport.getRemoteCandidates
+    (3009, 6351), // RTCIceTransport.getRemoteParameters
+    (3022, 6352), // RTCIceTransport.getSelectedCandidatePair
+    (4659, 6353), // RTCIceTransport.role
+    (4793, 6354), // RTCIceTransport.selectedcandidatepairchange_event
+    (5106, 6355), // RTCIceTransport.state
+    (5107, 6356), // RTCIceTransport.statechange_event
+    (3211, 6358), // RTCIdentityAssertion.idp
+    (3887, 6359), // RTCIdentityAssertion.name
+    (782, 6361), // RTCPeerConnection.RTCPeerConnection
+    (1257, 6375), // RTCPeerConnection.addIceCandidate
+    (1265, 6377), // RTCPeerConnection.addStream
+    (1268, 6378), // RTCPeerConnection.addTrack
+    (1269, 6379), // RTCPeerConnection.addTransceiver
+    (1277, 6383), // RTCPeerConnection.addstream_event
+    (1652, 6384), // RTCPeerConnection.canTrickleIceCandidates
+    (1792, 6385), // RTCPeerConnection.close
+    (1887, 6386), // RTCPeerConnection.connectionState
+    (1890, 6387), // RTCPeerConnection.connectionstatechange_event
+    (1986, 6388), // RTCPeerConnection.createAnswer
+    (2012, 6390), // RTCPeerConnection.createDTMFSender
+    (2013, 6391), // RTCPeerConnection.createDataChannel
+    (2044, 6392), // RTCPeerConnection.createOffer
+    (2143, 6394), // RTCPeerConnection.currentLocalDescription
+    (2146, 6395), // RTCPeerConnection.currentRemoteDescription
+    (2170, 6396), // RTCPeerConnection.datachannel_event
+    (2785, 6397), // RTCPeerConnection.generateCertificate
+    (2786, 6397), // RTCPeerConnection.generateCertificate_static
+    (2857, 6398), // RTCPeerConnection.getConfiguration
+    (2919, 6399), // RTCPeerConnection.getIdentityAssertion
+    (2944, 6400), // RTCPeerConnection.getLocalStreams
+    (3002, 6401), // RTCPeerConnection.getReceivers
+    (3010, 6403), // RTCPeerConnection.getRemoteStreams
+    (3024, 6404), // RTCPeerConnection.getSenders
+    (3040, 6406), // RTCPeerConnection.getStats
+    (3066, 6409), // RTCPeerConnection.getTransceivers
+    (3198, 6411), // RTCPeerConnection.iceConnectionState
+    (3199, 6412), // RTCPeerConnection.iceGatheringState
+    (3201, 6413), // RTCPeerConnection.icecandidate_event
+    (3202, 6414), // RTCPeerConnection.icecandidateerror_event
+    (3203, 6415), // RTCPeerConnection.iceconnectionstatechange_event
+    (3204, 6416), // RTCPeerConnection.icegatheringstatechange_event
+    (3212, 6417), // RTCPeerConnection.idpLoginUrl
+    (3587, 6418), // RTCPeerConnection.localDescription
+    (3909, 6419), // RTCPeerConnection.negotiationneeded_event
+    (4117, 6420), // RTCPeerConnection.peerIdentity
+    (4119, 6421), // RTCPeerConnection.pendingLocalDescription
+    (4120, 6422), // RTCPeerConnection.pendingRemoteDescription
+    (4483, 6423), // RTCPeerConnection.remoteDescription
+    (4506, 6424), // RTCPeerConnection.removeStream
+    (4507, 6425), // RTCPeerConnection.removeTrack
+    (4516, 6426), // RTCPeerConnection.removestream_event
+    (4622, 6427), // RTCPeerConnection.restartIce
+    (4754, 6428), // RTCPeerConnection.sctp
+    (4842, 6429), // RTCPeerConnection.setConfiguration
+    (4870, 6430), // RTCPeerConnection.setIdentityProvider
+    (4883, 6431), // RTCPeerConnection.setLocalDescription
+    (4909, 6434), // RTCPeerConnection.setRemoteDescription
+    (5001, 6437), // RTCPeerConnection.signalingState
+    (5002, 6438), // RTCPeerConnection.signalingstatechange_event
+    (5393, 6439), // RTCPeerConnection.track_event
+    (783, 6441), // RTCPeerConnectionIceErrorEvent.RTCPeerConnectionIceErrorEvent
+    (1274, 6442), // RTCPeerConnectionIceErrorEvent.address
+    (2514, 6443), // RTCPeerConnectionIceErrorEvent.errorCode
+    (2516, 6444), // RTCPeerConnectionIceErrorEvent.errorText
+    (3186, 6445), // RTCPeerConnectionIceErrorEvent.hostCandidate
+    (4224, 6446), // RTCPeerConnectionIceErrorEvent.port
+    (5577, 6447), // RTCPeerConnectionIceErrorEvent.url
+    (784, 6449), // RTCPeerConnectionIceEvent.RTCPeerConnectionIceEvent
+    (1663, 6450), // RTCPeerConnectionIceEvent.candidate
+    (5577, 6451), // RTCPeerConnectionIceEvent.url
+    (2021, 6453), // RTCRtpReceiver.createEncodedStreams
+    (2838, 6454), // RTCRtpReceiver.getCapabilities
+    (2839, 6454), // RTCRtpReceiver.getCapabilities_static
+    (2861, 6455), // RTCRtpReceiver.getContributingSources
+    (2970, 6462), // RTCRtpReceiver.getParameters
+    (3040, 6466), // RTCRtpReceiver.getStats
+    (3054, 6467), // RTCRtpReceiver.getSynchronizationSources
+    (3455, 6470), // RTCRtpReceiver.jitterBufferTarget
+    (4680, 6471), // RTCRtpReceiver.rtcpTransport
+    (5391, 6472), // RTCRtpReceiver.track
+    (5409, 6473), // RTCRtpReceiver.transform
+    (5425, 6474), // RTCRtpReceiver.transport
+    (786, 6476), // RTCRtpScriptTransform.RTCRtpScriptTransform
+    (2788, 6478), // RTCRtpScriptTransformer.generateKeyFrame
+    (3989, 6479), // RTCRtpScriptTransformer.options
+    (4393, 6480), // RTCRtpScriptTransformer.readable
+    (4807, 6481), // RTCRtpScriptTransformer.sendKeyFrameRequest
+    (5758, 6482), // RTCRtpScriptTransformer.writable
+    (2021, 6484), // RTCRtpSender.createEncodedStreams
+    (2409, 6485), // RTCRtpSender.dtmf
+    (2838, 6486), // RTCRtpSender.getCapabilities
+    (2839, 6486), // RTCRtpSender.getCapabilities_static
+    (2970, 6487), // RTCRtpSender.getParameters
+    (3040, 6494), // RTCRtpSender.getStats
+    (4541, 6495), // RTCRtpSender.replaceTrack
+    (4680, 6496), // RTCRtpSender.rtcpTransport
+    (4897, 6497), // RTCRtpSender.setParameters
+    (4932, 6513), // RTCRtpSender.setStreams
+    (5391, 6514), // RTCRtpSender.track
+    (5409, 6515), // RTCRtpSender.transform
+    (5425, 6516), // RTCRtpSender.transport
+    (2140, 6518), // RTCRtpTransceiver.currentDirection
+    (2311, 6520), // RTCRtpTransceiver.direction
+    (2914, 6522), // RTCRtpTransceiver.getHeaderExtensionsToNegotiate
+    (2957, 6523), // RTCRtpTransceiver.getNegotiatedHeaderExtensions
+    (3805, 6524), // RTCRtpTransceiver.mid
+    (4403, 6525), // RTCRtpTransceiver.receiver
+    (4810, 6526), // RTCRtpTransceiver.sender
+    (4840, 6527), // RTCRtpTransceiver.setCodecPreferences
+    (4867, 6528), // RTCRtpTransceiver.setHeaderExtensionsToNegotiate
+    (5129, 6529), // RTCRtpTransceiver.stop
+    (5134, 6530), // RTCRtpTransceiver.stopped
+    (3726, 6532), // RTCSctpTransport.maxChannels
+    (3747, 6533), // RTCSctpTransport.maxMessageSize
+    (5106, 6534), // RTCSctpTransport.state
+    (5107, 6535), // RTCSctpTransport.statechange_event
+    (5425, 6536), // RTCSctpTransport.transport
+    (791, 6538), // RTCSessionDescription.RTCSessionDescription
+    (4757, 6539), // RTCSessionDescription.sdp
+    (5341, 6540), // RTCSessionDescription.toJSON
+    (5443, 6541), // RTCSessionDescription.type
+    (4, 6543), // RTCStatsReport.@@iterator
+    (2503, 6544), // RTCStatsReport.entries
+    (2692, 6545), // RTCStatsReport.forEach
+    (2796, 6546), // RTCStatsReport.get
+    (3141, 6547), // RTCStatsReport.has
+    (3486, 6548), // RTCStatsReport.keys
+    (5011, 6549), // RTCStatsReport.size
+    (5445, 6550), // RTCStatsReport.type_candidate-pair
+    (5446, 6576), // RTCStatsReport.type_certificate
+    (5447, 6584), // RTCStatsReport.type_codec
+    (5448, 6594), // RTCStatsReport.type_data-channel
+    (5451, 6606), // RTCStatsReport.type_inbound-rtp
+    (5452, 6659), // RTCStatsReport.type_local-candidate
+    (5453, 6671), // RTCStatsReport.type_media-playout
+    (5454, 6681), // RTCStatsReport.type_media-source
+    (5455, 6694), // RTCStatsReport.type_outbound-rtp
+    (5456, 6727), // RTCStatsReport.type_peer-connection
+    (5457, 6733), // RTCStatsReport.type_remote-candidate
+    (5458, 6745), // RTCStatsReport.type_remote-inbound-rtp
+    (5459, 6761), // RTCStatsReport.type_remote-outbound-rtp
+    (5462, 6776), // RTCStatsReport.type_transport
+    (5622, 6796), // RTCStatsReport.values
+    (793, 6798), // RTCTrackEvent.RTCTrackEvent
+    (4403, 6799), // RTCTrackEvent.receiver
+    (5156, 6800), // RTCTrackEvent.streams
+    (5391, 6801), // RTCTrackEvent.track
+    (5398, 6802), // RTCTrackEvent.transceiver
+    (5414, 6804), // RTCTransformEvent.transformer
+    (5614, 6806), // RadioNodeList.value
+    (796, 6808), // Range.Range
+    (1789, 6809), // Range.cloneContents
+    (1791, 6810), // Range.cloneRange
+    (1814, 6811), // Range.collapse
+    (1817, 6813), // Range.collapsed
+    (1837, 6814), // Range.commonAncestorContainer
+    (1839, 6815), // Range.compareBoundaryPoints
+    (1842, 6816), // Range.compareNode
+    (1843, 6817), // Range.comparePoint
+    (2008, 6818), // Range.createContextualFragment
+    (2216, 6820), // Range.deleteContents
+    (2278, 6821), // Range.detach
+    (2479, 6822), // Range.endContainer
+    (2485, 6823), // Range.endOffset
+    (2569, 6824), // Range.extractContents
+    (2828, 6825), // Range.getBoundingClientRect
+    (2850, 6826), // Range.getClientRects
+    (3305, 6827), // Range.insertNode
+    (3346, 6828), // Range.intersectsNode
+    (3402, 6829), // Range.isPointInRange
+    (4783, 6830), // Range.selectNode
+    (4784, 6831), // Range.selectNodeContents
+    (4851, 6832), // Range.setEnd
+    (4852, 6833), // Range.setEndAfter
+    (4853, 6834), // Range.setEndBefore
+    (4926, 6835), // Range.setStart
+    (4927, 6836), // Range.setStartAfter
+    (4928, 6837), // Range.setStartBefore
+    (5096, 6838), // Range.startContainer
+    (5099, 6839), // Range.startOffset
+    (5213, 6840), // Range.surroundContents
+    (5355, 6841), // Range.toString
+    (797, 10897), // RangeError.RangeError
+    (4816, 10898), // RangeError.serializable_object
+    (1626, 6843), // ReadableByteStreamController.byobRequest
+    (1792, 6844), // ReadableByteStreamController.close
+    (2275, 6845), // ReadableByteStreamController.desiredSize
+    (2498, 6846), // ReadableByteStreamController.enqueue
+    (2513, 6847), // ReadableByteStreamController.error
+    (1, 6849), // ReadableStream.@@asyncIterator
+    (799, 6850), // ReadableStream.ReadableStream
+    (1653, 6851), // ReadableStream.cancel
+    (2736, 6852), // ReadableStream.from
+    (2757, 6852), // ReadableStream.from_static
+    (3001, 6853), // ReadableStream.getReader
+    (3599, 6854), // ReadableStream.locked
+    (4171, 6855), // ReadableStream.pipeThrough
+    (4172, 6856), // ReadableStream.pipeTo
+    (5270, 6857), // ReadableStream.tee
+    (5408, 6858), // ReadableStream.transferable
+    (5622, 6859), // ReadableStream.values
+    (800, 6861), // ReadableStreamBYOBReader.ReadableStreamBYOBReader
+    (1653, 6862), // ReadableStreamBYOBReader.cancel
+    (1797, 6863), // ReadableStreamBYOBReader.closed
+    (4381, 6864), // ReadableStreamBYOBReader.read
+    (4471, 6866), // ReadableStreamBYOBReader.releaseLock
+    (4609, 6869), // ReadableStreamBYOBRequest.respond
+    (4611, 6870), // ReadableStreamBYOBRequest.respondWithNewView
+    (5662, 6871), // ReadableStreamBYOBRequest.view
+    (1792, 6873), // ReadableStreamDefaultController.close
+    (2275, 6874), // ReadableStreamDefaultController.desiredSize
+    (2498, 6875), // ReadableStreamDefaultController.enqueue
+    (2513, 6876), // ReadableStreamDefaultController.error
+    (803, 6878), // ReadableStreamDefaultReader.ReadableStreamDefaultReader
+    (1653, 6879), // ReadableStreamDefaultReader.cancel
+    (1797, 6880), // ReadableStreamDefaultReader.closed
+    (4381, 6881), // ReadableStreamDefaultReader.read
+    (4471, 6882), // ReadableStreamDefaultReader.releaseLock
+    (1598, 6885), // Rect.bottom
+    (3530, 6886), // Rect.left
+    (4652, 6887), // Rect.right
+    (5375, 6888), // Rect.top
+    (805, 10900), // ReferenceError.ReferenceError
+    (4816, 10901), // ReferenceError.serializable_object
+    (1366, 10903), // Reflect.apply
+    (1895, 10904), // Reflect.construct
+    (2205, 10905), // Reflect.defineProperty
+    (2226, 10906), // Reflect.deleteProperty
+    (2796, 10907), // Reflect.get
+    (2965, 10908), // Reflect.getOwnPropertyDescriptor
+    (2991, 10909), // Reflect.getPrototypeOf
+    (3141, 10910), // Reflect.has
+    (3381, 10911), // Reflect.isExtensible
+    (4033, 10912), // Reflect.ownKeys
+    (4270, 10913), // Reflect.preventExtensions
+    (4824, 10914), // Reflect.set
+    (4907, 10915), // Reflect.setPrototypeOf
+    (5, 10917), // RegExp.@@match
+    (6, 10918), // RegExp.@@matchAll
+    (7, 10919), // RegExp.@@replace
+    (8, 10920), // RegExp.@@search
+    (9, 10921), // RegExp.@@species
+    (10, 10922), // RegExp.@@split
+    (807, 10923), // RegExp.RegExp
+    (1845, 10924), // RegExp.compile
+    (2361, 10926), // RegExp.dotAll
+    (2520, 10927), // RegExp.escape
+    (2534, 10928), // RegExp.exec
+    (2649, 10929), // RegExp.flags
+    (3101, 10930), // RegExp.global
+    (3150, 10932), // RegExp.hasIndices
+    (3214, 10933), // RegExp.ignoreCase
+    (3285, 10935), // RegExp.input
+    (3507, 10936), // RegExp.lastIndex
+    (3510, 10937), // RegExp.lastMatch
+    (3514, 10938), // RegExp.lastParen
+    (3531, 10939), // RegExp.leftContext
+    (3880, 10940), // RegExp.multiline
+    (3886, 10942), // RegExp.n
+    (4653, 10943), // RegExp.rightContext
+    (5045, 10944), // RegExp.source
+    (5127, 10948), // RegExp.sticky
+    (5273, 10951), // RegExp.test
+    (5355, 10952), // RegExp.toString
+    (5475, 10954), // RegExp.unicode
+    (5478, 10955), // RegExp.unicodeSets
+    (808, 6890), // RelativeOrientationSensor.RelativeOrientationSensor
+    (1660, 6892), // RemotePlayback.cancelWatchAvailability
+    (1882, 6893), // RemotePlayback.connect_event
+    (1884, 6894), // RemotePlayback.connecting_event
+    (2324, 6895), // RemotePlayback.disconnect_event
+    (4304, 6896), // RemotePlayback.prompt
+    (5106, 6897), // RemotePlayback.state
+    (5711, 6898), // RemotePlayback.watchAvailability
+    (1591, 6900), // Report.body
+    (5341, 6901), // Report.toJSON
+    (5443, 6902), // Report.type
+    (5577, 6903), // Report.url
+    (5341, 6905), // ReportBody.toJSON
+    (813, 6907), // ReportingObserver.ReportingObserver
+    (2323, 6917), // ReportingObserver.disconnect
+    (3954, 6918), // ReportingObserver.observe
+    (5254, 6919), // ReportingObserver.takeRecords
+    (5754, 6920), // ReportingObserver.worker_support
+    (814, 6922), // Request.Request
+    (1428, 6936), // Request.arrayBuffer
+    (1578, 6937), // Request.blob
+    (1591, 6938), // Request.body
+    (1592, 6939), // Request.bodyUsed
+    (1630, 6940), // Request.bytes
+    (1633, 6941), // Request.cache
+    (1788, 6943), // Request.clone
+    (2123, 6944), // Request.credentials
+    (2276, 6946), // Request.destination
+    (2411, 6949), // Request.duplex
+    (2700, 6950), // Request.formData
+    (3169, 6951), // Request.headers
+    (3328, 6952), // Request.integrity
+    (3390, 6953), // Request.isHistoryNavigation
+    (3412, 6954), // Request.isReloadNavigation
+    (3459, 6955), // Request.json
+    (3470, 6956), // Request.keepalive
+    (3801, 6957), // Request.method
+    (3832, 6958), // Request.mode
+    (4413, 6960), // Request.redirect
+    (4442, 6961), // Request.referrer
+    (4443, 6962), // Request.referrerPolicy
+    (4994, 6963), // Request.signal
+    (5260, 6964), // Request.targetAddressSpace
+    (5282, 6965), // Request.text
+    (5288, 6966), // Request.textStream
+    (5577, 6967), // Request.url
+    (815, 6969), // ResizeObserver.ResizeObserver
+    (2323, 6970), // ResizeObserver.disconnect
+    (3954, 6971), // ResizeObserver.observe
+    (5525, 6973), // ResizeObserver.unobserve
+    (1597, 6975), // ResizeObserverEntry.borderBoxSize
+    (1909, 6976), // ResizeObserverEntry.contentBoxSize
+    (1914, 6977), // ResizeObserverEntry.contentRect
+    (2291, 6978), // ResizeObserverEntry.devicePixelContentBoxSize
+    (5259, 6979), // ResizeObserverEntry.target
+    (1581, 6981), // ResizeObserverSize.blockSize
+    (3279, 6982), // ResizeObserverSize.inlineSize
+    (818, 6984), // Response.Response
+    (1428, 6987), // Response.arrayBuffer
+    (1578, 6988), // Response.blob
+    (1591, 6989), // Response.body
+    (1592, 6991), // Response.bodyUsed
+    (1630, 6992), // Response.bytes
+    (1788, 6993), // Response.clone
+    (2513, 6994), // Response.error
+    (2518, 6994), // Response.error_static
+    (2700, 6995), // Response.formData
+    (3169, 6996), // Response.headers
+    (3459, 6998), // Response.json
+    (3460, 6998), // Response.json_static
+    (3966, 6999), // Response.ok
+    (4413, 7000), // Response.redirect
+    (4417, 7000), // Response.redirect_static
+    (4418, 7001), // Response.redirected
+    (5110, 7002), // Response.status
+    (5113, 7003), // Response.statusText
+    (5282, 7004), // Response.text
+    (5288, 7005), // Response.textStream
+    (5443, 7006), // Response.type
+    (5577, 7007), // Response.url
+    (2741, 7009), // RestrictionTarget.fromElement
+    (2742, 7009), // RestrictionTarget.fromElement_static
+    (2365, 7011), // SVGAElement.download
+    (3165, 7012), // SVGAElement.hash
+    (3185, 7013), // SVGAElement.host
+    (3187, 7014), // SVGAElement.hostname
+    (3188, 7015), // SVGAElement.href
+    (3190, 7016), // SVGAElement.hreflang
+    (3333, 7017), // SVGAElement.interestForElement
+    (4010, 7018), // SVGAElement.origin
+    (4086, 7019), // SVGAElement.password
+    (4090, 7020), // SVGAElement.pathname
+    (4170, 7021), // SVGAElement.ping
+    (4224, 7022), // SVGAElement.port
+    (4313, 7023), // SVGAElement.protocol
+    (4443, 7024), // SVGAElement.referrerPolicy
+    (4460, 7025), // SVGAElement.rel
+    (4461, 7026), // SVGAElement.relList
+    (4762, 7027), // SVGAElement.search
+    (5259, 7028), // SVGAElement.target
+    (5443, 7029), // SVGAElement.type
+    (5600, 7030), // SVGAElement.username
+    (1940, 7032), // SVGAngle.convertToSpecifiedUnits
+    (3915, 7033), // SVGAngle.newValueSpecifiedUnits
+    (5517, 7034), // SVGAngle.unitType
+    (5614, 7035), // SVGAngle.value
+    (5617, 7036), // SVGAngle.valueAsString
+    (5618, 7037), // SVGAngle.valueInSpecifiedUnits
+    (1330, 7042), // SVGAnimatedAngle.animVal
+    (1523, 7043), // SVGAnimatedAngle.baseVal
+    (1330, 7045), // SVGAnimatedBoolean.animVal
+    (1523, 7046), // SVGAnimatedBoolean.baseVal
+    (1330, 7048), // SVGAnimatedEnumeration.animVal
+    (1523, 7049), // SVGAnimatedEnumeration.baseVal
+    (1330, 7051), // SVGAnimatedInteger.animVal
+    (1523, 7052), // SVGAnimatedInteger.baseVal
+    (1330, 7054), // SVGAnimatedLength.animVal
+    (1523, 7055), // SVGAnimatedLength.baseVal
+    (1330, 7057), // SVGAnimatedLengthList.animVal
+    (1523, 7058), // SVGAnimatedLengthList.baseVal
+    (1330, 7060), // SVGAnimatedNumber.animVal
+    (1523, 7061), // SVGAnimatedNumber.baseVal
+    (1330, 7063), // SVGAnimatedNumberList.animVal
+    (1523, 7064), // SVGAnimatedNumberList.baseVal
+    (1330, 7066), // SVGAnimatedPreserveAspectRatio.animVal
+    (1523, 7067), // SVGAnimatedPreserveAspectRatio.baseVal
+    (1330, 7069), // SVGAnimatedRect.animVal
+    (1523, 7070), // SVGAnimatedRect.baseVal
+    (1330, 7072), // SVGAnimatedString.animVal
+    (1523, 7073), // SVGAnimatedString.baseVal
+    (1330, 7076), // SVGAnimatedTransformList.animVal
+    (1523, 7077), // SVGAnimatedTransformList.baseVal
+    (1538, 7079), // SVGAnimationElement.beginElement
+    (1539, 7080), // SVGAnimationElement.beginElementAt
+    (1540, 7081), // SVGAnimationElement.beginEvent_event
+    (2480, 7082), // SVGAnimationElement.endElement
+    (2481, 7083), // SVGAnimationElement.endElementAt
+    (2482, 7084), // SVGAnimationElement.endEvent_event
+    (2867, 7085), // SVGAnimationElement.getCurrentTime
+    (3034, 7086), // SVGAnimationElement.getSimpleDuration
+    (3038, 7087), // SVGAnimationElement.getStartTime
+    (4530, 7088), // SVGAnimationElement.repeatEvent_event
+    (4589, 7089), // SVGAnimationElement.requiredExtensions
+    (5241, 7090), // SVGAnimationElement.systemLanguage
+    (5261, 7091), // SVGAnimationElement.targetElement
+    (2162, 7093), // SVGCircleElement.cx
+    (2163, 7094), // SVGCircleElement.cy
+    (4352, 7095), // SVGCircleElement.r
+    (1783, 7097), // SVGClipPathElement.clipPathUnits
+    (5409, 7098), // SVGClipPathElement.transform
+    (1318, 7100), // SVGComponentTransferFunctionElement.amplitude
+    (2553, 7101), // SVGComponentTransferFunctionElement.exponent
+    (3332, 7102), // SVGComponentTransferFunctionElement.intercept
+    (3957, 7103), // SVGComponentTransferFunctionElement.offset
+    (5026, 7104), // SVGComponentTransferFunctionElement.slope
+    (5247, 7105), // SVGComponentTransferFunctionElement.tableValues
+    (5443, 7106), // SVGComponentTransferFunctionElement.type
+    (1463, 7111), // SVGElement.attributeStyleMap
+    (1486, 7112), // SVGElement.autofocus
+    (1589, 7113), // SVGElement.blur
+    (1743, 7114), // SVGElement.className
+    (2172, 7115), // SVGElement.dataset
+    (2517, 7116), // SVGElement.error_event
+    (2657, 7117), // SVGElement.focus
+    (3576, 7119), // SVGElement.load_event
+    (3933, 7120), // SVGElement.nonce
+    (4038, 7121), // SVGElement.ownerSVGElement
+    (5166, 7122), // SVGElement.style
+    (5245, 7124), // SVGElement.tabIndex
+    (5668, 7125), // SVGElement.viewportElement
+    (2162, 7127), // SVGEllipseElement.cx
+    (2163, 7128), // SVGEllipseElement.cy
+    (4687, 7129), // SVGEllipseElement.rx
+    (4688, 7130), // SVGEllipseElement.ry
+    (3173, 7132), // SVGFEBlendElement.height
+    (3232, 7133), // SVGFEBlendElement.in1
+    (3233, 7134), // SVGFEBlendElement.in2
+    (3832, 7135), // SVGFEBlendElement.mode
+    (4627, 7136), // SVGFEBlendElement.result
+    (5739, 7137), // SVGFEBlendElement.width
+    (5772, 7138), // SVGFEBlendElement.x
+    (5781, 7139), // SVGFEBlendElement.y
+    (3173, 7141), // SVGFEColorMatrixElement.height
+    (3232, 7142), // SVGFEColorMatrixElement.in1
+    (4627, 7143), // SVGFEColorMatrixElement.result
+    (5443, 7144), // SVGFEColorMatrixElement.type
+    (5622, 7145), // SVGFEColorMatrixElement.values
+    (5739, 7146), // SVGFEColorMatrixElement.width
+    (5772, 7147), // SVGFEColorMatrixElement.x
+    (5781, 7148), // SVGFEColorMatrixElement.y
+    (3173, 7150), // SVGFEComponentTransferElement.height
+    (3232, 7151), // SVGFEComponentTransferElement.in1
+    (4627, 7152), // SVGFEComponentTransferElement.result
+    (5739, 7153), // SVGFEComponentTransferElement.width
+    (5772, 7154), // SVGFEComponentTransferElement.x
+    (5781, 7155), // SVGFEComponentTransferElement.y
+    (3173, 7157), // SVGFECompositeElement.height
+    (3232, 7158), // SVGFECompositeElement.in1
+    (3233, 7159), // SVGFECompositeElement.in2
+    (3464, 7160), // SVGFECompositeElement.k1
+    (3465, 7161), // SVGFECompositeElement.k2
+    (3466, 7162), // SVGFECompositeElement.k3
+    (3467, 7163), // SVGFECompositeElement.k4
+    (3987, 7164), // SVGFECompositeElement.operator
+    (4627, 7165), // SVGFECompositeElement.result
+    (5739, 7166), // SVGFECompositeElement.width
+    (5772, 7167), // SVGFECompositeElement.x
+    (5781, 7168), // SVGFECompositeElement.y
+    (1551, 7170), // SVGFEConvolveMatrixElement.bias
+    (2342, 7171), // SVGFEConvolveMatrixElement.divisor
+    (2431, 7172), // SVGFEConvolveMatrixElement.edgeMode
+    (3173, 7173), // SVGFEConvolveMatrixElement.height
+    (3232, 7174), // SVGFEConvolveMatrixElement.in1
+    (3471, 7175), // SVGFEConvolveMatrixElement.kernelMatrix
+    (3472, 7176), // SVGFEConvolveMatrixElement.kernelUnitLengthX
+    (3473, 7177), // SVGFEConvolveMatrixElement.kernelUnitLengthY
+    (3998, 7178), // SVGFEConvolveMatrixElement.orderX
+    (3999, 7179), // SVGFEConvolveMatrixElement.orderY
+    (4263, 7180), // SVGFEConvolveMatrixElement.preserveAlpha
+    (4627, 7181), // SVGFEConvolveMatrixElement.result
+    (5267, 7182), // SVGFEConvolveMatrixElement.targetX
+    (5268, 7183), // SVGFEConvolveMatrixElement.targetY
+    (5739, 7184), // SVGFEConvolveMatrixElement.width
+    (5772, 7185), // SVGFEConvolveMatrixElement.x
+    (5781, 7186), // SVGFEConvolveMatrixElement.y
+    (2305, 7188), // SVGFEDiffuseLightingElement.diffuseConstant
+    (3173, 7189), // SVGFEDiffuseLightingElement.height
+    (3232, 7190), // SVGFEDiffuseLightingElement.in1
+    (3472, 7191), // SVGFEDiffuseLightingElement.kernelUnitLengthX
+    (3473, 7192), // SVGFEDiffuseLightingElement.kernelUnitLengthY
+    (4627, 7193), // SVGFEDiffuseLightingElement.result
+    (5212, 7194), // SVGFEDiffuseLightingElement.surfaceScale
+    (5739, 7195), // SVGFEDiffuseLightingElement.width
+    (5772, 7196), // SVGFEDiffuseLightingElement.x
+    (5781, 7197), // SVGFEDiffuseLightingElement.y
+    (3173, 7199), // SVGFEDisplacementMapElement.height
+    (3232, 7200), // SVGFEDisplacementMapElement.in1
+    (3233, 7201), // SVGFEDisplacementMapElement.in2
+    (4627, 7202), // SVGFEDisplacementMapElement.result
+    (4703, 7203), // SVGFEDisplacementMapElement.scale
+    (5739, 7204), // SVGFEDisplacementMapElement.width
+    (5772, 7205), // SVGFEDisplacementMapElement.x
+    (5775, 7206), // SVGFEDisplacementMapElement.xChannelSelector
+    (5781, 7207), // SVGFEDisplacementMapElement.y
+    (5784, 7208), // SVGFEDisplacementMapElement.yChannelSelector
+    (1505, 7210), // SVGFEDistantLightElement.azimuth
+    (2444, 7211), // SVGFEDistantLightElement.elevation
+    (2427, 7213), // SVGFEDropShadowElement.dx
+    (2428, 7214), // SVGFEDropShadowElement.dy
+    (3173, 7215), // SVGFEDropShadowElement.height
+    (3232, 7216), // SVGFEDropShadowElement.in1
+    (4627, 7217), // SVGFEDropShadowElement.result
+    (4930, 7218), // SVGFEDropShadowElement.setStdDeviation
+    (5115, 7219), // SVGFEDropShadowElement.stdDeviationX
+    (5116, 7220), // SVGFEDropShadowElement.stdDeviationY
+    (5739, 7221), // SVGFEDropShadowElement.width
+    (5772, 7222), // SVGFEDropShadowElement.x
+    (5781, 7223), // SVGFEDropShadowElement.y
+    (3173, 7225), // SVGFEFloodElement.height
+    (4627, 7226), // SVGFEFloodElement.result
+    (5739, 7227), // SVGFEFloodElement.width
+    (5772, 7228), // SVGFEFloodElement.x
+    (5781, 7229), // SVGFEFloodElement.y
+    (2431, 7235), // SVGFEGaussianBlurElement.edgeMode
+    (3173, 7236), // SVGFEGaussianBlurElement.height
+    (3232, 7237), // SVGFEGaussianBlurElement.in1
+    (4627, 7238), // SVGFEGaussianBlurElement.result
+    (4930, 7239), // SVGFEGaussianBlurElement.setStdDeviation
+    (5115, 7240), // SVGFEGaussianBlurElement.stdDeviationX
+    (5116, 7241), // SVGFEGaussianBlurElement.stdDeviationY
+    (5739, 7242), // SVGFEGaussianBlurElement.width
+    (5772, 7243), // SVGFEGaussianBlurElement.x
+    (5781, 7244), // SVGFEGaussianBlurElement.y
+    (2126, 7246), // SVGFEImageElement.crossOrigin
+    (3173, 7247), // SVGFEImageElement.height
+    (3188, 7248), // SVGFEImageElement.href
+    (4264, 7249), // SVGFEImageElement.preserveAspectRatio
+    (4627, 7250), // SVGFEImageElement.result
+    (5739, 7251), // SVGFEImageElement.width
+    (5772, 7252), // SVGFEImageElement.x
+    (5781, 7253), // SVGFEImageElement.y
+    (3173, 7255), // SVGFEMergeElement.height
+    (4627, 7256), // SVGFEMergeElement.result
+    (5739, 7257), // SVGFEMergeElement.width
+    (5772, 7258), // SVGFEMergeElement.x
+    (5781, 7259), // SVGFEMergeElement.y
+    (3232, 7261), // SVGFEMergeNodeElement.in1
+    (3173, 7263), // SVGFEMorphologyElement.height
+    (3232, 7264), // SVGFEMorphologyElement.in1
+    (3987, 7265), // SVGFEMorphologyElement.operator
+    (4357, 7266), // SVGFEMorphologyElement.radiusX
+    (4358, 7267), // SVGFEMorphologyElement.radiusY
+    (4627, 7268), // SVGFEMorphologyElement.result
+    (5739, 7269), // SVGFEMorphologyElement.width
+    (5772, 7270), // SVGFEMorphologyElement.x
+    (5781, 7271), // SVGFEMorphologyElement.y
+    (2427, 7273), // SVGFEOffsetElement.dx
+    (2428, 7274), // SVGFEOffsetElement.dy
+    (3173, 7275), // SVGFEOffsetElement.height
+    (3232, 7276), // SVGFEOffsetElement.in1
+    (4627, 7277), // SVGFEOffsetElement.result
+    (5739, 7278), // SVGFEOffsetElement.width
+    (5772, 7279), // SVGFEOffsetElement.x
+    (5781, 7280), // SVGFEOffsetElement.y
+    (5772, 7282), // SVGFEPointLightElement.x
+    (5781, 7283), // SVGFEPointLightElement.y
+    (5786, 7284), // SVGFEPointLightElement.z
+    (3173, 7286), // SVGFESpecularLightingElement.height
+    (3232, 7287), // SVGFESpecularLightingElement.in1
+    (3472, 7288), // SVGFESpecularLightingElement.kernelUnitLengthX
+    (3473, 7289), // SVGFESpecularLightingElement.kernelUnitLengthY
+    (4627, 7290), // SVGFESpecularLightingElement.result
+    (5067, 7291), // SVGFESpecularLightingElement.specularConstant
+    (5068, 7292), // SVGFESpecularLightingElement.specularExponent
+    (5212, 7293), // SVGFESpecularLightingElement.surfaceScale
+    (5739, 7294), // SVGFESpecularLightingElement.width
+    (5772, 7295), // SVGFESpecularLightingElement.x
+    (5781, 7296), // SVGFESpecularLightingElement.y
+    (3545, 7298), // SVGFESpotLightElement.limitingConeAngle
+    (4211, 7299), // SVGFESpotLightElement.pointsAtX
+    (4212, 7300), // SVGFESpotLightElement.pointsAtY
+    (4213, 7301), // SVGFESpotLightElement.pointsAtZ
+    (5068, 7302), // SVGFESpotLightElement.specularExponent
+    (5772, 7303), // SVGFESpotLightElement.x
+    (5781, 7304), // SVGFESpotLightElement.y
+    (5786, 7305), // SVGFESpotLightElement.z
+    (3173, 7307), // SVGFETileElement.height
+    (3232, 7308), // SVGFETileElement.in1
+    (4627, 7309), // SVGFETileElement.result
+    (5739, 7310), // SVGFETileElement.width
+    (5772, 7311), // SVGFETileElement.x
+    (5781, 7312), // SVGFETileElement.y
+    (1517, 7314), // SVGFETurbulenceElement.baseFrequencyX
+    (1518, 7315), // SVGFETurbulenceElement.baseFrequencyY
+    (3173, 7316), // SVGFETurbulenceElement.height
+    (3943, 7317), // SVGFETurbulenceElement.numOctaves
+    (4627, 7318), // SVGFETurbulenceElement.result
+    (4771, 7319), // SVGFETurbulenceElement.seed
+    (5128, 7320), // SVGFETurbulenceElement.stitchTiles
+    (5443, 7321), // SVGFETurbulenceElement.type
+    (5739, 7322), // SVGFETurbulenceElement.width
+    (5772, 7323), // SVGFETurbulenceElement.x
+    (5781, 7324), // SVGFETurbulenceElement.y
+    (2627, 7326), // SVGFilterElement.filterUnits
+    (3173, 7327), // SVGFilterElement.height
+    (3188, 7328), // SVGFilterElement.href
+    (4282, 7329), // SVGFilterElement.primitiveUnits
+    (5739, 7330), // SVGFilterElement.width
+    (5772, 7331), // SVGFilterElement.x
+    (5781, 7332), // SVGFilterElement.y
+    (3173, 7334), // SVGForeignObjectElement.height
+    (5739, 7335), // SVGForeignObjectElement.width
+    (5772, 7336), // SVGForeignObjectElement.x
+    (5781, 7337), // SVGForeignObjectElement.y
+    (2977, 7340), // SVGGeometryElement.getPointAtLength
+    (3063, 7341), // SVGGeometryElement.getTotalLength
+    (3400, 7342), // SVGGeometryElement.isPointInFill
+    (3403, 7344), // SVGGeometryElement.isPointInStroke
+    (4089, 7346), // SVGGeometryElement.pathLength
+    (3112, 7348), // SVGGradientElement.gradientTransform
+    (3113, 7349), // SVGGradientElement.gradientUnits
+    (3188, 7350), // SVGGradientElement.href
+    (5078, 7351), // SVGGradientElement.spreadMethod
+    (2823, 7353), // SVGGraphicsElement.getBBox
+    (2835, 7359), // SVGGraphicsElement.getCTM
+    (3017, 7360), // SVGGraphicsElement.getScreenCTM
+    (4589, 7361), // SVGGraphicsElement.requiredExtensions
+    (5241, 7362), // SVGGraphicsElement.systemLanguage
+    (5409, 7363), // SVGGraphicsElement.transform
+    (2126, 7365), // SVGImageElement.crossOrigin
+    (2181, 7366), // SVGImageElement.decode
+    (2187, 7367), // SVGImageElement.decoding
+    (3173, 7368), // SVGImageElement.height
+    (3188, 7369), // SVGImageElement.href
+    (4264, 7370), // SVGImageElement.preserveAspectRatio
+    (5739, 7371), // SVGImageElement.width
+    (5772, 7372), // SVGImageElement.x
+    (5781, 7373), // SVGImageElement.y
+    (1940, 7375), // SVGLength.convertToSpecifiedUnits
+    (3915, 7376), // SVGLength.newValueSpecifiedUnits
+    (5517, 7377), // SVGLength.unitType
+    (5614, 7378), // SVGLength.value
+    (5617, 7379), // SVGLength.valueAsString
+    (5618, 7380), // SVGLength.valueInSpecifiedUnits
+    (1358, 7382), // SVGLengthList.appendItem
+    (1744, 7383), // SVGLengthList.clear
+    (2933, 7384), // SVGLengthList.getItem
+    (3274, 7385), // SVGLengthList.initialize
+    (3304, 7386), // SVGLengthList.insertItemBefore
+    (3535, 7387), // SVGLengthList.length
+    (3948, 7388), // SVGLengthList.numberOfItems
+    (4495, 7389), // SVGLengthList.removeItem
+    (4538, 7390), // SVGLengthList.replaceItem
+    (5773, 7392), // SVGLineElement.x1
+    (5774, 7393), // SVGLineElement.x2
+    (5782, 7394), // SVGLineElement.y1
+    (5783, 7395), // SVGLineElement.y2
+    (5773, 7397), // SVGLinearGradientElement.x1
+    (5774, 7398), // SVGLinearGradientElement.x2
+    (5782, 7399), // SVGLinearGradientElement.y1
+    (5783, 7400), // SVGLinearGradientElement.y2
+    (3188, 7402), // SVGMPathElement.href
+    (3698, 7404), // SVGMarkerElement.markerHeight
+    (3699, 7405), // SVGMarkerElement.markerUnits
+    (3700, 7406), // SVGMarkerElement.markerWidth
+    (4002, 7407), // SVGMarkerElement.orient
+    (4003, 7408), // SVGMarkerElement.orientAngle
+    (4004, 7409), // SVGMarkerElement.orientType
+    (4264, 7410), // SVGMarkerElement.preserveAspectRatio
+    (4437, 7411), // SVGMarkerElement.refX
+    (4438, 7412), // SVGMarkerElement.refY
+    (4893, 7413), // SVGMarkerElement.setOrientToAngle
+    (4894, 7414), // SVGMarkerElement.setOrientToAuto
+    (5663, 7415), // SVGMarkerElement.viewBox
+    (3173, 7417), // SVGMaskElement.height
+    (3701, 7418), // SVGMaskElement.maskContentUnits
+    (3702, 7419), // SVGMaskElement.maskUnits
+    (5739, 7420), // SVGMaskElement.width
+    (5772, 7421), // SVGMaskElement.x
+    (5781, 7422), // SVGMaskElement.y
+    (5614, 7425), // SVGNumber.value
+    (1358, 7427), // SVGNumberList.appendItem
+    (1744, 7428), // SVGNumberList.clear
+    (2933, 7429), // SVGNumberList.getItem
+    (3274, 7430), // SVGNumberList.initialize
+    (3304, 7431), // SVGNumberList.insertItemBefore
+    (3535, 7432), // SVGNumberList.length
+    (3948, 7433), // SVGNumberList.numberOfItems
+    (4495, 7434), // SVGNumberList.removeItem
+    (4538, 7435), // SVGNumberList.replaceItem
+    (2069, 7437), // SVGPathElement.createSVGPathSegArcAbs
+    (2070, 7438), // SVGPathElement.createSVGPathSegArcRel
+    (2071, 7439), // SVGPathElement.createSVGPathSegClosePath
+    (2072, 7440), // SVGPathElement.createSVGPathSegCurvetoCubicAbs
+    (2073, 7441), // SVGPathElement.createSVGPathSegCurvetoCubicRel
+    (2074, 7442), // SVGPathElement.createSVGPathSegCurvetoCubicSmoothAbs
+    (2075, 7443), // SVGPathElement.createSVGPathSegCurvetoCubicSmoothRel
+    (2076, 7444), // SVGPathElement.createSVGPathSegCurvetoQuadraticAbs
+    (2077, 7445), // SVGPathElement.createSVGPathSegCurvetoQuadraticRel
+    (2078, 7446), // SVGPathElement.createSVGPathSegCurvetoQuadraticSmoothAbs
+    (2079, 7447), // SVGPathElement.createSVGPathSegCurvetoQuadraticSmoothRel
+    (2080, 7448), // SVGPathElement.createSVGPathSegLinetoAbs
+    (2081, 7449), // SVGPathElement.createSVGPathSegLinetoHorizontalAbs
+    (2082, 7450), // SVGPathElement.createSVGPathSegLinetoHorizontalRel
+    (2083, 7451), // SVGPathElement.createSVGPathSegLinetoRel
+    (2084, 7452), // SVGPathElement.createSVGPathSegLinetoVerticalAbs
+    (2085, 7453), // SVGPathElement.createSVGPathSegLinetoVerticalRel
+    (2086, 7454), // SVGPathElement.createSVGPathSegMovetoAbs
+    (2087, 7455), // SVGPathElement.createSVGPathSegMovetoRel
+    (2972, 7456), // SVGPathElement.getPathData
+    (2973, 7457), // SVGPathElement.getPathSegAtLength
+    (2974, 7458), // SVGPathElement.getPathSegmentAtLength
+    (2977, 7459), // SVGPathElement.getPointAtLength
+    (3063, 7460), // SVGPathElement.getTotalLength
+    (4089, 7461), // SVGPathElement.pathLength
+    (4898, 7462), // SVGPathElement.setPathData
+    (3173, 7464), // SVGPatternElement.height
+    (3188, 7465), // SVGPatternElement.href
+    (4092, 7466), // SVGPatternElement.patternContentUnits
+    (4094, 7467), // SVGPatternElement.patternTransform
+    (4095, 7468), // SVGPatternElement.patternUnits
+    (4264, 7469), // SVGPatternElement.preserveAspectRatio
+    (5663, 7470), // SVGPatternElement.viewBox
+    (5739, 7471), // SVGPatternElement.width
+    (5772, 7472), // SVGPatternElement.x
+    (5781, 7473), // SVGPatternElement.y
+    (3710, 7475), // SVGPoint.matrixTransform
+    (5772, 7476), // SVGPoint.x
+    (5781, 7477), // SVGPoint.y
+    (1358, 7479), // SVGPointList.appendItem
+    (1744, 7480), // SVGPointList.clear
+    (2933, 7481), // SVGPointList.getItem
+    (3274, 7482), // SVGPointList.initialize
+    (3304, 7483), // SVGPointList.insertItemBefore
+    (3535, 7484), // SVGPointList.length
+    (3948, 7485), // SVGPointList.numberOfItems
+    (4495, 7486), // SVGPointList.removeItem
+    (4538, 7487), // SVGPointList.replaceItem
+    (1333, 7489), // SVGPolygonElement.animatedPoints
+    (4210, 7490), // SVGPolygonElement.points
+    (1333, 7492), // SVGPolylineElement.animatedPoints
+    (4210, 7493), // SVGPolylineElement.points
+    (1291, 7495), // SVGPreserveAspectRatio.align
+    (3790, 7496), // SVGPreserveAspectRatio.meetOrSlice
+    (2162, 7498), // SVGRadialGradientElement.cx
+    (2163, 7499), // SVGRadialGradientElement.cy
+    (2715, 7500), // SVGRadialGradientElement.fr
+    (2769, 7501), // SVGRadialGradientElement.fx
+    (2770, 7502), // SVGRadialGradientElement.fy
+    (4352, 7503), // SVGRadialGradientElement.r
+    (3173, 7505), // SVGRect.height
+    (5739, 7506), // SVGRect.width
+    (5772, 7507), // SVGRect.x
+    (5781, 7508), // SVGRect.y
+    (3173, 7510), // SVGRectElement.height
+    (4687, 7511), // SVGRectElement.rx
+    (4688, 7512), // SVGRectElement.ry
+    (5739, 7513), // SVGRectElement.width
+    (5772, 7514), // SVGRectElement.x
+    (5781, 7515), // SVGRectElement.y
+    (1339, 7517), // SVGSVGElement.animationsPaused
+    (1726, 7518), // SVGSVGElement.checkEnclosure
+    (1728, 7519), // SVGSVGElement.checkIntersection
+    (2065, 7520), // SVGSVGElement.createSVGAngle
+    (2066, 7521), // SVGSVGElement.createSVGLength
+    (2067, 7522), // SVGSVGElement.createSVGMatrix
+    (2068, 7523), // SVGSVGElement.createSVGNumber
+    (2088, 7524), // SVGSVGElement.createSVGPoint
+    (2089, 7525), // SVGSVGElement.createSVGRect
+    (2090, 7526), // SVGSVGElement.createSVGTransform
+    (2091, 7527), // SVGSVGElement.createSVGTransformFromMatrix
+    (2147, 7528), // SVGSVGElement.currentScale
+    (2153, 7529), // SVGSVGElement.currentTranslate
+    (2154, 7530), // SVGSVGElement.currentView
+    (2273, 7531), // SVGSVGElement.deselectAll
+    (2695, 7532), // SVGSVGElement.forceRedraw
+    (2867, 7533), // SVGSVGElement.getCurrentTime
+    (2882, 7534), // SVGSVGElement.getElementById
+    (2887, 7535), // SVGSVGElement.getEnclosureList
+    (2932, 7536), // SVGSVGElement.getIntersectionList
+    (3173, 7537), // SVGSVGElement.height
+    (4097, 7538), // SVGSVGElement.pauseAnimations
+    (4264, 7539), // SVGSVGElement.preserveAspectRatio
+    (4845, 7540), // SVGSVGElement.setCurrentTime
+    (5215, 7541), // SVGSVGElement.suspendRedraw
+    (5528, 7542), // SVGSVGElement.unpauseAnimations
+    (5535, 7543), // SVGSVGElement.unsuspendRedraw
+    (5536, 7544), // SVGSVGElement.unsuspendRedrawAll
+    (5585, 7545), // SVGSVGElement.useCurrentView
+    (5663, 7546), // SVGSVGElement.viewBox
+    (5739, 7547), // SVGSVGElement.width
+    (5772, 7548), // SVGSVGElement.x
+    (5781, 7549), // SVGSVGElement.y
+    (1445, 7551), // SVGScriptElement.async
+    (2126, 7552), // SVGScriptElement.crossOrigin
+    (2201, 7553), // SVGScriptElement.defer
+    (3188, 7554), // SVGScriptElement.href
+    (5443, 7555), // SVGScriptElement.type
+    (3957, 7558), // SVGStopElement.offset
+    (1358, 7560), // SVGStringList.appendItem
+    (1744, 7561), // SVGStringList.clear
+    (2933, 7562), // SVGStringList.getItem
+    (3274, 7563), // SVGStringList.initialize
+    (3304, 7564), // SVGStringList.insertItemBefore
+    (3535, 7565), // SVGStringList.length
+    (3948, 7566), // SVGStringList.numberOfItems
+    (4495, 7567), // SVGStringList.removeItem
+    (4538, 7568), // SVGStringList.replaceItem
+    (2318, 7570), // SVGStyleElement.disabled
+    (3780, 7571), // SVGStyleElement.media
+    (4973, 7572), // SVGStyleElement.sheet
+    (5326, 7573), // SVGStyleElement.title
+    (5443, 7574), // SVGStyleElement.type
+    (4264, 7577), // SVGSymbolElement.preserveAspectRatio
+    (5663, 7578), // SVGSymbolElement.viewBox
+    (2842, 7581), // SVGTextContentElement.getCharNumAtPosition
+    (2855, 7582), // SVGTextContentElement.getComputedTextLength
+    (2888, 7583), // SVGTextContentElement.getEndPositionOfChar
+    (2894, 7584), // SVGTextContentElement.getExtentOfChar
+    (2960, 7585), // SVGTextContentElement.getNumberOfChars
+    (3014, 7586), // SVGTextContentElement.getRotationOfChar
+    (3037, 7587), // SVGTextContentElement.getStartPositionOfChar
+    (3044, 7588), // SVGTextContentElement.getSubStringLength
+    (3536, 7589), // SVGTextContentElement.lengthAdjust
+    (4785, 7590), // SVGTextContentElement.selectSubString
+    (5286, 7591), // SVGTextContentElement.textLength
+    (3188, 7594), // SVGTextPathElement.href
+    (3801, 7595), // SVGTextPathElement.method
+    (4991, 7596), // SVGTextPathElement.side
+    (5060, 7597), // SVGTextPathElement.spacing
+    (5099, 7598), // SVGTextPathElement.startOffset
+    (2427, 7600), // SVGTextPositioningElement.dx
+    (2428, 7601), // SVGTextPositioningElement.dy
+    (4665, 7602), // SVGTextPositioningElement.rotate
+    (5772, 7603), // SVGTextPositioningElement.x
+    (5781, 7604), // SVGTextPositioningElement.y
+    (1327, 7607), // SVGTransform.angle
+    (3709, 7608), // SVGTransform.matrix
+    (4884, 7609), // SVGTransform.setMatrix
+    (4914, 7610), // SVGTransform.setRotate
+    (4915, 7611), // SVGTransform.setScale
+    (4924, 7612), // SVGTransform.setSkewX
+    (4925, 7613), // SVGTransform.setSkewY
+    (4938, 7614), // SVGTransform.setTranslate
+    (5443, 7615), // SVGTransform.type
+    (1358, 7617), // SVGTransformList.appendItem
+    (1744, 7618), // SVGTransformList.clear
+    (1892, 7619), // SVGTransformList.consolidate
+    (2091, 7620), // SVGTransformList.createSVGTransformFromMatrix
+    (2933, 7621), // SVGTransformList.getItem
+    (3274, 7622), // SVGTransformList.initialize
+    (3304, 7623), // SVGTransformList.insertItemBefore
+    (3535, 7624), // SVGTransformList.length
+    (3948, 7625), // SVGTransformList.numberOfItems
+    (4495, 7626), // SVGTransformList.removeItem
+    (4538, 7627), // SVGTransformList.replaceItem
+    (3173, 7630), // SVGUseElement.height
+    (3188, 7631), // SVGUseElement.href
+    (5739, 7632), // SVGUseElement.width
+    (5772, 7633), // SVGUseElement.x
+    (5781, 7634), // SVGUseElement.y
+    (4264, 7636), // SVGViewElement.preserveAspectRatio
+    (5663, 7637), // SVGViewElement.viewBox
+    (919, 7639), // Sanitizer.Sanitizer
+    (1301, 7640), // Sanitizer.allowAttribute
+    (1302, 7641), // Sanitizer.allowElement
+    (1305, 7642), // Sanitizer.allowProcessingInstruction
+    (2796, 7643), // Sanitizer.get
+    (4487, 7644), // Sanitizer.removeAttribute
+    (4492, 7645), // Sanitizer.removeElement
+    (4500, 7646), // Sanitizer.removeProcessingInstruction
+    (4508, 7647), // Sanitizer.removeUnsafe
+    (4537, 7648), // Sanitizer.replaceElementWithChildren
+    (4841, 7649), // Sanitizer.setComments
+    (4848, 7650), // Sanitizer.setDataAttributes
+    (4879, 7651), // Sanitizer.setJavascriptURLs
+    (4239, 7653), // Scheduler.postTask
+    (5785, 7654), // Scheduler.yield
+    (3393, 7656), // Scheduling.isInputPending
+    (1491, 7658), // Screen.availHeight
+    (1492, 7659), // Screen.availLeft
+    (1493, 7661), // Screen.availTop
+    (1494, 7663), // Screen.availWidth
+    (1700, 7664), // Screen.change_event
+    (1821, 7665), // Screen.colorDepth
+    (3173, 7666), // Screen.height
+    (3380, 7667), // Screen.isExtended
+    (3530, 7668), // Screen.left
+    (3598, 7670), // Screen.lockOrientation
+    (4005, 7671), // Screen.orientation
+    (4009, 7672), // Screen.orientationchange_event
+    (4174, 7673), // Screen.pixelDepth
+    (5375, 7674), // Screen.top
+    (5522, 7676), // Screen.unlockOrientation
+    (5739, 7677), // Screen.width
+    (1492, 7679), // ScreenDetailed.availLeft
+    (1493, 7680), // ScreenDetailed.availTop
+    (2292, 7681), // ScreenDetailed.devicePixelRatio
+    (3395, 7682), // ScreenDetailed.isInternal
+    (3405, 7683), // ScreenDetailed.isPrimary
+    (3494, 7684), // ScreenDetailed.label
+    (3530, 7685), // ScreenDetailed.left
+    (5375, 7686), // ScreenDetailed.top
+    (2148, 7688), // ScreenDetails.currentScreen
+    (2156, 7689), // ScreenDetails.currentscreenchange_event
+    (4722, 7690), // ScreenDetails.screens
+    (4723, 7691), // ScreenDetails.screenschange_event
+    (1327, 7693), // ScreenOrientation.angle
+    (1700, 7694), // ScreenOrientation.change_event
+    (3597, 7695), // ScreenOrientation.lock
+    (5443, 7696), // ScreenOrientation.type
+    (5521, 7697), // ScreenOrientation.unlock
+    (1474, 7699), // ScriptProcessorNode.audioprocess_event
+    (1614, 7700), // ScriptProcessorNode.bufferSize
+    (927, 7702), // ScrollTimeline.ScrollTimeline
+    (1503, 7703), // ScrollTimeline.axis
+    (5045, 7704), // ScrollTimeline.source
+    (928, 7706), // SecurityPolicyViolationEvent.SecurityPolicyViolationEvent
+    (1582, 7707), // SecurityPolicyViolationEvent.blockedURI
+    (1830, 7708), // SecurityPolicyViolationEvent.columnNumber
+    (2339, 7709), // SecurityPolicyViolationEvent.disposition
+    (2350, 7710), // SecurityPolicyViolationEvent.documentURI
+    (2435, 7711), // SecurityPolicyViolationEvent.effectiveDirective
+    (3555, 7712), // SecurityPolicyViolationEvent.lineNumber
+    (4012, 7713), // SecurityPolicyViolationEvent.originalPolicy
+    (4442, 7714), // SecurityPolicyViolationEvent.referrer
+    (4692, 7715), // SecurityPolicyViolationEvent.sample
+    (5051, 7716), // SecurityPolicyViolationEvent.sourceFile
+    (5111, 7717), // SecurityPolicyViolationEvent.statusCode
+    (5670, 7718), // SecurityPolicyViolationEvent.violatedDirective
+    (5754, 7719), // SecurityPolicyViolationEvent.worker_support
+    (1261, 7721), // Selection.addRange
+    (1322, 7723), // Selection.anchorNode
+    (1323, 7724), // Selection.anchorOffset
+    (1814, 7725), // Selection.collapse
+    (1815, 7729), // Selection.collapseToEnd
+    (1816, 7730), // Selection.collapseToStart
+    (1907, 7731), // Selection.containsNode
+    (2220, 7733), // Selection.deleteFromDocument
+    (2311, 7734), // Selection.direction
+    (2453, 7735), // Selection.empty
+    (2557, 7736), // Selection.extend
+    (2658, 7739), // Selection.focusNode
+    (2659, 7740), // Selection.focusOffset
+    (2853, 7741), // Selection.getComposedRanges
+    (3000, 7743), // Selection.getRangeAt
+    (3364, 7744), // Selection.isCollapsed
+    (3835, 7745), // Selection.modify
+    (4363, 7746), // Selection.rangeCount
+    (4485, 7747), // Selection.removeAllRanges
+    (4502, 7748), // Selection.removeRange
+    (4779, 7749), // Selection.selectAllChildren
+    (4832, 7750), // Selection.setBaseAndExtent
+    (4902, 7752), // Selection.setPosition
+    (5355, 7753), // Selection.toString
+    (5443, 7754), // Selection.type
+    (1229, 7756), // Sensor.activate_event
+    (1230, 7757), // Sensor.activated
+    (2517, 7758), // Sensor.error_event
+    (3159, 7759), // Sensor.hasReading
+    (4394, 7760), // Sensor.reading_event
+    (5095, 7761), // Sensor.start
+    (5129, 7762), // Sensor.stop
+    (5322, 7763), // Sensor.timestamp
+    (933, 7765), // SensorErrorEvent.SensorErrorEvent
+    (2513, 7766), // SensorErrorEvent.error
+    (2978, 7768), // Serial.getPorts
+    (4573, 7769), // Serial.requestPort
+    (1792, 7773), // SerialPort.close
+    (1882, 7774), // SerialPort.connect_event
+    (1883, 7776), // SerialPort.connected
+    (2324, 7777), // SerialPort.disconnect_event
+    (2697, 7779), // SerialPort.forget
+    (2925, 7780), // SerialPort.getInfo
+    (3033, 7782), // SerialPort.getSignals
+    (3980, 7783), // SerialPort.open
+    (4393, 7784), // SerialPort.readable
+    (4922, 7785), // SerialPort.setSignals
+    (5758, 7786), // SerialPort.writable
+    (2430, 7788), // ServiceWorker.ecmascript_modules
+    (2517, 7789), // ServiceWorker.error_event
+    (4238, 7790), // ServiceWorker.postMessage
+    (4724, 7791), // ServiceWorker.scriptURL
+    (5106, 7792), // ServiceWorker.state
+    (5107, 7793), // ServiceWorker.statechange_event
+    (1933, 7795), // ServiceWorkerContainer.controller
+    (1934, 7796), // ServiceWorkerContainer.controllerchange_event
+    (3005, 7797), // ServiceWorkerContainer.getRegistration
+    (3006, 7798), // ServiceWorkerContainer.getRegistrations
+    (3796, 7799), // ServiceWorkerContainer.message_event
+    (3797, 7800), // ServiceWorkerContainer.messageerror_event
+    (4396, 7801), // ServiceWorkerContainer.ready
+    (4450, 7802), // ServiceWorkerContainer.register
+    (5097, 7804), // ServiceWorkerContainer.startMessages
+    (5754, 7805), // ServiceWorkerContainer.worker_support
+    (1215, 7807), // ServiceWorkerGlobalScope.abortpayment_event
+    (1229, 7808), // ServiceWorkerGlobalScope.activate_event
+    (1511, 7809), // ServiceWorkerGlobalScope.backgroundfetchabort_event
+    (1512, 7810), // ServiceWorkerGlobalScope.backgroundfetchclick_event
+    (1513, 7811), // ServiceWorkerGlobalScope.backgroundfetchfail_event
+    (1514, 7812), // ServiceWorkerGlobalScope.backgroundfetchsuccess_event
+    (1664, 7813), // ServiceWorkerGlobalScope.canmakepayment_event
+    (1781, 7814), // ServiceWorkerGlobalScope.clients
+    (1917, 7815), // ServiceWorkerGlobalScope.contentdelete_event
+    (1943, 7816), // ServiceWorkerGlobalScope.cookieStore
+    (1944, 7817), // ServiceWorkerGlobalScope.cookiechange_event
+    (2611, 7818), // ServiceWorkerGlobalScope.fetch_event
+    (3323, 7819), // ServiceWorkerGlobalScope.install_event
+    (3796, 7820), // ServiceWorkerGlobalScope.message_event
+    (3797, 7821), // ServiceWorkerGlobalScope.messageerror_event
+    (3939, 7822), // ServiceWorkerGlobalScope.notificationclick_event
+    (3940, 7823), // ServiceWorkerGlobalScope.notificationclose_event
+    (4113, 7824), // ServiceWorkerGlobalScope.paymentrequest_event
+    (4125, 7825), // ServiceWorkerGlobalScope.periodicsync_event
+    (4327, 7826), // ServiceWorkerGlobalScope.push_event
+    (4328, 7827), // ServiceWorkerGlobalScope.pushsubscriptionchange_event
+    (4456, 7828), // ServiceWorkerGlobalScope.registration
+    (4820, 7829), // ServiceWorkerGlobalScope.serviceWorker
+    (5023, 7830), // ServiceWorkerGlobalScope.skipWaiting
+    (5236, 7831), // ServiceWorkerGlobalScope.sync_event
+    (1233, 7833), // ServiceWorkerRegistration.active
+    (1510, 7834), // ServiceWorkerRegistration.backgroundFetch
+    (1945, 7835), // ServiceWorkerRegistration.cookies
+    (2959, 7836), // ServiceWorkerRegistration.getNotifications
+    (3247, 7837), // ServiceWorkerRegistration.index
+    (3325, 7838), // ServiceWorkerRegistration.installing
+    (3901, 7839), // ServiceWorkerRegistration.navigationPreload
+    (4108, 7840), // ServiceWorkerRegistration.paymentManager
+    (4124, 7841), // ServiceWorkerRegistration.periodicSync
+    (4325, 7842), // ServiceWorkerRegistration.pushManager
+    (4715, 7843), // ServiceWorkerRegistration.scope
+    (4985, 7844), // ServiceWorkerRegistration.showNotification
+    (5235, 7852), // ServiceWorkerRegistration.sync
+    (5529, 7853), // ServiceWorkerRegistration.unregister
+    (5542, 7854), // ServiceWorkerRegistration.update
+    (5560, 7855), // ServiceWorkerRegistration.updateViaCache
+    (5564, 7856), // ServiceWorkerRegistration.updatefound_event
+    (5702, 7857), // ServiceWorkerRegistration.waiting
+    (4, 10957), // Set.@@iterator
+    (9, 10958), // Set.@@species
+    (940, 10959), // Set.Set
+    (1248, 10962), // Set.add
+    (1744, 10963), // Set.clear
+    (2212, 10964), // Set.delete
+    (2304, 10965), // Set.difference
+    (2503, 10966), // Set.entries
+    (2692, 10967), // Set.forEach
+    (3141, 10968), // Set.has
+    (3343, 10969), // Set.intersection
+    (3376, 10970), // Set.isDisjointFrom
+    (3426, 10971), // Set.isSubsetOf
+    (3427, 10972), // Set.isSupersetOf
+    (3482, 10973), // Set.key_equality_for_zeros
+    (3486, 10974), // Set.keys
+    (5011, 10975), // Set.size
+    (5234, 10976), // Set.symmetricDifference
+    (5514, 10977), // Set.union
+    (5622, 10978), // Set.values
+    (1235, 7859), // ShadowRoot.activeElement
+    (1281, 7860), // ShadowRoot.adoptedStyleSheets
+    (1284, 7861), // ShadowRoot.afterHTML
+    (1285, 7862), // ShadowRoot.afterHTMLUnsafe
+    (1356, 7863), // ShadowRoot.appendHTML
+    (1357, 7864), // ShadowRoot.appendHTMLUnsafe
+    (1527, 7865), // ShadowRoot.beforeHTML
+    (1528, 7866), // ShadowRoot.beforeHTMLUnsafe
+    (1787, 7867), // ShadowRoot.clonable
+    (2158, 7868), // ShadowRoot.customElementRegistry
+    (2211, 7869), // ShadowRoot.delegatesFocus
+    (2440, 7870), // ShadowRoot.elementFromPoint
+    (2443, 7871), // ShadowRoot.elementsFromPoint
+    (2765, 7872), // ShadowRoot.fullscreenElement
+    (2807, 7873), // ShadowRoot.getAnimations
+    (2913, 7874), // ShadowRoot.getHTML
+    (3023, 7876), // ShadowRoot.getSelection
+    (3185, 7877), // ShadowRoot.host
+    (3281, 7878), // ShadowRoot.innerHTML
+    (3832, 7881), // ShadowRoot.mode
+    (4166, 7882), // ShadowRoot.pictureInPictureElement
+    (4197, 7883), // ShadowRoot.pointerLockElement
+    (4255, 7884), // ShadowRoot.prependHTML
+    (4256, 7885), // ShadowRoot.prependHTMLUnsafe
+    (4441, 7886), // ShadowRoot.referenceTarget
+    (4543, 7887), // ShadowRoot.replaceWithHTML
+    (4544, 7888), // ShadowRoot.replaceWithHTMLUnsafe
+    (4815, 7889), // ShadowRoot.serializable
+    (4865, 7890), // ShadowRoot.setHTML
+    (4866, 7891), // ShadowRoot.setHTMLUnsafe
+    (5028, 7895), // ShadowRoot.slotAssignment
+    (5141, 7896), // ShadowRoot.streamAfterHTML
+    (5142, 7897), // ShadowRoot.streamAfterHTMLUnsafe
+    (5143, 7898), // ShadowRoot.streamAppendHTML
+    (5144, 7899), // ShadowRoot.streamAppendHTMLUnsafe
+    (5145, 7900), // ShadowRoot.streamBeforeHTML
+    (5146, 7901), // ShadowRoot.streamBeforeHTMLUnsafe
+    (5148, 7902), // ShadowRoot.streamHTML
+    (5149, 7903), // ShadowRoot.streamHTMLUnsafe
+    (5150, 7904), // ShadowRoot.streamPrependHTML
+    (5151, 7905), // ShadowRoot.streamPrependHTMLUnsafe
+    (5152, 7906), // ShadowRoot.streamReplaceWithHTML
+    (5153, 7907), // ShadowRoot.streamReplaceWithHTMLUnsafe
+    (5172, 7908), // ShadowRoot.styleSheets
+    (9, 10980), // SharedArrayBuffer.@@species
+    (942, 10981), // SharedArrayBuffer.SharedArrayBuffer
+    (1628, 10983), // SharedArrayBuffer.byteLength
+    (3127, 10984), // SharedArrayBuffer.grow
+    (3128, 10985), // SharedArrayBuffer.growable
+    (3724, 10986), // SharedArrayBuffer.maxByteLength
+    (5025, 10987), // SharedArrayBuffer.slice
+    (1351, 7910), // SharedStorage.append
+    (1525, 7911), // SharedStorage.batchUpdate
+    (1744, 7912), // SharedStorage.clear
+    (2117, 7913), // SharedStorage.createWorklet
+    (2212, 7914), // SharedStorage.delete
+    (2796, 7915), // SharedStorage.get
+    (4684, 7916), // SharedStorage.run
+    (4786, 7917), // SharedStorage.selectURL
+    (4824, 7918), // SharedStorage.set
+    (5755, 7919), // SharedStorage.worklet
+    (944, 7921), // SharedStorageAppendMethod.SharedStorageAppendMethod
+    (945, 7923), // SharedStorageClearMethod.SharedStorageClearMethod
+    (946, 7925), // SharedStorageDeleteMethod.SharedStorageDeleteMethod
+    (948, 7928), // SharedStorageSetMethod.SharedStorageSetMethod
+    (4684, 7930), // SharedStorageWorklet.run
+    (4786, 7931), // SharedStorageWorklet.selectURL
+    (3334, 7933), // SharedStorageWorkletGlobalScope.interestGroups
+    (4450, 7934), // SharedStorageWorkletGlobalScope.register
+    (4971, 7935), // SharedStorageWorkletGlobalScope.sharedStorage
+    (951, 7937), // SharedWorker.SharedWorker
+    (2517, 7945), // SharedWorker.error_event
+    (4224, 7946), // SharedWorker.port
+    (1792, 7948), // SharedWorkerGlobalScope.close
+    (1882, 7949), // SharedWorkerGlobalScope.connect_event
+    (3887, 7950), // SharedWorkerGlobalScope.name
+    (953, 7952), // SnapEvent.SnapEvent
+    (5032, 7953), // SnapEvent.snapTargetBlock
+    (5033, 7954), // SnapEvent.snapTargetInline
+    (1211, 7956), // SourceBuffer.abort
+    (1212, 7958), // SourceBuffer.abort_event
+    (1352, 7960), // SourceBuffer.appendBuffer
+    (1353, 7962), // SourceBuffer.appendBufferAsync
+    (1361, 7963), // SourceBuffer.appendWindowEnd
+    (1362, 7965), // SourceBuffer.appendWindowStart
+    (1471, 7967), // SourceBuffer.audioTracks
+    (1616, 7969), // SourceBuffer.buffered
+    (1699, 7971), // SourceBuffer.changeType
+    (2517, 7973), // SourceBuffer.error_event
+    (3832, 7975), // SourceBuffer.mode
+    (4484, 7977), // SourceBuffer.remove
+    (4486, 7979), // SourceBuffer.removeAsync
+    (5289, 7980), // SourceBuffer.textTracks
+    (5323, 7981), // SourceBuffer.timestampOffset
+    (5562, 7983), // SourceBuffer.update_event
+    (5563, 7985), // SourceBuffer.updateend_event
+    (5565, 7987), // SourceBuffer.updatestart_event
+    (5566, 7989), // SourceBuffer.updating
+    (5660, 7991), // SourceBuffer.videoTracks
+    (1276, 7994), // SourceBufferList.addsourcebuffer_event
+    (3535, 7996), // SourceBufferList.length
+    (4515, 7998), // SourceBufferList.removesourcebuffer_event
+    (956, 8001), // SpeechGrammar.SpeechGrammar
+    (5083, 8002), // SpeechGrammar.src
+    (5727, 8003), // SpeechGrammar.weight
+    (957, 8005), // SpeechGrammarList.SpeechGrammarList
+    (1254, 8006), // SpeechGrammarList.addFromString
+    (1255, 8007), // SpeechGrammarList.addFromURI
+    (3446, 8008), // SpeechGrammarList.item
+    (3535, 8009), // SpeechGrammarList.length
+    (958, 8011), // SpeechRecognition.SpeechRecognition
+    (1211, 8012), // SpeechRecognition.abort
+    (1473, 8013), // SpeechRecognition.audioend_event
+    (1475, 8014), // SpeechRecognition.audiostart_event
+    (1497, 8015), // SpeechRecognition.available
+    (1498, 8015), // SpeechRecognition.available_static
+    (1928, 8020), // SpeechRecognition.continuous
+    (2490, 8021), // SpeechRecognition.end_event
+    (2517, 8022), // SpeechRecognition.error_event
+    (3114, 8023), // SpeechRecognition.grammars
+    (3322, 8024), // SpeechRecognition.install
+    (3324, 8024), // SpeechRecognition.install_static
+    (3342, 8029), // SpeechRecognition.interimResults
+    (3496, 8030), // SpeechRecognition.lang
+    (3718, 8031), // SpeechRecognition.maxAlternatives
+    (3932, 8032), // SpeechRecognition.nomatch_event
+    (4165, 8033), // SpeechRecognition.phrases
+    (4288, 8034), // SpeechRecognition.processLocally
+    (4630, 8035), // SpeechRecognition.result_event
+    (5043, 8036), // SpeechRecognition.soundend_event
+    (5044, 8037), // SpeechRecognition.soundstart_event
+    (5070, 8038), // SpeechRecognition.speechend_event
+    (5071, 8039), // SpeechRecognition.speechstart_event
+    (5095, 8040), // SpeechRecognition.start
+    (5103, 8042), // SpeechRecognition.start_event
+    (5129, 8043), // SpeechRecognition.stop
+    (5533, 8044), // SpeechRecognition.unspokenPunctuation
+    (1868, 8046), // SpeechRecognitionAlternative.confidence
+    (5399, 8047), // SpeechRecognitionAlternative.transcript
+    (960, 8049), // SpeechRecognitionErrorEvent.SpeechRecognitionErrorEvent
+    (2513, 8050), // SpeechRecognitionErrorEvent.error
+    (3794, 8051), // SpeechRecognitionErrorEvent.message
+    (961, 8053), // SpeechRecognitionEvent.SpeechRecognitionEvent
+    (4628, 8054), // SpeechRecognitionEvent.resultIndex
+    (4632, 8055), // SpeechRecognitionEvent.results
+    (962, 8057), // SpeechRecognitionPhrase.SpeechRecognitionPhrase
+    (1595, 8058), // SpeechRecognitionPhrase.boost
+    (4164, 8059), // SpeechRecognitionPhrase.phrase
+    (3384, 8061), // SpeechRecognitionResult.isFinal
+    (3446, 8062), // SpeechRecognitionResult.item
+    (3535, 8063), // SpeechRecognitionResult.length
+    (3446, 8065), // SpeechRecognitionResultList.item
+    (3535, 8066), // SpeechRecognitionResultList.length
+    (1653, 8068), // SpeechSynthesis.cancel
+    (3098, 8069), // SpeechSynthesis.getVoices
+    (4096, 8070), // SpeechSynthesis.pause
+    (4103, 8071), // SpeechSynthesis.paused
+    (4118, 8072), // SpeechSynthesis.pending
+    (4633, 8073), // SpeechSynthesis.resume
+    (5062, 8074), // SpeechSynthesis.speak
+    (5064, 8075), // SpeechSynthesis.speaking
+    (5686, 8076), // SpeechSynthesis.voiceschanged_event
+    (966, 8078), // SpeechSynthesisErrorEvent.SpeechSynthesisErrorEvent
+    (2513, 8079), // SpeechSynthesisErrorEvent.error
+    (967, 8081), // SpeechSynthesisEvent.SpeechSynthesisEvent
+    (1711, 8082), // SpeechSynthesisEvent.charIndex
+    (1712, 8083), // SpeechSynthesisEvent.charLength
+    (2438, 8084), // SpeechSynthesisEvent.elapsedTime
+    (3887, 8086), // SpeechSynthesisEvent.name
+    (5603, 8087), // SpeechSynthesisEvent.utterance
+    (968, 8089), // SpeechSynthesisUtterance.SpeechSynthesisUtterance
+    (1601, 8090), // SpeechSynthesisUtterance.boundary_event
+    (2490, 8091), // SpeechSynthesisUtterance.end_event
+    (2517, 8092), // SpeechSynthesisUtterance.error_event
+    (3496, 8093), // SpeechSynthesisUtterance.lang
+    (3697, 8094), // SpeechSynthesisUtterance.mark_event
+    (4102, 8095), // SpeechSynthesisUtterance.pause_event
+    (4173, 8096), // SpeechSynthesisUtterance.pitch
+    (4370, 8097), // SpeechSynthesisUtterance.rate
+    (4636, 8098), // SpeechSynthesisUtterance.resume_event
+    (5103, 8099), // SpeechSynthesisUtterance.start_event
+    (5282, 8100), // SpeechSynthesisUtterance.text
+    (5684, 8101), // SpeechSynthesisUtterance.voice
+    (5687, 8102), // SpeechSynthesisUtterance.volume
+    (2191, 8104), // SpeechSynthesisVoice.default
+    (3496, 8105), // SpeechSynthesisVoice.lang
+    (3589, 8106), // SpeechSynthesisVoice.localService
+    (3887, 8107), // SpeechSynthesisVoice.name
+    (5685, 8108), // SpeechSynthesisVoice.voiceURI
+    (970, 8110), // StaticRange.StaticRange
+    (1817, 8111), // StaticRange.collapsed
+    (2479, 8112), // StaticRange.endContainer
+    (2485, 8113), // StaticRange.endOffset
+    (5096, 8114), // StaticRange.startContainer
+    (5099, 8115), // StaticRange.startOffset
+    (971, 8117), // StereoPannerNode.StereoPannerNode
+    (4061, 8118), // StereoPannerNode.pan
+    (1744, 8120), // Storage.clear
+    (2933, 8121), // Storage.getItem
+    (3474, 8122), // Storage.key
+    (3535, 8123), // Storage.length
+    (4495, 8124), // Storage.removeItem
+    (4878, 8125), // Storage.setItem
+    (94, 8127), // StorageAccessHandle.BroadcastChannel
+    (951, 8128), // StorageAccessHandle.SharedWorker
+    (1634, 8129), // StorageAccessHandle.caches
+    (2042, 8130), // StorageAccessHandle.createObjectURL
+    (2522, 8131), // StorageAccessHandle.estimate
+    (2879, 8132), // StorageAccessHandle.getDirectory
+    (3251, 8133), // StorageAccessHandle.indexedDB
+    (3590, 8134), // StorageAccessHandle.localStorage
+    (3600, 8135), // StorageAccessHandle.locks
+    (4646, 8136), // StorageAccessHandle.revokeObjectURL
+    (4823, 8137), // StorageAccessHandle.sessionStorage
+    (1634, 8139), // StorageBucket.caches
+    (2522, 8140), // StorageBucket.estimate
+    (2550, 8141), // StorageBucket.expires
+    (2879, 8142), // StorageBucket.getDirectory
+    (3251, 8143), // StorageBucket.indexedDB
+    (3887, 8144), // StorageBucket.name
+    (4158, 8145), // StorageBucket.persist
+    (4159, 8146), // StorageBucket.persisted
+    (4854, 8147), // StorageBucket.setExpires
+    (2212, 8149), // StorageBucketManager.delete
+    (3486, 8150), // StorageBucketManager.keys
+    (3980, 8151), // StorageBucketManager.open
+    (976, 8153), // StorageEvent.StorageEvent
+    (3268, 8154), // StorageEvent.initStorageEvent
+    (3474, 8155), // StorageEvent.key
+    (3914, 8156), // StorageEvent.newValue
+    (3970, 8157), // StorageEvent.oldValue
+    (5136, 8158), // StorageEvent.storageArea
+    (5577, 8159), // StorageEvent.url
+    (2522, 8161), // StorageManager.estimate
+    (2879, 8163), // StorageManager.getDirectory
+    (4158, 8164), // StorageManager.persist
+    (4159, 8165), // StorageManager.persisted
+    (4, 10989), // String.@@iterator
+    (978, 10990), // String.String
+    (1320, 10991), // String.anchor
+    (1448, 10992), // String.at
+    (1552, 10993), // String.big
+    (1576, 10994), // String.blink
+    (1593, 10995), // String.bold
+    (1708, 10996), // String.charAt
+    (1710, 10997), // String.charCodeAt
+    (1807, 10998), // String.codePointAt
+    (1862, 10999), // String.concat
+    (2496, 11000), // String.endsWith
+    (2647, 11001), // String.fixed
+    (2687, 11002), // String.fontcolor
+    (2690, 11003), // String.fontsize
+    (2739, 11004), // String.fromCharCode
+    (2740, 11005), // String.fromCodePoint
+    (3237, 11006), // String.includes
+    (3249, 11007), // String.indexOf
+    (3442, 11008), // String.isWellFormed
+    (3445, 11009), // String.italics
+    (3508, 11010), // String.lastIndexOf
+    (3535, 11011), // String.length
+    (3565, 11012), // String.link
+    (3593, 11013), // String.localeCompare
+    (3703, 11016), // String.match
+    (3704, 11017), // String.matchAll
+    (3935, 11018), // String.normalize
+    (4046, 11019), // String.padEnd
+    (4047, 11020), // String.padStart
+    (4373, 11021), // String.raw
+    (4529, 11022), // String.repeat
+    (4532, 11023), // String.replace
+    (4533, 11024), // String.replaceAll
+    (4762, 11025), // String.search
+    (5025, 11026), // String.slice
+    (5030, 11027), // String.small
+    (5076, 11028), // String.split
+    (5104, 11029), // String.startsWith
+    (5158, 11030), // String.strike
+    (5175, 11031), // String.sub
+    (5187, 11032), // String.substr
+    (5188, 11033), // String.substring
+    (5198, 11034), // String.sup
+    (5343, 11035), // String.toLocaleLowerCase
+    (5346, 11037), // String.toLocaleUpperCase
+    (5347, 11039), // String.toLowerCase
+    (5355, 11040), // String.toString
+    (5362, 11041), // String.toUpperCase
+    (5363, 11042), // String.toWellFormed
+    (5429, 11043), // String.trim
+    (5430, 11044), // String.trimEnd
+    (5431, 11045), // String.trimLeft
+    (5432, 11046), // String.trimRight
+    (5433, 11047), // String.trimStart
+    (5479, 11048), // String.unicode_code_point_escapes
+    (5620, 11049), // String.valueOf
+    (3706, 8167), // StyleMedia.matchMedium
+    (5443, 8168), // StyleMedia.type
+    (1351, 8170), // StylePropertyMap.append
+    (1744, 8171), // StylePropertyMap.clear
+    (2212, 8172), // StylePropertyMap.delete
+    (4824, 8173), // StylePropertyMap.set
+    (4, 8175), // StylePropertyMapReadOnly.@@iterator
+    (2503, 8176), // StylePropertyMapReadOnly.entries
+    (2692, 8177), // StylePropertyMapReadOnly.forEach
+    (2796, 8178), // StylePropertyMapReadOnly.get
+    (2802, 8179), // StylePropertyMapReadOnly.getAll
+    (3141, 8180), // StylePropertyMapReadOnly.has
+    (3486, 8181), // StylePropertyMapReadOnly.keys
+    (5011, 8182), // StylePropertyMapReadOnly.size
+    (5622, 8183), // StylePropertyMapReadOnly.values
+    (2318, 8185), // StyleSheet.disabled
+    (3188, 8186), // StyleSheet.href
+    (3780, 8187), // StyleSheet.media
+    (4036, 8188), // StyleSheet.ownerNode
+    (4068, 8189), // StyleSheet.parentStyleSheet
+    (5326, 8190), // StyleSheet.title
+    (5443, 8191), // StyleSheet.type
+    (3446, 8193), // StyleSheetList.item
+    (3535, 8194), // StyleSheetList.length
+    (984, 8196), // SubmitEvent.SubmitEvent
+    (5183, 8197), // SubmitEvent.submitter
+    (1233, 8199), // Subscriber.active
+    (1266, 8200), // Subscriber.addTeardown
+    (1847, 8201), // Subscriber.complete
+    (2513, 8202), // Subscriber.error
+    (3917, 8203), // Subscriber.next
+    (4994, 8204), // Subscriber.signal
+    (2178, 8206), // SubtleCrypto.decapsulateBits
+    (2179, 8207), // SubtleCrypto.decapsulateKey
+    (2190, 8208), // SubtleCrypto.decrypt
+    (2268, 8209), // SubtleCrypto.deriveBits
+    (2269, 8211), // SubtleCrypto.deriveKey
+    (2306, 8217), // SubtleCrypto.digest
+    (2465, 8218), // SubtleCrypto.encapsulateBits
+    (2466, 8219), // SubtleCrypto.encapsulateKey
+    (2475, 8220), // SubtleCrypto.encrypt
+    (2555, 8221), // SubtleCrypto.exportKey
+    (2787, 8224), // SubtleCrypto.generateKey
+    (2992, 8227), // SubtleCrypto.getPublicKey
+    (3226, 8228), // SubtleCrypto.importKey
+    (4769, 8235), // SubtleCrypto.secure_context_required
+    (4993, 8236), // SubtleCrypto.sign
+    (5205, 8238), // SubtleCrypto.supports
+    (5210, 8238), // SubtleCrypto.supports_static
+    (5537, 8239), // SubtleCrypto.unwrapKey
+    (5631, 8240), // SubtleCrypto.verify
+    (5754, 8242), // SubtleCrypto.worker_support
+    (5757, 8243), // SubtleCrypto.wrapKey
+    (1495, 8245), // Summarizer.availability
+    (1496, 8245), // Summarizer.availability_static
+    (1983, 8246), // Summarizer.create
+    (2120, 8246), // Summarizer.create_static
+    (2277, 8247), // Summarizer.destroy
+    (2545, 8248), // Summarizer.expectedContextLanguages
+    (2547, 8249), // Summarizer.expectedInputLanguages
+    (2705, 8250), // Summarizer.format
+    (3288, 8251), // Summarizer.inputQuota
+    (3535, 8252), // Summarizer.length
+    (3777, 8253), // Summarizer.measureInputUsage
+    (4024, 8254), // Summarizer.outputLanguage
+    (4970, 8255), // Summarizer.sharedContext
+    (5195, 8256), // Summarizer.summarize
+    (5196, 8257), // Summarizer.summarizeStreaming
+    (5443, 8258), // Summarizer.type
+    (988, 11051), // SuppressedError.SuppressedError
+    (2513, 11052), // SuppressedError.error
+    (5211, 11053), // SuppressedError.suppressed
+    (11, 11055), // Symbol.@@toPrimitive
+    (989, 11056), // Symbol.Symbol
+    (1446, 11057), // Symbol.asyncDispose
+    (1447, 11058), // Symbol.asyncIterator
+    (2272, 11059), // Symbol.description
+    (2335, 11060), // Symbol.dispose
+    (2691, 11061), // Symbol.for
+    (3151, 11062), // Symbol.hasInstance
+    (3366, 11063), // Symbol.isConcatSpreadable
+    (3453, 11064), // Symbol.iterator
+    (3476, 11065), // Symbol.keyFor
+    (3703, 11066), // Symbol.match
+    (3704, 11067), // Symbol.matchAll
+    (4532, 11068), // Symbol.replace
+    (4762, 11069), // Symbol.search
+    (5065, 11070), // Symbol.species
+    (5076, 11071), // Symbol.split
+    (5350, 11072), // Symbol.toPrimitive
+    (5355, 11073), // Symbol.toString
+    (5356, 11074), // Symbol.toStringTag
+    (5531, 11076), // Symbol.unscopables
+    (5620, 11077), // Symbol.valueOf
+    (990, 8260), // SyncEvent.SyncEvent
+    (3502, 8261), // SyncEvent.lastChance
+    (5249, 8262), // SyncEvent.tag
+    (3055, 8264), // SyncManager.getTags
+    (4450, 8265), // SyncManager.register
+    (5754, 8266), // SyncManager.worker_support
+    (992, 11079), // SyntaxError.SyntaxError
+    (4816, 11080), // SyntaxError.serializable_object
+    (1899, 8268), // TaskAttributionTiming.containerId
+    (1900, 8269), // TaskAttributionTiming.containerName
+    (1902, 8270), // TaskAttributionTiming.containerSrc
+    (1905, 8271), // TaskAttributionTiming.containerType
+    (5341, 8272), // TaskAttributionTiming.toJSON
+    (994, 8274), // TaskController.TaskController
+    (4904, 8275), // TaskController.setPriority
+    (995, 8277), // TaskPriorityChangeEvent.TaskPriorityChangeEvent
+    (4274, 8278), // TaskPriorityChangeEvent.previousPriority
+    (1346, 8280), // TaskSignal.any
+    (1347, 8280), // TaskSignal.any_static
+    (4284, 8281), // TaskSignal.priority
+    (4285, 8282), // TaskSignal.prioritychange_event
+    (269, 11082), // Temporal.Duration
+    (521, 11109), // Temporal.Instant
+    (656, 11128), // Temporal.Now
+    (727, 11135), // Temporal.PlainDate
+    (728, 11170), // Temporal.PlainDateTime
+    (729, 11212), // Temporal.PlainMonthDay
+    (730, 11225), // Temporal.PlainTime
+    (731, 11246), // Temporal.PlainYearMonth
+    (1207, 11271), // Temporal.ZonedDateTime
+    (998, 8284), // Text.Text
+    (1444, 8285), // Text.assignedSlot
+    (2830, 8286), // Text.getBoxQuads
+    (5077, 8287), // Text.splitText
+    (5738, 8288), // Text.wholeText
+    (999, 8290), // TextDecoder.TextDecoder
+    (2181, 8291), // TextDecoder.decode
+    (2473, 8292), // TextDecoder.encoding
+    (2579, 8293), // TextDecoder.fatal
+    (3213, 8294), // TextDecoder.ignoreBOM
+    (5754, 8295), // TextDecoder.worker_support
+    (1000, 8297), // TextDecoderStream.TextDecoderStream
+    (2473, 8298), // TextDecoderStream.encoding
+    (2579, 8299), // TextDecoderStream.fatal
+    (3213, 8300), // TextDecoderStream.ignoreBOM
+    (4393, 8301), // TextDecoderStream.readable
+    (5758, 8302), // TextDecoderStream.writable
+    (1001, 8304), // TextEncoder.TextEncoder
+    (2467, 8305), // TextEncoder.encode
+    (2468, 8306), // TextEncoder.encodeInto
+    (2473, 8307), // TextEncoder.encoding
+    (5754, 8308), // TextEncoder.worker_support
+    (1002, 8310), // TextEncoderStream.TextEncoderStream
+    (2473, 8311), // TextEncoderStream.encoding
+    (4393, 8312), // TextEncoderStream.readable
+    (5758, 8313), // TextEncoderStream.writable
+    (2165, 8315), // TextEvent.data
+    (3269, 8316), // TextEvent.initTextEvent
+    (1004, 8318), // TextFormat.TextFormat
+    (4364, 8319), // TextFormat.rangeEnd
+    (4368, 8320), // TextFormat.rangeStart
+    (5469, 8321), // TextFormat.underlineStyle
+    (5470, 8322), // TextFormat.underlineThickness
+    (1005, 8324), // TextFormatUpdateEvent.TextFormatUpdateEvent
+    (3058, 8325), // TextFormatUpdateEvent.getTextFormats
+    (1241, 8327), // TextMetrics.actualBoundingBoxAscent
+    (1242, 8328), // TextMetrics.actualBoundingBoxDescent
+    (1243, 8329), // TextMetrics.actualBoundingBoxLeft
+    (1244, 8330), // TextMetrics.actualBoundingBoxRight
+    (1309, 8331), // TextMetrics.alphabeticBaseline
+    (2448, 8332), // TextMetrics.emHeightAscent
+    (2449, 8333), // TextMetrics.emHeightDescent
+    (2674, 8334), // TextMetrics.fontBoundingBoxAscent
+    (2675, 8335), // TextMetrics.fontBoundingBoxDescent
+    (3136, 8336), // TextMetrics.hangingBaseline
+    (3210, 8337), // TextMetrics.ideographicBaseline
+    (5739, 8338), // TextMetrics.width
+    (1234, 8340), // TextTrack.activeCues
+    (1251, 8341), // TextTrack.addCue
+    (2135, 8342), // TextTrack.cuechange_event
+    (2136, 8343), // TextTrack.cues
+    (3207, 8344), // TextTrack.id
+    (3234, 8345), // TextTrack.inBandMetadataTrackDispatchType
+    (3489, 8346), // TextTrack.kind
+    (3494, 8347), // TextTrack.label
+    (3497, 8348), // TextTrack.language
+    (3832, 8349), // TextTrack.mode
+    (4491, 8350), // TextTrack.removeCue
+    (5046, 8351), // TextTrack.sourceBuffer
+    (2488, 8353), // TextTrackCue.endTime
+    (2500, 8354), // TextTrackCue.enter_event
+    (2542, 8355), // TextTrackCue.exit_event
+    (3207, 8356), // TextTrackCue.id
+    (4100, 8357), // TextTrackCue.pauseOnExit
+    (5101, 8358), // TextTrackCue.startTime
+    (5391, 8359), // TextTrackCue.track
+    (2864, 8361), // TextTrackCueList.getCueById
+    (3535, 8362), // TextTrackCueList.length
+    (1278, 8364), // TextTrackList.addtrack_event
+    (1700, 8365), // TextTrackList.change_event
+    (3064, 8366), // TextTrackList.getTrackById
+    (3535, 8367), // TextTrackList.length
+    (4517, 8368), // TextTrackList.removetrack_event
+    (1011, 8370), // TextUpdateEvent.TextUpdateEvent
+    (4796, 8371), // TextUpdateEvent.selectionEnd
+    (4797, 8372), // TextUpdateEvent.selectionStart
+    (5282, 8373), // TextUpdateEvent.text
+    (5551, 8374), // TextUpdateEvent.updateRangeEnd
+    (5552, 8375), // TextUpdateEvent.updateRangeStart
+    (2281, 8377), // TimeEvent.detail
+    (3270, 8378), // TimeEvent.initTimeEvent
+    (5662, 8379), // TimeEvent.view
+    (2478, 8381), // TimeRanges.end
+    (3535, 8382), // TimeRanges.length
+    (5095, 8383), // TimeRanges.start
+    (1014, 8385), // ToggleEvent.ToggleEvent
+    (3911, 8386), // ToggleEvent.newState
+    (3967, 8387), // ToggleEvent.oldState
+    (5045, 8388), // ToggleEvent.source
+    (1015, 8390), // Touch.Touch
+    (1317, 8391), // Touch.altitudeAngle
+    (1506, 8392), // Touch.azimuthAngle
+    (1779, 8393), // Touch.clientX
+    (1780, 8394), // Touch.clientY
+    (2693, 8395), // Touch.force
+    (3208, 8396), // Touch.identifier
+    (4052, 8397), // Touch.pageX
+    (4053, 8398), // Touch.pageY
+    (4357, 8399), // Touch.radiusX
+    (4358, 8400), // Touch.radiusY
+    (4672, 8401), // Touch.rotationAngle
+    (4720, 8402), // Touch.screenX
+    (4721, 8403), // Touch.screenY
+    (5259, 8404), // Touch.target
+    (5382, 8405), // Touch.touchType
+    (1016, 8407), // TouchEvent.TouchEvent
+    (1311, 8408), // TouchEvent.altKey
+    (1702, 8409), // TouchEvent.changedTouches
+    (2134, 8410), // TouchEvent.ctrlKey
+    (3799, 8411), // TouchEvent.metaKey
+    (4975, 8412), // TouchEvent.shiftKey
+    (5265, 8413), // TouchEvent.targetTouches
+    (5386, 8414), // TouchEvent.touches
+    (3446, 8416), // TouchList.item
+    (3535, 8417), // TouchList.length
+    (1018, 8419), // TrackEvent.TrackEvent
+    (5391, 8420), // TrackEvent.track
+    (1019, 8422), // TransformStream.TransformStream
+    (4393, 8424), // TransformStream.readable
+    (5408, 8425), // TransformStream.transferable
+    (5758, 8426), // TransformStream.writable
+    (2275, 8428), // TransformStreamDefaultController.desiredSize
+    (2498, 8429), // TransformStreamDefaultController.enqueue
+    (2513, 8430), // TransformStreamDefaultController.error
+    (5271, 8431), // TransformStreamDefaultController.terminate
+    (1021, 8433), // TransitionEvent.TransitionEvent
+    (1334, 8434), // TransitionEvent.animation
+    (2438, 8435), // TransitionEvent.elapsedTime
+    (4310, 8436), // TransitionEvent.propertyName
+    (4317, 8437), // TransitionEvent.pseudoElement
+    (1495, 8439), // Translator.availability
+    (1496, 8439), // Translator.availability_static
+    (1983, 8440), // Translator.create
+    (2120, 8440), // Translator.create_static
+    (2277, 8441), // Translator.destroy
+    (3288, 8442), // Translator.inputQuota
+    (3777, 8443), // Translator.measureInputUsage
+    (5053, 8444), // Translator.sourceLanguage
+    (5262, 8445), // Translator.targetLanguage
+    (5422, 8446), // Translator.translate
+    (5424, 8447), // Translator.translateStreaming
+    (2144, 8449), // TreeWalker.currentNode
+    (2626, 8450), // TreeWalker.filter
+    (2642, 8451), // TreeWalker.firstChild
+    (3504, 8452), // TreeWalker.lastChild
+    (3920, 8453), // TreeWalker.nextNode
+    (3921, 8454), // TreeWalker.nextSibling
+    (4066, 8455), // TreeWalker.parentNode
+    (4273, 8456), // TreeWalker.previousNode
+    (4276, 8457), // TreeWalker.previousSibling
+    (4661, 8458), // TreeWalker.root
+    (5729, 8459), // TreeWalker.whatToShow
+    (5341, 8461), // TrustedHTML.toJSON
+    (5355, 8462), // TrustedHTML.toString
+    (4686, 8464), // TrustedHTMLParserOptions.runScripts
+    (4700, 8465), // TrustedHTMLParserOptions.sanitizer
+    (5341, 8467), // TrustedScript.toJSON
+    (5355, 8468), // TrustedScript.toString
+    (5341, 8470), // TrustedScriptURL.toJSON
+    (5355, 8471), // TrustedScriptURL.toString
+    (2027, 8473), // TrustedTypePolicy.createHTML
+    (2093, 8474), // TrustedTypePolicy.createScript
+    (2095, 8475), // TrustedTypePolicy.createScriptURL
+    (3887, 8476), // TrustedTypePolicy.name
+    (2050, 8478), // TrustedTypePolicyFactory.createPolicy
+    (2195, 8479), // TrustedTypePolicyFactory.defaultPolicy
+    (2454, 8480), // TrustedTypePolicyFactory.emptyHTML
+    (2455, 8481), // TrustedTypePolicyFactory.emptyScript
+    (2818, 8482), // TrustedTypePolicyFactory.getAttributeType
+    (2989, 8483), // TrustedTypePolicyFactory.getPropertyType
+    (3389, 8484), // TrustedTypePolicyFactory.isHTML
+    (3420, 8485), // TrustedTypePolicyFactory.isScript
+    (3421, 8486), // TrustedTypePolicyFactory.isScriptURL
+    (1030, 11324), // TypeError.TypeError
+    (4816, 11325), // TypeError.serializable_object
+    (4, 11327), // TypedArray.@@iterator
+    (9, 11328), // TypedArray.@@species
+    (67, 11329), // TypedArray.BYTES_PER_ELEMENT
+    (1448, 11330), // TypedArray.at
+    (1612, 11331), // TypedArray.buffer
+    (1628, 11332), // TypedArray.byteLength
+    (1629, 11333), // TypedArray.byteOffset
+    (1897, 11334), // TypedArray.constructor_without_parameters
+    (1959, 11335), // TypedArray.copyWithin
+    (2503, 11336), // TypedArray.entries
+    (2528, 11337), // TypedArray.every
+    (2620, 11338), // TypedArray.fill
+    (2626, 11339), // TypedArray.filter
+    (2630, 11340), // TypedArray.find
+    (2631, 11341), // TypedArray.findIndex
+    (2632, 11342), // TypedArray.findLast
+    (2633, 11343), // TypedArray.findLastIndex
+    (2692, 11344), // TypedArray.forEach
+    (2736, 11345), // TypedArray.from
+    (3237, 11346), // TypedArray.includes
+    (3249, 11347), // TypedArray.indexOf
+    (3250, 11348), // TypedArray.index_properties_not_consulting_prototype
+    (3448, 11349), // TypedArray.iterable_in_constructor
+    (3456, 11350), // TypedArray.join
+    (3486, 11351), // TypedArray.keys
+    (3508, 11352), // TypedArray.lastIndexOf
+    (3535, 11353), // TypedArray.length
+    (3669, 11354), // TypedArray.map
+    (3887, 11355), // TypedArray.name
+    (3890, 11356), // TypedArray.named_properties
+    (3955, 11357), // TypedArray.of
+    (4420, 11358), // TypedArray.reduce
+    (4429, 11359), // TypedArray.reduceRight
+    (4642, 11360), // TypedArray.reverse
+    (4824, 11361), // TypedArray.set
+    (5025, 11362), // TypedArray.slice
+    (5040, 11363), // TypedArray.some
+    (5041, 11364), // TypedArray.sort
+    (5176, 11365), // TypedArray.subarray
+    (5344, 11366), // TypedArray.toLocaleString
+    (5352, 11367), // TypedArray.toReversed
+    (5353, 11368), // TypedArray.toSorted
+    (5355, 11369), // TypedArray.toString
+    (5622, 11370), // TypedArray.values
+    (5745, 11371), // TypedArray.with
+    (1032, 8488), // UIEvent.UIEvent
+    (2281, 8489), // UIEvent.detail
+    (3271, 8490), // UIEvent.initUIEvent
+    (5048, 8491), // UIEvent.sourceCapabilities
+    (5662, 8492), // UIEvent.view
+    (5737, 8493), // UIEvent.which
+    (1033, 11373), // URIError.URIError
+    (4816, 11374), // URIError.serializable_object
+    (1034, 8495), // URL.URL
+    (1646, 8496), // URL.canParse
+    (1647, 8496), // URL.canParse_static
+    (2042, 8497), // URL.createObjectURL
+    (2043, 8497), // URL.createObjectURL_static
+    (3165, 8498), // URL.hash
+    (3185, 8499), // URL.host
+    (3187, 8500), // URL.hostname
+    (3188, 8501), // URL.href
+    (4010, 8502), // URL.origin
+    (4069, 8503), // URL.parse
+    (4083, 8503), // URL.parse_static
+    (4086, 8504), // URL.password
+    (4090, 8505), // URL.pathname
+    (4224, 8507), // URL.port
+    (4313, 8508), // URL.protocol
+    (4646, 8509), // URL.revokeObjectURL
+    (4647, 8509), // URL.revokeObjectURL_static
+    (4762, 8510), // URL.search
+    (4763, 8511), // URL.searchParams
+    (5341, 8512), // URL.toJSON
+    (5355, 8513), // URL.toString
+    (5600, 8514), // URL.username
+    (1035, 8516), // URLPattern.URLPattern
+    (2534, 8518), // URLPattern.exec
+    (3161, 8519), // URLPattern.hasRegExpGroups
+    (3165, 8520), // URLPattern.hash
+    (3187, 8521), // URLPattern.hostname
+    (4086, 8522), // URLPattern.password
+    (4090, 8523), // URLPattern.pathname
+    (4224, 8524), // URLPattern.port
+    (4313, 8525), // URLPattern.protocol
+    (4762, 8526), // URLPattern.search
+    (5273, 8527), // URLPattern.test
+    (5600, 8528), // URLPattern.username
+    (4, 8530), // URLSearchParams.@@iterator
+    (1036, 8531), // URLSearchParams.URLSearchParams
+    (1351, 8535), // URLSearchParams.append
+    (2212, 8536), // URLSearchParams.delete
+    (2503, 8538), // URLSearchParams.entries
+    (2692, 8539), // URLSearchParams.forEach
+    (2796, 8540), // URLSearchParams.get
+    (2802, 8541), // URLSearchParams.getAll
+    (3141, 8542), // URLSearchParams.has
+    (3486, 8544), // URLSearchParams.keys
+    (4824, 8545), // URLSearchParams.set
+    (5011, 8546), // URLSearchParams.size
+    (5041, 8547), // URLSearchParams.sort
+    (5355, 8548), // URLSearchParams.toString
+    (5622, 8549), // URLSearchParams.values
+    (1882, 8551), // USB.connect_event
+    (2324, 8552), // USB.disconnect_event
+    (2877, 8553), // USB.getDevices
+    (4556, 8554), // USB.requestDevice
+    (5754, 8556), // USB.worker_support
+    (1038, 8558), // USBAlternateInterface.USBAlternateInterface
+    (1313, 8559), // USBAlternateInterface.alternateSetting
+    (2495, 8560), // USBAlternateInterface.endpoints
+    (3336, 8561), // USBAlternateInterface.interfaceClass
+    (3337, 8562), // USBAlternateInterface.interfaceName
+    (3339, 8563), // USBAlternateInterface.interfaceProtocol
+    (3340, 8564), // USBAlternateInterface.interfaceSubclass
+    (5754, 8565), // USBAlternateInterface.worker_support
+    (1039, 8567), // USBConfiguration.USBConfiguration
+    (1872, 8568), // USBConfiguration.configurationName
+    (1873, 8569), // USBConfiguration.configurationValue
+    (3341, 8570), // USBConfiguration.interfaces
+    (5754, 8571), // USBConfiguration.worker_support
+    (1040, 8573), // USBConnectionEvent.USBConnectionEvent
+    (2287, 8574), // USBConnectionEvent.device
+    (5754, 8575), // USBConnectionEvent.worker_support
+    (1739, 8577), // USBDevice.claimInterface
+    (1754, 8578), // USBDevice.clearHalt
+    (1792, 8579), // USBDevice.close
+    (1871, 8580), // USBDevice.configuration
+    (1875, 8581), // USBDevice.configurations
+    (1931, 8582), // USBDevice.controlTransferIn
+    (1932, 8583), // USBDevice.controlTransferOut
+    (2288, 8584), // USBDevice.deviceClass
+    (2294, 8585), // USBDevice.deviceProtocol
+    (2295, 8586), // USBDevice.deviceSubclass
+    (2296, 8587), // USBDevice.deviceVersionMajor
+    (2297, 8588), // USBDevice.deviceVersionMinor
+    (2298, 8589), // USBDevice.deviceVersionSubminor
+    (2697, 8590), // USBDevice.forget
+    (3443, 8591), // USBDevice.isochronousTransferIn
+    (3444, 8592), // USBDevice.isochronousTransferOut
+    (3668, 8593), // USBDevice.manufacturerName
+    (3980, 8594), // USBDevice.open
+    (3985, 8595), // USBDevice.opened
+    (4293, 8596), // USBDevice.productId
+    (4294, 8597), // USBDevice.productName
+    (4470, 8598), // USBDevice.releaseInterface
+    (4591, 8599), // USBDevice.reset
+    (4780, 8600), // USBDevice.selectAlternateInterface
+    (4782, 8601), // USBDevice.selectConfiguration
+    (4814, 8602), // USBDevice.serialNumber
+    (5403, 8603), // USBDevice.transferIn
+    (5404, 8604), // USBDevice.transferOut
+    (5581, 8605), // USBDevice.usbVersionMajor
+    (5582, 8606), // USBDevice.usbVersionMinor
+    (5583, 8607), // USBDevice.usbVersionSubminor
+    (5629, 8608), // USBDevice.vendorId
+    (5754, 8609), // USBDevice.worker_support
+    (1042, 8611), // USBEndpoint.USBEndpoint
+    (2311, 8612), // USBEndpoint.direction
+    (2494, 8613), // USBEndpoint.endpointNumber
+    (4043, 8614), // USBEndpoint.packetSize
+    (5443, 8615), // USBEndpoint.type
+    (5754, 8616), // USBEndpoint.worker_support
+    (1043, 8618), // USBInTransferResult.USBInTransferResult
+    (2165, 8619), // USBInTransferResult.data
+    (5110, 8620), // USBInTransferResult.status
+    (5754, 8621), // USBInTransferResult.worker_support
+    (1044, 8623), // USBInterface.USBInterface
+    (1312, 8624), // USBInterface.alternate
+    (1314, 8625), // USBInterface.alternates
+    (1740, 8626), // USBInterface.claimed
+    (3338, 8627), // USBInterface.interfaceNumber
+    (5754, 8628), // USBInterface.worker_support
+    (1045, 8630), // USBIsochronousInTransferPacket.USBIsochronousInTransferPacket
+    (2165, 8631), // USBIsochronousInTransferPacket.data
+    (5110, 8632), // USBIsochronousInTransferPacket.status
+    (5754, 8633), // USBIsochronousInTransferPacket.worker_support
+    (1046, 8635), // USBIsochronousInTransferResult.USBIsochronousInTransferResult
+    (2165, 8636), // USBIsochronousInTransferResult.data
+    (4044, 8637), // USBIsochronousInTransferResult.packets
+    (5754, 8638), // USBIsochronousInTransferResult.worker_support
+    (1047, 8640), // USBIsochronousOutTransferPacket.USBIsochronousOutTransferPacket
+    (1631, 8641), // USBIsochronousOutTransferPacket.bytesWritten
+    (5110, 8642), // USBIsochronousOutTransferPacket.status
+    (5754, 8643), // USBIsochronousOutTransferPacket.worker_support
+    (1048, 8645), // USBIsochronousOutTransferResult.USBIsochronousOutTransferResult
+    (4044, 8646), // USBIsochronousOutTransferResult.packets
+    (5754, 8647), // USBIsochronousOutTransferResult.worker_support
+    (1049, 8649), // USBOutTransferResult.USBOutTransferResult
+    (1631, 8650), // USBOutTransferResult.bytesWritten
+    (5110, 8651), // USBOutTransferResult.status
+    (5754, 8652), // USBOutTransferResult.worker_support
+    (1051, 11376), // Uint16Array.Uint16Array
+    (1052, 11380), // Uint32Array.Uint32Array
+    (1053, 11384), // Uint8Array.Uint8Array
+    (2738, 11387), // Uint8Array.fromBase64
+    (2748, 11388), // Uint8Array.fromHex
+    (4862, 11389), // Uint8Array.setFromBase64
+    (4863, 11390), // Uint8Array.setFromHex
+    (5330, 11391), // Uint8Array.toBase64
+    (5339, 11392), // Uint8Array.toHex
+    (1054, 11394), // Uint8ClampedArray.Uint8ClampedArray
+    (3145, 8654), // UserActivation.hasBeenActive
+    (3359, 8655), // UserActivation.isActive
+    (1655, 8657), // VRDisplay.cancelAnimationFrame
+    (1672, 8658), // VRDisplay.capabilities
+    (2254, 8659), // VRDisplay.depthFar
+    (2257, 8660), // VRDisplay.depthNear
+    (2332, 8661), // VRDisplay.displayId
+    (2333, 8662), // VRDisplay.displayName
+    (2541, 8663), // VRDisplay.exitPresent
+    (2895, 8664), // VRDisplay.getEyeParameters
+    (2908, 8665), // VRDisplay.getFrameData
+    (2922, 8666), // VRDisplay.getImmediatePose
+    (2938, 8667), // VRDisplay.getLayers
+    (2979, 8668), // VRDisplay.getPose
+    (3371, 8669), // VRDisplay.isConnected
+    (3404, 8670), // VRDisplay.isPresenting
+    (4553, 8671), // VRDisplay.requestAnimationFrame
+    (4574, 8672), // VRDisplay.requestPresent
+    (4593, 8673), // VRDisplay.resetPose
+    (5092, 8674), // VRDisplay.stageParameters
+    (5181, 8675), // VRDisplay.submitFrame
+    (1650, 8677), // VRDisplayCapabilities.canPresent
+    (3147, 8678), // VRDisplayCapabilities.hasExternalDisplay
+    (3152, 8679), // VRDisplayCapabilities.hasOrientation
+    (3157, 8680), // VRDisplayCapabilities.hasPosition
+    (3745, 8681), // VRDisplayCapabilities.maxLayers
+    (1058, 8683), // VRDisplayEvent.VRDisplayEvent
+    (2330, 8684), // VRDisplayEvent.display
+    (4399, 8685), // VRDisplayEvent.reason
+    (2614, 8687), // VREyeParameters.fieldOfView
+    (3773, 8688), // VREyeParameters.maximumFieldOfView
+    (3823, 8689), // VREyeParameters.minimumFieldOfView
+    (3957, 8690), // VREyeParameters.offset
+    (4519, 8691), // VREyeParameters.renderHeight
+    (4524, 8692), // VREyeParameters.renderWidth
+    (2362, 8694), // VRFieldOfView.downDegrees
+    (3532, 8695), // VRFieldOfView.leftDegrees
+    (4654, 8696), // VRFieldOfView.rightDegrees
+    (5538, 8697), // VRFieldOfView.upDegrees
+    (1061, 8699), // VRFrameData.VRFrameData
+    (3533, 8700), // VRFrameData.leftProjectionMatrix
+    (3534, 8701), // VRFrameData.leftViewMatrix
+    (4228, 8702), // VRFrameData.pose
+    (4655, 8703), // VRFrameData.rightProjectionMatrix
+    (4656, 8704), // VRFrameData.rightViewMatrix
+    (5322, 8705), // VRFrameData.timestamp
+    (1328, 8707), // VRPose.angularAcceleration
+    (1329, 8708), // VRPose.angularVelocity
+    (3560, 8709), // VRPose.linearAcceleration
+    (3562, 8710), // VRPose.linearVelocity
+    (4005, 8711), // VRPose.orientation
+    (4229, 8712), // VRPose.position
+    (5010, 8714), // VRStageParameters.sittingToStandingTransform
+    (5014, 8715), // VRStageParameters.sizeX
+    (5015, 8716), // VRStageParameters.sizeY
+    (1064, 8718), // VTTCue.VTTCue
+    (1291, 8719), // VTTCue.align
+    (2863, 8720), // VTTCue.getCueAsHTML
+    (3547, 8721), // VTTCue.line
+    (3549, 8722), // VTTCue.lineAlign
+    (4229, 8723), // VTTCue.position
+    (4232, 8724), // VTTCue.positionAlign
+    (4447, 8725), // VTTCue.region
+    (5011, 8726), // VTTCue.size
+    (5034, 8727), // VTTCue.snapToLines
+    (5282, 8728), // VTTCue.text
+    (5650, 8730), // VTTCue.vertical
+    (1065, 8732), // VTTRegion.VTTRegion
+    (3207, 8733), // VTTRegion.id
+    (3564, 8734), // VTTRegion.lines
+    (4448, 8735), // VTTRegion.regionAnchorX
+    (4449, 8736), // VTTRegion.regionAnchorY
+    (4726, 8737), // VTTRegion.scroll
+    (5666, 8738), // VTTRegion.viewportAnchorX
+    (5667, 8739), // VTTRegion.viewportAnchorY
+    (5739, 8740), // VTTRegion.width
+    (1515, 8742), // ValidityState.badInput
+    (2160, 8743), // ValidityState.customError
+    (4093, 8744), // ValidityState.patternMismatch
+    (4367, 8745), // ValidityState.rangeOverflow
+    (4369, 8746), // ValidityState.rangeUnderflow
+    (5125, 8747), // ValidityState.stepMismatch
+    (5372, 8748), // ValidityState.tooLong
+    (5373, 8749), // ValidityState.tooShort
+    (5444, 8750), // ValidityState.typeMismatch
+    (5607, 8751), // ValidityState.valid
+    (5619, 8752), // ValidityState.valueMissing
+    (1067, 8754), // VideoColorSpace.VideoColorSpace
+    (2762, 8755), // VideoColorSpace.fullRange
+    (3709, 8756), // VideoColorSpace.matrix
+    (4277, 8757), // VideoColorSpace.primaries
+    (5341, 8758), // VideoColorSpace.toJSON
+    (5400, 8759), // VideoColorSpace.transfer
+    (1068, 8761), // VideoDecoder.VideoDecoder
+    (1792, 8762), // VideoDecoder.close
+    (1876, 8763), // VideoDecoder.configure
+    (2181, 8766), // VideoDecoder.decode
+    (2183, 8767), // VideoDecoder.decodeQueueSize
+    (2266, 8768), // VideoDecoder.dequeue_event
+    (2656, 8769), // VideoDecoder.flush
+    (3369, 8770), // VideoDecoder.isConfigSupported
+    (3370, 8770), // VideoDecoder.isConfigSupported_static
+    (4591, 8773), // VideoDecoder.reset
+    (5106, 8774), // VideoDecoder.state
+    (1069, 8776), // VideoEncoder.VideoEncoder
+    (1792, 8777), // VideoEncoder.close
+    (1876, 8778), // VideoEncoder.configure
+    (2266, 8779), // VideoEncoder.dequeue_event
+    (2467, 8780), // VideoEncoder.encode
+    (2469, 8781), // VideoEncoder.encodeQueueSize
+    (2656, 8782), // VideoEncoder.flush
+    (3369, 8783), // VideoEncoder.isConfigSupported
+    (3370, 8783), // VideoEncoder.isConfigSupported_static
+    (4591, 8784), // VideoEncoder.reset
+    (5106, 8785), // VideoEncoder.state
+    (1070, 8787), // VideoFrame.VideoFrame
+    (1299, 8791), // VideoFrame.allocationSize
+    (1788, 8792), // VideoFrame.clone
+    (1792, 8793), // VideoFrame.close
+    (1810, 8794), // VideoFrame.codedHeight
+    (1811, 8795), // VideoFrame.codedRect
+    (1812, 8796), // VideoFrame.codedWidth
+    (1825, 8797), // VideoFrame.colorSpace
+    (1957, 8798), // VideoFrame.copyTo
+    (2331, 8800), // VideoFrame.displayHeight
+    (2334, 8801), // VideoFrame.displayWidth
+    (2413, 8802), // VideoFrame.duration
+    (2652, 8803), // VideoFrame.flip
+    (2705, 8804), // VideoFrame.format
+    (3800, 8805), // VideoFrame.metadata
+    (4671, 8806), // VideoFrame.rotation
+    (5322, 8807), // VideoFrame.timestamp
+    (5677, 8808), // VideoFrame.visibleRect
+    (1961, 8810), // VideoPlaybackQuality.corruptedVideoFrames
+    (2121, 8811), // VideoPlaybackQuality.creationTime
+    (2408, 8812), // VideoPlaybackQuality.droppedVideoFrames
+    (5379, 8813), // VideoPlaybackQuality.totalFrameDelay
+    (5381, 8814), // VideoPlaybackQuality.totalVideoFrames
+    (3207, 8816), // VideoTrack.id
+    (3489, 8817), // VideoTrack.kind
+    (3494, 8818), // VideoTrack.label
+    (3497, 8819), // VideoTrack.language
+    (4788, 8820), // VideoTrack.selected
+    (5046, 8821), // VideoTrack.sourceBuffer
+    (1073, 8823), // VideoTrackGenerator.VideoTrackGenerator
+    (3885, 8824), // VideoTrackGenerator.muted
+    (5391, 8825), // VideoTrackGenerator.track
+    (5758, 8826), // VideoTrackGenerator.writable
+    (1278, 8828), // VideoTrackList.addtrack_event
+    (1700, 8829), // VideoTrackList.change_event
+    (3064, 8830), // VideoTrackList.getTrackById
+    (3535, 8831), // VideoTrackList.length
+    (4517, 8832), // VideoTrackList.removetrack_event
+    (4789, 8833), // VideoTrackList.selectedIndex
+    (1075, 8835), // ViewTimeline.ViewTimeline
+    (2485, 8836), // ViewTimeline.endOffset
+    (5099, 8837), // ViewTimeline.startOffset
+    (5179, 8838), // ViewTimeline.subject
+    (2637, 8840), // ViewTransition.finished
+    (4396, 8841), // ViewTransition.ready
+    (5022, 8842), // ViewTransition.skipTransition
+    (5417, 8843), // ViewTransition.transitionRoot
+    (5465, 8844), // ViewTransition.types
+    (5544, 8845), // ViewTransition.updateCallbackDone
+    (5701, 8846), // ViewTransition.waitUntil
+    (4, 8848), // ViewTransitionTypeSet.@@iterator
+    (1248, 8849), // ViewTransitionTypeSet.add
+    (1744, 8850), // ViewTransitionTypeSet.clear
+    (2212, 8851), // ViewTransitionTypeSet.delete
+    (2503, 8852), // ViewTransitionTypeSet.entries
+    (2692, 8853), // ViewTransitionTypeSet.forEach
+    (3141, 8854), // ViewTransitionTypeSet.has
+    (3486, 8855), // ViewTransitionTypeSet.keys
+    (5011, 8856), // ViewTransitionTypeSet.size
+    (5622, 8857), // ViewTransitionTypeSet.values
+    (4777, 8859), // Viewport.segments
+    (1605, 8861), // VirtualKeyboard.boundingRect
+    (2792, 8862), // VirtualKeyboard.geometrychange_event
+    (3176, 8863), // VirtualKeyboard.hide
+    (4028, 8864), // VirtualKeyboard.overlaysContent
+    (4982, 8865), // VirtualKeyboard.show
+    (2413, 8867), // VisibilityStateEntry.duration
+    (2505, 8868), // VisibilityStateEntry.entryType
+    (3887, 8869), // VisibilityStateEntry.name
+    (5101, 8870), // VisibilityStateEntry.startTime
+    (3173, 8872), // VisualViewport.height
+    (3959, 8873), // VisualViewport.offsetLeft
+    (3962, 8874), // VisualViewport.offsetTop
+    (4049, 8875), // VisualViewport.pageLeft
+    (4051, 8876), // VisualViewport.pageTop
+    (4603, 8877), // VisualViewport.resize_event
+    (4703, 8878), // VisualViewport.scale
+    (4747, 8879), // VisualViewport.scroll_event
+    (4749, 8880), // VisualViewport.scrollend_event
+    (5739, 8881), // VisualViewport.width
+    (3051, 8884), // WEBGL_compressed_texture_astc.getSupportedProfiles
+    (3069, 8892), // WEBGL_debug_shaders.getTranslatedShaderSource
+    (2390, 8895), // WEBGL_draw_buffers.drawBuffersWEBGL
+    (3620, 8897), // WEBGL_lose_context.loseContext
+    (4624, 8898), // WEBGL_lose_context.restoreContext
+    (3875, 8900), // WEBGL_multi_draw.multiDrawArraysInstancedWEBGL
+    (3876, 8901), // WEBGL_multi_draw.multiDrawArraysWEBGL
+    (3877, 8902), // WEBGL_multi_draw.multiDrawElementsInstancedWEBGL
+    (3878, 8903), // WEBGL_multi_draw.multiDrawElementsWEBGL
+    (4, 8905), // WGSLLanguageFeatures.@@iterator
+    (2503, 8906), // WGSLLanguageFeatures.entries
+    (2558, 8907), // WGSLLanguageFeatures.extension_linear_indexing
+    (2559, 8908), // WGSLLanguageFeatures.extension_packed_4x8_integer_dot_product
+    (2560, 8909), // WGSLLanguageFeatures.extension_pointer_composite_access
+    (2561, 8910), // WGSLLanguageFeatures.extension_readonly_and_readwrite_storage_textures
+    (2562, 8911), // WGSLLanguageFeatures.extension_subgroup_id
+    (2563, 8912), // WGSLLanguageFeatures.extension_subgroup_uniformity
+    (2564, 8913), // WGSLLanguageFeatures.extension_texture_and_sampler_let
+    (2565, 8914), // WGSLLanguageFeatures.extension_uniform_buffer_standard_layout
+    (2566, 8915), // WGSLLanguageFeatures.extension_unrestricted_pointer_parameters
+    (2692, 8916), // WGSLLanguageFeatures.forEach
+    (3141, 8917), // WGSLLanguageFeatures.has
+    (3486, 8918), // WGSLLanguageFeatures.keys
+    (5011, 8919), // WGSLLanguageFeatures.size
+    (5622, 8920), // WGSLLanguageFeatures.values
+    (4549, 8922), // WakeLock.request
+    (4467, 8924), // WakeLockSentinel.release
+    (4473, 8925), // WakeLockSentinel.release_event
+    (4474, 8926), // WakeLockSentinel.released
+    (5443, 8927), // WakeLockSentinel.type
+    (1098, 8929), // WaveShaperNode.WaveShaperNode
+    (2157, 8930), // WaveShaperNode.curve
+    (4032, 8931), // WaveShaperNode.oversample
+    (1099, 11398), // WeakMap.WeakMap
+    (2212, 11401), // WeakMap.delete
+    (2796, 11402), // WeakMap.get
+    (2962, 11403), // WeakMap.getOrInsert
+    (2963, 11404), // WeakMap.getOrInsertComputed
+    (3141, 11405), // WeakMap.has
+    (4824, 11406), // WeakMap.set
+    (5232, 11407), // WeakMap.symbol_as_keys
+    (1100, 11409), // WeakRef.WeakRef
+    (2267, 11411), // WeakRef.deref
+    (1101, 11413), // WeakSet.WeakSet
+    (1248, 11416), // WeakSet.add
+    (2212, 11417), // WeakSet.delete
+    (3141, 11418), // WeakSet.has
+    (5232, 11419), // WeakSet.symbol_as_keys
+    (1237, 8933), // WebGL2RenderingContext.activeTexture
+    (1454, 8934), // WebGL2RenderingContext.attachShader
+    (1543, 8935), // WebGL2RenderingContext.beginQuery
+    (1546, 8936), // WebGL2RenderingContext.beginTransformFeedback
+    (1555, 8937), // WebGL2RenderingContext.bindAttribLocation
+    (1556, 8938), // WebGL2RenderingContext.bindBuffer
+    (1557, 8939), // WebGL2RenderingContext.bindBufferBase
+    (1558, 8940), // WebGL2RenderingContext.bindBufferRange
+    (1559, 8941), // WebGL2RenderingContext.bindFramebuffer
+    (1560, 8942), // WebGL2RenderingContext.bindRenderbuffer
+    (1561, 8943), // WebGL2RenderingContext.bindSampler
+    (1562, 8944), // WebGL2RenderingContext.bindTexture
+    (1563, 8945), // WebGL2RenderingContext.bindTransformFeedback
+    (1564, 8946), // WebGL2RenderingContext.bindVertexArray
+    (1566, 8947), // WebGL2RenderingContext.blendColor
+    (1567, 8948), // WebGL2RenderingContext.blendEquation
+    (1568, 8949), // WebGL2RenderingContext.blendEquationSeparate
+    (1571, 8950), // WebGL2RenderingContext.blendFunc
+    (1572, 8951), // WebGL2RenderingContext.blendFuncSeparate
+    (1577, 8952), // WebGL2RenderingContext.blitFramebuffer
+    (1613, 8953), // WebGL2RenderingContext.bufferData
+    (1615, 8955), // WebGL2RenderingContext.bufferSubData
+    (1669, 8957), // WebGL2RenderingContext.canvas
+    (1727, 8958), // WebGL2RenderingContext.checkFramebufferStatus
+    (1744, 8959), // WebGL2RenderingContext.clear
+    (1747, 8960), // WebGL2RenderingContext.clearBufferfi
+    (1748, 8961), // WebGL2RenderingContext.clearBufferfv
+    (1749, 8963), // WebGL2RenderingContext.clearBufferiv
+    (1750, 8965), // WebGL2RenderingContext.clearBufferuiv
+    (1751, 8967), // WebGL2RenderingContext.clearColor
+    (1753, 8968), // WebGL2RenderingContext.clearDepth
+    (1765, 8969), // WebGL2RenderingContext.clearStencil
+    (1777, 8970), // WebGL2RenderingContext.clientWaitSync
+    (1822, 8971), // WebGL2RenderingContext.colorMask
+    (1846, 8972), // WebGL2RenderingContext.compileShader
+    (1857, 8973), // WebGL2RenderingContext.compressedTexImage2D
+    (1858, 8975), // WebGL2RenderingContext.compressedTexImage3D
+    (1859, 8977), // WebGL2RenderingContext.compressedTexSubImage2D
+    (1860, 8979), // WebGL2RenderingContext.compressedTexSubImage3D
+    (1947, 8980), // WebGL2RenderingContext.copyBufferSubData
+    (1952, 8981), // WebGL2RenderingContext.copyTexImage2D
+    (1953, 8982), // WebGL2RenderingContext.copyTexSubImage2D
+    (1954, 8983), // WebGL2RenderingContext.copyTexSubImage3D
+    (1994, 8984), // WebGL2RenderingContext.createBuffer
+    (2025, 8985), // WebGL2RenderingContext.createFramebuffer
+    (2052, 8986), // WebGL2RenderingContext.createProgram
+    (2055, 8987), // WebGL2RenderingContext.createQuery
+    (2064, 8988), // WebGL2RenderingContext.createRenderbuffer
+    (2092, 8989), // WebGL2RenderingContext.createSampler
+    (2098, 8990), // WebGL2RenderingContext.createShader
+    (2107, 8991), // WebGL2RenderingContext.createTexture
+    (2110, 8992), // WebGL2RenderingContext.createTransformFeedback
+    (2113, 8993), // WebGL2RenderingContext.createVertexArray
+    (2137, 8994), // WebGL2RenderingContext.cullFace
+    (2213, 8995), // WebGL2RenderingContext.deleteBuffer
+    (2219, 8996), // WebGL2RenderingContext.deleteFramebuffer
+    (2225, 8997), // WebGL2RenderingContext.deleteProgram
+    (2227, 8998), // WebGL2RenderingContext.deleteQuery
+    (2229, 8999), // WebGL2RenderingContext.deleteRenderbuffer
+    (2232, 9000), // WebGL2RenderingContext.deleteSampler
+    (2233, 9001), // WebGL2RenderingContext.deleteShader
+    (2234, 9002), // WebGL2RenderingContext.deleteSync
+    (2237, 9003), // WebGL2RenderingContext.deleteTexture
+    (2238, 9004), // WebGL2RenderingContext.deleteTransformFeedback
+    (2239, 9005), // WebGL2RenderingContext.deleteVertexArray
+    (2255, 9006), // WebGL2RenderingContext.depthFunc
+    (2256, 9007), // WebGL2RenderingContext.depthMask
+    (2259, 9008), // WebGL2RenderingContext.depthRange
+    (2279, 9009), // WebGL2RenderingContext.detachShader
+    (2314, 9010), // WebGL2RenderingContext.disable
+    (2317, 9011), // WebGL2RenderingContext.disableVertexAttribArray
+    (2386, 9012), // WebGL2RenderingContext.drawArrays
+    (2387, 9013), // WebGL2RenderingContext.drawArraysInstanced
+    (2389, 9014), // WebGL2RenderingContext.drawBuffers
+    (2391, 9015), // WebGL2RenderingContext.drawElements
+    (2392, 9016), // WebGL2RenderingContext.drawElementsInstanced
+    (2399, 9017), // WebGL2RenderingContext.drawRangeElements
+    (2400, 9018), // WebGL2RenderingContext.drawingBufferColorSpace
+    (2401, 9019), // WebGL2RenderingContext.drawingBufferFormat
+    (2402, 9020), // WebGL2RenderingContext.drawingBufferHeight
+    (2403, 9021), // WebGL2RenderingContext.drawingBufferStorage
+    (2404, 9022), // WebGL2RenderingContext.drawingBufferWidth
+    (2457, 9023), // WebGL2RenderingContext.enable
+    (2460, 9024), // WebGL2RenderingContext.enableVertexAttribArray
+    (2486, 9025), // WebGL2RenderingContext.endQuery
+    (2489, 9026), // WebGL2RenderingContext.endTransformFeedback
+    (2606, 9027), // WebGL2RenderingContext.fenceSync
+    (2635, 9028), // WebGL2RenderingContext.finish
+    (2656, 9029), // WebGL2RenderingContext.flush
+    (2726, 9030), // WebGL2RenderingContext.framebufferRenderbuffer
+    (2727, 9031), // WebGL2RenderingContext.framebufferTexture2D
+    (2728, 9032), // WebGL2RenderingContext.framebufferTextureLayer
+    (2758, 9033), // WebGL2RenderingContext.frontFace
+    (2789, 9034), // WebGL2RenderingContext.generateMipmap
+    (2797, 9035), // WebGL2RenderingContext.getActiveAttrib
+    (2798, 9036), // WebGL2RenderingContext.getActiveUniform
+    (2799, 9037), // WebGL2RenderingContext.getActiveUniformBlockName
+    (2800, 9038), // WebGL2RenderingContext.getActiveUniformBlockParameter
+    (2801, 9039), // WebGL2RenderingContext.getActiveUniforms
+    (2811, 9040), // WebGL2RenderingContext.getAttachedShaders
+    (2812, 9041), // WebGL2RenderingContext.getAttribLocation
+    (2831, 9042), // WebGL2RenderingContext.getBufferParameter
+    (2832, 9043), // WebGL2RenderingContext.getBufferSubData
+    (2860, 9045), // WebGL2RenderingContext.getContextAttributes
+    (2892, 9046), // WebGL2RenderingContext.getError
+    (2893, 9047), // WebGL2RenderingContext.getExtension
+    (2907, 9048), // WebGL2RenderingContext.getFragDataLocation
+    (2909, 9049), // WebGL2RenderingContext.getFramebufferAttachmentParameter
+    (2924, 9050), // WebGL2RenderingContext.getIndexedParameter
+    (2931, 9051), // WebGL2RenderingContext.getInternalformatParameter
+    (2969, 9052), // WebGL2RenderingContext.getParameter
+    (2984, 9053), // WebGL2RenderingContext.getProgramInfoLog
+    (2985, 9054), // WebGL2RenderingContext.getProgramParameter
+    (2994, 9055), // WebGL2RenderingContext.getQuery
+    (2997, 9056), // WebGL2RenderingContext.getQueryParameter
+    (3011, 9057), // WebGL2RenderingContext.getRenderbufferParameter
+    (3016, 9058), // WebGL2RenderingContext.getSamplerParameter
+    (3029, 9059), // WebGL2RenderingContext.getShaderInfoLog
+    (3030, 9060), // WebGL2RenderingContext.getShaderParameter
+    (3031, 9061), // WebGL2RenderingContext.getShaderPrecisionFormat
+    (3032, 9062), // WebGL2RenderingContext.getShaderSource
+    (3048, 9063), // WebGL2RenderingContext.getSupportedExtensions
+    (3053, 9064), // WebGL2RenderingContext.getSyncParameter
+    (3057, 9065), // WebGL2RenderingContext.getTexParameter
+    (3068, 9066), // WebGL2RenderingContext.getTransformFeedbackVarying
+    (3083, 9067), // WebGL2RenderingContext.getUniform
+    (3084, 9068), // WebGL2RenderingContext.getUniformBlockIndex
+    (3085, 9069), // WebGL2RenderingContext.getUniformIndices
+    (3086, 9070), // WebGL2RenderingContext.getUniformLocation
+    (3091, 9071), // WebGL2RenderingContext.getVertexAttrib
+    (3092, 9072), // WebGL2RenderingContext.getVertexAttribOffset
+    (3183, 9073), // WebGL2RenderingContext.hint
+    (3351, 9074), // WebGL2RenderingContext.invalidateFramebuffer
+    (3352, 9075), // WebGL2RenderingContext.invalidateSubFramebuffer
+    (3363, 9076), // WebGL2RenderingContext.isBuffer
+    (3373, 9077), // WebGL2RenderingContext.isContextLost
+    (3377, 9078), // WebGL2RenderingContext.isEnabled
+    (3387, 9079), // WebGL2RenderingContext.isFramebuffer
+    (3406, 9080), // WebGL2RenderingContext.isProgram
+    (3408, 9081), // WebGL2RenderingContext.isQuery
+    (3413, 9082), // WebGL2RenderingContext.isRenderbuffer
+    (3419, 9083), // WebGL2RenderingContext.isSampler
+    (3425, 9084), // WebGL2RenderingContext.isShader
+    (3428, 9085), // WebGL2RenderingContext.isSync
+    (3430, 9086), // WebGL2RenderingContext.isTexture
+    (3431, 9087), // WebGL2RenderingContext.isTransformFeedback
+    (3438, 9088), // WebGL2RenderingContext.isVertexArray
+    (3558, 9089), // WebGL2RenderingContext.lineWidth
+    (3567, 9090), // WebGL2RenderingContext.linkProgram
+    (3662, 9091), // WebGL2RenderingContext.makeXRCompatible
+    (4101, 9092), // WebGL2RenderingContext.pauseTransformFeedback
+    (4176, 9093), // WebGL2RenderingContext.pixelStorei
+    (4215, 9094), // WebGL2RenderingContext.polygonOffset
+    (4386, 9095), // WebGL2RenderingContext.readBuffer
+    (4389, 9096), // WebGL2RenderingContext.readPixels
+    (4525, 9098), // WebGL2RenderingContext.renderbufferStorage
+    (4526, 9099), // WebGL2RenderingContext.renderbufferStorageMultisample
+    (4635, 9100), // WebGL2RenderingContext.resumeTransformFeedback
+    (4694, 9101), // WebGL2RenderingContext.sampleCoverage
+    (4697, 9102), // WebGL2RenderingContext.samplerParameterf
+    (4698, 9103), // WebGL2RenderingContext.samplerParameteri
+    (4714, 9104), // WebGL2RenderingContext.scissor
+    (4955, 9105), // WebGL2RenderingContext.shaderSource
+    (5117, 9106), // WebGL2RenderingContext.stencilFunc
+    (5118, 9107), // WebGL2RenderingContext.stencilFuncSeparate
+    (5119, 9108), // WebGL2RenderingContext.stencilMask
+    (5120, 9109), // WebGL2RenderingContext.stencilMaskSeparate
+    (5121, 9110), // WebGL2RenderingContext.stencilOp
+    (5122, 9111), // WebGL2RenderingContext.stencilOpSeparate
+    (5274, 9112), // WebGL2RenderingContext.texImage2D
+    (5275, 9113), // WebGL2RenderingContext.texImage3D
+    (5276, 9115), // WebGL2RenderingContext.texParameterf
+    (5277, 9116), // WebGL2RenderingContext.texParameteri
+    (5278, 9117), // WebGL2RenderingContext.texStorage2D
+    (5279, 9118), // WebGL2RenderingContext.texStorage3D
+    (5280, 9119), // WebGL2RenderingContext.texSubImage2D
+    (5281, 9120), // WebGL2RenderingContext.texSubImage3D
+    (5410, 9122), // WebGL2RenderingContext.transformFeedbackVaryings
+    (5480, 9123), // WebGL2RenderingContext.uniform1f
+    (5481, 9124), // WebGL2RenderingContext.uniform1fv
+    (5482, 9125), // WebGL2RenderingContext.uniform1i
+    (5483, 9126), // WebGL2RenderingContext.uniform1iv
+    (5484, 9127), // WebGL2RenderingContext.uniform1ui
+    (5485, 9128), // WebGL2RenderingContext.uniform1uiv
+    (5486, 9129), // WebGL2RenderingContext.uniform2f
+    (5487, 9130), // WebGL2RenderingContext.uniform2fv
+    (5488, 9131), // WebGL2RenderingContext.uniform2i
+    (5489, 9132), // WebGL2RenderingContext.uniform2iv
+    (5490, 9133), // WebGL2RenderingContext.uniform2ui
+    (5491, 9134), // WebGL2RenderingContext.uniform2uiv
+    (5492, 9135), // WebGL2RenderingContext.uniform3f
+    (5493, 9136), // WebGL2RenderingContext.uniform3fv
+    (5494, 9137), // WebGL2RenderingContext.uniform3i
+    (5495, 9138), // WebGL2RenderingContext.uniform3iv
+    (5496, 9139), // WebGL2RenderingContext.uniform3ui
+    (5497, 9140), // WebGL2RenderingContext.uniform3uiv
+    (5498, 9141), // WebGL2RenderingContext.uniform4f
+    (5499, 9142), // WebGL2RenderingContext.uniform4fv
+    (5500, 9143), // WebGL2RenderingContext.uniform4i
+    (5501, 9144), // WebGL2RenderingContext.uniform4iv
+    (5502, 9145), // WebGL2RenderingContext.uniform4ui
+    (5503, 9146), // WebGL2RenderingContext.uniform4uiv
+    (5504, 9147), // WebGL2RenderingContext.uniformBlockBinding
+    (5505, 9148), // WebGL2RenderingContext.uniformMatrix2fv
+    (5506, 9150), // WebGL2RenderingContext.uniformMatrix2x3fv
+    (5507, 9152), // WebGL2RenderingContext.uniformMatrix2x4fv
+    (5508, 9154), // WebGL2RenderingContext.uniformMatrix3fv
+    (5509, 9156), // WebGL2RenderingContext.uniformMatrix3x2fv
+    (5510, 9158), // WebGL2RenderingContext.uniformMatrix3x4fv
+    (5511, 9160), // WebGL2RenderingContext.uniformMatrix4fv
+    (5512, 9162), // WebGL2RenderingContext.uniformMatrix4x2fv
+    (5513, 9164), // WebGL2RenderingContext.uniformMatrix4x3fv
+    (5526, 9166), // WebGL2RenderingContext.unpackColorSpace
+    (5587, 9167), // WebGL2RenderingContext.useProgram
+    (5609, 9168), // WebGL2RenderingContext.validateProgram
+    (5634, 9169), // WebGL2RenderingContext.vertexAttrib1f
+    (5635, 9170), // WebGL2RenderingContext.vertexAttrib1fv
+    (5636, 9172), // WebGL2RenderingContext.vertexAttrib2f
+    (5637, 9173), // WebGL2RenderingContext.vertexAttrib2fv
+    (5638, 9175), // WebGL2RenderingContext.vertexAttrib3f
+    (5639, 9176), // WebGL2RenderingContext.vertexAttrib3fv
+    (5640, 9178), // WebGL2RenderingContext.vertexAttrib4f
+    (5641, 9179), // WebGL2RenderingContext.vertexAttrib4fv
+    (5642, 9181), // WebGL2RenderingContext.vertexAttribDivisor
+    (5644, 9182), // WebGL2RenderingContext.vertexAttribI4i
+    (5645, 9183), // WebGL2RenderingContext.vertexAttribI4iv
+    (5646, 9185), // WebGL2RenderingContext.vertexAttribI4ui
+    (5647, 9186), // WebGL2RenderingContext.vertexAttribI4uiv
+    (5648, 9188), // WebGL2RenderingContext.vertexAttribIPointer
+    (5649, 9189), // WebGL2RenderingContext.vertexAttribPointer
+    (5665, 9190), // WebGL2RenderingContext.viewport
+    (5700, 9191), // WebGL2RenderingContext.waitSync
+    (3887, 9193), // WebGLActiveInfo.name
+    (5011, 9194), // WebGLActiveInfo.size
+    (5443, 9195), // WebGLActiveInfo.type
+    (5754, 9196), // WebGLActiveInfo.worker_support
+    (5754, 9198), // WebGLBuffer.worker_support
+    (1105, 9200), // WebGLContextEvent.WebGLContextEvent
+    (5112, 9201), // WebGLContextEvent.statusMessage
+    (5754, 9202), // WebGLContextEvent.worker_support
+    (5754, 9204), // WebGLFramebuffer.worker_support
+    (5754, 9207), // WebGLProgram.worker_support
+    (5754, 9210), // WebGLRenderbuffer.worker_support
+    (1237, 9212), // WebGLRenderingContext.activeTexture
+    (1454, 9213), // WebGLRenderingContext.attachShader
+    (1555, 9214), // WebGLRenderingContext.bindAttribLocation
+    (1556, 9215), // WebGLRenderingContext.bindBuffer
+    (1559, 9216), // WebGLRenderingContext.bindFramebuffer
+    (1560, 9217), // WebGLRenderingContext.bindRenderbuffer
+    (1562, 9218), // WebGLRenderingContext.bindTexture
+    (1566, 9219), // WebGLRenderingContext.blendColor
+    (1567, 9220), // WebGLRenderingContext.blendEquation
+    (1568, 9221), // WebGLRenderingContext.blendEquationSeparate
+    (1571, 9222), // WebGLRenderingContext.blendFunc
+    (1572, 9223), // WebGLRenderingContext.blendFuncSeparate
+    (1613, 9224), // WebGLRenderingContext.bufferData
+    (1615, 9225), // WebGLRenderingContext.bufferSubData
+    (1669, 9226), // WebGLRenderingContext.canvas
+    (1727, 9227), // WebGLRenderingContext.checkFramebufferStatus
+    (1744, 9228), // WebGLRenderingContext.clear
+    (1751, 9229), // WebGLRenderingContext.clearColor
+    (1753, 9230), // WebGLRenderingContext.clearDepth
+    (1765, 9231), // WebGLRenderingContext.clearStencil
+    (1822, 9232), // WebGLRenderingContext.colorMask
+    (1846, 9233), // WebGLRenderingContext.compileShader
+    (1857, 9234), // WebGLRenderingContext.compressedTexImage2D
+    (1859, 9236), // WebGLRenderingContext.compressedTexSubImage2D
+    (1952, 9237), // WebGLRenderingContext.copyTexImage2D
+    (1953, 9238), // WebGLRenderingContext.copyTexSubImage2D
+    (1994, 9239), // WebGLRenderingContext.createBuffer
+    (2025, 9240), // WebGLRenderingContext.createFramebuffer
+    (2052, 9241), // WebGLRenderingContext.createProgram
+    (2064, 9242), // WebGLRenderingContext.createRenderbuffer
+    (2098, 9243), // WebGLRenderingContext.createShader
+    (2107, 9244), // WebGLRenderingContext.createTexture
+    (2137, 9245), // WebGLRenderingContext.cullFace
+    (2213, 9246), // WebGLRenderingContext.deleteBuffer
+    (2219, 9247), // WebGLRenderingContext.deleteFramebuffer
+    (2225, 9248), // WebGLRenderingContext.deleteProgram
+    (2229, 9249), // WebGLRenderingContext.deleteRenderbuffer
+    (2233, 9250), // WebGLRenderingContext.deleteShader
+    (2237, 9251), // WebGLRenderingContext.deleteTexture
+    (2255, 9252), // WebGLRenderingContext.depthFunc
+    (2256, 9253), // WebGLRenderingContext.depthMask
+    (2259, 9254), // WebGLRenderingContext.depthRange
+    (2279, 9255), // WebGLRenderingContext.detachShader
+    (2314, 9256), // WebGLRenderingContext.disable
+    (2317, 9257), // WebGLRenderingContext.disableVertexAttribArray
+    (2386, 9258), // WebGLRenderingContext.drawArrays
+    (2391, 9259), // WebGLRenderingContext.drawElements
+    (2400, 9260), // WebGLRenderingContext.drawingBufferColorSpace
+    (2401, 9261), // WebGLRenderingContext.drawingBufferFormat
+    (2402, 9262), // WebGLRenderingContext.drawingBufferHeight
+    (2403, 9263), // WebGLRenderingContext.drawingBufferStorage
+    (2404, 9264), // WebGLRenderingContext.drawingBufferWidth
+    (2457, 9265), // WebGLRenderingContext.enable
+    (2460, 9266), // WebGLRenderingContext.enableVertexAttribArray
+    (2635, 9267), // WebGLRenderingContext.finish
+    (2656, 9268), // WebGLRenderingContext.flush
+    (2726, 9269), // WebGLRenderingContext.framebufferRenderbuffer
+    (2727, 9270), // WebGLRenderingContext.framebufferTexture2D
+    (2758, 9271), // WebGLRenderingContext.frontFace
+    (2789, 9272), // WebGLRenderingContext.generateMipmap
+    (2797, 9273), // WebGLRenderingContext.getActiveAttrib
+    (2798, 9274), // WebGLRenderingContext.getActiveUniform
+    (2811, 9275), // WebGLRenderingContext.getAttachedShaders
+    (2812, 9276), // WebGLRenderingContext.getAttribLocation
+    (2831, 9277), // WebGLRenderingContext.getBufferParameter
+    (2860, 9278), // WebGLRenderingContext.getContextAttributes
+    (2892, 9279), // WebGLRenderingContext.getError
+    (2893, 9280), // WebGLRenderingContext.getExtension
+    (2909, 9281), // WebGLRenderingContext.getFramebufferAttachmentParameter
+    (2969, 9282), // WebGLRenderingContext.getParameter
+    (2984, 9283), // WebGLRenderingContext.getProgramInfoLog
+    (2985, 9284), // WebGLRenderingContext.getProgramParameter
+    (3011, 9285), // WebGLRenderingContext.getRenderbufferParameter
+    (3029, 9286), // WebGLRenderingContext.getShaderInfoLog
+    (3030, 9287), // WebGLRenderingContext.getShaderParameter
+    (3031, 9288), // WebGLRenderingContext.getShaderPrecisionFormat
+    (3032, 9289), // WebGLRenderingContext.getShaderSource
+    (3048, 9290), // WebGLRenderingContext.getSupportedExtensions
+    (3057, 9291), // WebGLRenderingContext.getTexParameter
+    (3083, 9292), // WebGLRenderingContext.getUniform
+    (3086, 9293), // WebGLRenderingContext.getUniformLocation
+    (3091, 9294), // WebGLRenderingContext.getVertexAttrib
+    (3092, 9295), // WebGLRenderingContext.getVertexAttribOffset
+    (3183, 9296), // WebGLRenderingContext.hint
+    (3363, 9297), // WebGLRenderingContext.isBuffer
+    (3373, 9298), // WebGLRenderingContext.isContextLost
+    (3377, 9299), // WebGLRenderingContext.isEnabled
+    (3387, 9300), // WebGLRenderingContext.isFramebuffer
+    (3406, 9301), // WebGLRenderingContext.isProgram
+    (3413, 9302), // WebGLRenderingContext.isRenderbuffer
+    (3425, 9303), // WebGLRenderingContext.isShader
+    (3430, 9304), // WebGLRenderingContext.isTexture
+    (3558, 9305), // WebGLRenderingContext.lineWidth
+    (3567, 9306), // WebGLRenderingContext.linkProgram
+    (3662, 9307), // WebGLRenderingContext.makeXRCompatible
+    (4176, 9308), // WebGLRenderingContext.pixelStorei
+    (4215, 9309), // WebGLRenderingContext.polygonOffset
+    (4389, 9310), // WebGLRenderingContext.readPixels
+    (4525, 9311), // WebGLRenderingContext.renderbufferStorage
+    (4694, 9312), // WebGLRenderingContext.sampleCoverage
+    (4714, 9313), // WebGLRenderingContext.scissor
+    (4955, 9314), // WebGLRenderingContext.shaderSource
+    (5117, 9315), // WebGLRenderingContext.stencilFunc
+    (5118, 9316), // WebGLRenderingContext.stencilFuncSeparate
+    (5119, 9317), // WebGLRenderingContext.stencilMask
+    (5120, 9318), // WebGLRenderingContext.stencilMaskSeparate
+    (5121, 9319), // WebGLRenderingContext.stencilOp
+    (5122, 9320), // WebGLRenderingContext.stencilOpSeparate
+    (5274, 9321), // WebGLRenderingContext.texImage2D
+    (5276, 9322), // WebGLRenderingContext.texParameterf
+    (5277, 9323), // WebGLRenderingContext.texParameteri
+    (5280, 9324), // WebGLRenderingContext.texSubImage2D
+    (5480, 9325), // WebGLRenderingContext.uniform1f
+    (5481, 9326), // WebGLRenderingContext.uniform1fv
+    (5482, 9327), // WebGLRenderingContext.uniform1i
+    (5483, 9328), // WebGLRenderingContext.uniform1iv
+    (5486, 9329), // WebGLRenderingContext.uniform2f
+    (5487, 9330), // WebGLRenderingContext.uniform2fv
+    (5488, 9331), // WebGLRenderingContext.uniform2i
+    (5489, 9332), // WebGLRenderingContext.uniform2iv
+    (5492, 9333), // WebGLRenderingContext.uniform3f
+    (5493, 9334), // WebGLRenderingContext.uniform3fv
+    (5494, 9335), // WebGLRenderingContext.uniform3i
+    (5495, 9336), // WebGLRenderingContext.uniform3iv
+    (5498, 9337), // WebGLRenderingContext.uniform4f
+    (5499, 9338), // WebGLRenderingContext.uniform4fv
+    (5500, 9339), // WebGLRenderingContext.uniform4i
+    (5501, 9340), // WebGLRenderingContext.uniform4iv
+    (5505, 9341), // WebGLRenderingContext.uniformMatrix2fv
+    (5508, 9342), // WebGLRenderingContext.uniformMatrix3fv
+    (5511, 9343), // WebGLRenderingContext.uniformMatrix4fv
+    (5526, 9344), // WebGLRenderingContext.unpackColorSpace
+    (5587, 9345), // WebGLRenderingContext.useProgram
+    (5609, 9346), // WebGLRenderingContext.validateProgram
+    (5634, 9347), // WebGLRenderingContext.vertexAttrib1f
+    (5635, 9348), // WebGLRenderingContext.vertexAttrib1fv
+    (5636, 9350), // WebGLRenderingContext.vertexAttrib2f
+    (5637, 9351), // WebGLRenderingContext.vertexAttrib2fv
+    (5638, 9353), // WebGLRenderingContext.vertexAttrib3f
+    (5639, 9354), // WebGLRenderingContext.vertexAttrib3fv
+    (5640, 9356), // WebGLRenderingContext.vertexAttrib4f
+    (5641, 9357), // WebGLRenderingContext.vertexAttrib4fv
+    (5649, 9359), // WebGLRenderingContext.vertexAttribPointer
+    (5665, 9360), // WebGLRenderingContext.viewport
+    (5754, 9361), // WebGLRenderingContext.worker_support
+    (5754, 9364), // WebGLShader.worker_support
+    (4245, 9366), // WebGLShaderPrecisionFormat.precision
+    (4365, 9367), // WebGLShaderPrecisionFormat.rangeMax
+    (4366, 9368), // WebGLShaderPrecisionFormat.rangeMin
+    (5754, 9369), // WebGLShaderPrecisionFormat.worker_support
+    (5754, 9372), // WebGLTexture.worker_support
+    (5754, 9376), // WebGLUniformLocation.worker_support
+    (1122, 9380), // WebKitPoint.WebKitPoint
+    (5772, 9381), // WebKitPoint.x
+    (5781, 9382), // WebKitPoint.y
+    (1123, 9384), // WebSocket.WebSocket
+    (1553, 9386), // WebSocket.binaryType
+    (1617, 9387), // WebSocket.bufferedAmount
+    (1792, 9388), // WebSocket.close
+    (1795, 9389), // WebSocket.close_event
+    (2517, 9390), // WebSocket.error_event
+    (2567, 9391), // WebSocket.extensions
+    (3591, 9392), // WebSocket.local_network_access
+    (3796, 9393), // WebSocket.message_event
+    (3984, 9394), // WebSocket.open_event
+    (4313, 9395), // WebSocket.protocol
+    (4314, 9396), // WebSocket.protocol_rfc_6455
+    (4397, 9397), // WebSocket.readyState
+    (4803, 9398), // WebSocket.send
+    (5577, 9399), // WebSocket.url
+    (5754, 9400), // WebSocket.worker_support
+    (1124, 9402), // WebSocketError.WebSocketError
+    (1793, 9403), // WebSocketError.closeCode
+    (4399, 9404), // WebSocketError.reason
+    (1125, 9406), // WebSocketStream.WebSocketStream
+    (1792, 9407), // WebSocketStream.close
+    (1797, 9408), // WebSocketStream.closed
+    (3985, 9409), // WebSocketStream.opened
+    (5577, 9410), // WebSocketStream.url
+    (1126, 9412), // WebTransport.WebTransport
+    (1343, 9418), // WebTransport.anticipatedConcurrentIncomingBidirectionalStreams
+    (1344, 9419), // WebTransport.anticipatedConcurrentIncomingUnidirectionalStreams
+    (1627, 9420), // WebTransport.byob_readers
+    (1792, 9421), // WebTransport.close
+    (1797, 9422), // WebTransport.closed
+    (1878, 9423), // WebTransport.congestionControl
+    (1990, 9424), // WebTransport.createBidirectionalStream
+    (2096, 9426), // WebTransport.createSendGroup
+    (2112, 9427), // WebTransport.createUnidirectionalStream
+    (2171, 9430), // WebTransport.datagrams
+    (2384, 9431), // WebTransport.draining
+    (2556, 9432), // WebTransport.exportKeyingMaterial
+    (3040, 9433), // WebTransport.getStats
+    (3238, 9434), // WebTransport.incomingBidirectionalStreams
+    (3242, 9435), // WebTransport.incomingUnidirectionalStreams
+    (3591, 9436), // WebTransport.local_network_access
+    (4313, 9437), // WebTransport.protocol
+    (4396, 9438), // WebTransport.ready
+    (4475, 9439), // WebTransport.reliability
+    (4614, 9440), // WebTransport.responseHeaders
+    (5206, 9441), // WebTransport.supportsReliableOnly
+    (5207, 9441), // WebTransport.supportsReliableOnly_static
+    (4393, 9443), // WebTransportBidirectionalStream.readable
+    (5758, 9445), // WebTransportBidirectionalStream.writable
+    (1627, 9448), // WebTransportDatagramDuplexStream.byob_readers
+    (2118, 9449), // WebTransportDatagramDuplexStream.createWritable
+    (3239, 9450), // WebTransportDatagramDuplexStream.incomingHighWaterMark
+    (3240, 9451), // WebTransportDatagramDuplexStream.incomingMaxAge
+    (3241, 9452), // WebTransportDatagramDuplexStream.incomingMaxBufferedDatagrams
+    (3735, 9453), // WebTransportDatagramDuplexStream.maxDatagramSize
+    (4020, 9454), // WebTransportDatagramDuplexStream.outgoingHighWaterMark
+    (4021, 9455), // WebTransportDatagramDuplexStream.outgoingMaxAge
+    (4022, 9456), // WebTransportDatagramDuplexStream.outgoingMaxBufferedDatagrams
+    (4393, 9457), // WebTransportDatagramDuplexStream.readable
+    (5758, 9458), // WebTransportDatagramDuplexStream.writable
+    (4806, 9460), // WebTransportDatagramsWritable.sendGroup
+    (4808, 9461), // WebTransportDatagramsWritable.sendOrder
+    (1130, 9463), // WebTransportError.WebTransportError
+    (5045, 9464), // WebTransportError.source
+    (5147, 9465), // WebTransportError.streamErrorCode
+    (3040, 9467), // WebTransportReceiveStream.getStats
+    (3040, 9469), // WebTransportSendGroup.getStats
+    (3040, 9471), // WebTransportSendStream.getStats
+    (3099, 9472), // WebTransportSendStream.getWriter
+    (4806, 9473), // WebTransportSendStream.sendGroup
+    (4808, 9474), // WebTransportSendStream.sendOrder
+    (1134, 9476), // WheelEvent.WheelEvent
+    (2244, 9477), // WheelEvent.deltaMode
+    (2246, 9478), // WheelEvent.deltaX
+    (2247, 9479), // WheelEvent.deltaY
+    (2248, 9480), // WheelEvent.deltaZ
+    (3836, 9481), // WheelEvent.momentum
+    (4169, 9482), // WheelEvent.pinch_to_zoom_support
+    (5730, 9483), // WheelEvent.wheelDelta
+    (5731, 9484), // WheelEvent.wheelDeltaX
+    (5732, 9485), // WheelEvent.wheelDeltaY
+    (1286, 9487), // Window.afterprint_event
+    (1289, 9488), // Window.alert
+    (1363, 9489), // Window.appinstalled_event
+    (1530, 9490), // Window.beforeinstallprompt_event
+    (1532, 9491), // Window.beforeprint_event
+    (1535, 9492), // Window.beforeunload_event
+    (1589, 9497), // Window.blur
+    (1590, 9498), // Window.blur_event
+    (1655, 9499), // Window.cancelAnimationFrame
+    (1657, 9500), // Window.cancelIdleCallback
+    (1675, 9501), // Window.captureEvents
+    (1755, 9502), // Window.clearImmediate
+    (1792, 9503), // Window.close
+    (1797, 9504), // Window.closed
+    (1877, 9505), // Window.confirm
+    (1943, 9506), // Window.cookieStore
+    (1982, 9507), // Window.crashReport
+    (2122, 9508), // Window.credentialless
+    (2159, 9509), // Window.customElements
+    (2292, 9510), // Window.devicePixelRatio
+    (2300, 9511), // Window.devicemotion_event
+    (2301, 9512), // Window.deviceorientation_event
+    (2302, 9513), // Window.deviceorientationabsolute_event
+    (2347, 9514), // Window.document
+    (2349, 9515), // Window.documentPictureInPicture
+    (2410, 9516), // Window.dump
+    (2517, 9517), // Window.error_event
+    (2525, 9518), // Window.event
+    (2568, 9519), // Window.external
+    (2605, 9520), // Window.fence
+    (2608, 9521), // Window.fetchLater
+    (2630, 9522), // Window.find
+    (2657, 9523), // Window.focus
+    (2660, 9524), // Window.focus_event
+    (2721, 9525), // Window.frameElement
+    (2731, 9526), // Window.frames
+    (2763, 9527), // Window.fullScreen
+    (2773, 9528), // Window.gamepadconnected_event
+    (2774, 9529), // Window.gamepaddisconnected_event
+    (2854, 9530), // Window.getComputedStyle
+    (2871, 9533), // Window.getDefaultComputedStyle
+    (2878, 9535), // Window.getDigitalGoodsService
+    (3018, 9536), // Window.getScreenDetails
+    (3023, 9537), // Window.getSelection
+    (3167, 9538), // Window.hashchange_event
+    (3184, 9539), // Window.history
+    (3282, 9540), // Window.innerHeight
+    (3284, 9541), // Window.innerWidth
+    (3498, 9542), // Window.languagechange_event
+    (3518, 9543), // Window.launchQueue
+    (3535, 9544), // Window.length
+    (3576, 9545), // Window.load_event
+    (3590, 9546), // Window.localStorage
+    (3594, 9547), // Window.location
+    (3596, 9548), // Window.locationbar
+    (3705, 9549), // Window.matchMedia
+    (3792, 9550), // Window.menubar
+    (3796, 9551), // Window.message_event
+    (3797, 9552), // Window.messageerror_event
+    (3850, 9553), // Window.moveBy
+    (3851, 9554), // Window.moveTo
+    (3862, 9556), // Window.mozInnerScreenX
+    (3863, 9557), // Window.mozInnerScreenY
+    (3887, 9558), // Window.name
+    (3899, 9559), // Window.navigation
+    (3904, 9560), // Window.navigator
+    (3956, 9561), // Window.offline_event
+    (3974, 9562), // Window.online_event
+    (3980, 9563), // Window.open
+    (3986, 9568), // Window.opener
+    (4005, 9569), // Window.orientation
+    (4009, 9570), // Window.orientationchange_event
+    (4011, 9571), // Window.originAgentCluster
+    (4017, 9572), // Window.outerHeight
+    (4019, 9573), // Window.outerWidth
+    (4054, 9574), // Window.pagehide_event
+    (4055, 9575), // Window.pagereveal_event
+    (4056, 9576), // Window.pageshow_event
+    (4057, 9577), // Window.pageswap_event
+    (4064, 9578), // Window.parent
+    (4162, 9579), // Window.personalbar
+    (4222, 9580), // Window.popstate_event
+    (4238, 9581), // Window.postMessage
+    (4283, 9585), // Window.print
+    (4304, 9586), // Window.prompt
+    (4325, 9587), // Window.pushManager
+    (4345, 9588), // Window.queryLocalFonts
+    (4459, 9589), // Window.rejectionhandled_event
+    (4469, 9590), // Window.releaseEvents
+    (4553, 9591), // Window.requestAnimationFrame
+    (4557, 9592), // Window.requestFileSystem
+    (4563, 9593), // Window.requestIdleCallback
+    (4577, 9594), // Window.requestResize
+    (4601, 9595), // Window.resizeBy
+    (4602, 9596), // Window.resizeTo
+    (4603, 9597), // Window.resize_event
+    (4605, 9598), // Window.resolveLocalFileSystemURL
+    (4716, 9599), // Window.screen
+    (4717, 9600), // Window.screenLeft
+    (4719, 9602), // Window.screenTop
+    (4720, 9604), // Window.screenX
+    (4721, 9606), // Window.screenY
+    (4726, 9608), // Window.scroll
+    (4728, 9613), // Window.scrollBy
+    (4729, 9618), // Window.scrollByLines
+    (4730, 9619), // Window.scrollByPages
+    (4738, 9620), // Window.scrollMaxX
+    (4739, 9621), // Window.scrollMaxY
+    (4741, 9622), // Window.scrollTo
+    (4745, 9627), // Window.scrollX
+    (4746, 9629), // Window.scrollY
+    (4748, 9631), // Window.scrollbars
+    (4752, 9632), // Window.scrollsnapchange_event
+    (4753, 9633), // Window.scrollsnapchanging_event
+    (4801, 9634), // Window.self
+    (4823, 9635), // Window.sessionStorage
+    (4871, 9636), // Window.setImmediate
+    (4912, 9637), // Window.setResizable
+    (4971, 9638), // Window.sharedStorage
+    (4983, 9639), // Window.showDirectoryPicker
+    (4986, 9640), // Window.showOpenFilePicker
+    (4989, 9641), // Window.showSaveFilePicker
+    (5069, 9642), // Window.speechSynthesis
+    (5110, 9643), // Window.status
+    (5114, 9644), // Window.statusbar
+    (5129, 9645), // Window.stop
+    (5138, 9646), // Window.storage_event
+    (5169, 9647), // Window.styleMedia
+    (5374, 9648), // Window.toolbar
+    (5375, 9649), // Window.top
+    (5474, 9650), // Window.unhandledrejection_event
+    (5520, 9651), // Window.unload_event
+    (5546, 9652), // Window.updateCommands
+    (5665, 9653), // Window.viewport
+    (5678, 9654), // Window.visualViewport
+    (5689, 9655), // Window.vrdisplayactivate_event
+    (5690, 9656), // Window.vrdisplayconnect_event
+    (5691, 9657), // Window.vrdisplaydeactivate_event
+    (5692, 9658), // Window.vrdisplaydisconnect_event
+    (5693, 9659), // Window.vrdisplaypresentchange_event
+    (5717, 9660), // Window.webkitConvertPointFromNodeToPage
+    (5718, 9661), // Window.webkitConvertPointFromPageToNode
+    (5741, 9662), // Window.window
+    (1319, 9664), // WindowClient.ancestorOrigins
+    (2657, 9665), // WindowClient.focus
+    (2661, 9666), // WindowClient.focused
+    (3895, 9667), // WindowClient.navigate
+    (5673, 9669), // WindowClient.visibilityState
+    (2792, 9671), // WindowControlsOverlay.geometrychange_event
+    (3062, 9672), // WindowControlsOverlay.getTitlebarAreaRect
+    (5676, 9673), // WindowControlsOverlay.visible
+    (1138, 9675), // WindowControlsOverlayGeometryChangeEvent.WindowControlsOverlayGeometryChangeEvent
+    (5327, 9676), // WindowControlsOverlayGeometryChangeEvent.titlebarAreaRect
+    (5676, 9677), // WindowControlsOverlayGeometryChangeEvent.visible
+    (1139, 9679), // Worker.Worker
+    (2517, 9685), // Worker.error_event
+    (3796, 9686), // Worker.message_event
+    (3797, 9687), // Worker.messageerror_event
+    (4238, 9688), // Worker.postMessage
+    (5271, 9690), // Worker.terminate
+    (5754, 9691), // Worker.worker_support
+    (2410, 9693), // WorkerGlobalScope.dump
+    (2517, 9694), // WorkerGlobalScope.error_event
+    (2689, 9695), // WorkerGlobalScope.fonts
+    (3228, 9696), // WorkerGlobalScope.importScripts
+    (3498, 9699), // WorkerGlobalScope.languagechange_event
+    (3594, 9700), // WorkerGlobalScope.location
+    (3904, 9701), // WorkerGlobalScope.navigator
+    (3956, 9702), // WorkerGlobalScope.offline_event
+    (3974, 9703), // WorkerGlobalScope.online_event
+    (4459, 9704), // WorkerGlobalScope.rejectionhandled_event
+    (4770, 9705), // WorkerGlobalScope.securitypolicyviolation_event
+    (4801, 9706), // WorkerGlobalScope.self
+    (5474, 9707), // WorkerGlobalScope.unhandledrejection_event
+    (3165, 9709), // WorkerLocation.hash
+    (3185, 9710), // WorkerLocation.host
+    (3187, 9711), // WorkerLocation.hostname
+    (3188, 9712), // WorkerLocation.href
+    (4010, 9713), // WorkerLocation.origin
+    (4090, 9714), // WorkerLocation.pathname
+    (4224, 9715), // WorkerLocation.port
+    (4313, 9716), // WorkerLocation.protocol
+    (4762, 9717), // WorkerLocation.search
+    (5355, 9718), // WorkerLocation.toString
+    (1348, 9720), // WorkerNavigator.appCodeName
+    (1349, 9721), // WorkerNavigator.appName
+    (1350, 9722), // WorkerNavigator.appVersion
+    (1885, 9723), // WorkerNavigator.connection
+    (2290, 9724), // WorkerNavigator.deviceMemory
+    (3104, 9725), // WorkerNavigator.globalPrivacyControl
+    (3108, 9726), // WorkerNavigator.gpu
+    (3140, 9727), // WorkerNavigator.hardwareConcurrency
+    (3174, 9728), // WorkerNavigator.hid
+    (3497, 9729), // WorkerNavigator.language
+    (3499, 9730), // WorkerNavigator.languages
+    (3600, 9731), // WorkerNavigator.locks
+    (3781, 9732), // WorkerNavigator.mediaCapabilities
+    (3828, 9733), // WorkerNavigator.ml
+    (3972, 9734), // WorkerNavigator.onLine
+    (4157, 9735), // WorkerNavigator.permissions
+    (4181, 9736), // WorkerNavigator.platform
+    (4292, 9737), // WorkerNavigator.product
+    (4813, 9738), // WorkerNavigator.serial
+    (4820, 9739), // WorkerNavigator.serviceWorker
+    (5135, 9740), // WorkerNavigator.storage
+    (5137, 9741), // WorkerNavigator.storageBuckets
+    (5580, 9742), // WorkerNavigator.usb
+    (5589, 9743), // WorkerNavigator.userAgent
+    (5592, 9744), // WorkerNavigator.userAgentData
+    (1259, 9746), // Worklet.addModule
+    (2430, 9747), // Worklet.ecmascript_modules
+    (1145, 9750), // WritableStream.WritableStream
+    (1211, 9751), // WritableStream.abort
+    (1792, 9752), // WritableStream.close
+    (3099, 9753), // WritableStream.getWriter
+    (3599, 9754), // WritableStream.locked
+    (5408, 9755), // WritableStream.transferable
+    (2513, 9757), // WritableStreamDefaultController.error
+    (4994, 9758), // WritableStreamDefaultController.signal
+    (1147, 9760), // WritableStreamDefaultWriter.WritableStreamDefaultWriter
+    (1211, 9761), // WritableStreamDefaultWriter.abort
+    (1792, 9762), // WritableStreamDefaultWriter.close
+    (1797, 9763), // WritableStreamDefaultWriter.closed
+    (2275, 9764), // WritableStreamDefaultWriter.desiredSize
+    (4396, 9765), // WritableStreamDefaultWriter.ready
+    (4471, 9766), // WritableStreamDefaultWriter.releaseLock
+    (5760, 9767), // WritableStreamDefaultWriter.write
+    (1149, 9770), // XMLHttpRequest.XMLHttpRequest
+    (1211, 9771), // XMLHttpRequest.abort
+    (1212, 9772), // XMLHttpRequest.abort_event
+    (1480, 9773), // XMLHttpRequest.authorization_removed_cross_origin
+    (2517, 9774), // XMLHttpRequest.error_event
+    (2805, 9775), // XMLHttpRequest.getAllResponseHeaders
+    (3012, 9777), // XMLHttpRequest.getResponseHeader
+    (3576, 9778), // XMLHttpRequest.load_event
+    (3580, 9779), // XMLHttpRequest.loadend_event
+    (3585, 9780), // XMLHttpRequest.loadstart_event
+    (3980, 9781), // XMLHttpRequest.open
+    (4031, 9782), // XMLHttpRequest.overrideMimeType
+    (4301, 9783), // XMLHttpRequest.progress_event
+    (4397, 9784), // XMLHttpRequest.readyState
+    (4398, 9785), // XMLHttpRequest.readystatechange_event
+    (4612, 9786), // XMLHttpRequest.response
+    (4618, 9787), // XMLHttpRequest.responseText
+    (4619, 9788), // XMLHttpRequest.responseType
+    (4620, 9793), // XMLHttpRequest.responseURL
+    (4621, 9794), // XMLHttpRequest.responseXML
+    (4803, 9795), // XMLHttpRequest.send
+    (4831, 9801), // XMLHttpRequest.setAttributionReporting
+    (4905, 9802), // XMLHttpRequest.setPrivateToken
+    (4911, 9803), // XMLHttpRequest.setRequestHeader
+    (5110, 9804), // XMLHttpRequest.status
+    (5113, 9805), // XMLHttpRequest.statusText
+    (5319, 9806), // XMLHttpRequest.timeout
+    (5320, 9807), // XMLHttpRequest.timeout_event
+    (5569, 9808), // XMLHttpRequest.upload
+    (5746, 9809), // XMLHttpRequest.withCredentials
+    (5754, 9810), // XMLHttpRequest.worker_support
+    (1212, 9813), // XMLHttpRequestUpload.abort_event
+    (2517, 9814), // XMLHttpRequestUpload.error_event
+    (3576, 9815), // XMLHttpRequestUpload.load_event
+    (3580, 9816), // XMLHttpRequestUpload.loadend_event
+    (3585, 9817), // XMLHttpRequestUpload.loadstart_event
+    (4301, 9818), // XMLHttpRequestUpload.progress_event
+    (5320, 9819), // XMLHttpRequestUpload.timeout_event
+    (1152, 9821), // XMLSerializer.XMLSerializer
+    (4817, 9822), // XMLSerializer.serializeToString
+    (1153, 9824), // XPathEvaluator.XPathEvaluator
+    (2024, 9825), // XPathEvaluator.createExpression
+    (2039, 9826), // XPathEvaluator.createNSResolver
+    (2524, 9827), // XPathEvaluator.evaluate
+    (2524, 9829), // XPathExpression.evaluate
+    (1594, 9831), // XPathResult.booleanValue
+    (3348, 9832), // XPathResult.invalidIteratorState
+    (3449, 9833), // XPathResult.iterateNext
+    (3950, 9834), // XPathResult.numberValue
+    (4629, 9835), // XPathResult.resultType
+    (5006, 9836), // XPathResult.singleNodeValue
+    (5035, 9837), // XPathResult.snapshotItem
+    (5036, 9838), // XPathResult.snapshotLength
+    (5159, 9839), // XPathResult.stringValue
+    (1324, 9841), // XRAnchor.anchorSpace
+    (2212, 9842), // XRAnchor.delete
+    (4570, 9843), // XRAnchor.requestPersistentHandle
+    (4, 9845), // XRAnchorSet.@@iterator
+    (2503, 9846), // XRAnchorSet.entries
+    (2692, 9847), // XRAnchorSet.forEach
+    (3141, 9848), // XRAnchorSet.has
+    (3486, 9849), // XRAnchorSet.keys
+    (5011, 9850), // XRAnchorSet.size
+    (5622, 9851), // XRAnchorSet.values
+    (1606, 9853), // XRBoundedReferenceSpace.boundsGeometry
+    (2165, 9855), // XRCPUDepthInformation.data
+    (2872, 9856), // XRCPUDepthInformation.getDepthInMeters
+    (3173, 9858), // XRCamera.height
+    (5739, 9859), // XRCamera.width
+    (1575, 9861), // XRCompositionLayer.blendTextureSourceAlpha
+    (2277, 9862), // XRCompositionLayer.destroy
+    (2694, 9863), // XRCompositionLayer.forceMonoPresentation
+    (3525, 9864), // XRCompositionLayer.layout
+    (3826, 9865), // XRCompositionLayer.mipLevels
+    (3905, 9866), // XRCompositionLayer.needsRedraw
+    (3978, 9867), // XRCompositionLayer.opacity
+    (4334, 9868), // XRCompositionLayer.quality
+    (4005, 9870), // XRCubeLayer.orientation
+    (4419, 9871), // XRCubeLayer.redraw_event
+    (5059, 9872), // XRCubeLayer.space
+    (1438, 9874), // XRCylinderLayer.aspectRatio
+    (1690, 9875), // XRCylinderLayer.centralAngle
+    (4356, 9876), // XRCylinderLayer.radius
+    (4419, 9877), // XRCylinderLayer.redraw_event
+    (5059, 9878), // XRCylinderLayer.space
+    (5409, 9879), // XRCylinderLayer.transform
+    (3173, 9881), // XRDepthInformation.height
+    (3934, 9882), // XRDepthInformation.normDepthBufferFromNormView
+    (4302, 9883), // XRDepthInformation.projectionMatrix
+    (4376, 9884), // XRDepthInformation.rawValueToMeters
+    (5409, 9885), // XRDepthInformation.transform
+    (5739, 9886), // XRDepthInformation.width
+    (1691, 9888), // XREquirectLayer.centralHorizontalAngle
+    (3629, 9889), // XREquirectLayer.lowerVerticalAngle
+    (4356, 9890), // XREquirectLayer.radius
+    (4419, 9891), // XREquirectLayer.redraw_event
+    (5059, 9892), // XREquirectLayer.space
+    (5409, 9893), // XREquirectLayer.transform
+    (5576, 9894), // XREquirectLayer.upperVerticalAngle
+    (1985, 9896), // XRFrame.createAnchor
+    (2284, 9897), // XRFrame.detectedMeshes
+    (2285, 9898), // XRFrame.detectedPlanes
+    (2621, 9899), // XRFrame.fillJointRadii
+    (2622, 9900), // XRFrame.fillPoses
+    (2873, 9901), // XRFrame.getDepthInformation
+    (2916, 9902), // XRFrame.getHitTestResults
+    (2917, 9903), // XRFrame.getHitTestResultsForTransientInput
+    (2934, 9904), // XRFrame.getJointPose
+    (2940, 9905), // XRFrame.getLightEstimate
+    (2979, 9906), // XRFrame.getPose
+    (3096, 9907), // XRFrame.getViewerPose
+    (4246, 9908), // XRFrame.predictedDisplayTime
+    (4821, 9909), // XRFrame.session
+    (5394, 9910), // XRFrame.trackedAnchors
+    (4, 9912), // XRHand.@@iterator
+    (2503, 9913), // XRHand.entries
+    (2692, 9914), // XRHand.forEach
+    (2796, 9915), // XRHand.get
+    (3486, 9916), // XRHand.keys
+    (5011, 9917), // XRHand.size
+    (5622, 9918), // XRHand.values
+    (1985, 9920), // XRHitTestResult.createAnchor
+    (2979, 9921), // XRHitTestResult.getPose
+    (1653, 9923), // XRHitTestSource.cancel
+    (2772, 9925), // XRInputSource.gamepad
+    (3118, 9926), // XRInputSource.gripSpace
+    (3132, 9927), // XRInputSource.hand
+    (3133, 9928), // XRInputSource.handedness
+    (4300, 9929), // XRInputSource.profiles
+    (5021, 9930), // XRInputSource.skipRendering
+    (5263, 9931), // XRInputSource.targetRayMode
+    (5264, 9932), // XRInputSource.targetRaySpace
+    (4, 9934), // XRInputSourceArray.@@iterator
+    (2503, 9935), // XRInputSourceArray.entries
+    (2692, 9936), // XRInputSourceArray.forEach
+    (3486, 9937), // XRInputSourceArray.keys
+    (3535, 9938), // XRInputSourceArray.length
+    (5622, 9939), // XRInputSourceArray.values
+    (1172, 9941), // XRInputSourceEvent.XRInputSourceEvent
+    (2718, 9942), // XRInputSourceEvent.frame
+    (3289, 9943), // XRInputSourceEvent.inputSource
+    (1173, 9945), // XRInputSourcesChangeEvent.XRInputSourcesChangeEvent
+    (1270, 9946), // XRInputSourcesChangeEvent.added
+    (4512, 9947), // XRInputSourcesChangeEvent.removed
+    (4821, 9948), // XRInputSourcesChangeEvent.session
+    (4356, 9950), // XRJointPose.radius
+    (3458, 9952), // XRJointSpace.jointName
+    (1177, 9955), // XRLayerEvent.XRLayerEvent
+    (3519, 9956), // XRLayerEvent.layer
+    (4279, 9958), // XRLightEstimate.primaryLightDirection
+    (4280, 9959), // XRLightEstimate.primaryLightIntensity
+    (5074, 9960), // XRLightEstimate.sphericalHarmonicsCoefficients
+    (4287, 9962), // XRLightProbe.probeSpace
+    (4445, 9963), // XRLightProbe.reflectionchange_event
+    (1180, 9965), // XRMediaBinding.XRMediaBinding
+    (2011, 9966), // XRMediaBinding.createCylinderLayer
+    (2022, 9967), // XRMediaBinding.createEquirectLayer
+    (2054, 9968), // XRMediaBinding.createQuadLayer
+    (3503, 9970), // XRPlane.lastChangedTime
+    (4005, 9971), // XRPlane.orientation
+    (4180, 9972), // XRPlane.planeSpace
+    (4214, 9973), // XRPlane.polygon
+    (4802, 9974), // XRPlane.semanticLabel
+    (4, 9976), // XRPlaneSet.@@iterator
+    (2503, 9977), // XRPlaneSet.entries
+    (2692, 9978), // XRPlaneSet.forEach
+    (3141, 9979), // XRPlaneSet.has
+    (3486, 9980), // XRPlaneSet.keys
+    (5011, 9981), // XRPlaneSet.size
+    (5622, 9982), // XRPlaneSet.values
+    (1329, 9984), // XRPose.angularVelocity
+    (2456, 9985), // XRPose.emulatedPosition
+    (3562, 9986), // XRPose.linearVelocity
+    (5409, 9987), // XRPose.transform
+    (2245, 9989), // XRProjectionLayer.deltaPose
+    (2648, 9990), // XRProjectionLayer.fixedFoveation
+    (3215, 9991), // XRProjectionLayer.ignoreDepthValues
+    (5293, 9992), // XRProjectionLayer.textureArrayLength
+    (5295, 9993), // XRProjectionLayer.textureHeight
+    (5297, 9994), // XRProjectionLayer.textureWidth
+    (3173, 9996), // XRQuadLayer.height
+    (4419, 9997), // XRQuadLayer.redraw_event
+    (5059, 9998), // XRQuadLayer.space
+    (5409, 9999), // XRQuadLayer.transform
+    (5739, 10000), // XRQuadLayer.width
+    (1186, 10002), // XRRay.XRRay
+    (2311, 10003), // XRRay.direction
+    (3709, 10004), // XRRay.matrix
+    (4010, 10005), // XRRay.origin
+    (2961, 10007), // XRReferenceSpace.getOffsetReferenceSpace
+    (4597, 10008), // XRReferenceSpace.reset_event
+    (1188, 10010), // XRReferenceSpaceEvent.XRReferenceSpaceEvent
+    (4440, 10011), // XRReferenceSpaceEvent.referenceSpace
+    (5409, 10012), // XRReferenceSpaceEvent.transform
+    (1520, 10014), // XRRenderState.baseLayer
+    (2254, 10015), // XRRenderState.depthFar
+    (2257, 10016), // XRRenderState.depthNear
+    (3280, 10017), // XRRenderState.inlineVerticalFieldOfView
+    (3524, 10018), // XRRenderState.layers
+    (4085, 10019), // XRRenderState.passthroughFullyObscured
+    (1190, 10021), // XRRigidTransform.XRRigidTransform
+    (3353, 10022), // XRRigidTransform.inverse
+    (3709, 10023), // XRRigidTransform.matrix
+    (4005, 10024), // XRRigidTransform.orientation
+    (4229, 10025), // XRRigidTransform.position
+    (1655, 10027), // XRSession.cancelAnimationFrame
+    (2224, 10028), // XRSession.deletePersistentAnchor
+    (2252, 10029), // XRSession.depthActive
+    (2253, 10030), // XRSession.depthDataFormat
+    (2263, 10031), // XRSession.depthType
+    (2264, 10032), // XRSession.depthUsage
+    (2357, 10033), // XRSession.domOverlayState
+    (2462, 10034), // XRSession.enabledFeatures
+    (2478, 10035), // XRSession.end
+    (2490, 10036), // XRSession.end_event
+    (2507, 10037), // XRSession.environmentBlendMode
+    (2722, 10038), // XRSession.frameRate
+    (3275, 10039), // XRSession.initiateRoomCapture
+    (3290, 10040), // XRSession.inputSources
+    (3295, 10041), // XRSession.inputsourceschange_event
+    (3331, 10042), // XRSession.interactionMode
+    (3429, 10043), // XRSession.isSystemKeyboardSupported
+    (3750, 10044), // XRSession.maxRenderLayers
+    (4098, 10045), // XRSession.pauseDepthSensing
+    (4160, 10046), // XRSession.persistentAnchors
+    (4248, 10047), // XRSession.preferredReflectionFormat
+    (4522, 10048), // XRSession.renderState
+    (4553, 10049), // XRSession.requestAnimationFrame
+    (4560, 10050), // XRSession.requestHitTestSource
+    (4561, 10051), // XRSession.requestHitTestSourceForTransientInput
+    (4564, 10052), // XRSession.requestLightProbe
+    (4576, 10053), // XRSession.requestReferenceSpace
+    (4625, 10054), // XRSession.restorePersistentAnchor
+    (4634, 10055), // XRSession.resumeDepthSensing
+    (4787, 10056), // XRSession.select_event
+    (4794, 10057), // XRSession.selectend_event
+    (4800, 10058), // XRSession.selectstart_event
+    (5080, 10059), // XRSession.squeeze_event
+    (5081, 10060), // XRSession.squeezeend_event
+    (5082, 10061), // XRSession.squeezestart_event
+    (5203, 10062), // XRSession.supportedFrameRates
+    (5395, 10063), // XRSession.trackedSources
+    (5553, 10064), // XRSession.updateRenderState
+    (5556, 10065), // XRSession.updateTargetFrameRate
+    (5673, 10066), // XRSession.visibilityState
+    (5674, 10067), // XRSession.visibilitychange_event
+    (5675, 10068), // XRSession.visibilitymaskchange_event
+    (1192, 10070), // XRSessionEvent.XRSessionEvent
+    (4821, 10071), // XRSessionEvent.session
+    (5665, 10074), // XRSubImage.viewport
+    (2299, 10076), // XRSystem.devicechange_event
+    (3424, 10077), // XRSystem.isSessionSupported
+    (4578, 10078), // XRSystem.requestSession
+    (3289, 10080), // XRTransientInputHitTestResult.inputSource
+    (4632, 10081), // XRTransientInputHitTestResult.results
+    (1653, 10083), // XRTransientInputHitTestSource.cancel
+    (1637, 10085), // XRView.camera
+    (2571, 10086), // XRView.eye
+    (3247, 10087), // XRView.index
+    (3386, 10088), // XRView.isFirstPersonObserver
+    (4302, 10089), // XRView.projectionMatrix
+    (4406, 10090), // XRView.recommendedViewportScale
+    (4584, 10091), // XRView.requestViewportScale
+    (5409, 10092), // XRView.transform
+    (5669, 10094), // XRViewerPose.views
+    (3173, 10096), // XRViewport.height
+    (5739, 10097), // XRViewport.width
+    (5772, 10098), // XRViewport.x
+    (5781, 10099), // XRViewport.y
+    (1201, 10101), // XRVisibilityMaskChangeEvent.XRVisibilityMaskChangeEvent
+    (2571, 10102), // XRVisibilityMaskChangeEvent.eye
+    (3247, 10103), // XRVisibilityMaskChangeEvent.index
+    (3253, 10104), // XRVisibilityMaskChangeEvent.indices
+    (4821, 10105), // XRVisibilityMaskChangeEvent.session
+    (5651, 10106), // XRVisibilityMaskChangeEvent.vertices
+    (1202, 10108), // XRWebGLBinding.XRWebGLBinding
+    (2010, 10109), // XRWebGLBinding.createCubeLayer
+    (2011, 10110), // XRWebGLBinding.createCylinderLayer
+    (2022, 10111), // XRWebGLBinding.createEquirectLayer
+    (2053, 10112), // XRWebGLBinding.createProjectionLayer
+    (2054, 10113), // XRWebGLBinding.createQuadLayer
+    (2714, 10114), // XRWebGLBinding.foveateBoundTexture
+    (2836, 10115), // XRWebGLBinding.getCameraImage
+    (2873, 10116), // XRWebGLBinding.getDepthInformation
+    (3004, 10117), // XRWebGLBinding.getReflectionCubeMap
+    (3043, 10118), // XRWebGLBinding.getSubImage
+    (3095, 10119), // XRWebGLBinding.getViewSubImage
+    (3892, 10120), // XRWebGLBinding.nativeProjectionScaleFactor
+    (5602, 10121), // XRWebGLBinding.usesDepthValues
+    (3218, 10123), // XRWebGLDepthInformation.imageIndex
+    (5292, 10124), // XRWebGLDepthInformation.texture
+    (5296, 10125), // XRWebGLDepthInformation.textureType
+    (1204, 10127), // XRWebGLLayer.XRWebGLLayer
+    (1342, 10128), // XRWebGLLayer.antialias
+    (2648, 10129), // XRWebGLLayer.fixedFoveation
+    (2724, 10130), // XRWebGLLayer.framebuffer
+    (2725, 10131), // XRWebGLLayer.framebufferHeight
+    (2730, 10132), // XRWebGLLayer.framebufferWidth
+    (2955, 10133), // XRWebGLLayer.getNativeFramebufferScaleFactor
+    (2956, 10133), // XRWebGLLayer.getNativeFramebufferScaleFactor_static
+    (3097, 10134), // XRWebGLLayer.getViewport
+    (3215, 10135), // XRWebGLLayer.ignoreDepthValues
+    (1826, 10137), // XRWebGLSubImage.colorTexture
+    (1827, 10138), // XRWebGLSubImage.colorTextureHeight
+    (1828, 10139), // XRWebGLSubImage.colorTextureWidth
+    (2260, 10140), // XRWebGLSubImage.depthStencilTexture
+    (2261, 10141), // XRWebGLSubImage.depthStencilTextureHeight
+    (2262, 10142), // XRWebGLSubImage.depthStencilTextureWidth
+    (3218, 10143), // XRWebGLSubImage.imageIndex
+    (3837, 10144), // XRWebGLSubImage.motionVectorTexture
+    (3838, 10145), // XRWebGLSubImage.motionVectorTextureHeight
+    (3839, 10146), // XRWebGLSubImage.motionVectorTextureWidth
+    (1206, 10148), // XSLTProcessor.XSLTProcessor
+    (1762, 10149), // XSLTProcessor.clearParameters
+    (2969, 10150), // XSLTProcessor.getParameter
+    (3229, 10151), // XSLTProcessor.importStylesheet
+    (4499, 10152), // XSLTProcessor.removeParameter
+    (4591, 10153), // XSLTProcessor.reset
+    (4896, 10154), // XSLTProcessor.setParameter
+    (5412, 10155), // XSLTProcessor.transformToDocument
+    (5413, 10156), // XSLTProcessor.transformToFragment
+    (5754, 10158), // atob.worker_support
+    (5754, 10160), // btoa.worker_support
+    (2212, 981), // caches.delete
+    (3141, 982), // caches.has
+    (3486, 983), // caches.keys
+    (3703, 984), // caches.match
+    (3980, 985), // caches.open
+    (4769, 986), // caches.secure_context_required
+    (5754, 987), // caches.worker_support
+    (5754, 10165), // clearInterval.worker_support
+    (5754, 10167), // clearTimeout.worker_support
+    (1238, 5182), // clientInformation.activeVRDisplays
+    (1245, 5184), // clientInformation.adAuctionComponents
+    (1348, 5185), // clientInformation.appCodeName
+    (1349, 5186), // clientInformation.appName
+    (1350, 5187), // clientInformation.appVersion
+    (1470, 5188), // clientInformation.audioSession
+    (1477, 5189), // clientInformation.authentication
+    (1588, 5190), // clientInformation.bluetooth
+    (1622, 5191), // clientInformation.buildID
+    (1644, 5192), // clientInformation.canLoadAdAuctionFencedFrame
+    (1651, 5193), // clientInformation.canShare
+    (1745, 5196), // clientInformation.clearAppBadge
+    (1760, 5197), // clientInformation.clearOriginJoinedAdInterestGroups
+    (1784, 5198), // clientInformation.clipboard
+    (1885, 5199), // clientInformation.connection
+    (1898, 5200), // clientInformation.contacts
+    (1942, 5201), // clientInformation.cookieEnabled
+    (1969, 5202), // clientInformation.cpuPerformance
+    (1989, 5203), // clientInformation.createAuctionNonce
+    (2123, 5204), // clientInformation.credentials
+    (2250, 5205), // clientInformation.deprecatedReplaceInURN
+    (2251, 5206), // clientInformation.deprecatedRunAdAuctionEnforcesKAnonymity
+    (2290, 5207), // clientInformation.deviceMemory
+    (2293, 5208), // clientInformation.devicePosture
+    (2343, 5209), // clientInformation.doNotTrack
+    (2791, 5210), // clientInformation.geolocation
+    (2821, 5212), // clientInformation.getAutoplayPolicy
+    (2824, 5213), // clientInformation.getBattery
+    (2912, 5215), // clientInformation.getGamepads
+    (2926, 5216), // clientInformation.getInstalledRelatedApps
+    (2930, 5217), // clientInformation.getInterestGroupAdAuctionData
+    (3089, 5218), // clientInformation.getUserMedia
+    (3090, 5219), // clientInformation.getVRDisplays
+    (3104, 5220), // clientInformation.globalPrivacyControl
+    (3108, 5221), // clientInformation.gpu
+    (3140, 5222), // clientInformation.hardwareConcurrency
+    (3174, 5223), // clientInformation.hid
+    (3277, 5224), // clientInformation.ink
+    (3322, 5225), // clientInformation.install
+    (3454, 5226), // clientInformation.javaEnabled
+    (3457, 5227), // clientInformation.joinAdInterestGroup
+    (3483, 5228), // clientInformation.keyboard
+    (3497, 5229), // clientInformation.language
+    (3499, 5230), // clientInformation.languages
+    (3528, 5231), // clientInformation.leaveAdInterestGroup
+    (3600, 5232), // clientInformation.locks
+    (3610, 5233), // clientInformation.login
+    (3663, 5234), // clientInformation.managed
+    (3765, 5235), // clientInformation.maxTouchPoints
+    (3781, 5236), // clientInformation.mediaCapabilities
+    (3782, 5237), // clientInformation.mediaDevices
+    (3786, 5239), // clientInformation.mediaSession
+    (3808, 5240), // clientInformation.mimeTypes
+    (3828, 5242), // clientInformation.ml
+    (3972, 5243), // clientInformation.onLine
+    (4015, 5244), // clientInformation.oscpu
+    (4116, 5245), // clientInformation.pdfViewerEnabled
+    (4157, 5246), // clientInformation.permissions
+    (4181, 5247), // clientInformation.platform
+    (4194, 5248), // clientInformation.plugins
+    (4247, 5250), // clientInformation.preferences
+    (4259, 5251), // clientInformation.presentation
+    (4292, 5252), // clientInformation.product
+    (4295, 5253), // clientInformation.productSub
+    (4311, 5254), // clientInformation.protectedAudience
+    (4455, 5255), // clientInformation.registerProtocolHandler
+    (4565, 5290), // clientInformation.requestMIDIAccess
+    (4566, 5292), // clientInformation.requestMediaKeySystemAccess
+    (4685, 5293), // clientInformation.runAdAuction
+    (4712, 5294), // clientInformation.scheduling
+    (4804, 5295), // clientInformation.sendBeacon
+    (4813, 5296), // clientInformation.serial
+    (4820, 5297), // clientInformation.serviceWorker
+    (4826, 5298), // clientInformation.setAppBadge
+    (4969, 5299), // clientInformation.share
+    (5135, 5302), // clientInformation.storage
+    (5137, 5303), // clientInformation.storageBuckets
+    (5251, 5304), // clientInformation.taintEnabled
+    (5530, 5305), // clientInformation.unregisterProtocolHandler
+    (5543, 5306), // clientInformation.updateAdInterestGroups
+    (5580, 5307), // clientInformation.usb
+    (5588, 5308), // clientInformation.userActivation
+    (5589, 5309), // clientInformation.userAgent
+    (5592, 5310), // clientInformation.userAgentData
+    (5628, 5312), // clientInformation.vendor
+    (5630, 5313), // clientInformation.vendorSub
+    (5656, 5314), // clientInformation.vibrate
+    (5671, 5315), // clientInformation.virtualKeyboard
+    (5705, 5316), // clientInformation.wakeLock
+    (5713, 5317), // clientInformation.webdriver
+    (5743, 5318), // clientInformation.windowControlsOverlay
+    (5780, 5319), // clientInformation.xr
+    (1439, 10169), // console.assert
+    (1440, 10169), // console.assert_static
+    (1744, 10170), // console.clear
+    (1768, 10170), // console.clear_static
+    (1964, 10172), // console.count
+    (1965, 10171), // console.countReset
+    (1966, 10171), // console.countReset_static
+    (1967, 10172), // console.count_static
+    (2176, 10173), // console.debug
+    (2177, 10173), // console.debug_static
+    (2308, 10174), // console.dir
+    (2310, 10174), // console.dir_static
+    (2312, 10178), // console.dirxml
+    (2313, 10178), // console.dirxml_static
+    (2513, 10179), // console.error
+    (2518, 10179), // console.error_static
+    (2531, 10180), // console.exception
+    (2532, 10180), // console.exception_static
+    (3119, 10183), // console.group
+    (3121, 10181), // console.groupCollapsed
+    (3122, 10181), // console.groupCollapsed_static
+    (3123, 10182), // console.groupEnd
+    (3124, 10182), // console.groupEnd_static
+    (3126, 10183), // console.group_static
+    (3255, 10184), // console.info
+    (3256, 10184), // console.info_static
+    (3601, 10185), // console.log
+    (3605, 10185), // console.log_static
+    (4296, 10187), // console.profile
+    (4297, 10186), // console.profileEnd
+    (4298, 10186), // console.profileEnd_static
+    (4299, 10187), // console.profile_static
+    (5186, 10188), // console.substitution_strings
+    (5246, 10189), // console.table
+    (5248, 10189), // console.table_static
+    (5306, 10200), // console.time
+    (5307, 10190), // console.timeEnd
+    (5308, 10190), // console.timeEnd_static
+    (5309, 10191), // console.timeLog
+    (5310, 10191), // console.timeLog_static
+    (5313, 10192), // console.timeStamp
+    (5314, 10192), // console.timeStamp_static
+    (5315, 10200), // console.time_static
+    (5389, 10201), // console.trace
+    (5390, 10201), // console.trace_static
+    (5706, 10202), // console.warn
+    (5707, 10202), // console.warn_static
+    (5754, 10203), // console.worker_support
+    (299, 2364), // cookieStore.EventTarget
+    (1253, 2365), // cookieStore.addEventListener
+    (1700, 1242), // cookieStore.change_event
+    (2212, 1243), // cookieStore.delete
+    (2327, 2374), // cookieStore.dispatchEvent
+    (2796, 1245), // cookieStore.get
+    (2802, 1254), // cookieStore.getAll
+    (4494, 2375), // cookieStore.removeEventListener
+    (4824, 1255), // cookieStore.set
+    (5734, 2378), // cookieStore.when
+    (3990, 10205), // createImageBitmap.options_colorSpaceConversion_parameter
+    (3991, 10206), // createImageBitmap.options_imageOrientation_parameter
+    (3993, 10209), // createImageBitmap.options_premultiplyAlpha_parameter
+    (3994, 10210), // createImageBitmap.options_resizeHeight_parameter
+    (3995, 10211), // createImageBitmap.options_resizeQuality_parameter
+    (3996, 10212), // createImageBitmap.options_resizeWidth_parameter
+    (5219, 10213), // createImageBitmap.svgimageelement_as_source_image
+    (2999, 1321), // crypto.getRandomValues
+    (4360, 1322), // crypto.randomUUID
+    (5190, 1323), // crypto.subtle
+    (218, 1331), // customElements.CustomElementRegistry
+    (1623, 1332), // customElements.builtin_element_support
+    (2202, 1333), // customElements.define
+    (2796, 1337), // customElements.get
+    (2952, 1338), // customElements.getName
+    (3274, 1339), // customElements.initialize
+    (5567, 1340), // customElements.upgrade
+    (5735, 1341), // customElements.whenDefined
+    (222, 1650), // document.DOMContentLoaded_event
+    (262, 1651), // document.Document
+    (299, 2364), // document.EventTarget
+    (1034, 1652), // document.URL
+    (1235, 1653), // document.activeElement
+    (1239, 1654), // document.activeViewTransition
+    (1253, 2365), // document.addEventListener
+    (1280, 1655), // document.adoptNode
+    (1281, 1656), // document.adoptedStyleSheets
+    (1287, 1658), // document.afterscriptexecute_event
+    (1294, 1659), // document.alinkColor
+    (1295, 1660), // document.all
+    (1325, 1661), // document.anchors
+    (1351, 1662), // document.append
+    (1354, 5342), // document.appendChild
+    (1364, 1663), // document.applets
+    (1407, 1664), // document.ariaNotify
+    (1522, 5343), // document.baseURI
+    (1533, 1665), // document.beforescriptexecute_event
+    (1550, 1666), // document.bgColor
+    (1591, 1667), // document.body
+    (1609, 1668), // document.browsingTopics
+    (1675, 1669), // document.captureEvents
+    (1679, 1670), // document.caretPositionFromPoint
+    (1680, 1672), // document.caretRangeFromPoint
+    (1715, 1673), // document.characterSet
+    (1732, 1674), // document.childElementCount
+    (1733, 5344), // document.childNodes
+    (1734, 1675), // document.children
+    (1744, 1676), // document.clear
+    (1790, 5345), // document.cloneNode
+    (1792, 1677), // document.close
+    (1840, 5346), // document.compareDocumentPosition
+    (1844, 1678), // document.compatMode
+    (1906, 5347), // document.contains
+    (1915, 1679), // document.contentType
+    (1941, 1680), // document.cookie
+    (1987, 1681), // document.createAttribute
+    (1988, 1683), // document.createAttributeNS
+    (1996, 1685), // document.createCDATASection
+    (2001, 1686), // document.createComment
+    (2016, 1687), // document.createDocumentFragment
+    (2019, 1688), // document.createElement
+    (2020, 1693), // document.createElementNS
+    (2023, 1698), // document.createEvent
+    (2024, 1699), // document.createExpression
+    (2039, 1700), // document.createNSResolver
+    (2040, 1701), // document.createNodeIterator
+    (2051, 1702), // document.createProcessingInstruction
+    (2059, 1703), // document.createRange
+    (2106, 1704), // document.createTextNode
+    (2108, 1705), // document.createTouch
+    (2109, 1706), // document.createTouchList
+    (2111, 1707), // document.createTreeWalker
+    (2149, 1709), // document.currentScript
+    (2158, 1710), // document.customElementRegistry
+    (2200, 1711), // document.defaultView
+    (2274, 1712), // document.designMode
+    (2308, 1713), // document.dir
+    (2327, 2374), // document.dispatchEvent
+    (2346, 1714), // document.doctype
+    (2348, 1715), // document.documentElement
+    (2350, 1716), // document.documentURI
+    (2358, 1717), // document.domain
+    (2440, 1718), // document.elementFromPoint
+    (2443, 1719), // document.elementsFromPoint
+    (2451, 1720), // document.embeds
+    (2459, 1721), // document.enableStyleSheetsForSet
+    (2524, 1722), // document.evaluate
+    (2535, 1723), // document.execCommand
+    (2538, 1731), // document.exitFullscreen
+    (2539, 1733), // document.exitPictureInPicture
+    (2540, 1734), // document.exitPointerLock
+    (2580, 1735), // document.featurePolicy
+    (2613, 1736), // document.fgColor
+    (2642, 5348), // document.firstChild
+    (2643, 1737), // document.firstElementChild
+    (2689, 1738), // document.fonts
+    (2707, 1739), // document.forms
+    (2717, 1740), // document.fragmentDirective
+    (2733, 1741), // document.freeze_event
+    (2764, 1742), // document.fullscreen
+    (2765, 1743), // document.fullscreenElement
+    (2766, 1744), // document.fullscreenEnabled
+    (2767, 1745), // document.fullscreenchange_event
+    (2768, 1746), // document.fullscreenerror_event
+    (2807, 1747), // document.getAnimations
+    (2830, 1748), // document.getBoxQuads
+    (2882, 1749), // document.getElementById
+    (2883, 1750), // document.getElementsByClassName
+    (2884, 1751), // document.getElementsByName
+    (2885, 1752), // document.getElementsByTagName
+    (2886, 1753), // document.getElementsByTagNameNS
+    (3013, 5349), // document.getRootNode
+    (3023, 1754), // document.getSelection
+    (3146, 5350), // document.hasChildNodes
+    (3149, 1755), // document.hasFocus
+    (3158, 1756), // document.hasPrivateToken
+    (3160, 1757), // document.hasRedemptionRecord
+    (3162, 1758), // document.hasStorageAccess
+    (3164, 1759), // document.hasUnpartitionedCookieAccess
+    (3168, 1760), // document.head
+    (3175, 1761), // document.hidden
+    (3223, 1762), // document.images
+    (3224, 1763), // document.implementation
+    (3227, 1764), // document.importNode
+    (3299, 5351), // document.insertBefore
+    (3371, 5352), // document.isConnected
+    (3374, 5353), // document.isDefaultNamespace
+    (3378, 5354), // document.isEqualNode
+    (3416, 5355), // document.isSameNode
+    (3504, 5356), // document.lastChild
+    (3505, 1765), // document.lastElementChild
+    (3511, 1766), // document.lastModified
+    (3515, 1767), // document.lastStyleSheetSet
+    (3566, 1768), // document.linkColor
+    (3568, 1769), // document.links
+    (3594, 1770), // document.location
+    (3614, 5357), // document.lookupNamespaceURI
+    (3615, 5358), // document.lookupPrefix
+    (3849, 1771), // document.moveBefore
+    (3869, 1772), // document.mozSetImageElement
+    (3921, 5359), // document.nextSibling
+    (3929, 5360), // document.nodeName
+    (3930, 5361), // document.nodeType
+    (3931, 5362), // document.nodeValue
+    (3935, 5363), // document.normalize
+    (3980, 1773), // document.open
+    (4034, 5364), // document.ownerDocument
+    (4065, 5365), // document.parentElement
+    (4066, 5366), // document.parentNode
+    (4078, 1774), // document.parseHTMLUnsafe_static
+    (4079, 1777), // document.parseHTML_static
+    (4166, 1778), // document.pictureInPictureElement
+    (4167, 1779), // document.pictureInPictureEnabled
+    (4194, 1780), // document.plugins
+    (4197, 1781), // document.pointerLockElement
+    (4203, 1782), // document.pointerlockchange_event
+    (4204, 1783), // document.pointerlockerror_event
+    (4249, 1784), // document.preferredStyleSheetSet
+    (4254, 1785), // document.prepend
+    (4257, 1786), // document.prerendering
+    (4258, 1787), // document.prerenderingchange_event
+    (4276, 5367), // document.previousSibling
+    (4338, 1788), // document.queryCommandEnabled
+    (4339, 1789), // document.queryCommandIndeterm
+    (4340, 1790), // document.queryCommandState
+    (4341, 1791), // document.queryCommandSupported
+    (4342, 1792), // document.queryCommandValue
+    (4347, 1793), // document.querySelector
+    (4348, 1794), // document.querySelectorAll
+    (4397, 1795), // document.readyState
+    (4398, 1796), // document.readystatechange_event
+    (4442, 1797), // document.referrer
+    (4468, 1798), // document.releaseCapture
+    (4469, 1799), // document.releaseEvents
+    (4490, 5368), // document.removeChild
+    (4494, 2375), // document.removeEventListener
+    (4534, 5369), // document.replaceChild
+    (4535, 1800), // document.replaceChildren
+    (4580, 1801), // document.requestStorageAccess
+    (4581, 1817), // document.requestStorageAccessFor
+    (4636, 1818), // document.resume_event
+    (4663, 1819), // document.rootElement
+    (4725, 1820), // document.scripts
+    (4747, 1821), // document.scroll_event
+    (4749, 1822), // document.scrollend_event
+    (4751, 1823), // document.scrollingElement
+    (4752, 1824), // document.scrollsnapchange_event
+    (4753, 1825), // document.scrollsnapchanging_event
+    (4770, 1826), // document.securitypolicyviolation_event
+    (4791, 1827), // document.selectedStyleSheetSet
+    (4798, 1828), // document.selectionchange_event
+    (4800, 5370), // document.selectstart_event
+    (5102, 1829), // document.startViewTransition
+    (5171, 1834), // document.styleSheetSets
+    (5172, 1835), // document.styleSheets
+    (5285, 5371), // document.textContent
+    (5317, 1836), // document.timeline
+    (5326, 1837), // document.title
+    (5673, 1838), // document.visibilityState
+    (5674, 1839), // document.visibilitychange_event
+    (5679, 1840), // document.vlinkColor
+    (5709, 1841), // document.wasDiscarded
+    (5734, 2378), // document.when
+    (5760, 1842), // document.write
+    (5770, 1844), // document.writeln
+    (5776, 1846), // document.xmlEncoding
+    (5777, 1847), // document.xmlStandalone
+    (5778, 1848), // document.xmlVersion
+    (299, 2364), // documentPictureInPicture.EventTarget
+    (1253, 2365), // documentPictureInPicture.addEventListener
+    (2327, 2374), // documentPictureInPicture.dispatchEvent
+    (2500, 1863), // documentPictureInPicture.enter_event
+    (4494, 2375), // documentPictureInPicture.removeEventListener
+    (4585, 1864), // documentPictureInPicture.requestWindow
+    (5734, 2378), // documentPictureInPicture.when
+    (5741, 1867), // documentPictureInPicture.window
+    (20, 2397), // external.AddSearchProvider
+    (532, 2398), // external.IsSearchProviderInstalled
+    (1480, 10218), // fetch.authorization_removed_cross_origin
+    (1579, 10219), // fetch.blob_data_support
+    (3992, 10220), // fetch.options_parameter
+    (221, 1933), // frameElement.DOMActivate_event
+    (228, 1934), // frameElement.DOMMouseScroll_event
+    (299, 2364), // frameElement.EventTarget
+    (624, 1935), // frameElement.MozMousePixelScroll_event
+    (1239, 1936), // frameElement.activeViewTransition
+    (1253, 2365), // frameElement.addEventListener
+    (1283, 1937), // frameElement.after
+    (1284, 1938), // frameElement.afterHTML
+    (1285, 1939), // frameElement.afterHTMLUnsafe
+    (1287, 1940), // frameElement.afterscriptexecute_event
+    (1331, 1941), // frameElement.animate
+    (1336, 1950), // frameElement.animationcancel_event
+    (1337, 1951), // frameElement.animationend_event
+    (1338, 1952), // frameElement.animationiteration_event
+    (1340, 1953), // frameElement.animationstart_event
+    (1351, 1954), // frameElement.append
+    (1354, 5342), // frameElement.appendChild
+    (1356, 1955), // frameElement.appendHTML
+    (1357, 1956), // frameElement.appendHTMLUnsafe
+    (1376, 1957), // frameElement.ariaActiveDescendantElement
+    (1377, 1958), // frameElement.ariaAtomic
+    (1378, 1959), // frameElement.ariaAutoComplete
+    (1379, 1960), // frameElement.ariaBrailleLabel
+    (1380, 1961), // frameElement.ariaBrailleRoleDescription
+    (1381, 1962), // frameElement.ariaBusy
+    (1382, 1963), // frameElement.ariaChecked
+    (1383, 1964), // frameElement.ariaColCount
+    (1384, 1965), // frameElement.ariaColIndex
+    (1385, 1966), // frameElement.ariaColIndexText
+    (1386, 1967), // frameElement.ariaColSpan
+    (1387, 1968), // frameElement.ariaControlsElements
+    (1388, 1969), // frameElement.ariaCurrent
+    (1389, 1970), // frameElement.ariaDescribedByElements
+    (1390, 1971), // frameElement.ariaDescription
+    (1391, 1972), // frameElement.ariaDetailsElements
+    (1392, 1973), // frameElement.ariaDisabled
+    (1393, 1974), // frameElement.ariaErrorMessageElements
+    (1394, 1975), // frameElement.ariaExpanded
+    (1395, 1976), // frameElement.ariaFlowToElements
+    (1396, 1977), // frameElement.ariaHasPopup
+    (1397, 1978), // frameElement.ariaHidden
+    (1398, 1979), // frameElement.ariaInvalid
+    (1399, 1980), // frameElement.ariaKeyShortcuts
+    (1400, 1981), // frameElement.ariaLabel
+    (1401, 1982), // frameElement.ariaLabelledByElements
+    (1402, 1983), // frameElement.ariaLevel
+    (1403, 1984), // frameElement.ariaLive
+    (1404, 1985), // frameElement.ariaModal
+    (1405, 1986), // frameElement.ariaMultiLine
+    (1406, 1987), // frameElement.ariaMultiSelectable
+    (1407, 1988), // frameElement.ariaNotify
+    (1408, 1989), // frameElement.ariaOrientation
+    (1409, 1990), // frameElement.ariaOwnsElements
+    (1410, 1991), // frameElement.ariaPlaceholder
+    (1411, 1992), // frameElement.ariaPosInSet
+    (1412, 1993), // frameElement.ariaPressed
+    (1413, 1994), // frameElement.ariaReadOnly
+    (1414, 1995), // frameElement.ariaRelevant
+    (1415, 1996), // frameElement.ariaRequired
+    (1416, 1997), // frameElement.ariaRoleDescription
+    (1417, 1998), // frameElement.ariaRowCount
+    (1418, 1999), // frameElement.ariaRowIndex
+    (1419, 2000), // frameElement.ariaRowIndexText
+    (1420, 2001), // frameElement.ariaRowSpan
+    (1421, 2002), // frameElement.ariaSelected
+    (1422, 2003), // frameElement.ariaSetSize
+    (1423, 2004), // frameElement.ariaSort
+    (1424, 2005), // frameElement.ariaValueMax
+    (1425, 2006), // frameElement.ariaValueMin
+    (1426, 2007), // frameElement.ariaValueNow
+    (1427, 2008), // frameElement.ariaValueText
+    (1444, 2009), // frameElement.assignedSlot
+    (1455, 2010), // frameElement.attachShadow
+    (1464, 2016), // frameElement.attributes
+    (1490, 2017), // frameElement.auxclick_event
+    (1522, 5343), // frameElement.baseURI
+    (1526, 2019), // frameElement.before
+    (1527, 2020), // frameElement.beforeHTML
+    (1528, 2021), // frameElement.beforeHTMLUnsafe
+    (1529, 2022), // frameElement.beforeinput_event
+    (1531, 2023), // frameElement.beforematch_event
+    (1533, 2024), // frameElement.beforescriptexecute_event
+    (1536, 2025), // frameElement.beforexrselect_event
+    (1590, 2026), // frameElement.blur_event
+    (1730, 2027), // frameElement.checkVisibility
+    (1732, 2033), // frameElement.childElementCount
+    (1733, 5344), // frameElement.childNodes
+    (1734, 2034), // frameElement.children
+    (1742, 2035), // frameElement.classList
+    (1743, 2036), // frameElement.className
+    (1770, 2037), // frameElement.click_event
+    (1772, 2039), // frameElement.clientHeight
+    (1775, 2040), // frameElement.clientLeft
+    (1776, 2041), // frameElement.clientTop
+    (1778, 2042), // frameElement.clientWidth
+    (1790, 5345), // frameElement.cloneNode
+    (1799, 2043), // frameElement.closest
+    (1840, 5346), // frameElement.compareDocumentPosition
+    (1854, 2044), // frameElement.compositionend_event
+    (1855, 2045), // frameElement.compositionstart_event
+    (1856, 2046), // frameElement.compositionupdate_event
+    (1861, 2047), // frameElement.computedStyleMap
+    (1906, 5347), // frameElement.contains
+    (1918, 2048), // frameElement.contentvisibilityautostatechange_event
+    (1923, 2049), // frameElement.contextmenu_event
+    (1960, 2051), // frameElement.copy_event
+    (2139, 2052), // frameElement.currentCSSZoom
+    (2158, 2053), // frameElement.customElementRegistry
+    (2161, 2054), // frameElement.cut_event
+    (2175, 2055), // frameElement.dblclick_event
+    (2327, 2374), // frameElement.dispatchEvent
+    (2441, 2056), // frameElement.elementTiming
+    (2642, 5348), // frameElement.firstChild
+    (2643, 2057), // frameElement.firstElementChild
+    (2660, 2058), // frameElement.focus_event
+    (2662, 2059), // frameElement.focusin_event
+    (2663, 2060), // frameElement.focusout_event
+    (2767, 2061), // frameElement.fullscreenchange_event
+    (2768, 2062), // frameElement.fullscreenerror_event
+    (2793, 2063), // frameElement.gesturechange_event
+    (2794, 2064), // frameElement.gestureend_event
+    (2795, 2065), // frameElement.gesturestart_event
+    (2807, 2066), // frameElement.getAnimations
+    (2813, 2069), // frameElement.getAttribute
+    (2814, 2070), // frameElement.getAttributeNS
+    (2815, 2071), // frameElement.getAttributeNames
+    (2816, 2072), // frameElement.getAttributeNode
+    (2817, 2073), // frameElement.getAttributeNodeNS
+    (2828, 2074), // frameElement.getBoundingClientRect
+    (2830, 2075), // frameElement.getBoxQuads
+    (2850, 2076), // frameElement.getClientRects
+    (2883, 2077), // frameElement.getElementsByClassName
+    (2885, 2078), // frameElement.getElementsByTagName
+    (2886, 2080), // frameElement.getElementsByTagNameNS
+    (2913, 2082), // frameElement.getHTML
+    (3013, 5349), // frameElement.getRootNode
+    (3107, 2084), // frameElement.gotpointercapture_event
+    (3142, 2085), // frameElement.hasAttribute
+    (3143, 2086), // frameElement.hasAttributeNS
+    (3144, 2087), // frameElement.hasAttributes
+    (3146, 5350), // frameElement.hasChildNodes
+    (3156, 2088), // frameElement.hasPointerCapture
+    (3207, 2089), // frameElement.id
+    (3281, 2090), // frameElement.innerHTML
+    (3292, 2093), // frameElement.input_event
+    (3296, 2094), // frameElement.insertAdjacentElement
+    (3297, 2095), // frameElement.insertAdjacentHTML
+    (3298, 2097), // frameElement.insertAdjacentText
+    (3299, 5351), // frameElement.insertBefore
+    (3371, 5352), // frameElement.isConnected
+    (3374, 5353), // frameElement.isDefaultNamespace
+    (3378, 5354), // frameElement.isEqualNode
+    (3416, 5355), // frameElement.isSameNode
+    (3484, 2098), // frameElement.keydown_event
+    (3485, 2099), // frameElement.keypress_event
+    (3488, 2100), // frameElement.keyup_event
+    (3504, 5356), // frameElement.lastChild
+    (3505, 2101), // frameElement.lastElementChild
+    (3588, 2102), // frameElement.localName
+    (3614, 5357), // frameElement.lookupNamespaceURI
+    (3615, 5358), // frameElement.lookupPrefix
+    (3623, 2103), // frameElement.lostpointercapture_event
+    (3707, 2104), // frameElement.matches
+    (3840, 2105), // frameElement.mousedown_event
+    (3841, 2106), // frameElement.mouseenter_event
+    (3842, 2107), // frameElement.mouseleave_event
+    (3843, 2108), // frameElement.mousemove_event
+    (3844, 2109), // frameElement.mouseout_event
+    (3845, 2110), // frameElement.mouseover_event
+    (3846, 2111), // frameElement.mouseup_event
+    (3847, 2112), // frameElement.mousewheel_event
+    (3849, 2113), // frameElement.moveBefore
+    (3891, 2114), // frameElement.namespaceURI
+    (3918, 2115), // frameElement.nextElementSibling
+    (3921, 5359), // frameElement.nextSibling
+    (3929, 5360), // frameElement.nodeName
+    (3930, 5361), // frameElement.nodeType
+    (3931, 5362), // frameElement.nodeValue
+    (3935, 5363), // frameElement.normalize
+    (4016, 2116), // frameElement.outerHTML
+    (4034, 5364), // frameElement.ownerDocument
+    (4065, 5365), // frameElement.parentElement
+    (4066, 5366), // frameElement.parentNode
+    (4084, 2119), // frameElement.part
+    (4087, 2120), // frameElement.paste_event
+    (4199, 2121), // frameElement.pointercancel_event
+    (4200, 2122), // frameElement.pointerdown_event
+    (4201, 2123), // frameElement.pointerenter_event
+    (4202, 2124), // frameElement.pointerleave_event
+    (4205, 2125), // frameElement.pointermove_event
+    (4206, 2126), // frameElement.pointerout_event
+    (4207, 2127), // frameElement.pointerover_event
+    (4208, 2128), // frameElement.pointerrawupdate_event
+    (4209, 2129), // frameElement.pointerup_event
+    (4250, 2130), // frameElement.prefix
+    (4254, 2131), // frameElement.prepend
+    (4255, 2132), // frameElement.prependHTML
+    (4256, 2133), // frameElement.prependHTMLUnsafe
+    (4272, 2134), // frameElement.previousElementSibling
+    (4276, 5367), // frameElement.previousSibling
+    (4316, 2135), // frameElement.pseudo
+    (4347, 2136), // frameElement.querySelector
+    (4348, 2137), // frameElement.querySelectorAll
+    (4472, 2138), // frameElement.releasePointerCapture
+    (4484, 2139), // frameElement.remove
+    (4487, 2140), // frameElement.removeAttribute
+    (4488, 2141), // frameElement.removeAttributeNS
+    (4489, 2142), // frameElement.removeAttributeNode
+    (4490, 5368), // frameElement.removeChild
+    (4494, 2375), // frameElement.removeEventListener
+    (4534, 5369), // frameElement.replaceChild
+    (4535, 2143), // frameElement.replaceChildren
+    (4542, 2144), // frameElement.replaceWith
+    (4543, 2145), // frameElement.replaceWithHTML
+    (4544, 2146), // frameElement.replaceWithHTMLUnsafe
+    (4559, 2147), // frameElement.requestFullscreen
+    (4572, 2153), // frameElement.requestPointerLock
+    (4659, 2155), // frameElement.role
+    (4726, 2156), // frameElement.scroll
+    (4728, 2161), // frameElement.scrollBy
+    (4732, 2166), // frameElement.scrollHeight
+    (4733, 2167), // frameElement.scrollIntoView
+    (4734, 2173), // frameElement.scrollIntoViewIfNeeded
+    (4735, 2174), // frameElement.scrollLeft
+    (4736, 2175), // frameElement.scrollLeftMax
+    (4741, 2176), // frameElement.scrollTo
+    (4742, 2181), // frameElement.scrollTop
+    (4743, 2182), // frameElement.scrollTopMax
+    (4744, 2183), // frameElement.scrollWidth
+    (4747, 2184), // frameElement.scroll_event
+    (4749, 2185), // frameElement.scrollend_event
+    (4752, 2186), // frameElement.scrollsnapchange_event
+    (4753, 2187), // frameElement.scrollsnapchanging_event
+    (4770, 2188), // frameElement.securitypolicyviolation_event
+    (4800, 5370), // frameElement.selectstart_event
+    (4827, 2189), // frameElement.setAttribute
+    (4828, 2192), // frameElement.setAttributeNS
+    (4829, 2194), // frameElement.setAttributeNode
+    (4830, 2195), // frameElement.setAttributeNodeNS
+    (4838, 2197), // frameElement.setCapture
+    (4865, 2198), // frameElement.setHTML
+    (4866, 2199), // frameElement.setHTMLUnsafe
+    (4901, 2203), // frameElement.setPointerCapture
+    (4960, 2204), // frameElement.shadowRoot
+    (5027, 2205), // frameElement.slot
+    (5102, 2206), // frameElement.startViewTransition
+    (5141, 2207), // frameElement.streamAfterHTML
+    (5142, 2208), // frameElement.streamAfterHTMLUnsafe
+    (5143, 2209), // frameElement.streamAppendHTML
+    (5144, 2210), // frameElement.streamAppendHTMLUnsafe
+    (5145, 2211), // frameElement.streamBeforeHTML
+    (5146, 2212), // frameElement.streamBeforeHTMLUnsafe
+    (5148, 2213), // frameElement.streamHTML
+    (5149, 2214), // frameElement.streamHTMLUnsafe
+    (5150, 2215), // frameElement.streamPrependHTML
+    (5151, 2216), // frameElement.streamPrependHTMLUnsafe
+    (5152, 2217), // frameElement.streamReplaceWithHTML
+    (5153, 2218), // frameElement.streamReplaceWithHTMLUnsafe
+    (5250, 2219), // frameElement.tagName
+    (5285, 5371), // frameElement.textContent
+    (5365, 2220), // frameElement.toggleAttribute
+    (5383, 2222), // frameElement.touchcancel_event
+    (5385, 2223), // frameElement.touchend_event
+    (5387, 2224), // frameElement.touchmove_event
+    (5388, 2225), // frameElement.touchstart_event
+    (5418, 2226), // frameElement.transitioncancel_event
+    (5419, 2227), // frameElement.transitionend_event
+    (5420, 2228), // frameElement.transitionrun_event
+    (5421, 2229), // frameElement.transitionstart_event
+    (5723, 2230), // frameElement.webkitmouseforcechanged_event
+    (5724, 2231), // frameElement.webkitmouseforcedown_event
+    (5725, 2232), // frameElement.webkitmouseforceup_event
+    (5726, 2233), // frameElement.webkitmouseforcewillbegin_event
+    (5733, 2234), // frameElement.wheel_event
+    (5734, 2378), // frameElement.when
+    (1508, 4086), // history.back
+    (2708, 4087), // history.forward
+    (3106, 4088), // history.go
+    (3535, 4089), // history.length
+    (4326, 4090), // history.pushState
+    (4539, 4092), // history.replaceState
+    (4740, 4094), // history.scrollRestoration
+    (5106, 4095), // history.state
+    (1804, 4126), // indexedDB.cmp
+    (2169, 4127), // indexedDB.databases
+    (2218, 4128), // indexedDB.deleteDatabase
+    (3980, 4129), // indexedDB.open
+    (5754, 4130), // indexedDB.worker_support
+    (5754, 10235), // isSecureContext.worker_support
+    (1744, 8120), // localStorage.clear
+    (2933, 8121), // localStorage.getItem
+    (3474, 8122), // localStorage.key
+    (3535, 8123), // localStorage.length
+    (4495, 8124), // localStorage.removeItem
+    (4878, 8125), // localStorage.setItem
+    (1319, 4465), // location.ancestorOrigins
+    (1441, 4466), // location.assign
+    (3165, 4467), // location.hash
+    (3185, 4468), // location.host
+    (3187, 4469), // location.hostname
+    (3188, 4470), // location.href
+    (4010, 4471), // location.origin
+    (4090, 4472), // location.pathname
+    (4224, 4473), // location.port
+    (4313, 4474), // location.protocol
+    (4478, 4475), // location.reload
+    (4532, 4476), // location.replace
+    (4762, 4477), // location.search
+    (5355, 4478), // location.toString
+    (5676, 322), // locationbar.visible
+    (5676, 322), // menubar.visible
+    (299, 2364), // navigation.EventTarget
+    (1231, 5128), // navigation.activation
+    (1253, 2365), // navigation.addEventListener
+    (1508, 5129), // navigation.back
+    (1640, 5130), // navigation.canGoBack
+    (1641, 5131), // navigation.canGoForward
+    (2141, 5132), // navigation.currentEntry
+    (2155, 5133), // navigation.currententrychange_event
+    (2327, 2374), // navigation.dispatchEvent
+    (2503, 5134), // navigation.entries
+    (2708, 5135), // navigation.forward
+    (3895, 5136), // navigation.navigate
+    (3896, 5137), // navigation.navigate_event
+    (3897, 5138), // navigation.navigateerror_event
+    (3898, 5139), // navigation.navigatesuccess_event
+    (4478, 5140), // navigation.reload
+    (4494, 2375), // navigation.removeEventListener
+    (5415, 5141), // navigation.transition
+    (5427, 5142), // navigation.traverseTo
+    (5548, 5143), // navigation.updateCurrentEntry
+    (5734, 2378), // navigation.when
+    (1238, 5182), // navigator.activeVRDisplays
+    (1245, 5184), // navigator.adAuctionComponents
+    (1348, 5185), // navigator.appCodeName
+    (1349, 5186), // navigator.appName
+    (1350, 5187), // navigator.appVersion
+    (1470, 5188), // navigator.audioSession
+    (1477, 5189), // navigator.authentication
+    (1588, 5190), // navigator.bluetooth
+    (1622, 5191), // navigator.buildID
+    (1644, 5192), // navigator.canLoadAdAuctionFencedFrame
+    (1651, 5193), // navigator.canShare
+    (1745, 5196), // navigator.clearAppBadge
+    (1760, 5197), // navigator.clearOriginJoinedAdInterestGroups
+    (1784, 5198), // navigator.clipboard
+    (1885, 5199), // navigator.connection
+    (1898, 5200), // navigator.contacts
+    (1942, 5201), // navigator.cookieEnabled
+    (1969, 5202), // navigator.cpuPerformance
+    (1989, 5203), // navigator.createAuctionNonce
+    (2123, 5204), // navigator.credentials
+    (2250, 5205), // navigator.deprecatedReplaceInURN
+    (2251, 5206), // navigator.deprecatedRunAdAuctionEnforcesKAnonymity
+    (2290, 5207), // navigator.deviceMemory
+    (2293, 5208), // navigator.devicePosture
+    (2343, 5209), // navigator.doNotTrack
+    (2791, 5210), // navigator.geolocation
+    (2821, 5212), // navigator.getAutoplayPolicy
+    (2824, 5213), // navigator.getBattery
+    (2912, 5215), // navigator.getGamepads
+    (2926, 5216), // navigator.getInstalledRelatedApps
+    (2930, 5217), // navigator.getInterestGroupAdAuctionData
+    (3089, 5218), // navigator.getUserMedia
+    (3090, 5219), // navigator.getVRDisplays
+    (3104, 5220), // navigator.globalPrivacyControl
+    (3108, 5221), // navigator.gpu
+    (3140, 5222), // navigator.hardwareConcurrency
+    (3174, 5223), // navigator.hid
+    (3277, 5224), // navigator.ink
+    (3322, 5225), // navigator.install
+    (3454, 5226), // navigator.javaEnabled
+    (3457, 5227), // navigator.joinAdInterestGroup
+    (3483, 5228), // navigator.keyboard
+    (3497, 5229), // navigator.language
+    (3499, 5230), // navigator.languages
+    (3528, 5231), // navigator.leaveAdInterestGroup
+    (3600, 5232), // navigator.locks
+    (3610, 5233), // navigator.login
+    (3663, 5234), // navigator.managed
+    (3765, 5235), // navigator.maxTouchPoints
+    (3781, 5236), // navigator.mediaCapabilities
+    (3782, 5237), // navigator.mediaDevices
+    (3786, 5239), // navigator.mediaSession
+    (3808, 5240), // navigator.mimeTypes
+    (3828, 5242), // navigator.ml
+    (3972, 5243), // navigator.onLine
+    (4015, 5244), // navigator.oscpu
+    (4116, 5245), // navigator.pdfViewerEnabled
+    (4157, 5246), // navigator.permissions
+    (4181, 5247), // navigator.platform
+    (4194, 5248), // navigator.plugins
+    (4247, 5250), // navigator.preferences
+    (4259, 5251), // navigator.presentation
+    (4292, 5252), // navigator.product
+    (4295, 5253), // navigator.productSub
+    (4311, 5254), // navigator.protectedAudience
+    (4455, 5255), // navigator.registerProtocolHandler
+    (4565, 5290), // navigator.requestMIDIAccess
+    (4566, 5292), // navigator.requestMediaKeySystemAccess
+    (4685, 5293), // navigator.runAdAuction
+    (4712, 5294), // navigator.scheduling
+    (4804, 5295), // navigator.sendBeacon
+    (4813, 5296), // navigator.serial
+    (4820, 5297), // navigator.serviceWorker
+    (4826, 5298), // navigator.setAppBadge
+    (4969, 5299), // navigator.share
+    (5135, 5302), // navigator.storage
+    (5137, 5303), // navigator.storageBuckets
+    (5251, 5304), // navigator.taintEnabled
+    (5530, 5305), // navigator.unregisterProtocolHandler
+    (5543, 5306), // navigator.updateAdInterestGroups
+    (5580, 5307), // navigator.usb
+    (5588, 5308), // navigator.userActivation
+    (5589, 5309), // navigator.userAgent
+    (5592, 5310), // navigator.userAgentData
+    (5628, 5312), // navigator.vendor
+    (5630, 5313), // navigator.vendorSub
+    (5656, 5314), // navigator.vibrate
+    (5671, 5315), // navigator.virtualKeyboard
+    (5705, 5316), // navigator.wakeLock
+    (5713, 5317), // navigator.webdriver
+    (5743, 5318), // navigator.windowControlsOverlay
+    (5780, 5319), // navigator.xr
+    (3526, 11431), // parseInt.leading_zero_strings_as_decimal
+    (299, 2364), // performance.EventTarget
+    (1253, 2365), // performance.addEventListener
+    (1758, 5762), // performance.clearMarks
+    (1759, 5763), // performance.clearMeasures
+    (1764, 5764), // performance.clearResourceTimings
+    (2327, 2374), // performance.dispatchEvent
+    (2526, 5765), // performance.eventCounts
+    (2889, 5766), // performance.getEntries
+    (2890, 5767), // performance.getEntriesByName
+    (2891, 5768), // performance.getEntriesByType
+    (3329, 5769), // performance.interactionCount
+    (3696, 5770), // performance.mark
+    (3775, 5774), // performance.measure
+    (3779, 5778), // performance.measureUserAgentSpecificMemory
+    (3791, 5779), // performance.memory
+    (3899, 5780), // performance.navigation
+    (3942, 5781), // performance.now
+    (4494, 2375), // performance.removeEventListener
+    (4608, 5782), // performance.resourcetimingbufferfull_event
+    (4913, 5783), // performance.setResourceTimingBufferSize
+    (5311, 5784), // performance.timeOrigin
+    (5325, 5785), // performance.timing
+    (5341, 5786), // performance.toJSON
+    (5734, 2378), // performance.when
+    (5676, 322), // personalbar.visible
+    (4239, 7653), // scheduler.postTask
+    (5785, 7654), // scheduler.yield
+    (1491, 7658), // screen.availHeight
+    (1492, 7659), // screen.availLeft
+    (1493, 7661), // screen.availTop
+    (1494, 7663), // screen.availWidth
+    (1700, 7664), // screen.change_event
+    (1821, 7665), // screen.colorDepth
+    (3173, 7666), // screen.height
+    (3380, 7667), // screen.isExtended
+    (3530, 7668), // screen.left
+    (3598, 7670), // screen.lockOrientation
+    (4005, 7671), // screen.orientation
+    (4009, 7672), // screen.orientationchange_event
+    (4174, 7673), // screen.pixelDepth
+    (5375, 7674), // screen.top
+    (5522, 7676), // screen.unlockOrientation
+    (5739, 7677), // screen.width
+    (5676, 322), // scrollbars.visible
+    (299, 2364), // self.EventTarget
+    (1253, 2365), // self.addEventListener
+    (1286, 9487), // self.afterprint_event
+    (1289, 9488), // self.alert
+    (1363, 9489), // self.appinstalled_event
+    (1530, 9490), // self.beforeinstallprompt_event
+    (1532, 9491), // self.beforeprint_event
+    (1535, 9492), // self.beforeunload_event
+    (1589, 9497), // self.blur
+    (1590, 9498), // self.blur_event
+    (1655, 9499), // self.cancelAnimationFrame
+    (1657, 9500), // self.cancelIdleCallback
+    (1675, 9501), // self.captureEvents
+    (1755, 9502), // self.clearImmediate
+    (1792, 9503), // self.close
+    (1797, 9504), // self.closed
+    (1877, 9505), // self.confirm
+    (1943, 9506), // self.cookieStore
+    (1982, 9507), // self.crashReport
+    (2122, 9508), // self.credentialless
+    (2159, 9509), // self.customElements
+    (2292, 9510), // self.devicePixelRatio
+    (2300, 9511), // self.devicemotion_event
+    (2301, 9512), // self.deviceorientation_event
+    (2302, 9513), // self.deviceorientationabsolute_event
+    (2327, 2374), // self.dispatchEvent
+    (2347, 9514), // self.document
+    (2349, 9515), // self.documentPictureInPicture
+    (2410, 9516), // self.dump
+    (2517, 9517), // self.error_event
+    (2525, 9518), // self.event
+    (2568, 9519), // self.external
+    (2605, 9520), // self.fence
+    (2608, 9521), // self.fetchLater
+    (2630, 9522), // self.find
+    (2657, 9523), // self.focus
+    (2660, 9524), // self.focus_event
+    (2721, 9525), // self.frameElement
+    (2731, 9526), // self.frames
+    (2763, 9527), // self.fullScreen
+    (2773, 9528), // self.gamepadconnected_event
+    (2774, 9529), // self.gamepaddisconnected_event
+    (2854, 9530), // self.getComputedStyle
+    (2871, 9533), // self.getDefaultComputedStyle
+    (2878, 9535), // self.getDigitalGoodsService
+    (3018, 9536), // self.getScreenDetails
+    (3023, 9537), // self.getSelection
+    (3167, 9538), // self.hashchange_event
+    (3184, 9539), // self.history
+    (3282, 9540), // self.innerHeight
+    (3284, 9541), // self.innerWidth
+    (3498, 9542), // self.languagechange_event
+    (3518, 9543), // self.launchQueue
+    (3535, 9544), // self.length
+    (3576, 9545), // self.load_event
+    (3590, 9546), // self.localStorage
+    (3594, 9547), // self.location
+    (3596, 9548), // self.locationbar
+    (3705, 9549), // self.matchMedia
+    (3792, 9550), // self.menubar
+    (3796, 9551), // self.message_event
+    (3797, 9552), // self.messageerror_event
+    (3850, 9553), // self.moveBy
+    (3851, 9554), // self.moveTo
+    (3862, 9556), // self.mozInnerScreenX
+    (3863, 9557), // self.mozInnerScreenY
+    (3887, 9558), // self.name
+    (3899, 9559), // self.navigation
+    (3904, 9560), // self.navigator
+    (3956, 9561), // self.offline_event
+    (3974, 9562), // self.online_event
+    (3980, 9563), // self.open
+    (3986, 9568), // self.opener
+    (4005, 9569), // self.orientation
+    (4009, 9570), // self.orientationchange_event
+    (4011, 9571), // self.originAgentCluster
+    (4017, 9572), // self.outerHeight
+    (4019, 9573), // self.outerWidth
+    (4054, 9574), // self.pagehide_event
+    (4055, 9575), // self.pagereveal_event
+    (4056, 9576), // self.pageshow_event
+    (4057, 9577), // self.pageswap_event
+    (4064, 9578), // self.parent
+    (4162, 9579), // self.personalbar
+    (4222, 9580), // self.popstate_event
+    (4238, 9581), // self.postMessage
+    (4283, 9585), // self.print
+    (4304, 9586), // self.prompt
+    (4325, 9587), // self.pushManager
+    (4345, 9588), // self.queryLocalFonts
+    (4459, 9589), // self.rejectionhandled_event
+    (4469, 9590), // self.releaseEvents
+    (4494, 2375), // self.removeEventListener
+    (4553, 9591), // self.requestAnimationFrame
+    (4557, 9592), // self.requestFileSystem
+    (4563, 9593), // self.requestIdleCallback
+    (4577, 9594), // self.requestResize
+    (4601, 9595), // self.resizeBy
+    (4602, 9596), // self.resizeTo
+    (4603, 9597), // self.resize_event
+    (4605, 9598), // self.resolveLocalFileSystemURL
+    (4716, 9599), // self.screen
+    (4717, 9600), // self.screenLeft
+    (4719, 9602), // self.screenTop
+    (4720, 9604), // self.screenX
+    (4721, 9606), // self.screenY
+    (4726, 9608), // self.scroll
+    (4728, 9613), // self.scrollBy
+    (4729, 9618), // self.scrollByLines
+    (4730, 9619), // self.scrollByPages
+    (4738, 9620), // self.scrollMaxX
+    (4739, 9621), // self.scrollMaxY
+    (4741, 9622), // self.scrollTo
+    (4745, 9627), // self.scrollX
+    (4746, 9629), // self.scrollY
+    (4748, 9631), // self.scrollbars
+    (4752, 9632), // self.scrollsnapchange_event
+    (4753, 9633), // self.scrollsnapchanging_event
+    (4801, 9634), // self.self
+    (4823, 9635), // self.sessionStorage
+    (4871, 9636), // self.setImmediate
+    (4912, 9637), // self.setResizable
+    (4971, 9638), // self.sharedStorage
+    (4983, 9639), // self.showDirectoryPicker
+    (4986, 9640), // self.showOpenFilePicker
+    (4989, 9641), // self.showSaveFilePicker
+    (5069, 9642), // self.speechSynthesis
+    (5110, 9643), // self.status
+    (5114, 9644), // self.statusbar
+    (5129, 9645), // self.stop
+    (5138, 9646), // self.storage_event
+    (5169, 9647), // self.styleMedia
+    (5374, 9648), // self.toolbar
+    (5375, 9649), // self.top
+    (5474, 9650), // self.unhandledrejection_event
+    (5520, 9651), // self.unload_event
+    (5546, 9652), // self.updateCommands
+    (5665, 9653), // self.viewport
+    (5678, 9654), // self.visualViewport
+    (5689, 9655), // self.vrdisplayactivate_event
+    (5690, 9656), // self.vrdisplayconnect_event
+    (5691, 9657), // self.vrdisplaydeactivate_event
+    (5692, 9658), // self.vrdisplaydisconnect_event
+    (5693, 9659), // self.vrdisplaypresentchange_event
+    (5717, 9660), // self.webkitConvertPointFromNodeToPage
+    (5718, 9661), // self.webkitConvertPointFromPageToNode
+    (5734, 2378), // self.when
+    (5741, 9662), // self.window
+    (1744, 8120), // sessionStorage.clear
+    (2933, 8121), // sessionStorage.getItem
+    (3474, 8122), // sessionStorage.key
+    (3535, 8123), // sessionStorage.length
+    (4495, 8124), // sessionStorage.removeItem
+    (4878, 8125), // sessionStorage.setItem
+    (1809, 10243), // setInterval.code_param_enforces_trusted_types
+    (5209, 10244), // setInterval.supports_parameters_for_callback
+    (5754, 10245), // setInterval.worker_support
+    (1809, 10247), // setTimeout.code_param_enforces_trusted_types
+    (5209, 10248), // setTimeout.supports_parameters_for_callback
+    (5754, 10249), // setTimeout.worker_support
+    (299, 2364), // speechSynthesis.EventTarget
+    (1253, 2365), // speechSynthesis.addEventListener
+    (1653, 8068), // speechSynthesis.cancel
+    (2327, 2374), // speechSynthesis.dispatchEvent
+    (3098, 8069), // speechSynthesis.getVoices
+    (4096, 8070), // speechSynthesis.pause
+    (4103, 8071), // speechSynthesis.paused
+    (4118, 8072), // speechSynthesis.pending
+    (4494, 2375), // speechSynthesis.removeEventListener
+    (4633, 8073), // speechSynthesis.resume
+    (5062, 8074), // speechSynthesis.speak
+    (5064, 8075), // speechSynthesis.speaking
+    (5686, 8076), // speechSynthesis.voiceschanged_event
+    (5734, 2378), // speechSynthesis.when
+    (5676, 322), // statusbar.visible
+    (5676, 322), // toolbar.visible
+    (299, 2364), // visualViewport.EventTarget
+    (1253, 2365), // visualViewport.addEventListener
+    (2327, 2374), // visualViewport.dispatchEvent
+    (3173, 8872), // visualViewport.height
+    (3959, 8873), // visualViewport.offsetLeft
+    (3962, 8874), // visualViewport.offsetTop
+    (4049, 8875), // visualViewport.pageLeft
+    (4051, 8876), // visualViewport.pageTop
+    (4494, 2375), // visualViewport.removeEventListener
+    (4603, 8877), // visualViewport.resize_event
+    (4703, 8878), // visualViewport.scale
+    (4747, 8879), // visualViewport.scroll_event
+    (4749, 8880), // visualViewport.scrollend_event
+    (5734, 2378), // visualViewport.when
+    (5739, 8881), // visualViewport.width
+    (299, 2364), // window.EventTarget
+    (1253, 2365), // window.addEventListener
+    (1286, 9487), // window.afterprint_event
+    (1289, 9488), // window.alert
+    (1363, 9489), // window.appinstalled_event
+    (1530, 9490), // window.beforeinstallprompt_event
+    (1532, 9491), // window.beforeprint_event
+    (1535, 9492), // window.beforeunload_event
+    (1589, 9497), // window.blur
+    (1590, 9498), // window.blur_event
+    (1655, 9499), // window.cancelAnimationFrame
+    (1657, 9500), // window.cancelIdleCallback
+    (1675, 9501), // window.captureEvents
+    (1755, 9502), // window.clearImmediate
+    (1792, 9503), // window.close
+    (1797, 9504), // window.closed
+    (1877, 9505), // window.confirm
+    (1943, 9506), // window.cookieStore
+    (1982, 9507), // window.crashReport
+    (2122, 9508), // window.credentialless
+    (2159, 9509), // window.customElements
+    (2292, 9510), // window.devicePixelRatio
+    (2300, 9511), // window.devicemotion_event
+    (2301, 9512), // window.deviceorientation_event
+    (2302, 9513), // window.deviceorientationabsolute_event
+    (2327, 2374), // window.dispatchEvent
+    (2347, 9514), // window.document
+    (2349, 9515), // window.documentPictureInPicture
+    (2410, 9516), // window.dump
+    (2517, 9517), // window.error_event
+    (2525, 9518), // window.event
+    (2568, 9519), // window.external
+    (2605, 9520), // window.fence
+    (2608, 9521), // window.fetchLater
+    (2630, 9522), // window.find
+    (2657, 9523), // window.focus
+    (2660, 9524), // window.focus_event
+    (2721, 9525), // window.frameElement
+    (2731, 9526), // window.frames
+    (2763, 9527), // window.fullScreen
+    (2773, 9528), // window.gamepadconnected_event
+    (2774, 9529), // window.gamepaddisconnected_event
+    (2854, 9530), // window.getComputedStyle
+    (2871, 9533), // window.getDefaultComputedStyle
+    (2878, 9535), // window.getDigitalGoodsService
+    (3018, 9536), // window.getScreenDetails
+    (3023, 9537), // window.getSelection
+    (3167, 9538), // window.hashchange_event
+    (3184, 9539), // window.history
+    (3282, 9540), // window.innerHeight
+    (3284, 9541), // window.innerWidth
+    (3498, 9542), // window.languagechange_event
+    (3518, 9543), // window.launchQueue
+    (3535, 9544), // window.length
+    (3576, 9545), // window.load_event
+    (3590, 9546), // window.localStorage
+    (3594, 9547), // window.location
+    (3596, 9548), // window.locationbar
+    (3705, 9549), // window.matchMedia
+    (3792, 9550), // window.menubar
+    (3796, 9551), // window.message_event
+    (3797, 9552), // window.messageerror_event
+    (3850, 9553), // window.moveBy
+    (3851, 9554), // window.moveTo
+    (3862, 9556), // window.mozInnerScreenX
+    (3863, 9557), // window.mozInnerScreenY
+    (3887, 9558), // window.name
+    (3899, 9559), // window.navigation
+    (3904, 9560), // window.navigator
+    (3956, 9561), // window.offline_event
+    (3974, 9562), // window.online_event
+    (3980, 9563), // window.open
+    (3986, 9568), // window.opener
+    (4005, 9569), // window.orientation
+    (4009, 9570), // window.orientationchange_event
+    (4011, 9571), // window.originAgentCluster
+    (4017, 9572), // window.outerHeight
+    (4019, 9573), // window.outerWidth
+    (4054, 9574), // window.pagehide_event
+    (4055, 9575), // window.pagereveal_event
+    (4056, 9576), // window.pageshow_event
+    (4057, 9577), // window.pageswap_event
+    (4064, 9578), // window.parent
+    (4162, 9579), // window.personalbar
+    (4222, 9580), // window.popstate_event
+    (4238, 9581), // window.postMessage
+    (4283, 9585), // window.print
+    (4304, 9586), // window.prompt
+    (4325, 9587), // window.pushManager
+    (4345, 9588), // window.queryLocalFonts
+    (4459, 9589), // window.rejectionhandled_event
+    (4469, 9590), // window.releaseEvents
+    (4494, 2375), // window.removeEventListener
+    (4553, 9591), // window.requestAnimationFrame
+    (4557, 9592), // window.requestFileSystem
+    (4563, 9593), // window.requestIdleCallback
+    (4577, 9594), // window.requestResize
+    (4601, 9595), // window.resizeBy
+    (4602, 9596), // window.resizeTo
+    (4603, 9597), // window.resize_event
+    (4605, 9598), // window.resolveLocalFileSystemURL
+    (4716, 9599), // window.screen
+    (4717, 9600), // window.screenLeft
+    (4719, 9602), // window.screenTop
+    (4720, 9604), // window.screenX
+    (4721, 9606), // window.screenY
+    (4726, 9608), // window.scroll
+    (4728, 9613), // window.scrollBy
+    (4729, 9618), // window.scrollByLines
+    (4730, 9619), // window.scrollByPages
+    (4738, 9620), // window.scrollMaxX
+    (4739, 9621), // window.scrollMaxY
+    (4741, 9622), // window.scrollTo
+    (4745, 9627), // window.scrollX
+    (4746, 9629), // window.scrollY
+    (4748, 9631), // window.scrollbars
+    (4752, 9632), // window.scrollsnapchange_event
+    (4753, 9633), // window.scrollsnapchanging_event
+    (4801, 9634), // window.self
+    (4823, 9635), // window.sessionStorage
+    (4871, 9636), // window.setImmediate
+    (4912, 9637), // window.setResizable
+    (4971, 9638), // window.sharedStorage
+    (4983, 9639), // window.showDirectoryPicker
+    (4986, 9640), // window.showOpenFilePicker
+    (4989, 9641), // window.showSaveFilePicker
+    (5069, 9642), // window.speechSynthesis
+    (5110, 9643), // window.status
+    (5114, 9644), // window.statusbar
+    (5129, 9645), // window.stop
+    (5138, 9646), // window.storage_event
+    (5169, 9647), // window.styleMedia
+    (5374, 9648), // window.toolbar
+    (5375, 9649), // window.top
+    (5474, 9650), // window.unhandledrejection_event
+    (5520, 9651), // window.unload_event
+    (5546, 9652), // window.updateCommands
+    (5665, 9653), // window.viewport
+    (5678, 9654), // window.visualViewport
+    (5689, 9655), // window.vrdisplayactivate_event
+    (5690, 9656), // window.vrdisplayconnect_event
+    (5691, 9657), // window.vrdisplaydeactivate_event
+    (5692, 9658), // window.vrdisplaydisconnect_event
+    (5693, 9659), // window.vrdisplaypresentchange_event
+    (5717, 9660), // window.webkitConvertPointFromNodeToPage
+    (5718, 9661), // window.webkitConvertPointFromPageToNode
+    (5734, 2378), // window.when
+    (5741, 9662), // window.window
 ];

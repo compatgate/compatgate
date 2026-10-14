@@ -11,17 +11,31 @@ export declare const __napiBindingTarget: 'native' | 'wasm32-wasi' | 'wasm32-was
 
 /**
  * Resolved targets and compiled `allow` entries. One checker serves every file of a project: the
- * query, the support table and the globs are built once. The checker never changes after `new`, so
+ * support table and the globs are built once. The checker never changes after `new`, so
  * the checkers of several workers run at the same time without locks.
  */
 export declare class Checker {
-  /** Throws an error with the code `COMPATGATE_TARGETS` or `COMPATGATE_ALLOW`. */
-  constructor(targets: string, allow?: Array<AllowEntryInput> | undefined | null)
+  /**
+   * `targets` are the browsers that the `browserslist` npm package returns: `['chrome 120', 'safari 15.6-15.8']`.
+   * Throws an error with the code `COMPATGATE_TARGETS` or `COMPATGATE_ALLOW`.
+   */
+  constructor(targets: Array<string>, allow?: Array<AllowEntryInput> | undefined | null)
+  /**
+   * The entries with an unknown feature id and the entries that every target supports. The checker
+   * has resolved the targets already, so a caller asks it instead of resolving them again.
+   */
+  issues(): Array<AllowIssueOutput>
+  /**
+   * browserslist names in the targets that compatgate has no data for. A property of the targets,
+   * not of a checked file.
+   */
+  get ignoredBrowsers(): Array<string>
   /**
    * A source that does not parse gives no findings and a `parseError`: a linter shows its own parse
-   * errors, and a bundler skips the module.
+   * errors, and a bundler skips the module. `parse_as` selects the parser by its extension instead
+   * of `filename`; `filename` still matches the `files` and `packages` of the entries.
    */
-  check(source: string, filename: string): CheckResultOutput
+  check(source: string, filename: string, parseAs?: string | undefined | null): CheckResultOutput
 }
 
 export interface AllowEntryInput {
@@ -36,14 +50,15 @@ export type AllowIssueKind = 'unknown-feature' | 'native-in-targets'
 export interface AllowIssueOutput {
   index: number
   kind: AllowIssueKind
+  /** The closest known id for an unknown one, such as `api.fetch` for `api.fetchh`. */
+  suggestion?: string
 }
 
 export declare function bcdVersion(): string
 
 export interface CheckResultOutput {
   findings: Array<FindingOutput>
-  usedAllow: Array<number>
-  ignoredBrowsers: Array<string>
+  suppressed: Array<SuppressionOutput>
   parseError?: ParseErrorOutput
 }
 
@@ -91,5 +106,7 @@ export interface PositionOutput {
   column: number
 }
 
-/** Resolves the query on every call: a project validates its entries once, not per file. */
-export declare function validateAllow(allow: Array<AllowEntryInput>, targetsQuery: string): Array<AllowIssueOutput>
+export interface SuppressionOutput {
+  index: number
+  kind: FindingKind
+}

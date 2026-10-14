@@ -2,7 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Worker } from 'node:worker_threads';
 
-import { AllowConfigError, check, createChecker, isCheckable } from '../src-js/index.ts';
+import { createChecker } from '../src-js/checker.ts';
+import { AllowConfigError, ConfigError, OptionsError, TargetsConfigError, isCheckable } from '../src-js/index.ts';
+import { check } from './resolve.ts';
 
 const TARGETS = 'Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115';
 
@@ -18,22 +20,69 @@ test('a checker checks many files with one set of targets and allow entries', ()
     second.findings.map(finding => finding.feature),
     ['api.structuredClone'],
   );
-  assert.deepEqual(second.usedAllow, [0]);
-  assert.deepEqual(second.ignoredBrowsers, []);
+  assert.deepEqual(second.suppressed, [{ index: 0, kind: 'builtin' }]);
+  assert.deepEqual(checker.ignoredBrowsers, []);
+  assert.deepEqual(checker.issues(), []);
   assert.equal(second.parseError, undefined);
 });
 
-test('a checker gives the result of check()', () => {
+test('a checker tells the kinds of the findings that each used entry suppressed', () => {
+  const lookbehind = 'javascript.regular_expressions.lookbehind_assertion';
+  const checker = createChecker({ targets: TARGETS, allow: [lookbehind, 'api.ResizeObserver', 'api.structuredClone'] });
+  const result = checker.check('structuredClone(/(?<=a)b/);', '/p/a.js');
+  assert.deepEqual(result.findings, []);
+  assert.deepEqual(result.suppressed, [
+    { index: 0, kind: 'syntax' },
+    { index: 2, kind: 'api' },
+  ]);
+  assert.deepEqual(checker.check('const = ;', '/p/b.js').suppressed, []);
+});
+
+test('suppressed names each kind of an entry once, ordered by the index', () => {
+  const allow = [
+    'javascript.builtins.Intl.Segmenter',
+    'javascript.regular_expressions.lookbehind_assertion',
+    'api.structuredClone',
+    'javascript.builtins.Array.toSorted',
+  ];
+  const checker = createChecker({ targets: TARGETS, allow });
+  const source = 'structuredClone(/(?<=a)b/); [].toSorted(); list.toSorted(); new Intl.Segmenter(); /(?<=c)d/;';
+  const result = checker.check(source, '/p/a.js');
+  assert.deepEqual(result.findings, []);
+  assert.deepEqual(
+    result.suppressed.map(item => item.index),
+    [0, 1, 2, 3],
+  );
+  assert.deepEqual(
+    result.suppressed.map(item => item.kind),
+    ['builtin', 'syntax', 'api', 'builtin'],
+  );
+});
+
+test('the checker of a configuration gives the result of the binding with the messages', () => {
   const source = 'const s = "Мяу"; structuredClone(s); [1].toSorted(); class A { static {} }';
   const options = { targets: 'Chrome >= 90', allow: [] };
-  assert.deepEqual(createChecker(options).check(source, '/p/a.js'), check(source, { filename: '/p/a.js', ...options }));
+  const result = check(source, { filename: '/p/a.js', ...options });
+  const core = createChecker(options).check(source, '/p/a.js');
+  const messages = result.findings.map(finding => finding.message);
+  assert.deepEqual(result, {
+    ...core,
+    findings: core.findings.map((finding, i) => ({ ...finding, message: messages[i] })),
+  });
+  assert.equal(result.findings.length, 3);
+  for (const finding of result.findings) {
+    assert.match(
+      finding.message,
+      new RegExp(`^${finding.feature.replaceAll('.', '\\.')} is not supported in Chrome 90`),
+    );
+  }
 });
 
 test('a syntax error is in the result, not thrown', () => {
   const checker = createChecker({ targets: TARGETS });
   const result = checker.check('const a = 1;\nconst = ;', '/p/broken.js');
   assert.deepEqual(result.findings, []);
-  assert.deepEqual(result.usedAllow, []);
+  assert.deepEqual(result.suppressed, []);
   assert.equal(result.parseError?.kind, 'syntax');
   assert.equal(result.parseError?.line, 2);
   assert.equal(result.parseError?.column, 6);
@@ -146,10 +195,47 @@ test('invalid targets throw COMPATGATE_TARGETS', () => {
   assert.match(error.message, /Chrom >= 97/);
 });
 
+test('targets without data are a TargetsConfigError with the error of the binding as the cause', () => {
+  const error = thrown(() => createChecker({ targets: 'op_mini all' }));
+  assert.ok(error instanceof TargetsConfigError);
+  assert.equal(error.code, 'COMPATGATE_TARGETS');
+  assert.match(error.message, /op_mini all: selects no browser with compatibility data/);
+  assert.equal((error.cause as { code?: string }).code, 'COMPATGATE_TARGETS');
+});
+
+test('every error of a config or of the options is a ConfigError', () => {
+  const errors = [
+    thrown(() => createChecker({ targets: 'Chrom >= 97' })),
+    thrown(() => createChecker({ targets: 'op_mini all' })),
+    thrown(() => createChecker({ targets: TARGETS, allow: [{ feature: 'api.a', files: ['src/[a'] }] })),
+    thrown(() => createChecker({ targets: 97 } as never)),
+  ];
+  assert.deepEqual(
+    errors.map(error => error.constructor),
+    [TargetsConfigError, TargetsConfigError, AllowConfigError, OptionsError],
+  );
+  for (const error of errors) {
+    assert.ok(error instanceof ConfigError, error.name);
+    assert.deepEqual([error.watch, error.missing], [[], []]);
+  }
+});
+
+test('targets of a wrong type throw COMPATGATE_OPTIONS', () => {
+  for (const targets of [undefined, 97, ['Chrome >= 97']]) {
+    const error = thrown(() => createChecker({ targets } as never));
+    assert.equal(error.code, 'COMPATGATE_OPTIONS', String(targets));
+    assert.equal(error.message, 'targets: expected a string');
+  }
+});
+
 test('an invalid allow entry throws COMPATGATE_ALLOW', () => {
   const glob = thrown(() => createChecker({ targets: TARGETS, allow: [{ feature: 'api.a', files: ['src/[a'] }] }));
   assert.equal(glob.code, 'COMPATGATE_ALLOW');
   assert.match(glob.message, /api\.a/);
+  // The glob fails in the binding: the error of the binding is the cause.
+  assert.ok(glob instanceof AllowConfigError);
+  assert.equal((glob.cause as { code?: string }).code, 'COMPATGATE_ALLOW');
+  assert.equal((glob.cause as Error).message, glob.message);
   // The shape is checked in JavaScript, with the same code.
   // @ts-expect-error not an entry
   const shape = thrown(() => createChecker({ targets: TARGETS, allow: [{ feature: 'api.a', reason: 'x' }] }));
@@ -172,7 +258,7 @@ test('checkers in several workers check at the same time', async () => {
       parentPort.postMessage(workerData.files.map((file, index) => checker.check(file, '/p/' + index + '.js')));
     });
   `;
-  const module = new URL('../src-js/index.ts', import.meta.url).href;
+  const module = new URL('../src-js/checker.ts', import.meta.url).href;
   const results = await Promise.all(
     Array.from(
       { length: 4 },
@@ -187,4 +273,38 @@ test('checkers in several workers check at the same time', async () => {
   for (const result of results) {
     assert.deepEqual(result, expected);
   }
+});
+
+test('`parseAs` selects the parser, and the filename matches the `files` of allow entries', () => {
+  const checker = createChecker({
+    targets: TARGETS,
+    allow: [{ feature: 'api.structuredClone', files: 'src/*.vue', baseDir: '/p' }],
+  });
+  const component = checker.check('structuredClone(1);', '/p/src/App.vue', '/p/src/App.vue.js');
+  assert.equal(component.parseError, undefined);
+  assert.deepEqual(component.findings, []);
+  assert.deepEqual(component.suppressed, [{ index: 0, kind: 'api' }]);
+  const typed = checker.check('const n: number = 1;', '/p/src/App.vue', '/p/src/App.vue.ts');
+  assert.equal(typed.parseError, undefined);
+  const other = checker.check('structuredClone(1);', '/p/lib/App.vue', '/p/src/App.vue.js');
+  assert.deepEqual(
+    other.findings.map(finding => finding.feature),
+    ['api.structuredClone'],
+  );
+});
+
+test('a `parseAs` without a parser is an unsupported file', () => {
+  const result = createChecker({ targets: TARGETS }).check('x;', '/p/a.js', '/p/a.css');
+  assert.equal(result.parseError?.kind, 'unsupported-file');
+});
+
+test('check() takes `parseAs` too', () => {
+  const result = check('const n: number = structuredClone(1);', {
+    filename: '/p/src/App.vue',
+    parseAs: '/p/src/App.vue.ts',
+    targets: TARGETS,
+    allow: [{ feature: 'api.structuredClone', files: 'src/App.vue', baseDir: '/p' }],
+  });
+  assert.equal(result.parseError, undefined);
+  assert.deepEqual(result.suppressed, [{ index: 0, kind: 'api' }]);
 });

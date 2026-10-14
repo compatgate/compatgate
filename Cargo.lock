@@ -164,6 +164,7 @@ dependencies = [
  "browserslist-rs",
  "compatgate",
  "globset",
+ "memchr",
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",

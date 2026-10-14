@@ -22,4 +22,16 @@ export class LruCache<K, V> {
     this.#entries.set(key, value);
     return value;
   }
+
+  get size(): number {
+    return this.#entries.size;
+  }
+
+  values(): IterableIterator<V> {
+    return this.#entries.values();
+  }
+
+  clear(): void {
+    this.#entries.clear();
+  }
 }

@@ -7,7 +7,7 @@
 mod generated;
 
 pub use generated::BCD_VERSION;
-use generated::{FEATURES, INSTANCE_MEMBERS, INTERFACE_PARENTS, NOTES, RANGES, SINGLETONS};
+use generated::{FEATURES, GLOBALS, INSTANCE_MEMBERS, MEMBER_OBJECTS, MEMBER_ROWS, NAME_STARTS, NAMES, NOTES, RANGES};
 
 /// A row of `RANGES`: feature index, browser column, the range `[first version, version of removal)`,
 /// whether the support is partial, index into `NOTES` or `UNSUPPORTED`. A range without a removal
@@ -15,7 +15,7 @@ use generated::{FEATURES, INSTANCE_MEMBERS, INTERFACE_PARENTS, NOTES, RANGES, SI
 type RangeRow = (u32, u8, u32, u32, bool, u32);
 
 /// Version value for "not supported". It is larger than any real version.
-pub const UNSUPPORTED: u32 = u32::MAX;
+pub(crate) const UNSUPPORTED: u32 = u32::MAX;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Browser {
@@ -68,7 +68,7 @@ impl Browser {
         }
     }
 
-    pub fn from_browserslist(name: &str) -> Option<Self> {
+    pub(crate) fn from_browserslist(name: &str) -> Option<Self> {
         Some(match name {
             "chrome" => Browser::Chrome,
             "and_chr" => Browser::ChromeAndroid,
@@ -92,12 +92,12 @@ pub struct FeatureId(u32);
 
 impl FeatureId {
     /// Every feature, in the order of the ids.
-    pub fn all() -> impl Iterator<Item = Self> {
+    pub(crate) fn all() -> impl Iterator<Item = Self> {
         (0..FEATURES.len() as u32).map(Self)
     }
 
     /// The position of the feature in the order of the ids. Tables of one entry per feature use it.
-    pub fn index(self) -> usize {
+    pub(crate) fn index(self) -> usize {
         self.0 as usize
     }
 
@@ -124,15 +124,6 @@ impl FeatureId {
         None
     }
 
-    /// `find` for the id that the parts make together: `["api.", "Navigator", ".", "share"]`. It builds
-    /// no string, and the globals detector asks it for every name of a file.
-    pub fn find_parts(parts: &[&str]) -> Option<Self> {
-        FEATURES
-            .binary_search_by(|(key, _)| key.bytes().cmp(parts.iter().flat_map(|part| part.bytes())))
-            .ok()
-            .map(|index| Self(index as u32))
-    }
-
     pub fn find(id: &str) -> Option<Self> {
         FEATURES
             .binary_search_by(|(key, _)| (*key).cmp(id))
@@ -145,7 +136,7 @@ impl FeatureId {
     }
 
     /// First version from which full support lasts to the latest release, or `UNSUPPORTED`.
-    pub fn full_support(self, browser: Browser) -> u32 {
+    pub(crate) fn full_support(self, browser: Browser) -> u32 {
         FEATURES[self.0 as usize].1[browser.index()]
     }
 
@@ -162,7 +153,7 @@ impl FeatureId {
 
 impl FeatureId {
     /// The first version from `target` on with any support, partial or full, or `UNSUPPORTED`.
-    pub fn first_support(self, browser: Browser, target: u32) -> u32 {
+    pub(crate) fn first_support(self, browser: Browser, target: u32) -> u32 {
         browser_rows(RANGES, self.0, browser.index() as u8)
             .iter()
             .filter(|row| row.3 > target)
@@ -248,10 +239,19 @@ pub fn feature_ids() -> impl Iterator<Item = &'static str> {
     FEATURES.iter().map(|(id, _)| *id)
 }
 
+/// The ids that start with `prefix`, in order.
+pub(crate) fn ids_with_prefix(prefix: &str) -> impl Iterator<Item = &'static str> + '_ {
+    let start = FEATURES.partition_point(|&(id, _)| id < prefix);
+    FEATURES[start..]
+        .iter()
+        .map(|&(id, _)| id)
+        .take_while(move |id| id.starts_with(prefix))
+}
+
 /// Instance members with this name, with a flag that tells whether a finding may name the member.
 /// Methods of JavaScript builtins can be findings. Other members only make a name ambiguous:
 /// Web API members, accessors, and methods of `DisposableStack` and `AsyncDisposableStack`.
-pub fn instance_members(name: &str) -> impl Iterator<Item = (FeatureId, bool)> {
+pub(crate) fn instance_members(name: &str) -> impl Iterator<Item = (FeatureId, bool)> {
     let start = INSTANCE_MEMBERS.partition_point(|&(member, _, _)| member < name);
     INSTANCE_MEMBERS[start..]
         .iter()
@@ -260,7 +260,7 @@ pub fn instance_members(name: &str) -> impl Iterator<Item = (FeatureId, bool)> {
 }
 
 /// Every name of `INSTANCE_MEMBERS`, once, in order.
-pub fn instance_member_names() -> impl Iterator<Item = &'static str> {
+pub(crate) fn instance_member_names() -> impl Iterator<Item = &'static str> {
     INSTANCE_MEMBERS
         .iter()
         .enumerate()
@@ -268,20 +268,57 @@ pub fn instance_member_names() -> impl Iterator<Item = &'static str> {
         .map(|(_, &(name, _, _))| name)
 }
 
-/// The Web API interface of a global singleton, for example `Navigator` for `navigator`.
-pub fn singleton_interface(name: &str) -> Option<&'static str> {
-    SINGLETONS
-        .binary_search_by(|&(singleton, _)| singleton.cmp(name))
-        .ok()
-        .map(|index| SINGLETONS[index].1)
+/// No feature in a row of `GLOBALS`.
+const NO_FEATURE: u16 = u16::MAX;
+
+/// Name `index` of `NAMES`.
+fn name(index: usize) -> &'static str {
+    &NAMES[NAME_STARTS[index] as usize..NAME_STARTS[index + 1] as usize]
 }
 
-/// Direct parents of a Web API interface from its `extends` clauses in @types/web, for example `Node`
-/// for `Document`. Parents can be mixins without BCD data, such as `GlobalEventHandlers`.
-pub fn interface_parents(name: &str) -> &'static [&'static str] {
-    INTERFACE_PARENTS
-        .binary_search_by(|&(interface, _)| interface.cmp(name))
-        .map_or(&[], |index| INTERFACE_PARENTS[index].1)
+/// The index of `text` in `NAMES`. The names are sorted by bytes, so the index order is the string order.
+fn name_index(text: &str) -> Option<u16> {
+    let (mut low, mut high) = (0, NAME_STARTS.len() - 1);
+    while low < high {
+        let middle = low + (high - low) / 2;
+        match name(middle).cmp(text) {
+            std::cmp::Ordering::Less => low = middle + 1,
+            std::cmp::Ordering::Greater => high = middle,
+            std::cmp::Ordering::Equal => return Some(middle as u16),
+        }
+    }
+    None
+}
+
+/// The feature of a bare global name: `structuredClone`, `Array`, `when`. For `new X()` (`is_new`) the
+/// constructor entry `api.X.X` is more precise than the interface. A builtin wins over an interface, and
+/// members of the global object come last: `name` is `api.Window.name`, and `when` is inherited,
+/// `api.EventTarget.when`. The generator resolves every name, so a lookup is one binary search.
+///
+/// With BCD 8.1.4 and @types/web 0.0.358 the parents of `Window` add only the members of `EventTarget`.
+/// A data update that gives the mixin parents BCD rows adds bare names here;
+/// `the_parents_of_window_add_only_the_event_target_members` in the globals detector lists them.
+pub(crate) fn global_feature(name: &str, is_new: bool) -> Option<FeatureId> {
+    let name = name_index(name)?;
+    let index = GLOBALS.binary_search_by_key(&name, |&(global, _, _)| global).ok()?;
+    let (_, plain, constructed) = GLOBALS[index];
+    let feature = if is_new { constructed } else { plain };
+    (feature != NO_FEATURE).then_some(FeatureId(u32::from(feature)))
+}
+
+/// The feature of `object.member`: a member of the interface of a singleton such as `navigator`, its own
+/// or inherited (`document.addEventListener` is `api.EventTarget.addEventListener`), or a static member
+/// such as `Object.groupBy` or `BarcodeDetector.getSupportedFormats`.
+pub(crate) fn member_feature(object: &str, member: &str) -> Option<FeatureId> {
+    let (object, member) = (name_index(object)?, name_index(member)?);
+    let index = MEMBER_OBJECTS.binary_search_by_key(&object, |&(name, _)| name).ok()?;
+    let first = MEMBER_OBJECTS[index].1 as usize;
+    let end = MEMBER_OBJECTS
+        .get(index + 1)
+        .map_or(MEMBER_ROWS.len(), |&(_, next)| next as usize);
+    let rows = &MEMBER_ROWS[first..end];
+    let row = rows.binary_search_by_key(&member, |&(name, _)| name).ok()?;
+    Some(FeatureId(u32::from(rows[row].1)))
 }
 
 /// Encodes `major.minor.patch` as `major << 16 | minor << 8 | patch`.
@@ -517,22 +554,64 @@ mod tests {
     }
 
     #[test]
-    fn reads_interface_parents() {
-        assert!(interface_parents("Document").contains(&"Node"));
-        assert!(interface_parents("HTMLElement").contains(&"Element"));
-        // @types/web 0.0.358 declares Navigator with mixins such as NavigatorID.
-        assert!(interface_parents("Navigator").contains(&"NavigatorID"));
-        assert_eq!(interface_parents("EventTarget"), &[] as &[&str]);
-        assert_eq!(interface_parents("NoSuchInterface"), &[] as &[&str]);
+    fn names_are_sorted_and_found() {
+        let count = generated::NAME_STARTS.len() - 1;
+        assert_eq!(generated::NAME_STARTS[count] as usize, generated::NAMES.len());
+        assert!((1..count).all(|index| name(index - 1) < name(index)));
+        for index in 0..count {
+            assert_eq!(name_index(name(index)), Some(index as u16), "{}", name(index));
+        }
+        assert_eq!(name_index("noSuchName"), None);
+        assert_eq!(name_index(""), None);
     }
 
     #[test]
-    fn interface_parents_are_sorted_for_binary_search() {
+    fn globals_and_members_are_sorted_for_binary_search() {
+        assert!(generated::GLOBALS.windows(2).all(|pair| pair[0].0 < pair[1].0));
+        let objects = generated::MEMBER_OBJECTS;
         assert!(
-            generated::INTERFACE_PARENTS
+            objects
                 .windows(2)
-                .all(|pair| pair[0].0 < pair[1].0)
+                .all(|pair| pair[0].0 < pair[1].0 && pair[0].1 < pair[1].1)
         );
+        assert_eq!(objects[0].1, 0);
+        for (index, &(_, first)) in objects.iter().enumerate() {
+            let end = objects
+                .get(index + 1)
+                .map_or(generated::MEMBER_ROWS.len(), |next| next.1 as usize);
+            let rows = &generated::MEMBER_ROWS[first as usize..end];
+            assert!(rows.windows(2).all(|pair| pair[0].0 < pair[1].0));
+        }
+    }
+
+    #[test]
+    fn finds_global_features() {
+        let find = |name, is_new| global_feature(name, is_new).map(FeatureId::as_str);
+        assert_eq!(find("structuredClone", false), Some("api.structuredClone"));
+        assert_eq!(find("ResizeObserver", false), Some("api.ResizeObserver"));
+        assert_eq!(find("ResizeObserver", true), Some("api.ResizeObserver.ResizeObserver"));
+        assert_eq!(find("Array", true), Some("javascript.builtins.Array"));
+        assert_eq!(find("name", false), Some("api.Window.name"));
+        assert_eq!(find("when", false), Some("api.EventTarget.when"));
+        assert_eq!(find("noSuchThing", false), None);
+        assert_eq!(find("", true), None);
+    }
+
+    #[test]
+    fn finds_member_features() {
+        let find = |object, member| member_feature(object, member).map(FeatureId::as_str);
+        assert_eq!(find("navigator", "share"), Some("api.Navigator.share"));
+        // @types/web 0.0.358 declares Document as an extension of Node.
+        assert_eq!(find("document", "contains"), Some("api.Node.contains"));
+        assert_eq!(find("document", "querySelector"), Some("api.Document.querySelector"));
+        assert_eq!(find("Object", "groupBy"), Some("javascript.builtins.Object.groupBy"));
+        assert_eq!(find("Intl", "Segmenter"), Some("javascript.builtins.Intl.Segmenter"));
+        assert_eq!(
+            find("BarcodeDetector", "getSupportedFormats"),
+            Some("api.BarcodeDetector.getSupportedFormats_static")
+        );
+        assert_eq!(find("navigator", "noSuchThing"), None);
+        assert_eq!(find("Intl", "Segmenter.x"), None);
     }
 
     #[test]
@@ -556,20 +635,12 @@ mod tests {
     }
 
     #[test]
-    fn finds_singleton_interfaces() {
-        assert_eq!(singleton_interface("navigator"), Some("Navigator"));
-        assert_eq!(singleton_interface("document"), Some("Document"));
-        assert_eq!(singleton_interface("Intl"), None);
-    }
-
-    #[test]
     fn instance_members_are_sorted_for_binary_search() {
         assert!(
             generated::INSTANCE_MEMBERS
                 .windows(2)
                 .all(|pair| (pair[0].0, pair[0].1) <= (pair[1].0, pair[1].1))
         );
-        assert!(generated::SINGLETONS.windows(2).all(|pair| pair[0].0 < pair[1].0));
     }
 
     #[test]

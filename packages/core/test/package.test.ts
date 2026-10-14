@@ -18,6 +18,11 @@ test('the published tarball holds the loader and dist, but no native binary', ()
     files.filter(file => file.endsWith('.node')),
     [],
   );
+  // The build info of the incremental TypeScript build lives in dist, but it is no part of the package.
+  assert.deepEqual(
+    files.filter(file => file.endsWith('.tsbuildinfo')),
+    [],
+  );
   // The package is ESM only, the generated loader included.
   assert.deepEqual(
     files.filter(file => file.endsWith('.cjs') || file.endsWith('.cts')),

@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import browserslist from 'browserslist';
+
 import * as binding from '../binding.js';
-const TARGETS = 'Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115';
+const TARGETS = browserslist('Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115');
 
 function check(source: string, filename: string, targets = TARGETS, allow?: binding.AllowEntryInput[]) {
   return new binding.Checker(targets, allow).check(source, filename);
@@ -21,8 +23,8 @@ test('check returns findings with readable versions', () => {
       unsupported: [{ browser: 'chrome', target: '97', since: '98' }],
     },
   ]);
-  assert.deepEqual(result.usedAllow, []);
-  assert.deepEqual(result.ignoredBrowsers, []);
+  assert.deepEqual(result.suppressed, []);
+  assert.equal('ignoredBrowsers' in result, false);
 });
 
 test('check applies allow entries', () => {
@@ -30,7 +32,7 @@ test('check applies allow entries', () => {
     { feature: 'api.structuredClone', files: ['src/**'], baseDir: '/p' },
   ]);
   assert.deepEqual(result.findings, []);
-  assert.deepEqual(result.usedAllow, [0]);
+  assert.deepEqual(result.suppressed, [{ index: 0, kind: 'api' }]);
 });
 
 test('check returns a syntax error in the result', () => {
@@ -42,21 +44,50 @@ test('check returns a syntax error in the result', () => {
 });
 
 test('a configuration error carries its code', () => {
-  assert.throws(() => new binding.Checker('Chrom >= 97'), { code: 'COMPATGATE_TARGETS' });
+  assert.throws(() => new binding.Checker(['op_mini all']), {
+    code: 'COMPATGATE_TARGETS',
+    message: /op_mini all: selects no browser with compatibility data/,
+  });
+  assert.throws(() => new binding.Checker(['chrome']), { code: 'COMPATGATE_TARGETS', message: /"chrome"/ });
   assert.throws(() => new binding.Checker(TARGETS, [{ feature: 'api.a', files: ['src/**'] }]), {
     code: 'COMPATGATE_ALLOW',
     message: /needs the directory/,
   });
-  assert.throws(() => binding.validateAllow([], 'Chrom >= 97'), { code: 'COMPATGATE_TARGETS' });
 });
 
-test('validateAllow reports unknown and native features', () => {
+test('a checker reports unknown and native features of its entries', () => {
+  const checker = new binding.Checker(TARGETS, [
+    { feature: 'api.DoesNotExist' },
+    { feature: 'javascript.builtins.Array.at' },
+    { feature: 'api.structuredClone' },
+    { feature: 'api.fetchh' },
+  ]);
+  // The suggestion is absent, not undefined, when there is none.
+  assert.deepEqual(checker.issues(), [
+    { index: 0, kind: 'unknown-feature' },
+    { index: 1, kind: 'native-in-targets' },
+    { index: 3, kind: 'unknown-feature', suggestion: 'api.fetch' },
+  ]);
+  assert.deepEqual(new binding.Checker(TARGETS).issues(), []);
+});
+
+test('a checker takes the browsers in the form of browserslist', () => {
+  const result = new binding.Checker(['chrome 120', 'chrome 97', 'safari TP', 'safari 15.2-15.3']).check(
+    'structuredClone(1);',
+    'a.js',
+  );
+  assert.deepEqual(result.findings[0]?.unsupported, [
+    { browser: 'chrome', target: '97', since: '98' },
+    { browser: 'safari', target: '15.2', since: '15.4' },
+  ]);
+});
+
+test('a checker names the browsers of the targets without data, except the ones that BCD lacks by definition', () => {
+  assert.deepEqual(new binding.Checker(TARGETS).ignoredBrowsers, []);
   assert.deepEqual(
-    binding.validateAllow([{ feature: 'api.DoesNotExist' }, { feature: 'javascript.builtins.Array.at' }], TARGETS),
-    [
-      { index: 0, kind: 'unknown-feature' },
-      { index: 1, kind: 'native-in-targets' },
-    ],
+    new binding.Checker(['chrome 97', 'op_mini all', 'and_uc 15.5', 'and_qq 14.9', 'kaios 3.0-3.1', 'ie 11'])
+      .ignoredBrowsers,
+    ['ie'],
   );
 });
 
@@ -67,11 +98,11 @@ test('bcdVersion names the data version', () => {
 test('columns are UTF-16 units across the whole call', () => {
   // 🐈‍⬛ is four UTF-16 units: a surrogate pair, a zero-width joiner and one more character.
   const result = check('const s = "Мяу 🐈‍⬛"; structuredClone(s);', 'a.js');
-  assert.deepEqual(result.findings[0].start, { line: 1, column: 22 });
+  assert.deepEqual(result.findings[0]?.start, { line: 1, column: 22 });
 });
 
 test('partial findings carry the BCD note', () => {
-  const result = check('new BarcodeDetector();', 'a.js', 'Chrome >= 97');
+  const result = check('new BarcodeDetector();', 'a.js', browserslist('Chrome >= 97'));
   assert.equal(result.findings.length, 1);
   const [finding] = result.findings;
   assert.equal(finding?.confidence, 'partial');

@@ -2,7 +2,7 @@
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-use compatgate::allow::{AllowEntry, AllowIssue, AllowList, validate_allow as validate_entries};
+use compatgate::allow::{AllowEntry, AllowIssue, AllowList, validate_allow};
 use compatgate::data::{BCD_VERSION, format_version};
 use compatgate::position::Position;
 use compatgate::support::Gap;
@@ -13,7 +13,7 @@ use napi_derive::napi;
 /// The `code` of a JavaScript error that the binding throws.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Code {
-    /// The browserslist query is invalid.
+    /// The browsers of the targets are invalid or have no compatibility data.
     Targets,
     /// An `allow` entry is invalid.
     Allow,
@@ -128,10 +128,15 @@ pub struct ParseErrorOutput {
 }
 
 #[napi(object)]
+pub struct SuppressionOutput {
+    pub index: u32,
+    pub kind: FindingKind,
+}
+
+#[napi(object)]
 pub struct CheckResultOutput {
     pub findings: Vec<FindingOutput>,
-    pub used_allow: Vec<u32>,
-    pub ignored_browsers: Vec<String>,
+    pub suppressed: Vec<SuppressionOutput>,
     pub parse_error: Option<ParseErrorOutput>,
 }
 
@@ -147,54 +152,97 @@ pub enum AllowIssueKind {
 pub struct AllowIssueOutput {
     pub index: u32,
     pub kind: AllowIssueKind,
+    /// The closest known id for an unknown one, such as `api.fetch` for `api.fetchh`.
+    pub suggestion: Option<String>,
 }
 
 /// Resolved targets and compiled `allow` entries. One checker serves every file of a project: the
-/// query, the support table and the globs are built once. The checker never changes after `new`, so
+/// support table and the globs are built once. The checker never changes after `new`, so
 /// the checkers of several workers run at the same time without locks.
 #[napi]
 pub struct Checker {
     targets: Targets,
     allow: AllowList,
+    /// The entries as given, for `issues`: the compiled list keeps no more than a check needs.
+    entries: Vec<AllowEntry>,
 }
 
 #[napi]
 impl Checker {
+    /// `targets` are the browsers that the `browserslist` npm package returns: `['chrome 120', 'safari 15.6-15.8']`.
     /// Throws an error with the code `COMPATGATE_TARGETS` or `COMPATGATE_ALLOW`.
     #[napi(constructor)]
-    pub fn new(targets: String, allow: Option<Vec<AllowEntryInput>>) -> Result<Self> {
+    pub fn new(targets: Vec<String>, allow: Option<Vec<AllowEntryInput>>) -> Result<Self> {
         guard(|| {
+            let entries = entries(allow.unwrap_or_default());
+            let browsers: Vec<&str> = targets.iter().map(String::as_str).collect();
             Ok(Self {
-                targets: Targets::resolve(&targets).map_err(to_napi)?,
-                allow: AllowList::new(&entries(allow.unwrap_or_default())).map_err(to_napi)?,
+                targets: Targets::from_browserslist(&browsers).map_err(to_napi)?,
+                allow: AllowList::new(&entries).map_err(to_napi)?,
+                entries,
             })
         })
     }
 
-    /// A source that does not parse gives no findings and a `parseError`: a linter shows its own parse
-    /// errors, and a bundler skips the module.
+    /// The entries with an unknown feature id and the entries that every target supports. The checker
+    /// has resolved the targets already, so a caller asks it instead of resolving them again.
     #[napi]
-    pub fn check(&self, source: String, filename: String) -> Result<CheckResultOutput> {
+    pub fn issues(&self) -> Result<Vec<AllowIssueOutput>> {
         guard(|| {
-            let ignored_browsers = self.targets.ignored().to_vec();
+            Ok(validate_allow(&self.entries, &self.targets)
+                .into_iter()
+                .map(|issue| match issue {
+                    AllowIssue::UnknownFeature { index, suggestion } => AllowIssueOutput {
+                        index: index as u32,
+                        kind: AllowIssueKind::UnknownFeature,
+                        suggestion: suggestion.map(String::from),
+                    },
+                    AllowIssue::NativeInTargets { index } => AllowIssueOutput {
+                        index: index as u32,
+                        kind: AllowIssueKind::NativeInTargets,
+                        suggestion: None,
+                    },
+                })
+                .collect())
+        })
+    }
+
+    /// browserslist names in the targets that compatgate has no data for. A property of the targets,
+    /// not of a checked file.
+    #[napi(getter)]
+    pub fn ignored_browsers(&self) -> Vec<String> {
+        self.targets.ignored().to_vec()
+    }
+
+    /// A source that does not parse gives no findings and a `parseError`: a linter shows its own parse
+    /// errors, and a bundler skips the module. `parse_as` selects the parser by its extension instead
+    /// of `filename`; `filename` still matches the `files` and `packages` of the entries.
+    #[napi]
+    pub fn check(&self, source: String, filename: String, parse_as: Option<String>) -> Result<CheckResultOutput> {
+        guard(|| {
+            let parse_as = parse_as.as_deref().unwrap_or(&filename);
             Ok(
-                match compatgate::check(&source, &filename, &self.targets, &self.allow) {
+                match compatgate::check_as(&source, &filename, parse_as, &self.targets, &self.allow) {
                     Ok(output) => CheckResultOutput {
                         findings: output.findings.into_iter().map(finding).collect(),
-                        used_allow: output.used_allow.into_iter().map(|index| index as u32).collect(),
-                        ignored_browsers,
+                        suppressed: output
+                            .suppressed
+                            .into_iter()
+                            .map(|(index, kind)| SuppressionOutput {
+                                index: index as u32,
+                                kind: kind.into(),
+                            })
+                            .collect(),
                         parse_error: None,
                     },
                     Err(compatgate::Error::Parse(error)) => CheckResultOutput {
                         findings: Vec::new(),
-                        used_allow: Vec::new(),
-                        ignored_browsers,
+                        suppressed: Vec::new(),
                         parse_error: Some(parse_error(error)),
                     },
                     Err(compatgate::Error::UnsupportedFile(message)) => CheckResultOutput {
                         findings: Vec::new(),
-                        used_allow: Vec::new(),
-                        ignored_browsers,
+                        suppressed: Vec::new(),
                         parse_error: Some(ParseErrorOutput {
                             kind: ParseErrorKind::UnsupportedFile,
                             message,
@@ -219,27 +267,6 @@ fn entries(input: Vec<AllowEntryInput>) -> Vec<AllowEntry> {
             base_dir: entry.base_dir.unwrap_or_default(),
         })
         .collect()
-}
-
-/// Resolves the query on every call: a project validates its entries once, not per file.
-#[napi]
-pub fn validate_allow(allow: Vec<AllowEntryInput>, targets_query: String) -> Result<Vec<AllowIssueOutput>> {
-    guard(|| {
-        let targets = Targets::resolve(&targets_query).map_err(to_napi)?;
-        Ok(validate_entries(&entries(allow), &targets)
-            .into_iter()
-            .map(|issue| match issue {
-                AllowIssue::UnknownFeature { index } => AllowIssueOutput {
-                    index: index as u32,
-                    kind: AllowIssueKind::UnknownFeature,
-                },
-                AllowIssue::NativeInTargets { index } => AllowIssueOutput {
-                    index: index as u32,
-                    kind: AllowIssueKind::NativeInTargets,
-                },
-            })
-            .collect())
-    })
 }
 
 /// Whether `Checker.check` can parse a file with this name. A bundler id with a query (`a.ts?v=1`)
@@ -316,6 +343,10 @@ fn gap(gap: Gap) -> GapOutput {
 mod tests {
     use super::*;
 
+    fn browsers(list: &[&str]) -> Vec<String> {
+        list.iter().map(|entry| entry.to_string()).collect()
+    }
+
     #[test]
     fn a_panic_becomes_an_internal_error() {
         let error = guard::<()>(|| panic!("boom")).unwrap_err();
@@ -327,10 +358,10 @@ mod tests {
 
     #[test]
     fn configuration_errors_keep_their_codes() {
-        let targets = Checker::new("Chrom >= 97".into(), None).err().unwrap();
+        let targets = Checker::new(browsers(&["op_mini all"]), None).err().unwrap();
         assert_eq!(targets.status, Code::Targets);
         let allow = Checker::new(
-            "Chrome >= 97".into(),
+            browsers(&["chrome 97"]),
             Some(vec![AllowEntryInput {
                 feature: "api.a".into(),
                 packages: None,
@@ -341,6 +372,44 @@ mod tests {
         .err()
         .unwrap();
         assert_eq!(allow.status, Code::Allow);
+    }
+
+    #[test]
+    fn a_checker_reports_the_issues_of_its_entries_and_the_ignored_browsers() {
+        let entry = |feature: &str| AllowEntryInput {
+            feature: feature.into(),
+            packages: None,
+            files: None,
+            base_dir: None,
+        };
+        let checker = Checker::new(
+            browsers(&["chrome 120", "chrome 97", "op_mini all", "ie 11"]),
+            Some(vec![
+                entry("api.DoesNotExist"),
+                entry("api.structuredClone"),
+                entry("api.fetch"),
+                entry("api.URL.canParse"),
+            ]),
+        )
+        .unwrap();
+        let issues: Vec<(u32, bool, Option<String>)> = checker
+            .issues()
+            .unwrap()
+            .into_iter()
+            .map(|issue| {
+                let unknown = matches!(issue.kind, AllowIssueKind::UnknownFeature);
+                (issue.index, unknown, issue.suggestion)
+            })
+            .collect();
+        assert_eq!(
+            issues,
+            [
+                (0, true, None),
+                (2, false, None),
+                (3, true, Some("api.URL.canParse_static".into()))
+            ]
+        );
+        assert_eq!(checker.ignored_browsers(), ["ie"]);
     }
 
     #[test]
