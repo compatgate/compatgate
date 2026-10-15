@@ -27,7 +27,8 @@
     "binding.js",
     "binding.d.ts",
     "LICENSE-MIT",
-    "LICENSE-APACHE"
+    "LICENSE-APACHE",
+    "THIRD-PARTY-LICENSE"
   ],
   "type": "module",
   "exports": {

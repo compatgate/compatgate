@@ -9,6 +9,7 @@ version = "0.0.0"
 edition = "2024"
 # oxc_parser 0.152 needs Rust 1.96.
 rust-version = "1.96"
+license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
 compatgate = { path = "crates/compatgate" }

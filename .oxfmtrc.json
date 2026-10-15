@@ -5,9 +5,11 @@
   "arrowParens": "avoid",
   "trailingComma": "all",
   "ignorePatterns": [
+    "about.hbs",
     "crates/compatgate/tests/corpus",
     "packages/core/binding.js",
     "packages/core/binding.d.ts",
+    "packages/core/THIRD-PARTY-LICENSE",
     "pnpm-lock.yaml"
   ]
 }

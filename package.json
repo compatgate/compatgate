@@ -5,6 +5,7 @@
   "scripts": {
     "generate": "node scripts/generate-data.js",
     "generate:check": "node scripts/generate-data.js --check",
+    "third-party": "node scripts/third-party.js",
     "build:debug": "pnpm -r run build:debug",
     "lint": "oxlint --deny-warnings && cargo clippy --workspace --all-targets -- -D warnings",
     "fmt": "oxfmt && cargo fmt --all",

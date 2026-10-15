@@ -1,0 +1,17 @@
+Third-party licenses of the native binary of @compatgate/core and of its platform packages.
+
+Data:
+- @mdn/browser-compat-data: the compatibility data compiled into the binary. License: CC0-1.0.
+
+Crates:
+{{#each crates}}
+- {{package.name}} {{package.version}}: {{license}}
+{{/each}}
+
+{{#each licenses}}
+================================================================================
+{{name}}
+Used by:{{#each used_by}} {{crate.name}}{{/each}}
+
+{{text}}
+{{/each}}
