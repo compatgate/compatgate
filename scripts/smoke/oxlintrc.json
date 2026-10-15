@@ -1,0 +1,4 @@
+{
+  "jsPlugins": [{ "name": "compatgate", "specifier": "@compatgate/eslint" }],
+  "rules": { "compatgate/exact": "error" }
+}

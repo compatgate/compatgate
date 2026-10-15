@@ -5,6 +5,7 @@
     "conformance/fixture",
     "packages/core/binding.js",
     "packages/core/binding.d.ts",
-    "packages/*/dist"
+    "packages/*/dist",
+    "scripts/smoke"
   ]
 }
