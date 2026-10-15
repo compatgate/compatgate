@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@v7
+        with: { node-version: 24, cache: pnpm }
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+
+  node:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['20.19', '22']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@v7
+        with: { node-version: 24, cache: pnpm }
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with: { tool: cargo-about }
+      - run: pnpm install --frozen-lockfile
+      # The tests are TypeScript that Node 24 runs as it is, and pnpm needs Node 22: the packages are checked on the
+      # lowest Node of `engines` through their tarballs, as a user installs them.
+      - run: pnpm --filter @compatgate/core run build:debug && pnpm -r run build:js && pnpm third-party
+      # `napi artifacts` wants the binaries of every target: the one binary of this job is copied by hand.
+      - working-directory: packages/core
+        run: pnpm exec napi create-npm-dirs && cp compatgate.linux-x64-gnu.node npm/linux-x64-gnu/
+      - run: node scripts/prepare-platform-packages.js
+      - run: |
+          mkdir -p .smoke
+          (cd packages/core/npm/linux-x64-gnu && npm pack --pack-destination ../../../../.smoke)
+          for name in core eslint bundler; do (cd packages/$name && pnpm pack --pack-destination ../../.smoke); done
+      - uses: actions/setup-node@v7
+        with: { node-version: '${{ matrix.node }}' }
+      - run: node scripts/smoke.js --tarballs .smoke
+
+  eslint-9:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@v7
+        with: { node-version: 24, cache: pnpm }
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @compatgate/eslint add -D eslint@^9
+      - run: pnpm run build:debug
+      - run: pnpm --filter @compatgate/eslint test
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@v7
+        with: { node-version: 24, cache: pnpm }
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with: { tool: cargo-about }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build:debug
+      - run: pnpm third-party
+      - run: node scripts/pack-check.js
+      - run: |
+          for name in core eslint bundler; do
+            npx --yes publint@0.3.25 packages/$name --strict
+            npx --yes @arethetypeswrong/cli@0.18.5 --pack packages/$name --profile esm-only
+          done
+
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
