@@ -13,10 +13,23 @@
     "vite",
     "webpack"
   ],
+  "homepage": "https://github.com/compatgate/compatgate/tree/main/packages/bundler#readme",
+  "bugs": {
+    "url": "https://github.com/compatgate/compatgate/issues"
+  },
+  "license": "MIT OR Apache-2.0",
+  "author": "Shamil Iakupov <me@shamil.tech>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/compatgate/compatgate.git",
+    "directory": "packages/bundler"
+  },
   "files": [
     "dist",
     "!dist/*.tsbuildinfo",
-    "docs"
+    "docs",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
   ],
   "type": "module",
   "exports": {
@@ -50,7 +63,11 @@
     },
     "./package.json": "./package.json"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
+    "prepack": "node ../../scripts/copy-licenses.js",
     "build:js": "tsc -p tsconfig.json",
     "build": "pnpm run build:js",
     "build:debug": "pnpm run build:js",

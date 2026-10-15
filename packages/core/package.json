@@ -2,12 +2,32 @@
   "name": "@compatgate/core",
   "version": "0.0.0",
   "description": "Finds JavaScript syntax and APIs that your browserslist targets do not support.",
+  "keywords": [
+    "baseline",
+    "bcd",
+    "browserslist",
+    "compatibility",
+    "lint"
+  ],
+  "homepage": "https://github.com/compatgate/compatgate/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/compatgate/compatgate/issues"
+  },
+  "license": "MIT OR Apache-2.0",
+  "author": "Shamil Iakupov <me@shamil.tech>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/compatgate/compatgate.git",
+    "directory": "packages/core"
+  },
   "files": [
     "dist",
     "!dist/*.tsbuildinfo",
     "docs",
     "binding.js",
-    "binding.d.ts"
+    "binding.d.ts",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
   ],
   "type": "module",
   "exports": {
@@ -17,7 +37,11 @@
     },
     "./package.json": "./package.json"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
+    "prepack": "node ../../scripts/copy-licenses.js",
     "build:native": "napi build --platform --release --esm --no-const-enum --js binding.js --dts binding.d.ts",
     "build:native:debug": "napi build --platform --esm --no-const-enum --js binding.js --dts binding.d.ts",
     "build:js": "tsc -p tsconfig.json",

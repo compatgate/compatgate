@@ -2,6 +2,9 @@ target/
 node_modules/
 packages/*/dist/
 packages/core/*.node
+# Copies of the root licenses: `prepack` puts them into each package.
+packages/*/LICENSE-MIT
+packages/*/LICENSE-APACHE
 # The fixture of the conformance suite has packages of its own.
 !/conformance/fixture/node_modules/
 !/conformance/fixture/node_modules/**/node_modules/
