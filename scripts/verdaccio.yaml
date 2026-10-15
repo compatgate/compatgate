@@ -1,5 +1,7 @@
 # The local registry of scripts/local-registry.js. It is copied into a temporary directory: the paths are relative to it.
 storage: ./storage
+# A debug build of the binary packs to about 18 MB; verdaccio takes 10 MB by default.
+max_body_size: 200mb
 auth:
   htpasswd:
     file: ./htpasswd

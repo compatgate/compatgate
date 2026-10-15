@@ -1,3 +1,5 @@
+import { dirname } from 'node:path';
+
 import { checkModule } from './check.ts';
 import type { BuildEnd, BuildEndContext, Host, HostReports, HookContext } from './hosts/index.ts';
 import type { PluginState } from './state.ts';
@@ -66,8 +68,16 @@ export function endBuild(state: PluginState, host: Host, context: BuildEndContex
   const error: Error & { watchFiles?: string[] } = new Error(message);
   error.stack = '';
   // Rollup takes the watched files of a failed build from its error, and a hook at the end of a build adds
-  // none: without them the watch mode would see no edit, of the code or of a config.
-  error.watchFiles = context?.getWatchFiles?.();
+  // none: without them the watch mode would see no edit, of the code or of a config. A missing config goes as its
+  // directory: Rollup watches a missing file through a filter on its directory, and its chokidar 3 reads a directory
+  // for one filter at a time, so on Linux only the first missing config of the project root would show.
+  const watched = context?.getWatchFiles?.();
+  if (watched) {
+    const missing = state.missingFiles;
+    error.watchFiles = [
+      ...new Set([...watched.filter(file => !missing.has(file)), ...[...missing].map(file => dirname(file))]),
+    ];
+  }
   throw error;
 }
 

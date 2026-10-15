@@ -64,6 +64,8 @@ export class PluginState {
   readonly partials: PartialFinding[] = [];
   /** The configs of the modules of the dev server: an edit of one gives the modules a new configuration. */
   private readonly configFiles = new Set<string>();
+  /** The places of a new config that the modules of this build watch: see `endBuild`. */
+  readonly missingFiles = new Set<string>();
   /** The records of the modules, for the reports at the end of a build. They live for the plugin instance. */
   readonly records = new ModuleRecords();
   /**
@@ -104,6 +106,7 @@ export class PluginState {
     this.errors.length = 0;
     this.partials.length = 0;
     this.records.startBuild();
+    this.missingFiles.clear();
     this.snapshot = {};
   }
 
@@ -188,6 +191,7 @@ export class PluginState {
     }
     for (const file of files.missing ?? []) {
       context.addMissingFile(file);
+      this.missingFiles.add(file);
     }
   }
 

@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { join } from 'node:path';
 
 import * as esbuild from 'esbuild';
+import { rollup } from 'rollup';
 
-import { compatgateEsbuild } from '../src/index.ts';
+import { compatgateEsbuild, compatgateRollup } from '../src/index.ts';
 import { clearProcessMessages } from '../src/plugin.ts';
 import { TARGETS, createProject, editFile } from './helpers.ts';
 import {
@@ -464,6 +465,28 @@ describe('a build that fails for another reason', () => {
 });
 
 describe('rollup watch', () => {
+  test('the error of a build names the configs to watch, and the directory of a missing one', async t => {
+    // Rollup watches only the files of the error after a failed build. A missing file is watched through a filter
+    // on its directory, and chokidar 3 of Rollup reads a directory for one filter at a time: of three missing
+    // configs in the project root only the first would show on Linux. The directory itself shows each new file.
+    const root = createProject(t, { '.browserslistrc': TARGETS, 'src/index.js': 'new Intl.Segmenter();\n' });
+    // The project root of Rollup is the process directory: only there a new config is watched.
+    const cwd = process.cwd();
+    process.chdir(root);
+    t.after(() => process.chdir(cwd));
+    const error = await rollup({ input: join(root, 'src/index.js'), plugins: [compatgateRollup({})] }).then(
+      () => assert.fail('the build passes'),
+      (failure: { watchFiles?: string[] }) => failure,
+    );
+    const watched = error.watchFiles ?? [];
+    for (const path of [root, join(root, '.browserslistrc'), join(root, 'src/index.js')]) {
+      assert.ok(watched.includes(path), `${path} in ${watched.join(', ')}`);
+    }
+    for (const file of ['compatgate.jsonc', 'browserslist', 'package.json']) {
+      assert.ok(!watched.includes(join(root, file)), `${file} in ${watched.join(', ')}`);
+    }
+  });
+
   test('a new compatgate.jsonc in the project root shows in the next build', async t => {
     const root = createProject(t, PROJECT);
     // The project root of Rollup is the process directory: only there a new config is watched.

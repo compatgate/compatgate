@@ -4,7 +4,7 @@
 //
 // `node scripts/local-registry.js --tarballs <dir>` serves until it is stopped and writes the address to
 // `<dir>/registry.json`: a check on another Node version uses the registry that Node 24 runs (verdaccio needs Node 22).
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:net';
@@ -93,11 +93,15 @@ export async function startRegistry(directory) {
     if (!core || others.length !== 2) {
       throw new Error(`expected the tarballs of core, eslint and bundler in ${directory}`);
     }
-    const publish = path =>
-      execFileSync(npm, ['publish', path, '--userconfig', npmrc, '--registry', url, '--ignore-scripts'], {
-        stdio: 'ignore',
+    const publish = path => {
+      const run = spawnSync(npm, ['publish', path, '--userconfig', npmrc, '--registry', url, '--ignore-scripts'], {
+        encoding: 'utf8',
         shell: windows,
       });
+      if (run.status !== 0) {
+        throw new Error(`npm publish ${path} failed:\n${run.stdout}${run.stderr}`);
+      }
+    };
     for (const file of [...platforms, ...others]) {
       publish(resolve(directory, file));
     }
