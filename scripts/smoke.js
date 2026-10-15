@@ -3,7 +3,7 @@
 // in oxlint and rspack. The native package of the platform must work on its own: the checks run once with the wasm
 // fallback moved away, and once more on the fallback alone when npm installed it.
 import { execFileSync, spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, renameSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readdirSync, renameSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,14 +25,8 @@ if (values.tarballs) {
     throw new Error(`no tarball of @compatgate/core in ${directory}`);
   }
   version = core.replace(/^compatgate-core-/, '').replace(/\.tgz$/, '');
-  // A registry that another process serves, such as Node 24 for a check on Node 20: see scripts/local-registry.js.
-  const running = join(directory, 'registry.json');
-  if (existsSync(running)) {
-    registry = JSON.parse(readFileSync(running, 'utf8')).url;
-  } else {
-    const { startRegistry } = await import('./local-registry.js');
-    ({ url: registry, stop } = await startRegistry(directory));
-  }
+  const { startRegistry } = await import('./local-registry.js');
+  ({ url: registry, stop } = await startRegistry(directory));
 }
 
 const failures = [];

@@ -15,7 +15,7 @@ npm install --save-dev @compatgate/bundler
 ```
 
 The package is ESM. A CommonJS config, such as `webpack.config.js`, loads it with `require`
-(Node.js 20.19, 22.12 and later).
+(Node.js 22.12 and later).
 
 ## Set up
 

@@ -1,17 +1,13 @@
 // A local npm registry with the packages of a release, so that a check installs them by name and version, as a user
 // installs them from npmjs.com. npm then picks the platform package of the core through its optionalDependencies, which
 // an install of tarballs by path skips. The other packages come from npmjs.com through the registry.
-//
-// `node scripts/local-registry.js --tarballs <dir>` serves until it is stopped and writes the address to
-// `<dir>/registry.json`: a check on another Node version uses the registry that Node 24 runs (verdaccio needs Node 22).
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseArgs } from 'node:util';
 
 const windows = process.platform === 'win32';
 const npm = windows ? 'npm.cmd' : 'npm';
@@ -111,20 +107,4 @@ export async function startRegistry(directory) {
     stop();
     throw error;
   }
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { values } = parseArgs({ options: { tarballs: { type: 'string' } } });
-  const directory = resolve(values.tarballs ?? '.smoke');
-  mkdirSync(directory, { recursive: true });
-  const { url, stop } = await startRegistry(directory);
-  // verdaccio runs in a child process: it stops with this one.
-  for (const signal of ['SIGINT', 'SIGTERM']) {
-    process.on(signal, () => {
-      stop();
-      process.exit(0);
-    });
-  }
-  writeFileSync(join(directory, 'registry.json'), JSON.stringify({ url }));
-  console.log(`local registry at ${url}`);
 }

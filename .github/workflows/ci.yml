@@ -31,8 +31,11 @@ jobs:
     name: Packages on Node ${{ matrix.node }}
     runs-on: ubuntu-latest
     strategy:
+      # One version must not cancel the other: each shows its own failure.
+      fail-fast: false
       matrix:
-        node: ['20.19', '22']
+        # The lowest version of `engines` and the newest line; Node 24 runs the tests of the repository above.
+        node: ['22.12', '26']
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -45,8 +48,8 @@ jobs:
         with:
           tool: cargo-about
       - run: pnpm install --frozen-lockfile
-      # The tests are TypeScript that Node 24 runs as it is, and pnpm needs Node 22: the packages are checked on the
-      # lowest Node of `engines` through their tarballs, as a user installs them.
+      # The tests are TypeScript that Node 24 runs as it is: the packages are checked on other versions through
+      # their tarballs, as a user installs them.
       - run: pnpm --filter @compatgate/core run build:debug && pnpm -r run build:js && pnpm third-party
       # `napi artifacts` wants the binaries of every target: the one binary of this job is copied by hand.
       - working-directory: packages/core
@@ -56,11 +59,6 @@ jobs:
           mkdir -p .smoke
           (cd packages/core/npm/linux-x64-gnu && npm pack --pack-destination ../../../../.smoke)
           for name in core eslint bundler; do (cd packages/$name && pnpm pack --pack-destination ../../.smoke); done
-      # The local registry needs Node 22, so Node 24 serves it, and the packages install on the Node under test.
-      - run: |
-          node scripts/local-registry.js --tarballs .smoke &
-          for _ in $(seq 1 60); do [ -f .smoke/registry.json ] && break; sleep 1; done
-          test -f .smoke/registry.json
       - uses: actions/setup-node@v7
         with:
           node-version: '${{ matrix.node }}'
