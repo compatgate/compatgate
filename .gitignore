@@ -8,3 +8,12 @@ packages/*/LICENSE-APACHE
 # The fixture of the conformance suite has packages of its own.
 !/conformance/fixture/node_modules/
 !/conformance/fixture/node_modules/**/node_modules/
+# The platform packages and the binaries that CI makes for a release.
+npm/
+artifacts/
+*.wasm
+*.tgz
+# The loader of the wasm build that `napi build` writes next to the binary.
+packages/core/*.wasi.cjs
+packages/core/*.wasi-browser.js
+packages/core/wasi-worker*.mjs

@@ -48,19 +48,36 @@
     "build": "pnpm run build:native && pnpm run build:js",
     "build:debug": "pnpm run build:native:debug && pnpm run build:js",
     "typecheck": "tsc -p tsconfig.test.json",
-    "test": "node --test \"test/**/*.test.ts\""
+    "test": "node --test \"test/**/*.test.ts\"",
+    "prepublishOnly": "napi pre-publish -t npm"
   },
   "dependencies": {
     "browserslist": "^4.29.3",
     "jsonc-parser": "^3.3.1"
   },
   "devDependencies": {
+    "@emnapi/core": "^1.11.3",
+    "@emnapi/runtime": "^1.11.3",
     "@napi-rs/cli": "catalog:",
+    "@napi-rs/wasm-runtime": "^1.2.5",
     "@types/node": "catalog:",
+    "emnapi": "^1.11.3",
     "typescript": "catalog:"
   },
   "napi": {
-    "binaryName": "compatgate"
+    "binaryName": "compatgate",
+    "rootPublisher": "pnpm",
+    "targets": [
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-musl",
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc",
+      "wasm32-wasip1-threads"
+    ]
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
