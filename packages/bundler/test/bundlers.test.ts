@@ -2,6 +2,7 @@ import { beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { stripVTControlCharacters } from 'node:util';
 
 import { clearProcessMessages } from '../src/plugin.ts';
 import {
@@ -69,9 +70,14 @@ const PARTIAL_PROJECT = {
 };
 const PARTIAL_OPTIONS = { targets: 'Chrome >= 97' };
 
-/** The text from the marker of compatgate on, without the frame that the bundler adds. */
+/**
+ * The text from the marker of compatgate on, without the frame that the bundler adds. rspack colors its messages when
+ * the terminal or CI supports colors: the codes go.
+ */
 function texts(messages: readonly string[]): string[] {
-  return compatgateMessages(messages).map(message => message.slice(message.search(COMPATGATE)).trimEnd());
+  return compatgateMessages(messages).map(message =>
+    stripVTControlCharacters(message.slice(message.search(COMPATGATE))).trimEnd(),
+  );
 }
 
 for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {

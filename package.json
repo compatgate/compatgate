@@ -22,7 +22,8 @@
     "@types/web": "0.0.358",
     "oxfmt": "^0.72.0",
     "oxlint": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "verdaccio": "6.10.5"
   },
   "engines": {
     "node": ">=24"
