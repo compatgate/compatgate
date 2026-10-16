@@ -1,0 +1,170 @@
+name: Build
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.host }}
+    strategy:
+      # Each target shows its own failure.
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-apple-darwin
+            host: macos-15
+            build: ''
+          - target: aarch64-apple-darwin
+            host: macos-15
+            build: ''
+          - target: x86_64-unknown-linux-gnu
+            host: ubuntu-latest
+            build: --use-napi-cross
+          - target: aarch64-unknown-linux-gnu
+            host: ubuntu-latest
+            build: --use-napi-cross
+          - target: x86_64-unknown-linux-musl
+            host: ubuntu-latest
+            build: -x
+          - target: aarch64-unknown-linux-musl
+            host: ubuntu-latest
+            build: -x
+          - target: x86_64-pc-windows-msvc
+            host: windows-latest
+            build: ''
+          - target: aarch64-pc-windows-msvc
+            host: windows-latest
+            build: ''
+          - target: wasm32-wasip1-threads
+            host: ubuntu-latest
+            build: ''
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: rustup target add ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          key: ${{ matrix.target }}
+      - if: matrix.build == '-x'
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+      - if: matrix.build == '-x'
+        uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with:
+          tool: cargo-zigbuild
+      - run: pnpm install --frozen-lockfile
+      - working-directory: packages/core
+        run: pnpm run build:native --target ${{ matrix.target }} ${{ matrix.build }}
+      # The build must not change the committed loader and types: a change means a new export.
+      - run: git diff --exit-code packages/core/binding.js packages/core/binding.d.ts
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bindings-${{ matrix.target }}
+          if-no-files-found: error
+          path: |
+            packages/core/*.node
+            packages/core/*.wasm
+            !packages/core/*.debug.wasm
+            packages/core/*.wasi.cjs
+            packages/core/*.wasi.d.cts
+            packages/core/*.wasi-browser.js
+            packages/core/wasi-worker*.mjs
+
+  test:
+    name: Tests on ${{ matrix.target }}
+    needs: build
+    runs-on: ${{ matrix.host }}
+    # A hung test must not hold a runner for six hours.
+    timeout-minutes: 30
+    # An empty value runs the job on the runner itself.
+    container: ${{ matrix.container }}
+    env:
+      # @swc/core copies its binary into a cache and refuses a cache under a directory that others can write to:
+      # /github/home, the HOME of a container job, is one. An empty value keeps the default cache.
+      SWC_NATIVE_BINDING_CACHE: ${{ matrix.container && '/root/.cache/swc' || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            host: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            host: ubuntu-24.04-arm
+          - target: x86_64-unknown-linux-musl
+            host: ubuntu-latest
+            container: node:24-alpine
+          - target: x86_64-apple-darwin
+            host: macos-15-intel
+          - target: aarch64-apple-darwin
+            host: macos-15
+          - target: x86_64-pc-windows-msvc
+            host: windows-latest
+          - target: aarch64-pc-windows-msvc
+            host: windows-11-arm
+          - target: wasm32-wasip1-threads
+            host: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      # The image of a container brings its Node: setup-node would put a build for glibc into Alpine.
+      - if: ${{ !matrix.container }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: bindings-${{ matrix.target }}
+          path: packages/core
+      - run: pnpm -r run build:js
+      # `error` fails instead of falling back to a native binary; the loader accepts only `true` and `error`. The
+      # variable reaches every napi-rs package, so it is set for the core only: oxlint has no wasm build here.
+      - if: matrix.target == 'wasm32-wasip1-threads'
+        run: pnpm --filter @compatgate/core run test
+        env:
+          NAPI_RS_FORCE_WASI: error
+      # With no native binary next to the loader, the adapters load the wasm build of the core. `--no-bail --no-sort`
+      # runs the tests of every package: in the order of dependencies pnpm skips the dependents of a failed package.
+      - run: pnpm -r --no-bail --no-sort run test
+
+  smoke:
+    name: Installed packages on ${{ matrix.host }}
+    needs: build
+    runs-on: ${{ matrix.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [ubuntu-latest, macos-15, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with:
+          tool: cargo-about
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: bindings-*
+          path: packages/core/artifacts
+      - run: pnpm -r run build:js && pnpm third-party
+      - working-directory: packages/core
+        run: pnpm exec napi create-npm-dirs && pnpm exec napi artifacts --output-dir artifacts --npm-dir npm
+      - run: node scripts/prepare-platform-packages.js
+      - shell: bash
+        run: |
+          mkdir -p .smoke
+          for dir in packages/core/npm/*/; do (cd "$dir" && npm pack --pack-destination ../../../../.smoke); done
+          for name in core eslint bundler; do (cd packages/$name && pnpm pack --pack-destination ../../.smoke); done
+      - run: node scripts/smoke.js --tarballs .smoke

@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+    # `labeled`: the label `release-check` runs the build of every platform on any pull request.
+    types: [opened, synchronize, reopened, labeled]
   push:
     branches: [main]
 
@@ -110,3 +112,39 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+
+  changes:
+    name: Changed files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      build: ${{ steps.filter.outputs.build }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            build:
+              - 'crates/**'
+              - 'packages/core/src/**'
+              - 'packages/core/Cargo.toml'
+              - 'packages/core/build.rs'
+              - 'packages/core/package.json'
+              - 'Cargo.*'
+              - '.cargo/**'
+              - 'rust-toolchain.toml'
+              - '.github/workflows/**'
+              - 'scripts/smoke*'
+              - 'scripts/smoke/**'
+              - 'scripts/local-registry.js'
+              - 'scripts/verdaccio.yaml'
+              - 'scripts/prepare-platform-packages.js'
+
+  build:
+    name: Binaries
+    needs: changes
+    if: needs.changes.outputs.build == 'true' || contains(github.event.pull_request.labels.*.name, 'release-check')
+    uses: ./.github/workflows/build.yml
