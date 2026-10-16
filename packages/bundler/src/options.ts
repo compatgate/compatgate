@@ -1,4 +1,4 @@
-import { isAbsolute, posix, resolve } from 'node:path';
+import { isAbsolute, posix, resolve, sep } from 'node:path';
 
 import { OptionsError, type AllowEntryInput, type FindingConfidence, type SharedOptions } from '@compatgate/core';
 import picomatch from 'picomatch';
@@ -112,5 +112,5 @@ function matchers(pattern: FilterPattern | undefined, baseDir: string): Array<(p
 }
 
 export function toPosix(path: string): string {
-  return path.replaceAll('\\', '/');
+  return path.split(sep).join('/');
 }

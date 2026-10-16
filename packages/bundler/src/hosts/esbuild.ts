@@ -1,7 +1,5 @@
-import { extname } from 'node:path';
-
 import { esbuildLower, type EsbuildOptions, type TsconfigCache } from '../lowering.ts';
-import { ESBUILD_FILTER, SCRIPT_LOADERS, moduleFile } from '../module-id.ts';
+import { ESBUILD_FILTER, SCRIPT_LOADERS, extensionOf, moduleFile } from '../module-id.ts';
 import type { Host, HookContext } from './host.ts';
 import { pluginChannels } from './plugin-context.ts';
 
@@ -22,7 +20,7 @@ export function esbuildHost(): Host {
   // The `loader` option of the build overrides the loaders of the scripts, as esbuild does when it loads a file
   // itself: `{ '.js': 'jsx' }` is common.
   let loaders: Readonly<Record<string, string>> = SCRIPT_LOADERS;
-  const loader = (path: string) => loaders[extname(path).toLowerCase()] ?? 'js';
+  const loader = (path: string) => loaders[extensionOf(path)] ?? 'js';
   let options: EsbuildOptions | undefined;
   const tsconfigs: TsconfigCache = new Map();
   return {

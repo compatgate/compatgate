@@ -51,7 +51,12 @@ export const ESBUILD_FILTER = new RegExp(`\\.(?:${SCRIPTS})$`, 'i');
 
 /** Whether the core parses a file with this name: a script by the extension, in any case. */
 export function isScript(filename: string): boolean {
-  return Object.hasOwn(SCRIPT_LOADERS, win32.extname(filename).toLowerCase());
+  return Object.hasOwn(SCRIPT_LOADERS, extensionOf(filename));
+}
+
+/** The extension of `filename` in lower case, such as `.ts`. win32 takes POSIX paths too. */
+export function extensionOf(filename: string): string {
+  return win32.extname(filename).toLowerCase();
 }
 
 /**

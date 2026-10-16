@@ -12,7 +12,6 @@ import {
 import { CheckerRegistry, type ConfigurationMessages } from './checkers.ts';
 import type { ModuleFile } from './module-id.ts';
 import { WHERE, createFilter, readOptions, toPosix, type CompatgateBundlerOptions, type Level } from './options.ts';
-import { displayPath } from './paths.ts';
 import { ModuleRecords, type ModuleRecord } from './records.ts';
 import type { PartialFinding } from './summary.ts';
 
@@ -156,12 +155,8 @@ export class PluginState {
    * `context`, and gives `null`.
    */
   configuration(path: string, context: ModuleContext): Configuration | null {
-    const { baseDir } = this;
-    if (this.resolver.baseDir !== baseDir) {
-      this.resolver = { baseDir, resolver: createResolver({ ...this.shared, baseDir, where: WHERE }) };
-    }
     try {
-      const resolved = this.resolver.resolver.resolve(path, { snapshot: this.snapshot });
+      const resolved = this.currentResolver().resolve(path, { snapshot: this.snapshot });
       this.watch(context, resolved);
       const configuration = this.registry.configuration(resolved);
       this.report(configuration, context);
@@ -337,9 +332,18 @@ export class PluginState {
     return 'file' in source ? this.displayPath(source.file) : `${source.options}.allow`;
   }
 
-  /** The path in messages: relative to the project root when the module lies inside it. */
+  /** The path in messages, as the messages of the core name it: relative to the project root inside it. */
   displayPath(path: string): string {
-    return displayPath(path, this.baseDir);
+    return this.currentResolver().displayPath(path);
+  }
+
+  /** The resolver of the current `baseDir`: a host sets `baseDir` when the bundler gives its root. */
+  private currentResolver(): Resolver {
+    const { baseDir } = this;
+    if (this.resolver.baseDir !== baseDir) {
+      this.resolver = { baseDir, resolver: createResolver({ ...this.shared, baseDir, where: WHERE }) };
+    }
+    return this.resolver.resolver;
   }
 
   private matches(path: string): boolean {

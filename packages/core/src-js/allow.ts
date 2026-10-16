@@ -7,6 +7,7 @@ import type { ParseError } from 'jsonc-parser';
 
 import { ConfigError } from './errors.ts';
 import { fileState } from './file-state.ts';
+import { samePath } from './paths.ts';
 
 export const ALLOW_FILE = 'compatgate.jsonc';
 
@@ -100,7 +101,7 @@ export function findAllowFile(directory: string, root?: string): { path: string 
     if (existsSync(candidate)) {
       return { path: candidate, missing };
     }
-    if (directory === root) {
+    if (root !== undefined && samePath(directory, root)) {
       missing.push(candidate);
     }
     const parent = dirname(directory);

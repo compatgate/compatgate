@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 import { createProject, FAKE_ROOT, fakePath } from '@compatgate/test-utils';
 import { createChecker } from '../src-js/checker.ts';
-import { AllowConfigError, bcdVersion, clearCaches } from '../src-js/index.ts';
+import { AllowConfigError, bcdVersion, clearCaches, createResolver } from '../src-js/index.ts';
 import { check, resolveConfiguration } from './resolve.ts';
 
 test('check resolves targets and compatgate.jsonc from the filename', () => {
@@ -122,4 +122,12 @@ test('createChecker and check do not take the origin of an entry: compatgate set
     () => check('', { filename: fakePath('p', 'a.js'), targets: 'Chrome >= 97', allow: [entry] }),
     AllowConfigError,
   );
+});
+
+test('the resolver names a path as the messages of compatgate name it', () => {
+  const resolver = createResolver({ baseDir: FAKE_ROOT });
+  assert.equal(resolver.displayPath(fakePath('p', 'src', 'a.ts')), 'src/a.ts');
+  assert.equal(resolver.displayPath(fakePath('q', 'a.ts')), fakePath('q', 'a.ts'));
+  // Without `baseDir` the root is the directory of the process, as for the lookup of the configs.
+  assert.equal(createResolver().displayPath(join(process.cwd(), 'src', 'a.ts')), 'src/a.ts');
 });

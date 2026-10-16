@@ -19,7 +19,7 @@ import { describeAllowIssue, describeFinding, type DescribeFindingOptions } from
 import { ConfigError } from './errors.ts';
 import { fileState } from './file-state.ts';
 import { configLookupDirectory } from './lookup.ts';
-import { displayPaths } from './paths.ts';
+import { displayPath, displayPaths } from './paths.ts';
 import { readConfigurationOptions, type SharedOptions } from './options.ts';
 import { TARGETS_FILES, TargetsConfigError, clearTargetsCache, resolveBrowsers, resolveTargetsIn } from './targets.ts';
 import type { AllowIssue, CheckResult, Checker, CoreAllowIssue, CoreChecker, Finding } from './types.ts';
@@ -86,6 +86,11 @@ export interface Resolver {
    * such as `/src/App.vue.ts` for the script of `/src/App.vue`.
    */
   check(source: string, filename: string, options?: CheckOptions): CheckResult;
+  /**
+   * The name of `path` in the messages of compatgate: relative to `baseDir` with `/` separators when it lies below
+   * it, as it is otherwise. An adapter names the paths of its own messages with it.
+   */
+  displayPath(path: string): string;
 }
 
 export interface CheckOptions extends ResolveOptions {
@@ -100,12 +105,13 @@ export interface CheckOptions extends ResolveOptions {
 export function createResolver(options: ResolverOptions = {}): Resolver {
   const shared = readConfigurationOptions(options as Readonly<Record<string, unknown>>, options.where ?? 'options');
   const checked: ResolverOptions = Object.freeze({ ...shared, baseDir: options.baseDir, where: options.where });
-  const resolve = (filename: string, { snapshot }: ResolveOptions = {}) =>
+  const configuration = (filename: string, { snapshot }: ResolveOptions = {}) =>
     resolveConfiguration(filename, checked, snapshot);
   return Object.freeze({
-    resolve,
+    resolve: configuration,
     check: (source: string, filename: string, { parseAs, snapshot }: CheckOptions = {}) =>
-      resolve(filename, { snapshot }).checker.check(source, filename, parseAs),
+      configuration(filename, { snapshot }).checker.check(source, filename, parseAs),
+    displayPath: (path: string) => displayPath(path, resolve(checked.baseDir ?? process.cwd())),
   });
 }
 
