@@ -57,12 +57,12 @@
     "jsonc-parser": "^3.3.1"
   },
   "devDependencies": {
-    "@emnapi/core": "^1.11.3",
-    "@emnapi/runtime": "^1.11.3",
+    "@emnapi/core": "2.0.0-alpha.6",
+    "@emnapi/runtime": "2.0.0-alpha.6",
     "@napi-rs/cli": "catalog:",
     "@napi-rs/wasm-runtime": "^1.2.5",
     "@types/node": "catalog:",
-    "emnapi": "^1.11.3",
+    "emnapi": "2.0.0-alpha.6",
     "typescript": "catalog:"
   },
   "napi": {
