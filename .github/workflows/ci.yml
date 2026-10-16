@@ -3,7 +3,8 @@ name: CI
 on:
   pull_request:
     # `labeled`: the label `release-check` runs the build of every platform on any pull request.
-    types: [opened, synchronize, reopened, labeled]
+    # `ready_for_review`: the draft PR of a release gets its checks when the owner marks it ready.
+    types: [opened, synchronize, reopened, labeled, ready_for_review]
   push:
     branches: [main]
 
@@ -29,6 +30,8 @@ jobs:
           cache: pnpm
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: pnpm install --frozen-lockfile
+      # The change intents and the versions keep the rules of `versioning` in pnpm-workspace.yaml.
+      - run: pnpm change check
       # The dependencies that the packages bring to a project: a known flaw there fails CI. The dev tools are not in it.
       - run: pnpm audit --prod
       - run: pnpm run check

@@ -15,7 +15,9 @@
     "test:scripts": "node --test \"scripts/*.test.js\"",
     "test:rust": "cargo test --workspace",
     "test:js": "pnpm run build:debug && pnpm -r run test",
-    "check": "pnpm run generate:check && pnpm run fmt:check && pnpm run lint && pnpm run test && pnpm run typecheck"
+    "check": "pnpm run generate:check && pnpm run fmt:check && pnpm run lint && pnpm run test && pnpm run typecheck",
+    "change": "pnpm change",
+    "release": "pnpm -r run build:js && pnpm third-party && node scripts/prepare-platform-packages.js && pnpm publish -r --provenance --report-summary --no-git-checks --tag \"$RELEASE_TAG\""
   },
   "devDependencies": {
     "@mdn/browser-compat-data": "8.1.4",

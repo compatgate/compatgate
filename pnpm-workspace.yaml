@@ -30,3 +30,16 @@ allowBuilds:
 overrides:
   handlebars: ^4.7.10
   compression: ^1.8.2
+
+# The three packages release at one version. The private packages are never published.
+versioning:
+  fixed:
+    - ['@compatgate/core', '@compatgate/eslint', '@compatgate/bundler']
+  ignore:
+    - conformance
+    - '@compatgate/test-utils'
+  # A major change waits in a branch of its own: an intent `major` in `main` fails `pnpm change check`.
+  maxBump: minor
+  # The changelogs live in the repository: the GitHub Releases take their text from them.
+  changelog:
+    storage: repository
