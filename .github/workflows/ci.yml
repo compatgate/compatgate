@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -42,6 +44,8 @@ jobs:
         node: ['22.12', '26']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -74,6 +78,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -81,7 +87,8 @@ jobs:
           cache: pnpm
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @compatgate/eslint add -D eslint@^9
+      # The newest ESLint 9 on purpose, outside the lockfile: the job has no secrets, and its token only reads.
+      - run: pnpm --filter @compatgate/eslint add -D eslint@^9 # zizmor: ignore[adhoc-packages]
       - run: pnpm run build:debug
       - run: pnpm --filter @compatgate/eslint test
 
@@ -90,6 +97,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -115,7 +124,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+
+  zizmor:
+    name: Workflows (zizmor)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with:
+          tool: zizmor@1.30.1
+          fallback: none
+      # The token lets zizmor check online that each pinned commit belongs to its action and has no known flaw.
+      - run: zizmor --min-severity=low .github
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  dependency-review:
+    name: New dependencies (advisories, licenses)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          # The licenses of deny.toml and the other permissive ones: the packages bring their npm dependencies to a
+          # project. caniuse-lite is data under CC-BY-4.0, as browserslist needs it.
+          allow-licenses: >-
+            MIT, Apache-2.0, Apache-2.0 WITH LLVM-exception, Unicode-3.0, ISC, Unlicense, BSD-2-Clause, BSD-3-Clause,
+            0BSD
+          allow-dependencies-licenses: pkg:npm/caniuse-lite
 
   changes:
     name: Changed files
@@ -127,6 +168,8 @@ jobs:
       build: ${{ steps.filter.outputs.build }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         with:
@@ -151,4 +194,5 @@ jobs:
     name: Binaries
     needs: changes
     if: needs.changes.outputs.build == 'true' || contains(github.event.pull_request.labels.*.name, 'release-check')
-    uses: ./.github/workflows/build.yml
+    # `$/` of GitHub fails actionlint 1.7.12.
+    uses: ./.github/workflows/build.yml # zizmor: ignore[self-repository]
