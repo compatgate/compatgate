@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { FAKE_ROOT, fakePath } from '@compatgate/test-utils';
 import { describeFinding } from '../src-js/describe.ts';
 import type { CoreFinding as Finding, Gap } from '../src-js/types.ts';
 import { check } from './resolve.ts';
@@ -43,16 +44,16 @@ test('the advice names the place of the allow entries of the project', () => {
   assert.equal(advice(), 'add "javascript.builtins.Intl.Segmenter" to compatgate.jsonc.');
   // A path inside the project root is relative to it; another path stays absolute.
   assert.equal(
-    advice({ allowIn: '/p/src/lib/compatgate.jsonc', baseDir: '/p' }),
+    advice({ allowIn: fakePath('p', 'src', 'lib', 'compatgate.jsonc'), baseDir: FAKE_ROOT }),
     'add "javascript.builtins.Intl.Segmenter" to src/lib/compatgate.jsonc.',
   );
   assert.equal(
-    advice({ allowIn: '/q/compatgate.jsonc', baseDir: '/p' }),
-    'add "javascript.builtins.Intl.Segmenter" to /q/compatgate.jsonc.',
+    advice({ allowIn: fakePath('q', 'compatgate.jsonc'), baseDir: FAKE_ROOT }),
+    `add "javascript.builtins.Intl.Segmenter" to ${fakePath('q', 'compatgate.jsonc')}.`,
   );
   // An option is named as it is.
   assert.equal(
-    advice({ allowIn: 'settings.compatgate.allow', baseDir: '/p' }),
+    advice({ allowIn: 'settings.compatgate.allow', baseDir: FAKE_ROOT }),
     'add "javascript.builtins.Intl.Segmenter" to settings.compatgate.allow.',
   );
 });

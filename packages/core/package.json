@@ -57,6 +57,7 @@
     "jsonc-parser": "^3.3.1"
   },
   "devDependencies": {
+    "@compatgate/test-utils": "workspace:*",
     "@emnapi/core": "2.0.0-alpha.6",
     "@emnapi/runtime": "2.0.0-alpha.6",
     "@napi-rs/cli": "catalog:",

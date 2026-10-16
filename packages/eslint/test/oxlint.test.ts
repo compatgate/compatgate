@@ -1,17 +1,16 @@
-import { after, before, test } from 'node:test';
+import { before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Linter } from 'eslint';
 import typescriptParser from '@typescript-eslint/parser';
 
+import { createProject, toSlashes } from '@compatgate/test-utils';
 import plugin from '../src/index.ts';
+import { runOxlint } from './run-oxlint.ts';
 
 const packageDir = fileURLToPath(new URL('..', import.meta.url));
-const oxlintBin = join(packageDir, 'node_modules/.bin/oxlint');
 const TARGETS = 'Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115';
 
 // Twenty files: every kind and confidence of findings, a feature check, an allowed feature, TypeScript and JSX.
@@ -43,16 +42,10 @@ let root: string;
 
 before(() => {
   // The project installs the package by its name: oxlint resolves `jsPlugins` like an import.
-  root = mkdtempSync(join(tmpdir(), 'compatgate-oxlint-'));
+  root = createProject(Object.fromEntries(Object.entries(SOURCES).map(([name, source]) => [`src/${name}`, source])));
   mkdirSync(join(root, 'node_modules/@compatgate'), { recursive: true });
   symlinkSync(packageDir, join(root, 'node_modules/@compatgate/eslint'), 'dir');
-  for (const [name, source] of Object.entries(SOURCES)) {
-    mkdirSync(join(root, 'src', name, '..'), { recursive: true });
-    writeFileSync(join(root, 'src', name), source);
-  }
 });
-
-after(() => rmSync(root, { recursive: true, force: true }));
 
 interface OxlintDiagnostic {
   message: string;
@@ -63,10 +56,7 @@ interface OxlintDiagnostic {
 }
 
 function oxlint(config: Record<string, unknown>, paths = ['src']): OxlintDiagnostic[] {
-  const run = spawnSync(oxlintBin, ['-c', writeConfig(config), '--format', 'json', ...paths], {
-    cwd: root,
-    encoding: 'utf8',
-  });
+  const run = runOxlint(['-c', writeConfig(config), '--format', 'json', ...paths], root);
   assert.ok(run.stdout.startsWith('{'), `oxlint failed: ${run.stdout}\n${run.stderr}`);
   const diagnostics: OxlintDiagnostic[] = JSON.parse(run.stdout).diagnostics;
   // Rule crashes are diagnostics too. None is expected.
@@ -91,7 +81,7 @@ function oxlintFindings(diagnostics: OxlintDiagnostic[]): string[] {
     .map(diagnostic => {
       const rule = /\((\w+)\)$/.exec(diagnostic.code)?.[1] ?? diagnostic.code;
       const { offset, length } = diagnostic.labels[0]!.span;
-      const filename = diagnostic.filename.replaceAll('\\', '/');
+      const filename = toSlashes(diagnostic.filename);
       const start = position(filename, offset);
       const end = position(filename, offset + length);
       return `${filename}:${start}-${end} ${rule} ${diagnostic.message}`;
@@ -134,7 +124,7 @@ function eslintFindings(compatgate: Record<string, unknown>): string[] {
       assert.ok(message.ruleId, `${filename}: ${message.message}`);
       const rule = message.ruleId.split('/')[1];
       findings.push(
-        `${relative(root, filename)}:${message.line}:${message.column}-${message.endLine}:${message.endColumn} ${rule} ${message.message}`,
+        `${toSlashes(relative(root, filename))}:${message.line}:${message.column}-${message.endLine}:${message.endColumn} ${rule} ${message.message}`,
       );
     }
   }
@@ -169,7 +159,7 @@ test('oxlint gives two files with one text the findings of their own allow scope
   }
   const settings = { targets: TARGETS, allow: [{ feature: 'api.structuredClone', files: ['same/allowed/**'] }] };
   const files = oxlint(oxlintConfig(settings), ['same'])
-    .map(diagnostic => diagnostic.filename.replaceAll('\\', '/'))
+    .map(diagnostic => toSlashes(diagnostic.filename))
     .sort();
   assert.deepEqual(files, ['same/other/a.js', 'same/other/b.js']);
 });
@@ -185,10 +175,7 @@ test('oxlint takes an alias for the plugin', () => {
 });
 
 function oxlintRun(config: Record<string, unknown>, paths: string[]): { status: number | null; findings: string[] } {
-  const run = spawnSync(oxlintBin, ['-c', writeConfig(config), '--format', 'json', ...paths], {
-    cwd: root,
-    encoding: 'utf8',
-  });
+  const run = runOxlint(['-c', writeConfig(config), '--format', 'json', ...paths], root);
   assert.ok(run.stdout.startsWith('{'), `oxlint failed: ${run.stdout}\n${run.stderr}`);
   const diagnostics: OxlintDiagnostic[] = JSON.parse(run.stdout).diagnostics;
   return { status: run.status, findings: oxlintFindings(diagnostics) };
@@ -229,7 +216,7 @@ test('a broken config is one message of the exact rule in each file in oxlint; o
   const config = { ...oxlintConfig({}), rules: { ...oxlintConfig({}).rules, 'no-debugger': 'error' } };
   const { status, findings } = oxlintRun(config, ['broken']);
   assert.notEqual(status, 0);
-  const broken = `exact ${join('broken', 'compatgate.jsonc')}: CloseBracketExpected at offset 12`;
+  const broken = 'exact broken/compatgate.jsonc: CloseBracketExpected at offset 12';
   assert.deepEqual(
     findings.map(finding => finding.replace(/ eslint\(no-debugger\) .*$/, ' no-debugger')).sort(),
     [`broken/a.js:1:1-1:1 ${broken}`, 'broken/a.js:1:1-1:10 no-debugger', `broken/b.js:1:1-1:1 ${broken}`].sort(),

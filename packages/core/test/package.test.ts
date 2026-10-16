@@ -7,7 +7,12 @@ const packageDir = fileURLToPath(new URL('..', import.meta.url));
 
 test('the published tarball holds the loader and dist, but no native binary', () => {
   const [report] = JSON.parse(
-    execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: packageDir, encoding: 'utf8' }),
+    // npm is a batch file on Windows: only a shell runs it.
+    execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
+      cwd: packageDir,
+      encoding: 'utf8',
+      shell: process.platform === 'win32',
+    }),
   );
   const files: string[] = report.files.map((file: { path: string }) => file.path);
   for (const expected of ['package.json', 'README.md', 'binding.js', 'binding.d.ts', 'dist/index.js']) {

@@ -7,8 +7,8 @@ import * as esbuild from 'esbuild';
 import { rolldown } from 'rolldown';
 import { rollup, watch as rollupWatch, type Plugin as RollupPlugin, type RollupWatcherEvent } from 'rollup';
 import { build as viteBuild, createServer as createViteServer, type Logger, type PluginOption } from 'vite';
+import { editFile } from '@compatgate/test-utils';
 
-import { editFile } from './helpers.ts';
 import {
   compatgateEsbuild,
   compatgateRolldown,
@@ -108,6 +108,9 @@ export const rollupHost: Host = {
   name: 'rollup',
   async build(root, options, build = {}) {
     const warnings: string[] = [];
+    // Rollup has no project root: compatgate takes the directory of the process, as a project that runs Rollup has.
+    const cwd = process.cwd();
+    process.chdir(root);
     try {
       const bundle = await rollup({
         input: entry(root),
@@ -119,6 +122,8 @@ export const rollupHost: Host = {
       return { error: undefined, warnings };
     } catch (error) {
       return { error: message(error), warnings };
+    } finally {
+      process.chdir(cwd);
     }
   },
 };
@@ -191,6 +196,9 @@ export function watchRollup(
   const results: HostResult[] = [];
   const waiting: Array<(result: HostResult) => void> = [];
   let current: HostResult = { error: undefined, warnings: [] };
+  // Rollup has no project root: compatgate takes the directory of the process, as a project that runs Rollup has.
+  const cwd = process.cwd();
+  process.chdir(root);
   const watcher = rollupWatch({
     input: entry(root),
     plugins: [typescript, compatgateRollup(options), ...plugins],
@@ -260,7 +268,10 @@ export function watchRollup(
       }
       throw new Error(`rollup watch: the watcher does not see ${path}`);
     },
-    close: () => watcher.close(),
+    close: async () => {
+      await watcher.close();
+      process.chdir(cwd);
+    },
   };
 }
 

@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Worker } from 'node:worker_threads';
+import { sep } from 'node:path';
 
+import { FAKE_ROOT, fakePath } from '@compatgate/test-utils';
 import { createChecker } from '../src-js/checker.ts';
 import { AllowConfigError, ConfigError, OptionsError, TargetsConfigError, isCheckable } from '../src-js/index.ts';
 import { check } from './resolve.ts';
@@ -10,12 +12,12 @@ const TARGETS = 'Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115';
 
 test('a checker checks many files with one set of targets and allow entries', () => {
   const checker = createChecker({ targets: TARGETS, allow: ['javascript.builtins.Object.groupBy'] });
-  const first = checker.check('structuredClone(1);', '/p/a.js');
+  const first = checker.check('structuredClone(1);', fakePath('p', 'a.js'));
   assert.deepEqual(
     first.findings.map(finding => finding.feature),
     ['api.structuredClone'],
   );
-  const second = checker.check('Object.groupBy(a, f); structuredClone(1);', '/p/b.ts');
+  const second = checker.check('Object.groupBy(a, f); structuredClone(1);', fakePath('p', 'b.ts'));
   assert.deepEqual(
     second.findings.map(finding => finding.feature),
     ['api.structuredClone'],
@@ -29,13 +31,13 @@ test('a checker checks many files with one set of targets and allow entries', ()
 test('a checker tells the kinds of the findings that each used entry suppressed', () => {
   const lookbehind = 'javascript.regular_expressions.lookbehind_assertion';
   const checker = createChecker({ targets: TARGETS, allow: [lookbehind, 'api.ResizeObserver', 'api.structuredClone'] });
-  const result = checker.check('structuredClone(/(?<=a)b/);', '/p/a.js');
+  const result = checker.check('structuredClone(/(?<=a)b/);', fakePath('p', 'a.js'));
   assert.deepEqual(result.findings, []);
   assert.deepEqual(result.suppressed, [
     { index: 0, kind: 'syntax' },
     { index: 2, kind: 'api' },
   ]);
-  assert.deepEqual(checker.check('const = ;', '/p/b.js').suppressed, []);
+  assert.deepEqual(checker.check('const = ;', fakePath('p', 'b.js')).suppressed, []);
 });
 
 test('suppressed names each kind of an entry once, ordered by the index', () => {
@@ -47,7 +49,7 @@ test('suppressed names each kind of an entry once, ordered by the index', () => 
   ];
   const checker = createChecker({ targets: TARGETS, allow });
   const source = 'structuredClone(/(?<=a)b/); [].toSorted(); list.toSorted(); new Intl.Segmenter(); /(?<=c)d/;';
-  const result = checker.check(source, '/p/a.js');
+  const result = checker.check(source, fakePath('p', 'a.js'));
   assert.deepEqual(result.findings, []);
   assert.deepEqual(
     result.suppressed.map(item => item.index),
@@ -62,8 +64,8 @@ test('suppressed names each kind of an entry once, ordered by the index', () => 
 test('the checker of a configuration gives the result of the binding with the messages', () => {
   const source = 'const s = "Мяу"; structuredClone(s); [1].toSorted(); class A { static {} }';
   const options = { targets: 'Chrome >= 90', allow: [] };
-  const result = check(source, { filename: '/p/a.js', ...options });
-  const core = createChecker(options).check(source, '/p/a.js');
+  const result = check(source, { filename: fakePath('p', 'a.js'), ...options });
+  const core = createChecker(options).check(source, fakePath('p', 'a.js'));
   const messages = result.findings.map(finding => finding.message);
   assert.deepEqual(result, {
     ...core,
@@ -80,7 +82,7 @@ test('the checker of a configuration gives the result of the binding with the me
 
 test('a syntax error is in the result, not thrown', () => {
   const checker = createChecker({ targets: TARGETS });
-  const result = checker.check('const a = 1;\nconst = ;', '/p/broken.js');
+  const result = checker.check('const a = 1;\nconst = ;', fakePath('p', 'broken.js'));
   assert.deepEqual(result.findings, []);
   assert.deepEqual(result.suppressed, []);
   assert.equal(result.parseError?.kind, 'syntax');
@@ -93,24 +95,36 @@ test('a syntax error is in the result, not thrown', () => {
 test('an unknown file extension is an unsupported file, not a syntax error', () => {
   const checker = createChecker({ targets: TARGETS });
   for (const [filename, named] of [
-    ['/p/a.vue', '".vue"'],
-    ['/p/a.ts?v=123', '".ts?v=123"'],
+    [fakePath('p', 'a.vue'), '".vue"'],
+    [fakePath('p', 'a.ts?v=123'), '".ts?v=123"'],
   ] as const) {
     const result = checker.check('<template></template>', filename);
     assert.deepEqual(result.findings, []);
     assert.deepEqual(Object.keys(result.parseError ?? {}).sort(), ['kind', 'message'], 'no position');
     assert.equal(result.parseError?.kind, 'unsupported-file');
     assert.ok(result.parseError?.message.includes(named), result.parseError?.message);
-    assert.ok(!result.parseError?.message.includes('/p/'), 'the message does not repeat the filename');
+    assert.ok(!result.parseError?.message.includes(FAKE_ROOT), 'the message does not repeat the filename');
   }
 });
 
 test('isCheckable tells the files that a checker can parse', () => {
-  for (const filename of ['/p/a.js', '/p/a.mjs', '/p/a.cts', '/p/a.tsx', '/p/A.JS', '/p/a.d.ts']) {
+  for (const filename of [
+    fakePath('p', 'a.js'),
+    fakePath('p', 'a.mjs'),
+    fakePath('p', 'a.cts'),
+    fakePath('p', 'a.tsx'),
+    fakePath('p', 'A.JS'),
+    fakePath('p', 'a.d.ts'),
+  ]) {
     assert.equal(isCheckable(filename), true, filename);
   }
   // A bundler id with a query is no file name: the adapter strips the query first.
-  for (const filename of ['/p/a.vue', '/p/a.css', '/p/Makefile', '/p/a.ts?v=123']) {
+  for (const filename of [
+    fakePath('p', 'a.vue'),
+    fakePath('p', 'a.css'),
+    fakePath('p', 'Makefile'),
+    fakePath('p', 'a.ts?v=123'),
+  ]) {
     assert.equal(isCheckable(filename), false, filename);
   }
 });
@@ -118,7 +132,7 @@ test('isCheckable tells the files that a checker can parse', () => {
 test('a range is UTF-16 offsets into the source', () => {
   // 🐈‍⬛ is four UTF-16 units: a surrogate pair, a zero-width joiner and one more character.
   const source = '﻿const s = "Мяу 🐈‍⬛";\nstructuredClone(s);';
-  const [finding] = createChecker({ targets: TARGETS }).check(source, '/p/a.js').findings;
+  const [finding] = createChecker({ targets: TARGETS }).check(source, fakePath('p', 'a.js')).findings;
   assert.ok(finding);
   assert.equal(source.slice(...finding.range), 'structuredClone');
   // Columns skip the byte order mark, as ESLint does; the range indexes the string as given.
@@ -128,37 +142,40 @@ test('a range is UTF-16 offsets into the source', () => {
 
 test('a heuristic finding names the other features that the allow list accepts', () => {
   const checker = createChecker({ targets: TARGETS });
-  const [heuristic] = checker.check('list.toSorted();', '/p/a.js').findings;
+  const [heuristic] = checker.check('list.toSorted();', fakePath('p', 'a.js')).findings;
   assert.ok(heuristic);
   assert.equal(heuristic.confidence, 'heuristic');
   assert.ok(heuristic.alternatives.length > 0);
   assert.ok(!heuristic.alternatives.includes(heuristic.feature));
   // Each alternative suppresses the finding.
   for (const alternative of heuristic.alternatives) {
-    const allowed = createChecker({ targets: TARGETS, allow: [alternative] }).check('list.toSorted();', '/p/a.js');
+    const allowed = createChecker({ targets: TARGETS, allow: [alternative] }).check(
+      'list.toSorted();',
+      fakePath('p', 'a.js'),
+    );
     assert.deepEqual(allowed.findings, [], alternative);
   }
-  const [exact] = checker.check('structuredClone(1);', '/p/a.js').findings;
+  const [exact] = checker.check('structuredClone(1);', fakePath('p', 'a.js')).findings;
   assert.deepEqual(exact?.alternatives, []);
 });
 
 test('allow takes feature ids and entries; relative files resolve against baseDir', () => {
   const checker = createChecker({
     targets: TARGETS,
-    baseDir: '/p',
+    baseDir: FAKE_ROOT,
     allow: [
       'javascript.builtins.Object.groupBy',
       { feature: 'api.structuredClone', files: 'src/legacy/**' },
-      { feature: 'javascript.builtins.Intl.Segmenter', files: ['**/*.ts'], baseDir: '/other' },
+      { feature: 'javascript.builtins.Intl.Segmenter', files: ['**/*.ts'], baseDir: fakePath('other') },
     ],
   });
   const source = 'Object.groupBy(a, f); structuredClone(1); new Intl.Segmenter();';
   assert.deepEqual(
-    checker.check(source, '/p/src/legacy/a.js').findings.map(finding => finding.feature),
+    checker.check(source, fakePath('p', 'src', 'legacy', 'a.js')).findings.map(finding => finding.feature),
     ['javascript.builtins.Intl.Segmenter'],
   );
   assert.deepEqual(
-    checker.check(source, '/other/x.ts').findings.map(finding => finding.feature),
+    checker.check(source, fakePath('other', 'x.ts')).findings.map(finding => finding.feature),
     ['api.structuredClone'],
   );
 });
@@ -250,12 +267,14 @@ test('checkers in several workers check at the same time', async () => {
     index % 3 === 2 ? 'const = ;' : `${'x;\n'.repeat(index)}${source.split('\n')[index % 3]}`,
   );
   const checker = createChecker({ targets: TARGETS, allow: ['api.ResizeObserver'] });
-  const expected = files.map((file, index) => checker.check(file, `/p/${index}.js`));
+  const name = (index: number) => fakePath('p', `${index}.js`);
+  const names = files.map((_, index) => name(index));
+  const expected = files.map((file, index) => checker.check(file, name(index)));
   const code = `
     const { parentPort, workerData } = require('node:worker_threads');
     import(workerData.module).then(({ createChecker }) => {
       const checker = createChecker({ targets: workerData.targets, allow: ['api.ResizeObserver'] });
-      parentPort.postMessage(workerData.files.map((file, index) => checker.check(file, '/p/' + index + '.js')));
+      parentPort.postMessage(workerData.files.map((file, index) => checker.check(file, workerData.names[index])));
     });
   `;
   const module = new URL('../src-js/checker.ts', import.meta.url).href;
@@ -264,7 +283,7 @@ test('checkers in several workers check at the same time', async () => {
       { length: 4 },
       () =>
         new Promise((resolve, reject) => {
-          const worker = new Worker(code, { eval: true, workerData: { module, targets: TARGETS, files } });
+          const worker = new Worker(code, { eval: true, workerData: { module, targets: TARGETS, files, names } });
           worker.once('message', resolve);
           worker.once('error', reject);
         }),
@@ -278,15 +297,27 @@ test('checkers in several workers check at the same time', async () => {
 test('`parseAs` selects the parser, and the filename matches the `files` of allow entries', () => {
   const checker = createChecker({
     targets: TARGETS,
-    allow: [{ feature: 'api.structuredClone', files: 'src/*.vue', baseDir: '/p' }],
+    allow: [{ feature: 'api.structuredClone', files: 'src/*.vue', baseDir: FAKE_ROOT }],
   });
-  const component = checker.check('structuredClone(1);', '/p/src/App.vue', '/p/src/App.vue.js');
+  const component = checker.check(
+    'structuredClone(1);',
+    fakePath('p', 'src', 'App.vue'),
+    fakePath('p', 'src', 'App.vue.js'),
+  );
   assert.equal(component.parseError, undefined);
   assert.deepEqual(component.findings, []);
   assert.deepEqual(component.suppressed, [{ index: 0, kind: 'api' }]);
-  const typed = checker.check('const n: number = 1;', '/p/src/App.vue', '/p/src/App.vue.ts');
+  const typed = checker.check(
+    'const n: number = 1;',
+    fakePath('p', 'src', 'App.vue'),
+    fakePath('p', 'src', 'App.vue.ts'),
+  );
   assert.equal(typed.parseError, undefined);
-  const other = checker.check('structuredClone(1);', '/p/lib/App.vue', '/p/src/App.vue.js');
+  const other = checker.check(
+    'structuredClone(1);',
+    fakePath('p', 'lib', 'App.vue'),
+    fakePath('p', 'src', 'App.vue.js'),
+  );
   assert.deepEqual(
     other.findings.map(finding => finding.feature),
     ['api.structuredClone'],
@@ -294,17 +325,44 @@ test('`parseAs` selects the parser, and the filename matches the `files` of allo
 });
 
 test('a `parseAs` without a parser is an unsupported file', () => {
-  const result = createChecker({ targets: TARGETS }).check('x;', '/p/a.js', '/p/a.css');
+  const result = createChecker({ targets: TARGETS }).check('x;', fakePath('p', 'a.js'), fakePath('p', 'a.css'));
   assert.equal(result.parseError?.kind, 'unsupported-file');
 });
 
 test('check() takes `parseAs` too', () => {
   const result = check('const n: number = structuredClone(1);', {
-    filename: '/p/src/App.vue',
-    parseAs: '/p/src/App.vue.ts',
+    filename: fakePath('p', 'src', 'App.vue'),
+    parseAs: fakePath('p', 'src', 'App.vue.ts'),
     targets: TARGETS,
-    allow: [{ feature: 'api.structuredClone', files: 'src/App.vue', baseDir: '/p' }],
+    allow: [{ feature: 'api.structuredClone', files: 'src/App.vue', baseDir: FAKE_ROOT }],
   });
   assert.equal(result.parseError, undefined);
   assert.deepEqual(result.suppressed, [{ index: 0, kind: 'api' }]);
 });
+
+// ESLint passes `D:\p\src\a.js` on Windows; Vite and Rollup pass `D:/p/src/a.js`. Both are absolute paths there.
+test(
+  'on Windows a path with either separator matches the files of allow entries',
+  {
+    skip: process.platform !== 'win32',
+  },
+  () => {
+    const checker = createChecker({
+      targets: TARGETS,
+      baseDir: FAKE_ROOT,
+      allow: [{ feature: 'api.structuredClone', files: 'src/**' }],
+    });
+    for (const separator of ['\\', '/']) {
+      const path = (...segments: string[]) =>
+        fakePath(...segments)
+          .split(sep)
+          .join(separator);
+      assert.deepEqual(checker.check('structuredClone(1);', path('p', 'src', 'a.js')).findings, [], separator);
+      assert.deepEqual(
+        checker.check('structuredClone(1);', path('p', 'lib', 'a.js')).findings.map(finding => finding.feature),
+        ['api.structuredClone'],
+        separator,
+      );
+    }
+  },
+);

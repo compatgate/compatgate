@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import browserslist from 'browserslist';
 
+import { FAKE_ROOT, fakePath } from '@compatgate/test-utils';
 import * as binding from '../binding.js';
 const TARGETS = browserslist('Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115');
 
@@ -28,8 +29,8 @@ test('check returns findings with readable versions', () => {
 });
 
 test('check applies allow entries', () => {
-  const result = check('structuredClone(1);', '/p/src/a.js', TARGETS, [
-    { feature: 'api.structuredClone', files: ['src/**'], baseDir: '/p' },
+  const result = check('structuredClone(1);', fakePath('p', 'src', 'a.js'), TARGETS, [
+    { feature: 'api.structuredClone', files: ['src/**'], baseDir: FAKE_ROOT },
   ]);
   assert.deepEqual(result.findings, []);
   assert.deepEqual(result.suppressed, [{ index: 0, kind: 'api' }]);

@@ -1,20 +1,13 @@
-import { after, test } from 'node:test';
+import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import browserslist from 'browserslist';
 
+import { createProject } from '@compatgate/test-utils';
 import { configLookupDirectory } from '../src-js/lookup.ts';
 import { TargetsConfigError, clearTargetsCache, resolveTargetsIn, type ResolvedTargets } from '../src-js/targets.ts';
-
-const roots: string[] = [];
-after(() => {
-  for (const root of roots) {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
 
 /**
  * The targets of `filename`, as `resolveConfiguration` finds them, without the files to watch. browserslist keeps
@@ -45,29 +38,19 @@ function resolveTargets(filename: string, options: Options = {}): string[] {
   return resolveTargetsConfig(filename, options).browsers;
 }
 
-function project(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'compatgate-targets-'));
-  roots.push(root);
-  for (const [name, content] of Object.entries(files)) {
-    mkdirSync(join(root, name, '..'), { recursive: true });
-    writeFileSync(join(root, name), content);
-  }
-  return root;
-}
-
 test('reads .browserslistrc above the file', () => {
-  const root = project({ '.browserslistrc': 'Chrome >= 100\nFirefox >= 120\n', 'src/a.js': '' });
+  const root = createProject({ '.browserslistrc': 'Chrome >= 100\nFirefox >= 120\n', 'src/a.js': '' });
   assert.deepEqual(resolveTargets(join(root, 'src/a.js')), browserslist('Chrome >= 100, Firefox >= 120'));
 });
 
 test('reads the browserslist field of package.json', () => {
-  const root = project({ 'package.json': JSON.stringify({ browserslist: ['Safari >= 16'] }), 'a.js': '' });
+  const root = createProject({ 'package.json': JSON.stringify({ browserslist: ['Safari >= 16'] }), 'a.js': '' });
   assert.deepEqual(resolveTargets(join(root, 'a.js')), browserslist('Safari >= 16'));
 });
 
 test('reads a browserslist field of package.json that is one string', () => {
   // browserslist accepts a string as well as a list in package.json.
-  const root = project({
+  const root = createProject({
     'package.json': JSON.stringify({ browserslist: 'Chrome >= 97, Firefox >= 120' }),
     'a.js': '',
   });
@@ -75,7 +58,7 @@ test('reads a browserslist field of package.json that is one string', () => {
 });
 
 test('reads the query of a config as it is and gives the browsers of browserslist', () => {
-  const root = project({ '.browserslistrc': 'Chrome >= 100\nFirefox >= 120\n', 'src/a.js': '' });
+  const root = createProject({ '.browserslistrc': 'Chrome >= 100\nFirefox >= 120\n', 'src/a.js': '' });
   assert.deepEqual(
     resolveTargetsConfig(join(root, 'src/a.js')),
     found('Chrome >= 100, Firefox >= 120', join(root, '.browserslistrc')),
@@ -83,14 +66,14 @@ test('reads the query of a config as it is and gives the browsers of browserslis
 });
 
 test('a project without a config takes the browsers of browserslist for defaults', () => {
-  const root = project({ 'a.js': '' });
+  const root = createProject({ 'a.js': '' });
   assert.deepEqual(resolveTargetsConfig(join(root, 'a.js')), found('defaults', null));
   // The npm package resolves defaults with its own data: Firefox ESR and the latest Chrome are recent.
   assert.deepEqual(resolveTargets(join(root, 'a.js')), browserslist('defaults'));
 });
 
 test('falls back to defaultTargets and then to defaults', () => {
-  const root = project({ 'a.js': '' });
+  const root = createProject({ 'a.js': '' });
   assert.deepEqual(
     resolveTargets(join(root, 'a.js'), { defaultTargets: 'Chrome >= 97' }),
     browserslist('Chrome >= 97'),
@@ -99,7 +82,7 @@ test('falls back to defaultTargets and then to defaults', () => {
 });
 
 test('expands extends relative to the file, not to the process directory', () => {
-  const root = project({
+  const root = createProject({
     'node_modules/browserslist-config-base/package.json': JSON.stringify({ name: 'browserslist-config-base' }),
     'node_modules/browserslist-config-base/index.js': "module.exports = ['Safari >= 16'];",
     'node_modules/browserslist-config-foo/package.json': JSON.stringify({ name: 'browserslist-config-foo' }),
@@ -119,7 +102,7 @@ test('expands extends relative to the file, not to the process directory', () =>
 });
 
 test('picks the environment section of a shared config', () => {
-  const root = project({
+  const root = createProject({
     'node_modules/browserslist-config-env/package.json': JSON.stringify({ name: 'browserslist-config-env' }),
     'node_modules/browserslist-config-env/index.js':
       "module.exports = { defaults: ['Chrome >= 90'], legacy: ['Chrome >= 50'] };",
@@ -142,7 +125,7 @@ test('picks the environment section of a shared config', () => {
 });
 
 test('an extends package that cannot be resolved is an error that names it', () => {
-  const root = project({ '.browserslistrc': 'extends browserslist-config-missing\n', 'a.js': '' });
+  const root = createProject({ '.browserslistrc': 'extends browserslist-config-missing\n', 'a.js': '' });
   assert.throws(
     () => resolveTargets(join(root, 'a.js')),
     (error: unknown) =>
@@ -154,7 +137,7 @@ test('an extends package that cannot be resolved is an error that names it', () 
 });
 
 test('an invalid query of a config is a targets error that names the config and its directory', () => {
-  const root = project({ 'lib/.browserslistrc': 'Chrom >= 97\n', 'lib/a.js': '' });
+  const root = createProject({ 'lib/.browserslistrc': 'Chrom >= 97\n', 'lib/a.js': '' });
   assert.throws(
     () => resolveTargets(join(root, 'lib/a.js')),
     (error: unknown) =>
@@ -167,7 +150,7 @@ test('an invalid query of a config is a targets error that names the config and 
 });
 
 test('an invalid default query is a targets error that names the option', () => {
-  const root = project({ 'a.js': '' });
+  const root = createProject({ 'a.js': '' });
   assert.throws(
     () => resolveTargets(join(root, 'a.js'), { defaultTargets: 'Chrom >= 97' }),
     (error: unknown) =>
@@ -179,11 +162,11 @@ test('an invalid default query is a targets error that names the option', () => 
 });
 
 test('resolveTargetsConfig names the config file that gives the query', () => {
-  const root = project({ '.browserslistrc': 'Chrome >= 100\n', 'src/a.js': '' });
+  const root = createProject({ '.browserslistrc': 'Chrome >= 100\n', 'src/a.js': '' });
   assert.deepEqual(resolveTargetsConfig(join(root, 'src/a.js')), found('Chrome >= 100', join(root, '.browserslistrc')));
-  const pkg = project({ 'package.json': JSON.stringify({ browserslist: ['Safari >= 16'] }), 'a.js': '' });
+  const pkg = createProject({ 'package.json': JSON.stringify({ browserslist: ['Safari >= 16'] }), 'a.js': '' });
   assert.deepEqual(resolveTargetsConfig(join(pkg, 'a.js')), found('Safari >= 16', join(pkg, 'package.json')));
-  const none = project({ 'a.js': '' });
+  const none = createProject({ 'a.js': '' });
   assert.deepEqual(
     resolveTargetsConfig(join(none, 'a.js'), { defaultTargets: 'Chrome >= 97' }),
     found('Chrome >= 97', null),
@@ -191,7 +174,7 @@ test('resolveTargetsConfig names the config file that gives the query', () => {
 });
 
 test('an error of browserslist is a targets error with the code', () => {
-  const root = project({
+  const root = createProject({
     '.browserslistrc': 'Chrome >= 100\n',
     'package.json': JSON.stringify({ browserslist: ['Safari >= 16'] }),
     'a.js': '',
@@ -208,20 +191,20 @@ test('an error of browserslist is a targets error with the code', () => {
 });
 
 test('the files to watch are the config, and the package.json of the root when the lookup reaches the root', () => {
-  const root = project({ '.browserslistrc': 'Chrome >= 100\n', 'src/package.json': '{}', 'src/lib/a.js': '' });
+  const root = createProject({ '.browserslistrc': 'Chrome >= 100\n', 'src/package.json': '{}', 'src/lib/a.js': '' });
   const { watch, missing } = resolveTargetsIn(join(root, 'src/lib'), undefined, 'options', root);
   // A package.json on the way is not watched: a browserslist field added to it applies after a restart.
   assert.deepEqual([...watch.keys()], [join(root, '.browserslistrc')]);
   // A config in the directory of the found one is a conflict. A directory below the root is not watched.
   assert.deepEqual(missing, [join(root, 'browserslist'), join(root, 'package.json')]);
   // A package.json with the browserslist field is the config: a .browserslistrc or browserslist next to it conflicts.
-  const pkg = project({ 'package.json': JSON.stringify({ browserslist: ['Safari >= 16'] }), 'src/a.js': '' });
+  const pkg = createProject({ 'package.json': JSON.stringify({ browserslist: ['Safari >= 16'] }), 'src/a.js': '' });
   const found = resolveTargetsIn(join(pkg, 'src'), undefined, 'options', pkg);
   assert.deepEqual([...found.watch.keys()], [join(pkg, 'package.json')]);
   assert.deepEqual(found.missing, [join(pkg, '.browserslistrc'), join(pkg, 'browserslist')]);
   // Without a config the places of the root are missing, and none above it. The package.json of the root may get the
   // field.
-  const none = project({ 'a.js': '' });
+  const none = createProject({ 'a.js': '' });
   assert.deepEqual(resolveTargetsIn(join(none, 'src'), 'Chrome >= 97', 'options', none).missing, [
     join(none, '.browserslistrc'),
     join(none, 'browserslist'),
@@ -236,7 +219,7 @@ test('the files to watch are the config, and the package.json of the root when t
 });
 
 test('a deleted config gives way to the config above it', () => {
-  const root = project({
+  const root = createProject({
     '.browserslistrc': 'Chrome >= 100\n',
     'src/.browserslistrc': 'Chrome >= 110\n',
     'src/a.js': '',
@@ -248,7 +231,7 @@ test('a deleted config gives way to the config above it', () => {
 });
 
 test('a targets error names the directory of the failing config', () => {
-  const root = project({
+  const root = createProject({
     'lib/.browserslistrc': 'Chrome >= 100\n',
     'lib/package.json': JSON.stringify({ browserslist: ['Safari >= 16'] }),
     'lib/a.js': '',
@@ -260,7 +243,7 @@ test('a targets error names the directory of the failing config', () => {
 });
 
 test('a file inside node_modules takes the browserslist config of the project, not of the dependency', () => {
-  const root = project({
+  const root = createProject({
     '.browserslistrc': 'Chrome >= 97\n',
     'node_modules/lib/package.json': JSON.stringify({ name: 'lib', browserslist: 'Chrome >= 120' }),
     'node_modules/lib/.browserslistrc': 'Chrome >= 110\n',
@@ -279,7 +262,7 @@ test('a file inside node_modules takes the browserslist config of the project, n
 });
 
 test('a file inside node_modules of a project without a config takes the default query', () => {
-  const root = project({
+  const root = createProject({
     'node_modules/lib/package.json': JSON.stringify({ name: 'lib', browserslist: 'Chrome >= 120' }),
     'node_modules/lib/a.js': '',
   });
@@ -290,7 +273,7 @@ test('a file inside node_modules of a project without a config takes the default
 });
 
 test('extends takes the names that browserslist takes', () => {
-  const root = project({
+  const root = createProject({
     'node_modules/browserslist-config-co/package.json': JSON.stringify({ name: 'browserslist-config-co' }),
     'node_modules/browserslist-config-co/index.js': "module.exports = ['Chrome >= 100'];",
     'node_modules/browserslist-config-co/legacy.js': "module.exports = ['Chrome >= 50'];",
@@ -310,7 +293,7 @@ test('extends takes the names that browserslist takes', () => {
 });
 
 test('extends with a name that browserslist rejects is a targets error, and the module does not load', () => {
-  const root = project({
+  const root = createProject({
     'node_modules/evil/package.json': JSON.stringify({ name: 'evil' }),
     'node_modules/evil/index.js': "globalThis.compatgateEvilLoaded = true; module.exports = ['Chrome >= 1'];",
     'node_modules/browserslist-config-co/package.json': JSON.stringify({ name: 'browserslist-config-co' }),
@@ -344,7 +327,7 @@ test('extends with a name that browserslist rejects is a targets error, and the 
 
 test('extends resolves as browserslist does: from the process directory, then from the file', () => {
   // A monorepo of strict pnpm: the root config names a package that only the app installs.
-  const root = project({
+  const root = createProject({
     '.browserslistrc': 'extends browserslist-config-co\nFirefox >= 120\n',
     'packages/app/node_modules/browserslist-config-co/package.json': JSON.stringify({ name: 'browserslist-config-co' }),
     'packages/app/node_modules/browserslist-config-co/index.js': "module.exports = ['Chrome >= 100'];",
@@ -375,7 +358,7 @@ test('extends resolves as browserslist does: from the process directory, then fr
 });
 
 test('a dependency file resolves extends from the project side, not from inside the dependency', () => {
-  const root = project({
+  const root = createProject({
     '.browserslistrc': 'extends browserslist-config-co\n',
     'node_modules/browserslist-config-co/package.json': JSON.stringify({ name: 'browserslist-config-co' }),
     'node_modules/browserslist-config-co/index.js': "module.exports = ['Chrome >= 100'];",
@@ -389,7 +372,7 @@ test('a dependency file resolves extends from the project side, not from inside 
 });
 
 test('a project inside node_modules keeps its own config when baseDir is the project', () => {
-  const root = project({
+  const root = createProject({
     'nm/.browserslistrc': 'Chrome >= 50\n',
     'nm/node_modules/proj/.browserslistrc': 'Chrome >= 97\n',
     'nm/node_modules/proj/src/a.js': '',
@@ -409,7 +392,7 @@ test('a project inside node_modules keeps its own config when baseDir is the pro
 });
 
 test('the BROWSERSLIST variable replaces the config', () => {
-  const root = project({ '.browserslistrc': 'Chrome >= 100\n', 'a.js': '' });
+  const root = createProject({ '.browserslistrc': 'Chrome >= 100\n', 'a.js': '' });
   const saved = process.env.BROWSERSLIST;
   try {
     process.env.BROWSERSLIST = 'Firefox >= 120';
@@ -429,7 +412,7 @@ test('the BROWSERSLIST variable replaces the config', () => {
 });
 
 test('a circular extends is a targets error that names the config', () => {
-  const root = project({
+  const root = createProject({
     'node_modules/browserslist-config-a/package.json': JSON.stringify({ name: 'browserslist-config-a' }),
     'node_modules/browserslist-config-a/index.js':
       "module.exports = ['Chrome >= 100', 'extends browserslist-config-b'];",
@@ -449,7 +432,7 @@ test('a circular extends is a targets error that names the config', () => {
 });
 
 test('a query that selects no browser is a targets error that names the config', () => {
-  const root = project({ '.browserslistrc': 'Chrome > 1000\n', 'a.js': '' });
+  const root = createProject({ '.browserslistrc': 'Chrome > 1000\n', 'a.js': '' });
   assert.throws(
     () => resolveTargets(join(root, 'a.js')),
     (error: unknown) =>

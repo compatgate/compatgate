@@ -2,7 +2,7 @@
 // expectations line by line. The format is in the README of the corpus; `tests/corpus.rs` reads it the same way.
 
 import { readdirSync, readFileSync } from 'node:fs';
-import { dirname, extname, join, relative } from 'node:path';
+import { dirname, extname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { AllowEntryInput, FindingConfidence } from '@compatgate/core';
@@ -60,7 +60,7 @@ export interface ToolFinding {
 /** Every corpus file, sorted by name. */
 export function readCorpus(): CorpusFile[] {
   return collect(CORPUS_DIR)
-    .map(path => relative(CORPUS_DIR, path).replaceAll('\\', '/'))
+    .map(path => relative(CORPUS_DIR, path).split(sep).join('/'))
     .sort()
     .map(name => readCorpusFile(name, readFileSync(join(CORPUS_DIR, name), 'utf8')));
 }

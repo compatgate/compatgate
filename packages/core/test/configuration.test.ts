@@ -1,12 +1,12 @@
 import { after, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs, { mkdtempSync, mkdirSync, realpathSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import fs, { rmSync, writeFileSync } from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
-import { tmpdir } from 'node:os';
 import { isAbsolute, join, sep } from 'node:path';
 
 import browserslist from 'browserslist';
 
+import { createProject, editFile, fakePath, toSlashes } from '@compatgate/test-utils';
 import { cachedDirectories, clock, compiledTargets, counters, DIRECTORY_LIMIT } from '../src-js/configuration.ts';
 import { describeAllowIssue } from '../src-js/describe.ts';
 import { readConfigurationOptions } from '../src-js/options.ts';
@@ -42,31 +42,6 @@ function later(milliseconds = 1000): void {
 const PLACES = ['.browserslistrc', 'browserslist', 'package.json', 'compatgate.jsonc'];
 const places = (directory: string) => PLACES.map(name => join(directory, name));
 
-const roots: string[] = [];
-after(() => {
-  for (const root of roots) {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
-function project(files: Record<string, string>): string {
-  // The tmpdir of macOS is a symlink: a package resolves to its real path.
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'compatgate-configuration-')));
-  roots.push(root);
-  for (const [name, content] of Object.entries(files)) {
-    mkdirSync(join(root, name, '..'), { recursive: true });
-    writeFileSync(join(root, name), content);
-  }
-  return root;
-}
-
-// Moves the modification time forward: two writes in a row may get the same time on a coarse file system.
-function edit(path: string, content: string, seconds = 10): void {
-  writeFileSync(path, content);
-  const time = new Date(Date.now() + seconds * 1000);
-  utimesSync(path, time, time);
-}
-
 const features = (entries: readonly { feature: string }[]) => entries.map(entry => entry.feature);
 
 /** The place of a new entry that the advice of a finding in `filename` names. */
@@ -76,7 +51,7 @@ function allowIn(configuration: Configuration, filename: string): string {
 }
 
 test('100 files in 10 directories without configs take one full computation', () => {
-  const root = project({
+  const root = createProject({
     '.browserslistrc': `${TARGETS}\n`,
     'compatgate.jsonc': '{ "allow": ["api.structuredClone"] }',
   });
@@ -93,7 +68,7 @@ test('100 files in 10 directories without configs take one full computation', ()
 });
 
 test('a configuration gives the targets, the entries, the checker and the files to watch', () => {
-  const root = project({
+  const root = createProject({
     '.browserslistrc': `${TARGETS}\n`,
     'base.jsonc': '{ "allow": ["api.Base"] }',
     'compatgate.jsonc': '{ "extends": "./base.jsonc", "allow": ["api.structuredClone", "api.Typo"] }',
@@ -154,7 +129,7 @@ test('a configuration gives the targets, the entries, the checker and the files 
 });
 
 test('the advice of a finding names the compatgate.jsonc that takes the entries of the project', () => {
-  const root = project({
+  const root = createProject({
     'base.jsonc': '{ "allow": ["api.fetch"] }',
     'compatgate.jsonc': '{ "allow": [] }',
     'src/lib/compatgate.jsonc': '{ "extends": "../../base.jsonc" }',
@@ -169,7 +144,7 @@ test('the advice of a finding names the compatgate.jsonc that takes the entries 
   const inline = resolveConfiguration(file, { ...options, allow: [], where: 'settings.compatgate' });
   assert.equal(allowIn(inline, file), 'settings.compatgate.allow');
   // Without a config the advice names the config to make.
-  const bare = project({});
+  const bare = createProject({});
   const other = join(bare, 'a.ts');
   assert.equal(allowIn(resolveConfiguration(other, { targets: TARGETS, baseDir: bare }), other), 'compatgate.jsonc');
   // A config outside the project root keeps its absolute path.
@@ -178,7 +153,7 @@ test('the advice of a finding names the compatgate.jsonc that takes the entries 
 });
 
 test('the files of one directory take one lookup of the directory to start from', () => {
-  const root = project({ 'compatgate.jsonc': '{ "allow": [] }' });
+  const root = createProject({ 'compatgate.jsonc': '{ "allow": [] }' });
   const before = counters.lookups;
   for (let directory = 0; directory < 10; directory += 1) {
     for (let file = 0; file < 10; file += 1) {
@@ -194,7 +169,7 @@ test('the files of one directory take one lookup of the directory to start from'
 });
 
 test('a name that ends in . or .. leaves the lookup of its directory uncached', () => {
-  const root = project({
+  const root = createProject({
     'compatgate.jsonc': '{ "allow": [] }',
     'src/lib/compatgate.jsonc': '{ "allow": [] }',
   });
@@ -213,7 +188,7 @@ test('a name that ends in . or .. leaves the lookup of its directory uncached', 
 });
 
 test('options replace the lookup, and their entries name the options', () => {
-  const root = project({ 'base.jsonc': '{ "allow": ["api.Base"] }' });
+  const root = createProject({ 'base.jsonc': '{ "allow": ["api.Base"] }' });
   const configuration = resolveConfiguration(join(root, 'src/a.ts'), {
     targets: 'Chrome >= 97',
     allow: ['api.structuredClone', { feature: 'api.fetch', files: 'src/**' }],
@@ -235,20 +210,20 @@ test('options replace the lookup, and their entries name the options', () => {
 });
 
 test('an edit of a config computes the configuration again', () => {
-  const root = project({ '.browserslistrc': 'Chrome >= 97\n', 'compatgate.jsonc': '{ "allow": ["api.A"] }' });
+  const root = createProject({ '.browserslistrc': 'Chrome >= 97\n', 'compatgate.jsonc': '{ "allow": ["api.A"] }' });
   const filename = join(root, 'src/a.ts');
   const first = resolveConfiguration(filename, { baseDir: root });
   assert.equal(resolveConfiguration(filename, { baseDir: root }), first);
-  edit(join(root, 'compatgate.jsonc'), '{ "allow": ["api.B"] }');
+  editFile(join(root, 'compatgate.jsonc'), '{ "allow": ["api.B"] }');
   later();
   assert.deepEqual(features(resolveConfiguration(filename, { baseDir: root }).entries), ['api.B']);
-  edit(join(root, '.browserslistrc'), 'Chrome >= 100\n', 20);
+  editFile(join(root, '.browserslistrc'), 'Chrome >= 100\n', 20);
   later();
   assert.equal(resolveConfiguration(filename, { baseDir: root }).targets, 'Chrome >= 100');
 });
 
 test('a new compatgate.jsonc in the project root applies; a nested one applies after clearCaches', () => {
-  const root = project({ '.browserslistrc': 'Chrome >= 97\n', 'src/deep/a.ts': '' });
+  const root = createProject({ '.browserslistrc': 'Chrome >= 97\n', 'src/deep/a.ts': '' });
   const filename = join(root, 'src/deep/a.ts');
   const sibling = join(root, 'src/b.ts');
   const first = resolveConfiguration(filename, { baseDir: root });
@@ -274,7 +249,7 @@ test('a new compatgate.jsonc in the project root applies; a nested one applies a
 });
 
 test('the places of a new config are the project root only; a config above the root applies and is watched', () => {
-  const root = project({ '.browserslistrc': 'Chrome >= 97\n', 'proj/src/deep/a.ts': '' });
+  const root = createProject({ '.browserslistrc': 'Chrome >= 97\n', 'proj/src/deep/a.ts': '' });
   const proj = join(root, 'proj');
   const filename = join(proj, 'src/deep/a.ts');
   const first = resolveConfiguration(filename, { baseDir: proj });
@@ -284,7 +259,7 @@ test('the places of a new config are the project root only; a config above the r
   // A file outside the root watches no place of a new config.
   assert.deepEqual(resolveConfiguration(join(root, 'other/a.ts'), { baseDir: proj }).missing, []);
   // An edit of the config above the root applies.
-  edit(join(root, '.browserslistrc'), 'Chrome >= 100\n');
+  editFile(join(root, '.browserslistrc'), 'Chrome >= 100\n');
   later();
   assert.equal(resolveConfiguration(filename, { baseDir: proj }).targets, 'Chrome >= 100');
   // A new config in the root applies. Without a snapshot a call checks the configs at most once in 250 ms.
@@ -301,29 +276,33 @@ test('the places of a new config are the project root only; a config above the r
 });
 
 test('only the found browserslist config is watched; a package.json on the way applies after clearCaches', () => {
-  const root = project({ '.browserslistrc': 'Chrome >= 97\n', 'src/package.json': '{}', 'src/deep/lib/a.ts': '' });
+  const root = createProject({
+    '.browserslistrc': 'Chrome >= 97\n',
+    'src/package.json': '{}',
+    'src/deep/lib/a.ts': '',
+  });
   const filename = join(root, 'src/deep/lib/a.ts');
   const first = resolveConfiguration(filename, { baseDir: root, allow: [] });
   assert.equal(first.targets, 'Chrome >= 97');
   assert.deepEqual(first.watch, [join(root, '.browserslistrc')]);
-  edit(join(root, 'src/package.json'), JSON.stringify({ browserslist: ['Chrome >= 100'] }));
+  editFile(join(root, 'src/package.json'), JSON.stringify({ browserslist: ['Chrome >= 100'] }));
   later();
   assert.equal(resolveConfiguration(filename, { baseDir: root, allow: [] }).targets, 'Chrome >= 97');
   clearCaches();
   assert.equal(resolveConfiguration(filename, { baseDir: root, allow: [] }).targets, 'Chrome >= 100');
   // The package.json of the root is a place of a new config: its browserslist field applies.
-  const bare = project({ 'package.json': '{}', 'src/a.ts': '' });
+  const bare = createProject({ 'package.json': '{}', 'src/a.ts': '' });
   const options = { baseDir: bare, allow: [], defaultTargets: 'Chrome >= 97' };
   const own = resolveConfiguration(join(bare, 'src/a.ts'), options);
   assert.deepEqual(own.watch, [join(bare, 'package.json')]);
   assert.deepEqual(own.missing, [join(bare, '.browserslistrc'), join(bare, 'browserslist')]);
-  edit(join(bare, 'package.json'), JSON.stringify({ browserslist: ['Chrome >= 110'] }));
+  editFile(join(bare, 'package.json'), JSON.stringify({ browserslist: ['Chrome >= 110'] }));
   later();
   assert.equal(resolveConfiguration(join(bare, 'src/a.ts'), options).targets, 'Chrome >= 110');
 });
 
 test('calls within 250 ms check the configs once, in any number of directories; a check stats the watched files', t => {
-  const root = project({ '.browserslistrc': 'Chrome >= 97\n', 'compatgate.jsonc': '{ "allow": [] }' });
+  const root = createProject({ '.browserslistrc': 'Chrome >= 97\n', 'compatgate.jsonc': '{ "allow": [] }' });
   for (let directory = 0; directory < 1000; directory += 1) {
     resolveConfiguration(join(root, `d${directory}/a.ts`), { baseDir: root });
   }
@@ -351,7 +330,7 @@ test('calls within 250 ms check the configs once, in any number of directories; 
 });
 
 test('with BROWSERSLIST or BROWSERSLIST_CONFIG the places of a browserslist config do not apply', () => {
-  const root = project({ '.browserslistrc': 'Chrome >= 97\n', 'custom/config': 'Chrome >= 100\n' });
+  const root = createProject({ '.browserslistrc': 'Chrome >= 97\n', 'custom/config': 'Chrome >= 100\n' });
   const filename = join(root, 'src/a.ts');
   withEnvironment({ BROWSERSLIST_CONFIG: join(root, 'custom/config') }, () => {
     const configuration = resolveConfiguration(filename, { baseDir: root, allow: [] });
@@ -368,7 +347,7 @@ test('with BROWSERSLIST or BROWSERSLIST_CONFIG the places of a browserslist conf
 });
 
 test('with BROWSERSLIST a package.json does not make its directory compute a configuration', () => {
-  const root = project({ 'a/package.json': '{}', 'b/package.json': '{}' });
+  const root = createProject({ 'a/package.json': '{}', 'b/package.json': '{}' });
   withEnvironment({ BROWSERSLIST: 'Chrome >= 110' }, () => {
     const before = counters.computations;
     for (const path of ['x.ts', 'a/x.ts', 'b/x.ts']) {
@@ -379,9 +358,13 @@ test('with BROWSERSLIST a package.json does not make its directory compute a con
 });
 
 test('an edit of a found config reaches every directory at the next check, a new one too', () => {
-  const root = project({ 'a/.browserslistrc': 'Chrome >= 97\n', 'a/b/package.json': '{}', 'a/c/package.json': '{}' });
+  const root = createProject({
+    'a/.browserslistrc': 'Chrome >= 97\n',
+    'a/b/package.json': '{}',
+    'a/c/package.json': '{}',
+  });
   assert.equal(resolveConfiguration(join(root, 'a/b/x.ts'), { baseDir: root, allow: [] }).targets, 'Chrome >= 97');
-  edit(join(root, 'a/.browserslistrc'), 'Chrome >= 100\n');
+  editFile(join(root, 'a/.browserslistrc'), 'Chrome >= 100\n');
   // The configurations between two checks come from the same reads of the configs.
   assert.equal(resolveConfiguration(join(root, 'a/c/x.ts'), { baseDir: root, allow: [] }).targets, 'Chrome >= 97');
   later();
@@ -390,7 +373,7 @@ test('an edit of a found config reaches every directory at the next check, a new
 });
 
 test('a change of any watched config resets every configuration and clears browserslist once', t => {
-  const root = project({
+  const root = createProject({
     'a/.browserslistrc': 'Chrome >= 97\n',
     'b/package.json': JSON.stringify({ browserslist: ['Chrome >= 98'] }),
     'compatgate.jsonc': '{ "allow": ["api.A"] }',
@@ -402,14 +385,14 @@ test('a change of any watched config resets every configuration and clears brows
   assert.equal(resolveConfiguration(b, { baseDir: root }).targets, 'Chrome >= 98');
   // browserslist warns of old data once per process: each clear would warn again.
   assert.equal(clear.mock.callCount(), 0);
-  edit(join(root, 'compatgate.jsonc'), '{ "allow": ["api.B"] }');
+  editFile(join(root, 'compatgate.jsonc'), '{ "allow": ["api.B"] }');
   later();
   const before = counters.computations;
   assert.deepEqual(features(resolveConfiguration(a, { baseDir: root }).entries), ['api.B']);
   assert.deepEqual(features(resolveConfiguration(b, { baseDir: root }).entries), ['api.B']);
   assert.equal(counters.computations - before, 2);
   assert.equal(clear.mock.callCount(), 1);
-  edit(join(root, 'b/package.json'), JSON.stringify({ browserslist: ['Chrome >= 99'] }));
+  editFile(join(root, 'b/package.json'), JSON.stringify({ browserslist: ['Chrome >= 99'] }));
   later();
   assert.equal(resolveConfiguration(b, { baseDir: root }).targets, 'Chrome >= 99');
   assert.equal(resolveConfiguration(a, { baseDir: root }).targets, 'Chrome >= 97');
@@ -433,7 +416,7 @@ function withEnvironment(variables: Record<string, string>, run: () => void): vo
 }
 
 test('directories with the same configs share the entries and the checker', () => {
-  const root = project({
+  const root = createProject({
     'compatgate.jsonc': '{ "allow": ["api.A"] }',
     'a/package.json': '{}',
     'b/package.json': '{}',
@@ -445,14 +428,21 @@ test('directories with the same configs share the entries and the checker', () =
 });
 
 test('the issues name the browsers without data', () => {
-  const configuration = resolveConfiguration('/p/a.ts', { targets: 'Chrome >= 97, op_mini all, ie 11', allow: [] });
+  const configuration = resolveConfiguration(fakePath('p', 'a.ts'), {
+    targets: 'Chrome >= 97, op_mini all, ie 11',
+    allow: [],
+  });
   assert.deepEqual(configuration.ignoredBrowsers, ['ie']);
 });
 
 test('an entry of the options may not set origin or source: compatgate sets them', () => {
   for (const key of ['origin', 'source']) {
     assert.throws(
-      () => resolveConfiguration('/p/a.ts', { targets: TARGETS, allow: [{ feature: 'api.a', [key]: 'own' } as never] }),
+      () =>
+        resolveConfiguration(fakePath('p', 'a.ts'), {
+          targets: TARGETS,
+          allow: [{ feature: 'api.a', [key]: 'own' } as never],
+        }),
       (error: unknown) =>
         error instanceof AllowConfigError && error.message.startsWith(`options.allow[0]: unknown key "${key}"`),
       key,
@@ -460,7 +450,7 @@ test('an entry of the options may not set origin or source: compatgate sets them
   }
   assert.throws(
     () =>
-      resolveConfiguration('/p/a.ts', {
+      resolveConfiguration(fakePath('p', 'a.ts'), {
         targets: TARGETS,
         allow: [{ feature: 'api.a', origin: 'own' } as never],
         where: 'settings.compatgate',
@@ -470,7 +460,7 @@ test('an entry of the options may not set origin or source: compatgate sets them
 });
 
 test('a config error names the files to watch for its fix', () => {
-  const root = project({
+  const root = createProject({
     'broken/compatgate.jsonc': '{ "allow": [1] }',
     'targets/.browserslistrc': 'Chrom >= 97\n',
     'conflict/.browserslistrc': 'Chrome >= 97\n',
@@ -503,7 +493,7 @@ test('a config error names the files to watch for its fix', () => {
     (error: unknown) => {
       assert.ok(error instanceof TargetsConfigError);
       // The message names the config relative to the project root, `watch` names it by its absolute path.
-      assert.ok(error.message.startsWith(`${join('targets', '.browserslistrc')}: Chrom >= 97: `), error.message);
+      assert.ok(error.message.startsWith('targets/.browserslistrc: Chrom >= 97: '), error.message);
       assert.deepEqual(error.watch, [join(root, 'targets/.browserslistrc')]);
       return true;
     },
@@ -517,7 +507,11 @@ test('a config error names the files to watch for its fix', () => {
 });
 
 test('a targets error of the options watches no browserslist config; one without a directory stops at the root', () => {
-  const root = project({ 'package.json': '{}', 'proj/.browserslistrc': 'Chrome >= 97\n', 'proj/package.json': '{}' });
+  const root = createProject({
+    'package.json': '{}',
+    'proj/.browserslistrc': 'Chrome >= 97\n',
+    'proj/package.json': '{}',
+  });
   const proj = join(root, 'proj');
   const filename = join(proj, 'src/a.ts');
   // The `targets` option replaces the lookup: no browserslist config can fix its error.
@@ -539,7 +533,7 @@ test('a targets error of the options watches no browserslist config; one without
 });
 
 test('an error of the binding is a config error that watches every config of the configuration', () => {
-  const root = project({
+  const root = createProject({
     '.browserslistrc': `${TARGETS}\n`,
     'compatgate.jsonc': '{ "allow": [{ "feature": "api.a", "files": ["src/[a"] }] }',
     'nodata/.browserslistrc': 'op_mini all\n',
@@ -575,7 +569,7 @@ test('an error of the binding is a config error that watches every config of the
 });
 
 test('the message of an issue names the file and the index of the entry', () => {
-  const root = project({
+  const root = createProject({
     'base.jsonc': '{ "allow": ["api.BaseTypo"] }',
     'compatgate.jsonc': '{ "extends": "./base.jsonc", "allow": ["api.fetch", "api.Typo"] }',
   });
@@ -594,7 +588,7 @@ test('the message of an issue names the file and the index of the entry', () => 
     describeAllowIssue(issue!, configuration.entries[0]!),
     `${join(root, 'base.jsonc')}, allow[0]: unknown feature "api.BaseTypo". compatgate ignores the entry.`,
   );
-  const inline = resolveConfiguration('/p/a.ts', {
+  const inline = resolveConfiguration(fakePath('p', 'a.ts'), {
     targets: TARGETS,
     allow: ['api.Typo'],
     where: 'settings.compatgate',
@@ -606,7 +600,7 @@ test('the message of an issue names the file and the index of the entry', () => 
 });
 
 test('the message of an issue suggests the closest known id', () => {
-  const root = project({
+  const root = createProject({
     'base.jsonc': '{ "allow": ["api.fetchh"] }',
     'compatgate.jsonc': '{ "extends": "./base.jsonc", "allow": ["api.URL.canParse"] }',
   });
@@ -670,7 +664,7 @@ test('a config error names the configs inside the project root relative to it, a
     },
   };
   for (const [name, files] of Object.entries(cases)) {
-    const root = project(files);
+    const root = createProject(files);
     assert.throws(
       () => createResolver({ baseDir: root, defaultTargets: TARGETS }).resolve(join(root, 'src/a.ts')),
       (error: unknown) => {
@@ -690,13 +684,13 @@ test('a config error names the configs inside the project root relative to it, a
     );
   }
   // The `extends` option names its file too.
-  const root = project({});
+  const root = createProject({});
   assert.throws(
     () => createResolver({ baseDir: root, targets: TARGETS, extends: ['./nope.jsonc'] }).resolve(join(root, 'a.ts')),
     /^AllowConfigError: "extends" option points to a missing file: nope\.jsonc$/,
   );
   // A config outside the project root keeps its absolute path.
-  const outer = project({ 'compatgate.jsonc': '{ "alow": [] }' });
+  const outer = createProject({ 'compatgate.jsonc': '{ "alow": [] }' });
   assert.throws(
     () => createResolver({ baseDir: join(outer, 'app'), targets: TARGETS }).resolve(join(outer, 'app/a.ts')),
     (error: unknown) => error instanceof AllowConfigError && error.message.startsWith(join(outer, 'compatgate.jsonc')),
@@ -704,7 +698,7 @@ test('a config error names the configs inside the project root relative to it, a
 });
 
 test('clearCaches computes the configuration again', () => {
-  const root = project({ 'compatgate.jsonc': '{ "allow": ["api.A"] }' });
+  const root = createProject({ 'compatgate.jsonc': '{ "allow": ["api.A"] }' });
   const first = resolveConfiguration(join(root, 'a.ts'), { targets: TARGETS, baseDir: root });
   clearCaches();
   const second = resolveConfiguration(join(root, 'a.ts'), { targets: TARGETS, baseDir: root });
@@ -713,7 +707,7 @@ test('clearCaches computes the configuration again', () => {
 });
 
 test('calls with one snapshot check the configs once; a new snapshot sees an edit', () => {
-  const root = project({
+  const root = createProject({
     '.browserslistrc': 'Chrome >= 97\n',
     'compatgate.jsonc': '{ "allow": ["api.A"] }',
     'src/a.ts': '',
@@ -722,7 +716,7 @@ test('calls with one snapshot check the configs once; a new snapshot sees an edi
   const build = {};
   const before = counters.checks;
   assert.deepEqual(features(resolveConfiguration(filename, { baseDir: root, snapshot: build }).entries), ['api.A']);
-  edit(join(root, 'compatgate.jsonc'), '{ "allow": ["api.B"] }');
+  editFile(join(root, 'compatgate.jsonc'), '{ "allow": ["api.B"] }');
   writeFileSync(join(root, 'src/compatgate.jsonc'), '{ "allow": ["api.C"] }');
   // A bundler gives each build a snapshot: the configs of one build stay as the build found them.
   for (let file = 0; file < 10; file += 1) {
@@ -740,7 +734,7 @@ test('calls with one snapshot check the configs once; a new snapshot sees an edi
 });
 
 test('check of a resolver checks a file with the checker of its configuration', () => {
-  const root = project({
+  const root = createProject({
     'compatgate.jsonc': '{ "allow": [{ "feature": "api.structuredClone", "files": "src/ok/**" }] }',
   });
   const resolver = createResolver({ targets: TARGETS, baseDir: root });
@@ -760,7 +754,7 @@ test('check of a resolver checks a file with the checker of its configuration', 
 });
 
 test('calls of one resolver with one snapshot read the options once', () => {
-  const root = project({ 'compatgate.jsonc': '{ "allow": [] }' });
+  const root = createProject({ 'compatgate.jsonc': '{ "allow": [] }' });
   const resolver = createResolver({ targets: TARGETS, baseDir: root });
   const snapshot = {};
   const before = counters.scopes;
@@ -777,17 +771,20 @@ test('calls of one resolver with one snapshot read the options once', () => {
 });
 
 test('without where the options are named options everywhere', () => {
-  const configuration = resolveConfiguration('/p/a.ts', { targets: TARGETS, allow: ['api.a'] });
+  const configuration = resolveConfiguration(fakePath('p', 'a.ts'), { targets: TARGETS, allow: ['api.a'] });
   assert.deepEqual(configuration.entries[0]?.source, { options: 'options', index: 0 });
   assert.throws(
-    () => resolveConfiguration('/p/a.ts', { targets: TARGETS, allow: [{ feature: 1 } as never] }),
+    () => resolveConfiguration(fakePath('p', 'a.ts'), { targets: TARGETS, allow: [{ feature: 1 } as never] }),
     /^AllowConfigError: options\.allow\[0\]: expected a feature id/,
   );
-  assert.throws(() => resolveConfiguration('/p/a.ts', { targets: 1 as never }), /^OptionsError: options\.targets/);
+  assert.throws(
+    () => resolveConfiguration(fakePath('p', 'a.ts'), { targets: 1 as never }),
+    /^OptionsError: options\.targets/,
+  );
 });
 
 test('an inherited entry of a feature of every target names no fix: the project may not own the base', () => {
-  const root = project({ 'base.jsonc': '{ "allow": ["api.fetch"] }' });
+  const root = createProject({ 'base.jsonc': '{ "allow": ["api.fetch"] }' });
   const configuration = resolveConfiguration(join(root, 'a.ts'), {
     targets: TARGETS,
     allow: [],
@@ -801,7 +798,7 @@ test('an inherited entry of a feature of every target names no fix: the project 
 });
 
 test('the checkers of one list of entries are bounded: an edit of the targets does not pile them up', () => {
-  const root = project({ 'compatgate.jsonc': '{ "allow": ["api.structuredClone"] }' });
+  const root = createProject({ 'compatgate.jsonc': '{ "allow": ["api.structuredClone"] }' });
   let entries: unknown;
   for (let version = 90; version < 96; version += 1) {
     ({ entries } = resolveConfiguration(join(root, 'a.ts'), { targets: `Chrome >= ${version}`, baseDir: root }));
@@ -810,7 +807,7 @@ test('the checkers of one list of entries are bounded: an edit of the targets do
 });
 
 test('the cached directories of one set of options are bounded', () => {
-  const root = project({ 'compatgate.jsonc': '{ "allow": [] }' });
+  const root = createProject({ 'compatgate.jsonc': '{ "allow": [] }' });
   for (let index = 0; index <= DIRECTORY_LIMIT; index += 1) {
     resolveConfiguration(join(root, `d${index}`, 'a.ts'), { targets: TARGETS, baseDir: root });
   }
@@ -821,7 +818,7 @@ test('the cached directories of one set of options are bounded', () => {
 });
 
 test('a package.json with browserslist stops the inheritance; one without it does not', () => {
-  const root = project({
+  const root = createProject({
     '.browserslistrc': 'Chrome >= 97\n',
     'with/package.json': JSON.stringify({ browserslist: ['Firefox >= 115'] }),
     'without/package.json': JSON.stringify({ name: 'without' }),
@@ -831,7 +828,7 @@ test('a package.json with browserslist stops the inheritance; one without it doe
 });
 
 test('a project without a browserslist config takes defaults with the data of the browserslist package', () => {
-  const root = project({ 'compatgate.jsonc': '{ "allow": [] }' });
+  const root = createProject({ 'compatgate.jsonc': '{ "allow": [] }' });
   const filename = join(root, 'a.ts');
   const configuration = resolveConfiguration(filename, { baseDir: root });
   assert.equal(configuration.targets, 'defaults');
@@ -895,7 +892,7 @@ function compareParts(left: number[], right: number[] | undefined): number {
 }
 
 test('another environment of browserslist gives another configuration', () => {
-  const root = project({ '.browserslistrc': '[production]\nChrome >= 97\n\n[development]\nChrome >= 100\n' });
+  const root = createProject({ '.browserslistrc': '[production]\nChrome >= 97\n\n[development]\nChrome >= 100\n' });
   const filename = join(root, 'a.ts');
   const saved = { BROWSERSLIST_ENV: process.env.BROWSERSLIST_ENV, NODE_ENV: process.env.NODE_ENV };
   try {
@@ -920,3 +917,17 @@ test('another environment of browserslist gives another configuration', () => {
     }
   }
 });
+
+// Vite and Rollup pass `D:/p/src/a.ts` on Windows.
+test(
+  'on Windows a filename with forward slashes takes the compatgate.jsonc of its directory',
+  {
+    skip: process.platform !== 'win32',
+  },
+  () => {
+    const root = createProject({ 'src/lib/compatgate.jsonc': '{ "allow": ["api.structuredClone"] }' });
+    const file = toSlashes(join(root, 'src', 'lib', 'a.ts'));
+    const configuration = resolveConfiguration(file, { targets: TARGETS, baseDir: root });
+    assert.deepEqual(configuration.checker.check('structuredClone(1);', file).findings, []);
+  },
+);

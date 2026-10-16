@@ -1,10 +1,10 @@
 import { after, afterEach, beforeEach, mock, test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs, { mkdtempSync, mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import fs, { writeFileSync } from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
-import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
+import { createProject, editFile, FAKE_ROOT, fakePath } from '@compatgate/test-utils';
 import { AllowConfigError, findAllowFile as findFrom } from '../src-js/allow.ts';
 import type { AllowEntry } from '../src-js/allow.ts';
 import { clearCaches, clock } from '../src-js/configuration.ts';
@@ -61,30 +61,13 @@ afterEach(() => {
   syncBuiltinESMExports();
 });
 
-const roots: string[] = [];
-after(() => {
-  for (const root of roots) {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
-function project(files: Record<string, string>): string {
-  const root = mkdtempSync(join(tmpdir(), 'compatgate-allow-'));
-  roots.push(root);
-  for (const [name, content] of Object.entries(files)) {
-    mkdirSync(join(root, name, '..'), { recursive: true });
-    writeFileSync(join(root, name), content);
-  }
-  return root;
-}
-
 /** Loads the config of a file in `directory`: the lookup finds `directory`/compatgate.jsonc first. */
 function loadIn(directory: string): Loaded {
   return loadAllow(join(directory, 'a.ts'));
 }
 
 test('finds compatgate.jsonc above the file and reads comments and both entry forms', () => {
-  const root = project({
+  const root = createProject({
     'compatgate.jsonc': `{
       // Closed by a core-js polyfill
       "allow": [
@@ -111,12 +94,12 @@ test('finds compatgate.jsonc above the file and reads comments and both entry fo
 });
 
 test('returns no entries without a config', () => {
-  const root = project({ 'a.ts': '' });
+  const root = createProject({ 'a.ts': '' });
   assert.deepEqual(loadAllow(join(root, 'a.ts')), { path: null, entries: [], files: [] });
 });
 
 test('extends a relative file and a package, inherited entries first', () => {
-  const root = project({
+  const root = createProject({
     'node_modules/@company/compat-allow/package.json': JSON.stringify({ name: '@company/compat-allow' }),
     'node_modules/@company/compat-allow/compatgate.jsonc': '{ "allow": ["api.A"] }',
     'shared/base.jsonc': '{ "allow": ["api.B"] }',
@@ -127,7 +110,7 @@ test('extends a relative file and a package, inherited entries first', () => {
 });
 
 test('the same file reached twice through extends is not a cycle', () => {
-  const root = project({
+  const root = createProject({
     'base.jsonc': '{ "allow": ["api.A"] }',
     'b.jsonc': '{ "extends": "./base.jsonc" }',
     'c.jsonc': '{ "extends": "./base.jsonc" }',
@@ -137,7 +120,7 @@ test('the same file reached twice through extends is not a cycle', () => {
 });
 
 test('a circular extends is an error', () => {
-  const root = project({
+  const root = createProject({
     'compatgate.jsonc': '{ "extends": "./b.jsonc" }',
     'b.jsonc': '{ "extends": "./compatgate.jsonc" }',
   });
@@ -145,7 +128,7 @@ test('a circular extends is an error', () => {
 });
 
 test('invalid content is an error that names the file', () => {
-  const root = project({
+  const root = createProject({
     'syntax/compatgate.jsonc': '{ "allow": [ }',
     'shape/compatgate.jsonc': '{ "allow": [{ "feature": 1 }] }',
     'key/compatgate.jsonc': '{ "allow": [{ "feature": "api.A", "reason": "x" }] }',
@@ -163,7 +146,7 @@ test('invalid content is an error that names the file', () => {
 });
 
 test('a missing relative extends names the config that references it', () => {
-  const root = project({ 'compatgate.jsonc': '{ "extends": "./missing.jsonc" }' });
+  const root = createProject({ 'compatgate.jsonc': '{ "extends": "./missing.jsonc" }' });
   const config = join(root, 'compatgate.jsonc');
   assert.throws(
     () => loadIn(root),
@@ -177,7 +160,7 @@ test('a missing relative extends names the config that references it', () => {
 });
 
 test('extends may name a jsonc file inside a package', () => {
-  const root = project({
+  const root = createProject({
     'node_modules/@co/allow/package.json': JSON.stringify({ name: '@co/allow' }),
     'node_modules/@co/allow/strict.jsonc': '{ "allow": ["api.S"] }',
     'compatgate.jsonc': '{ "extends": "@co/allow/strict.jsonc" }',
@@ -189,19 +172,19 @@ test('extends may name a jsonc file inside a package', () => {
 });
 
 test('an unresolvable package names the file it looked for', () => {
-  const root = project({ 'compatgate.jsonc': '{ "extends": "@co/nothing" }' });
+  const root = createProject({ 'compatgate.jsonc': '{ "extends": "@co/nothing" }' });
   assert.throws(() => loadIn(root), /@co\/nothing\/compatgate\.jsonc/);
 });
 
 test('an inline entry takes the form of compatgate.jsonc and names the options', () => {
-  const inline = (allow: unknown[], baseDir = '/p') =>
-    resolveAllow('/p/a.ts', { allow: allow as never, baseDir, where: 'settings.compatgate' });
+  const inline = (allow: unknown[], baseDir = FAKE_ROOT) =>
+    resolveAllow(fakePath('p', 'a.ts'), { allow: allow as never, baseDir, where: 'settings.compatgate' });
   assert.deepEqual(inline(['api.structuredClone']), [
     {
       feature: 'api.structuredClone',
       packages: [],
       files: [],
-      baseDir: '/p',
+      baseDir: FAKE_ROOT,
       origin: 'own',
       source: { options: 'settings.compatgate', index: 0 },
     },
@@ -210,12 +193,12 @@ test('an inline entry takes the form of compatgate.jsonc and names the options',
     feature: 'api.a',
     packages: ['lib'],
     files: ['src/**'],
-    baseDir: '/p',
+    baseDir: FAKE_ROOT,
     origin: 'own',
   });
   // The directory of the entry wins over the option.
-  assert.equal(inline([{ feature: 'api.a', baseDir: '/q' }])[0]?.baseDir, '/q');
-  assert.equal(resolveAllow('/p/a.ts', { allow: ['api.a'] })[0]?.baseDir, process.cwd());
+  assert.equal(inline([{ feature: 'api.a', baseDir: fakePath('q') }])[0]?.baseDir, fakePath('q'));
+  assert.equal(resolveAllow(fakePath('p', 'a.ts'), { allow: ['api.a'] })[0]?.baseDir, process.cwd());
   // A relative directory would never match the absolute paths that a linter or a bundler passes.
   assert.equal(inline([{ feature: 'api.a', baseDir: 'sub' }])[0]?.baseDir, resolve('sub'));
   assert.equal(inline(['api.a'], 'sub')[0]?.baseDir, resolve('sub'));
@@ -231,7 +214,7 @@ test('an invalid inline entry is an allow error; a value of another type is an o
   ];
   for (const value of values) {
     assert.throws(
-      () => resolveAllow('/p/a.ts', { allow: [value as string], baseDir: '/p' }),
+      () => resolveAllow(fakePath('p', 'a.ts'), { allow: [value as string], baseDir: FAKE_ROOT }),
       (error: unknown) => {
         assert.ok(error instanceof AllowConfigError);
         assert.equal(error.code, 'COMPATGATE_ALLOW');
@@ -240,21 +223,24 @@ test('an invalid inline entry is an allow error; a value of another type is an o
     );
   }
   // A value that is neither a string nor an object is an error of the options: see readConfigurationOptions.
-  assert.throws(() => resolveAllow('/p/a.ts', { allow: [42 as never] }), /^OptionsError: options\.allow\[0\]/);
+  assert.throws(
+    () => resolveAllow(fakePath('p', 'a.ts'), { allow: [42 as never] }),
+    /^OptionsError: options\.allow\[0\]/,
+  );
 });
 
 test('compatgate.jsonc does not accept baseDir: the directory of the file is the base', () => {
-  const root = project({ 'compatgate.jsonc': '{ "allow": [{ "feature": "api.a", "baseDir": "/x" }] }' });
+  const root = createProject({ 'compatgate.jsonc': '{ "allow": [{ "feature": "api.a", "baseDir": "/x" }] }' });
   assert.throws(() => loadIn(root), /unknown key "baseDir"/);
 });
 
 test('compatgate.jsonc does not accept origin: the loader sets it', () => {
-  const root = project({ 'compatgate.jsonc': '{ "allow": [{ "feature": "api.a", "origin": "inherited" }] }' });
+  const root = createProject({ 'compatgate.jsonc': '{ "allow": [{ "feature": "api.a", "origin": "inherited" }] }' });
   assert.throws(() => loadIn(root), /unknown key "origin"/);
 });
 
 test('entries of the file are own, entries of its extends are inherited', () => {
-  const root = project({
+  const root = createProject({
     'base/compatgate.jsonc': '{ "extends": "../deep.jsonc", "allow": ["api.B"] }',
     'deep.jsonc': '{ "allow": ["api.D"] }',
     'compatgate.jsonc': '{ "extends": "./base/compatgate.jsonc", "allow": ["api.C"] }',
@@ -267,40 +253,33 @@ test('entries of the file are own, entries of its extends are inherited', () => 
   assert.deepEqual(marks(loadIn(join(root, 'base')).entries), ['api.D:inherited', 'api.B:own']);
 });
 
-// Moves the modification time forward: two writes in a row may get the same time on a coarse file system.
-function edit(path: string, content: string, seconds = 10): void {
-  writeFileSync(path, content);
-  const time = new Date(Date.now() + seconds * 1000);
-  utimesSync(path, time, time);
-}
-
 function features(config: { entries: readonly { feature: string }[] }): string[] {
   return config.entries.map(entry => entry.feature);
 }
 
 test('an edit of compatgate.jsonc is seen without clearCaches', () => {
-  const root = project({ 'compatgate.jsonc': '{ "allow": ["api.A"] }', 'src/a.ts': '' });
+  const root = createProject({ 'compatgate.jsonc': '{ "allow": ["api.A"] }', 'src/a.ts': '' });
   const filename = join(root, 'src/a.ts');
   assert.deepEqual(features(loadAllow(filename)), ['api.A']);
-  edit(join(root, 'compatgate.jsonc'), '{ "allow": ["api.B"] }');
+  editFile(join(root, 'compatgate.jsonc'), '{ "allow": ["api.B"] }');
   later();
   assert.deepEqual(features(loadAllow(filename)), ['api.B']);
 });
 
 test('an edit of a file in extends is seen without clearCaches', () => {
-  const root = project({
+  const root = createProject({
     'base.jsonc': '{ "allow": ["api.A"] }',
     'compatgate.jsonc': '{ "extends": "./base.jsonc" }',
     'a.ts': '',
   });
   assert.deepEqual(features(loadAllow(join(root, 'a.ts'))), ['api.A']);
-  edit(join(root, 'base.jsonc'), '{ "allow": ["api.B"] }');
+  editFile(join(root, 'base.jsonc'), '{ "allow": ["api.B"] }');
   later();
   assert.deepEqual(features(loadAllow(join(root, 'a.ts'))), ['api.B']);
 });
 
 test('a new compatgate.jsonc in a closer directory is seen after clearCaches', () => {
-  const root = project({ 'compatgate.jsonc': '{ "allow": ["api.A"] }', 'src/a.ts': '' });
+  const root = createProject({ 'compatgate.jsonc': '{ "allow": ["api.A"] }', 'src/a.ts': '' });
   const filename = join(root, 'src/a.ts');
   assert.deepEqual(features(loadAllow(filename, root)), ['api.A']);
   writeFileSync(join(root, 'src/compatgate.jsonc'), '{ "allow": ["api.B"] }');
@@ -325,7 +304,7 @@ test('a new compatgate.jsonc in a closer directory is seen after clearCaches', (
 });
 
 test('an unchanged config and its extends are read once', () => {
-  const root = project({
+  const root = createProject({
     'base.jsonc': '{ "allow": ["api.A"] }',
     'compatgate.jsonc': '{ "extends": "./base.jsonc", "allow": ["api.B"] }',
     'src/a.ts': '',
@@ -349,7 +328,7 @@ test('an unchanged config and its extends are read once', () => {
 });
 
 test('a deleted file in extends is an error on the next load', () => {
-  const root = project({
+  const root = createProject({
     'base.jsonc': '{ "allow": ["api.A"] }',
     'compatgate.jsonc': '{ "extends": "./base.jsonc" }',
   });
@@ -360,7 +339,7 @@ test('a deleted file in extends is an error on the next load', () => {
 });
 
 test('resolveAllow without extends gives the entries of compatgate.jsonc or allow', () => {
-  const root = project({
+  const root = createProject({
     'compatgate.jsonc': '{ "allow": ["api.A"] }',
     'src/a.ts': '',
   });
@@ -373,7 +352,7 @@ test('resolveAllow without extends gives the entries of compatgate.jsonc or allo
 
 test('resolveAllow puts the entries of extends first and marks them inherited', () => {
   // The base package is installed next to the builder, not above the checked files.
-  const root = project({
+  const root = createProject({
     'builder/node_modules/@builder/allow/package.json': JSON.stringify({ name: '@builder/allow' }),
     'builder/node_modules/@builder/allow/compatgate.jsonc': '{ "allow": ["api.Base"] }',
     'service/compatgate.jsonc': '{ "allow": ["api.Own"] }',
@@ -399,7 +378,7 @@ test('resolveAllow puts the entries of extends first and marks them inherited', 
 });
 
 test('resolveAllow takes a path in extends, absolute or relative to baseDir', () => {
-  const root = project({ 'shared/base.jsonc': '{ "allow": ["api.Base"] }', 'a.ts': '' });
+  const root = createProject({ 'shared/base.jsonc': '{ "allow": ["api.Base"] }', 'a.ts': '' });
   const filename = join(root, 'a.ts');
   for (const target of [join(root, 'shared/base.jsonc'), './shared/base.jsonc']) {
     assert.deepEqual(
@@ -423,7 +402,7 @@ test('resolveAllow takes a path in extends, absolute or relative to baseDir', ()
 });
 
 test('a missing config in extends is an allow error that names the file', () => {
-  const root = project({ 'a.ts': '' });
+  const root = createProject({ 'a.ts': '' });
   assert.throws(
     () => resolveAllow(join(root, 'a.ts'), { extends: [join(root, 'nope.jsonc')] }),
     (error: unknown) => {
@@ -436,7 +415,7 @@ test('a missing config in extends is an allow error that names the file', () => 
 });
 
 test('the cached entries cannot be changed by a caller', () => {
-  const root = project({
+  const root = createProject({
     'base.jsonc': '{ "allow": [{ "feature": "api.A", "files": ["src/**"] }] }',
     'compatgate.jsonc': '{ "extends": "./base.jsonc", "allow": ["api.B"] }',
     'a.ts': '',
@@ -458,7 +437,7 @@ test('the cached entries cannot be changed by a caller', () => {
 });
 
 test('a config lists the files that its entries come from: the config and its extends', () => {
-  const linked = project({
+  const linked = createProject({
     'node_modules/@co/allow/package.json': JSON.stringify({ name: '@co/allow' }),
     'node_modules/@co/allow/compatgate.jsonc': '{ "allow": ["api.A"] }',
     'shared/base.jsonc': '{ "extends": "@co/allow", "allow": ["api.B"] }',
@@ -478,7 +457,7 @@ test('a config lists the files that its entries come from: the config and its ex
 });
 
 test('a configuration watches the files of extends and the project config', () => {
-  const root = project({
+  const root = createProject({
     'base.jsonc': '{ "allow": ["api.Base"] }',
     'compatgate.jsonc': '{ "allow": ["api.Own"] }',
     'src/a.ts': '',
@@ -495,7 +474,7 @@ test('a configuration watches the files of extends and the project config', () =
 });
 
 test('an allow error names the file in error', () => {
-  const root = project({
+  const root = createProject({
     'broken/compatgate.jsonc': '{ "allow": [1] }',
     'base/base.jsonc': '{ "allow": [',
     'base/compatgate.jsonc': '{ "extends": "./base.jsonc" }',
@@ -532,7 +511,7 @@ test('an allow error names the file in error', () => {
 });
 
 test('a file inside node_modules takes compatgate.jsonc of the project, not of the dependency', () => {
-  const root = project({
+  const root = createProject({
     'compatgate.jsonc': '{ "allow": [{ "feature": "api.structuredClone", "packages": ["lib"] }] }',
     'node_modules/lib/compatgate.jsonc': '{ "allow": [] }',
     'node_modules/lib/src/compatgate.jsonc': '{ "allow": ["api.Other"] }',
@@ -563,7 +542,7 @@ test('a file inside node_modules takes compatgate.jsonc of the project, not of t
 });
 
 test('a file inside node_modules of a project without compatgate.jsonc has no entries', () => {
-  const root = project({
+  const root = createProject({
     'node_modules/lib/compatgate.jsonc': '{ "allow": ["api.structuredClone"] }',
     'node_modules/lib/a.js': '',
   });
@@ -574,18 +553,21 @@ test('a file inside node_modules of a project without compatgate.jsonc has no en
 test('the allow option does not accept origin: compatgate sets it', () => {
   for (const origin of ['inherited', 'own']) {
     assert.throws(
-      () => resolveAllow('/p/a.js', { allow: ['api.a', { feature: 'api.b', origin } as never] }),
+      () => resolveAllow(fakePath('p', 'a.js'), { allow: ['api.a', { feature: 'api.b', origin } as never] }),
       (error: unknown) =>
         error instanceof AllowConfigError && error.message.startsWith('options.allow[1]: unknown key "origin"'),
       origin,
     );
   }
   // The directory of an entry stays an option.
-  assert.equal(resolveAllow('/p/a.js', { allow: [{ feature: 'api.a', baseDir: '/q' }] })[0]?.baseDir, '/q');
+  assert.equal(
+    resolveAllow(fakePath('p', 'a.js'), { allow: [{ feature: 'api.a', baseDir: fakePath('q') }] })[0]?.baseDir,
+    fakePath('q'),
+  );
 });
 
 test('a project inside node_modules keeps its own compatgate.jsonc when baseDir is the project', () => {
-  const root = project({
+  const root = createProject({
     'nm/compatgate.jsonc': '{ "allow": ["api.Parent"] }',
     'nm/node_modules/proj/compatgate.jsonc': '{ "allow": ["api.Own"] }',
     'nm/node_modules/proj/src/a.js': '',

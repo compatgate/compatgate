@@ -1,11 +1,11 @@
-import { after, beforeEach, mock, test } from 'node:test';
+import { beforeEach, mock, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join, sep } from 'node:path';
 import { ESLint, Linter } from 'eslint';
 
 import { clearCaches } from '@compatgate/core';
+import { createProject } from '@compatgate/test-utils';
 import plugin from '../src/index.ts';
 
 const RULES: Linter.RulesRecord = {
@@ -16,22 +16,9 @@ const RULES: Linter.RulesRecord = {
 
 beforeEach(() => clearCaches());
 
-const roots: string[] = [];
-after(() => {
-  for (const root of roots) {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
-function tempRoot(): string {
-  const root = mkdtempSync(join(tmpdir(), 'compatgate-eslint-'));
-  roots.push(root);
-  return root;
-}
-
 /** A project with `.browserslistrc` and `compatgate.jsonc` that allows structuredClone in `src/allowed`. */
 function project(): string {
-  const root = tempRoot();
+  const root = createProject();
   mkdirSync(join(root, 'src/allowed'), { recursive: true });
   writeFileSync(join(root, '.browserslistrc'), 'Chrome >= 97\n');
   writeFileSync(
@@ -102,7 +89,7 @@ test('text from stdin takes the configs of the cwd', async () => {
 });
 
 test('without configs a file outside the project takes defaultTargets', () => {
-  const root = tempRoot();
+  const root = createProject();
   const linter = new Linter({ cwd: root });
   const config = (defaultTargets?: string) => ({
     plugins: { compatgate: plugin },
@@ -293,7 +280,11 @@ test('a broken config is one message of the exact rule in each file; other rules
   const lint = async () =>
     Object.fromEntries(
       (await eslint.lintFiles(['src', 'other'])).map(result => [
-        result.filePath.slice(root.length + 1),
+        // ESLint gives native separators; the keys take `/` on every system.
+        result.filePath
+          .slice(root.length + 1)
+          .split(sep)
+          .join('/'),
         result.messages.map(({ ruleId, line, column, message }) => `${ruleId} ${line}:${column} ${message}`),
       ]),
     );
@@ -331,7 +322,7 @@ test('the advice of a finding names the compatgate.jsonc of the file', () => {
 });
 
 test('a project that lies inside node_modules keeps its own configs: the cwd of the linter is its root', () => {
-  const root = tempRoot();
+  const root = createProject();
   const proj = join(root, 'node_modules/proj');
   mkdirSync(join(proj, 'src'), { recursive: true });
   writeFileSync(join(root, '.browserslistrc'), 'Chrome >= 130\n');

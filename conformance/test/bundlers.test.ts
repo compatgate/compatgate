@@ -11,7 +11,7 @@ import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { extname, join, relative } from 'node:path';
+import { extname, isAbsolute, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stripVTControlCharacters } from 'node:util';
 
@@ -64,16 +64,29 @@ const expectedLowered: ExpectedLowered = JSON.parse(readFileSync(join(fixture, '
 type Place = Pick<Expected, 'module' | 'line' | 'column' | 'feature'>;
 const place = (item: Place) => `${item.module}:${item.line}:${item.column} ${item.feature}`;
 
+/**
+ * The name of `path` in the fixture with `/` separators, or undefined for a path outside it. `relative` takes both
+ * separators on Windows, where Vite gives `/`; only the separator of the system becomes `/`, as `\\` is a character of
+ * a name elsewhere.
+ */
+function fixtureName(path: string): string | undefined {
+  const name = relative(fixture, path);
+  return name === '' || name === '..' || name.startsWith(`..${sep}`) || isAbsolute(name)
+    ? undefined
+    : name.split(sep).join('/');
+}
+
 /** The JavaScript and TypeScript sources of the fixture, its packages included. */
 const sources = readdirSync(fixture, { recursive: true, withFileTypes: true })
   .filter(entry => entry.isFile() && ['.js', '.ts'].includes(extname(entry.name)))
-  .map(entry => relative(fixture, join(entry.parentPath, entry.name)).replaceAll('\\', '/'))
+  .flatMap(entry => fixtureName(join(entry.parentPath, entry.name)) ?? [])
   .sort();
 
 let output: string;
 
 before(() => {
-  output = realpathSync(mkdtempSync(join(tmpdir(), 'compatgate-conformance-')));
+  // `native` gives the long names of Windows: its temporary directory has a short one, such as `RUNNER~1`.
+  output = realpathSync.native(mkdtempSync(join(tmpdir(), 'compatgate-conformance-')));
 });
 
 after(() => rmSync(output, { recursive: true, force: true }));
@@ -192,7 +205,7 @@ test('rspack gives the expected findings', async () => {
   const json = stats.toJson({ all: false, errors: true, warnings: true });
   const messages = [...(json.errors ?? []), ...(json.warnings ?? [])].map(item => item.message);
   const built = [...stats.compilation.modules].flatMap(module =>
-    'resource' in module && typeof module.resource === 'string' ? [relative(fixture, module.resource)] : [],
+    'resource' in module && typeof module.resource === 'string' ? (fixtureName(module.resource) ?? []) : [],
   );
   assert.deepEqual(built.sort(), sources, 'rspack builds every source of the fixture');
   compare('rspack', findingsOf('rspack', messages));
@@ -315,8 +328,9 @@ async function buildVite(target: string, options: CompatgateBundlerOptions = OPT
     name: 'conformance-record',
     enforce: 'post',
     transform(_code, id) {
-      if (id.startsWith(fixture)) {
-        transformed.add(relative(fixture, id.replace(/[?#].*$/, '')));
+      const name = fixtureName(id.replace(/[?#].*$/, ''));
+      if (name !== undefined) {
+        transformed.add(name);
       }
     },
   };

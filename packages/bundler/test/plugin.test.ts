@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { OptionsError as CoreOptionsError } from '@compatgate/core';
 
+import { createProject, editFile } from '@compatgate/test-utils';
 import * as bundler from '../src/index.ts';
 import {
   PluginState,
@@ -20,7 +21,7 @@ import {
 import { loaderHost } from '../src/hosts/loader.ts';
 import { LoweringEngineError, viteLower } from '../src/lowering.ts';
 import { copiedColumns } from '../src/source-map.ts';
-import { TARGETS, createProject, editFile } from './helpers.ts';
+import { TARGETS } from './helpers.ts';
 
 const packageDir = fileURLToPath(new URL('..', import.meta.url));
 const SEGMENTER = 'javascript.builtins.Intl.Segmenter';
@@ -144,8 +145,8 @@ test('the package gives the options error of the core', () => {
   assert.equal(bundler.OptionsError, CoreOptionsError);
 });
 
-test('an allow entry of the options may not set origin: compatgate sets it', t => {
-  const root = createProject(t, {});
+test('an allow entry of the options may not set origin: compatgate sets it', () => {
+  const root = createProject({});
   const errors: string[] = [];
   const context: ModuleContext = {
     error: message => errors.push(message),
@@ -162,8 +163,8 @@ test('an allow entry of the options may not set origin: compatgate sets it', t =
   assert.match(errors[0] ?? '', /^\[compatgate\] compatgate\.allow\[0\]: unknown key "origin"/);
 });
 
-test('an edit of a config in the dev server drops the checkers of its old versions', t => {
-  const root = createProject(t, { 'compatgate.jsonc': '{ "allow": [] }' });
+test('an edit of a config in the dev server drops the checkers of its old versions', () => {
+  const root = createProject({ 'compatgate.jsonc': '{ "allow": [] }' });
   const config = join(root, 'compatgate.jsonc');
   const module = join(root, 'src/a.ts');
   // Every target supports the features: each version of the config warns once in the process.
@@ -227,8 +228,8 @@ test('once shows a message on each module, once per build or once per process', 
   assert.deepEqual(shown.slice(4), ['build b', 'other build b']);
 });
 
-test('the advice of a finding names the place of the allow entries', async t => {
-  const root = createProject(t, { 'src/lib/compatgate.jsonc': '{ "allow": [] }' });
+test('the advice of a finding names the place of the allow entries', async () => {
+  const root = createProject({ 'src/lib/compatgate.jsonc': '{ "allow": [] }' });
   const advice = async (options: { allow?: string[] }, path: string) => {
     const state = new PluginState({ targets: 'Firefox >= 115', ...options }, root);
     const errors: string[] = [];
@@ -251,7 +252,7 @@ test('the advice of a finding names the place of the allow entries', async t => 
 test('the warning about browsers without data names the targets of the module', async t => {
   // Two queries of one list of browsers: the modules share a checker.
   const queries = ['Firefox >= 115, ie 11', 'ie 11, Firefox >= 115'];
-  const root = createProject(t, { 'a/.browserslistrc': queries[0] ?? '', 'b/.browserslistrc': queries[1] ?? '' });
+  const root = createProject({ 'a/.browserslistrc': queries[0] ?? '', 'b/.browserslistrc': queries[1] ?? '' });
   const state = new PluginState({ allow: [] }, root);
   const warnings: string[] = [];
   const context: ModuleContext = {
@@ -283,7 +284,7 @@ describe('the report of unused entries', () => {
   };
 
   function setup(t: TestContext, framework: 'rollup' | 'vite' | 'esbuild') {
-    const root = createProject(t, { 'src/a.ts': '', 'src/b.ts': '' });
+    const root = createProject({ 'src/a.ts': '', 'src/b.ts': '' });
     const ids = [join(root, 'src/a.ts'), join(root, 'src/b.ts'), join(root, 'src/c.css'), '\0virtual:x'];
     const hooks = bundler.compatgate.raw(
       { targets: TARGETS, allow: [UNUSED] },
@@ -325,8 +326,8 @@ describe('the report of unused entries', () => {
     assert.equal(warnings.length, 1);
   });
 
-  test('a module whose configs have an error leaves the build without a report', async t => {
-    const root = createProject(t, {
+  test('a module whose configs have an error leaves the build without a report', async () => {
+    const root = createProject({
       '.browserslistrc': TARGETS,
       'src/nested/.browserslistrc': 'not a query',
     });
@@ -346,7 +347,12 @@ describe('the report of unused entries', () => {
     await hooks.transform.handler.call(context, 'export {};', ids[0] as string);
     // The error leaves b.ts unchecked: it may need the entry.
     await hooks.transform.handler.call(context, 'structuredClone(1);', ids[1] as string);
-    assert.throws(() => hooks.buildEnd.call(context), /src\/nested\/\.browserslistrc/);
+    // The project root of Rollup is the directory of the process, not `root`: the config keeps its absolute path.
+    const config = join(root, 'src', 'nested', '.browserslistrc');
+    assert.throws(
+      () => hooks.buildEnd.call(context),
+      (error: Error) => error.message.includes(config),
+    );
     assert.deepEqual(warnings, []);
   });
 
@@ -366,8 +372,8 @@ describe('the report of unused entries', () => {
   });
 });
 
-test('the dev server of Vite warns of each partial finding at once: it has no end of a build', async t => {
-  const root = createProject(t, {});
+test('the dev server of Vite warns of each partial finding at once: it has no end of a build', async () => {
+  const root = createProject({});
   const hooks = bundler.compatgate.raw({ targets: 'Chrome >= 97' }, { framework: 'vite', versions: {} }) as unknown as {
     buildStart: (this: unknown) => void;
     transform: { handler: (this: unknown, code: string, id: string) => Promise<unknown> };
@@ -382,8 +388,8 @@ test('the dev server of Vite warns of each partial finding at once: it has no en
   assert.match(warnings[0] ?? '', /^\[compatgate\/partial\] src\/a\.ts:1:5 /);
 });
 
-test('an end of a build without `warn` throws rather than lose the held partial findings', async t => {
-  const root = createProject(t, {});
+test('an end of a build without `warn` throws rather than lose the held partial findings', async () => {
+  const root = createProject({});
   const id = join(root, 'src/a.ts');
   const hooks = bundler.compatgate.raw(
     { targets: 'Chrome >= 97' },
@@ -403,8 +409,8 @@ test('an end of a build without `warn` throws rather than lose the held partial 
   hooks.buildEnd.call(context);
 });
 
-test('a failed build without `warn` at its end keeps its own error', async t => {
-  const root = createProject(t, {});
+test('a failed build without `warn` at its end keeps its own error', async () => {
+  const root = createProject({});
   const id = join(root, 'src/a.ts');
   const hooks = bundler.compatgate.raw(
     { targets: 'Chrome >= 97' },
@@ -428,8 +434,8 @@ test('a loader host without `isChild` on the compiler takes the module for one o
   assert.equal(reports?.inGraph?.(context as never), true);
 });
 
-test('only the records of the graph give the entries to report; the others only mark entries as used', t => {
-  const root = createProject(t, {});
+test('only the records of the graph give the entries to report; the others only mark entries as used', () => {
+  const root = createProject({});
   const state = new PluginState({ targets: TARGETS, allow: [SEGMENTER, 'api.Highlight'] }, root);
   const context: ModuleContext = { error: assert.fail, warn: assert.fail, addWatchFile() {}, addMissingFile() {} };
   const configuration = state.configuration(join(root, 'src/a.ts'), context);
@@ -441,9 +447,9 @@ test('only the records of the graph give the entries to report; the others only 
   assert.deepEqual(state.unusedEntries([], [record([])]), []);
 });
 
-test('the entries of a config that a build read in two versions are not reported: the indexes may differ', t => {
+test('the entries of a config that a build read in two versions are not reported: the indexes may differ', () => {
   const allow = (entries: string[]) => JSON.stringify({ allow: entries });
-  const root = createProject(t, {
+  const root = createProject({
     'compatgate.jsonc': allow([SEGMENTER, 'api.Highlight', 'api.Navigator.share']),
   });
   const context: ModuleContext = { error: assert.fail, warn() {}, addWatchFile() {}, addMissingFile() {} };
@@ -464,8 +470,8 @@ test('the entries of a config that a build read in two versions are not reported
   assert.equal(browser.unusedEntries(records.slice(1)).length, 1);
 });
 
-test('a reset of the core that leaves a config as it was keeps its report', t => {
-  const root = createProject(t, {
+test('a reset of the core that leaves a config as it was keeps its report', () => {
+  const root = createProject({
     '.browserslistrc': `${TARGETS}\n`,
     'compatgate.jsonc': JSON.stringify({ allow: [SEGMENTER, 'api.Highlight'] }),
     'src/lib/.browserslistrc': `${TARGETS}\n`,
@@ -485,8 +491,8 @@ test('a reset of the core that leaves a config as it was keeps its report', t =>
   assert.match(state.unusedEntries(records).join('\n'), /compatgate\.jsonc: .*allow\[0\].*allow\[1\]/);
 });
 
-test('an entry that a config takes through extends counts as used in the config that owns it', t => {
-  const root = createProject(t, {
+test('an entry that a config takes through extends counts as used in the config that owns it', () => {
+  const root = createProject({
     'compatgate.jsonc': JSON.stringify({ allow: [SEGMENTER, 'api.Highlight', 'api.Navigator.share'] }),
     'src/lib/compatgate.jsonc': JSON.stringify({ extends: ['../../compatgate.jsonc'], allow: ['api.CookieStore'] }),
   });
@@ -505,8 +511,8 @@ test('an entry that a config takes through extends counts as used in the config 
   assert.match(report.join('\n'), /^\[compatgate\] compatgate\.jsonc: .*allow\[0\]/m);
 });
 
-test('a source map gives the position in the source file, or nothing when it does not reach the file', t => {
-  const root = createProject(t, { 'src/a.ts': 'const a = 1;\n' });
+test('a source map gives the position in the source file, or nothing when it does not reach the file', () => {
+  const root = createProject({ 'src/a.ts': 'const a = 1;\n' });
   const file = { path: join(root, 'src/out/a.js') };
   // One segment: column 0 of line 1 comes from column 0 of line 1 of the source.
   const map = (source: string, content?: string) => () => ({
@@ -540,14 +546,14 @@ test('a source map gives the position in the source file, or nothing when it doe
   );
 });
 
-test('a finding inside a segment of the map keeps its offset when the segment copies the text', t => {
+test('a finding inside a segment of the map keeps its offset when the segment copies the text', () => {
   const sources = {
     'src/a.ts': 'let r: R = /(?<=a)b/;\n',
     'src/comment.ts': 'const x = a /* why */ ?? b;\n',
     'src/spaces.ts': 'const y = a  ?? b;\n',
     'src/types.ts': 'const z = a as T ?? b;\n',
   };
-  const root = createProject(t, sources);
+  const root = createProject(sources);
   const locate = (name: string, mappings: string) =>
     sourceMapLocate({ path: join(root, 'src/out', name) }, () => ({
       version: 3,
@@ -587,25 +593,28 @@ test('a finding keeps its offset only inside the copied run of its segment', () 
   assert.equal(at(2, 'cd'), null);
 });
 
-test('a long line with one segment costs one pass over the line', t => {
+test('a long line with one segment costs one pass over the line', () => {
   // A minified bundle of a megabyte on one line that a plugin copied as it is: one segment for the whole line.
   const line = `${'x'.repeat(1 << 20)};`;
-  const root = createProject(t, { 'src/a.js': `${line}\n` });
+  const root = createProject({ 'src/a.js': `${line}\n` });
   const locate = sourceMapLocate({ path: join(root, 'src/out/a.js') }, () => ({
     version: 3,
     sources: ['../a.js'],
     names: [],
     mappings: 'AAAA',
   }));
-  const started = performance.now();
+  // The CPU time of the process, not the time of the clock: the test files and the packages run in parallel, and on a
+  // runner with few cores the wait for a core took a second.
+  const started = process.cpuUsage();
   let last = null;
   for (let column = 0; column < line.length; column += 50) {
     last = { column, place: locate({ line: 1, column }, { code: line, range: [column, column + 1] }) };
   }
-  const elapsed = performance.now() - started;
+  const { user, system } = process.cpuUsage(started);
+  const elapsed = (user + system) / 1000;
   // 20 000 findings, each exact; a comparison of the whole prefix of each took seconds.
   assert.equal(last?.place?.column, last?.column);
-  assert.ok(elapsed < 1000, `${elapsed} ms`);
+  assert.ok(elapsed < 1000, `${elapsed} ms of CPU`);
 });
 
 describe('the lowering of the bundler', () => {
@@ -621,7 +630,7 @@ describe('the lowering of the bundler', () => {
     code = CODE,
     reportsUnused = true,
   ) {
-    const root = createProject(t, {});
+    const root = createProject({});
     const state = new PluginState({ targets: 'Safari >= 15.6, Firefox >= 115', allow }, root);
     const errors: string[] = [];
     const context: ModuleContext = {
@@ -762,9 +771,9 @@ describe('the lowering of the bundler', () => {
   });
 });
 
-test('Vite older than 8 has no lowering: one warning per build, and the syntax findings stay', async t => {
+test('Vite older than 8 has no lowering: one warning per build, and the syntax findings stay', async () => {
   // A stub of Vite 7: it has no `transformWithOxc`.
-  const root = createProject(t, {
+  const root = createProject({
     'node_modules/vite/package.json': JSON.stringify({
       name: 'vite',
       version: '7.1.0',

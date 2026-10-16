@@ -75,7 +75,12 @@ test('the published entry point exports the plugin', async () => {
 
 test('the published tarball holds dist and no build info', () => {
   const [report] = JSON.parse(
-    execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: packageDir, encoding: 'utf8' }),
+    // npm is a batch file on Windows: only a shell runs it.
+    execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
+      cwd: packageDir,
+      encoding: 'utf8',
+      shell: process.platform === 'win32',
+    }),
   );
   const files: string[] = report.files.map((file: { path: string }) => file.path);
   for (const expected of ['package.json', 'README.md', 'dist/index.js', 'dist/index.d.ts', 'dist/rule.js']) {

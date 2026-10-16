@@ -3,7 +3,7 @@
   "compilerOptions": {
     "composite": false,
     "noEmit": true,
-    "rootDir": ".",
+    "rootDir": "../..",
     "allowImportingTsExtensions": true
   },
   "include": ["src-js", "test"]

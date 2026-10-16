@@ -3,11 +3,10 @@
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, extname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { createResolver, type FindingConfidence } from '@compatgate/core';
 import plugin from '@compatgate/eslint';
@@ -26,7 +25,10 @@ import {
 } from '../src/corpus.ts';
 
 const require = createRequire(import.meta.url);
-const oxlintBin = fileURLToPath(new URL('../node_modules/.bin/oxlint', import.meta.url));
+// The script of the `bin` field, which Node runs on every system. Windows runs neither the shell script of
+// node_modules/.bin nor, without a shell, the .cmd next to it.
+const oxlintManifest = createRequire(import.meta.url).resolve('oxlint/package.json');
+const oxlintBin = join(dirname(oxlintManifest), JSON.parse(readFileSync(oxlintManifest, 'utf8')).bin.oxlint);
 const pluginEntry = require.resolve('@compatgate/eslint');
 const CONFIDENCES: readonly FindingConfidence[] = ['exact', 'heuristic', 'partial'];
 
@@ -45,7 +47,8 @@ let root: string;
 
 before(() => {
   // The linters read files from the disk: each file lies at its `// filename:` inside a temporary directory.
-  root = realpathSync(mkdtempSync(join(tmpdir(), 'compatgate-conformance-')));
+  // `native` gives the long names of Windows: its temporary directory has a short one, such as `RUNNER~1`.
+  root = realpathSync.native(mkdtempSync(join(tmpdir(), 'compatgate-conformance-')));
   const placed = new Map<string, string>();
   for (const file of files) {
     const path = placedPath(root, file);
@@ -161,7 +164,10 @@ test('oxlint gives the findings of the core', () => {
       }),
     );
     const paths = group.map(file => placedPath(root, file));
-    const run = spawnSync(oxlintBin, ['-c', config, '--format', 'json', ...paths], { cwd: root, encoding: 'utf8' });
+    const run = spawnSync(process.execPath, [oxlintBin, '-c', config, '--format', 'json', ...paths], {
+      cwd: root,
+      encoding: 'utf8',
+    });
     assert.ok(run.stdout.startsWith('{'), `oxlint failed: ${run.stdout}\n${run.stderr}`);
     const output: { diagnostics: OxlintDiagnostic[]; number_of_files: number } = JSON.parse(run.stdout);
     // oxlint ignores some paths, such as `node_modules`, unless they are given: a file left out has no findings.

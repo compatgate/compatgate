@@ -1,9 +1,8 @@
-import { mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import { readdirSync, utimesSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import type { TestContext } from 'node:test';
+import { join } from 'node:path';
 
+import { editFile } from '@compatgate/test-utils';
 import { rspack, type RspackOptions } from '@rspack/core';
 import webpack, { type Configuration } from 'webpack';
 
@@ -12,27 +11,6 @@ import { compatgateRspack, compatgateWebpack, type CompatgateBundlerOptions } fr
 export const TARGETS = 'Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115';
 
 const require = createRequire(import.meta.url);
-
-/**
- * Writes the files into a new temporary directory and returns its real path. `prefix` names the directory, for
- * paths with special characters. The directory is removed after the test.
- */
-export function createProject(t: TestContext, files: Record<string, string>, prefix = 'compatgate-bundler-'): string {
-  // macOS gives a symlinked tmpdir; the bundlers report real paths.
-  const root = realpathSync(mkdtempSync(join(tmpdir(), prefix)));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
-  for (const [name, content] of Object.entries(files)) {
-    writeFile(join(root, name), content);
-  }
-  return root;
-}
-
-/** Writes a file with a later modification time: a test edits a file faster than the clock of the file system ticks. */
-export function editFile(path: string, content: string): void {
-  writeFile(path, content);
-  const later = new Date(Date.now() + 10_000);
-  utimesSync(path, later, later);
-}
 
 /**
  * Moves the modification time of the files of a project a minute back. webpack takes a file changed within the
@@ -45,11 +23,6 @@ export function backdateFiles(root: string): void {
       utimesSync(join(entry.parentPath, entry.name), earlier, earlier);
     }
   }
-}
-
-function writeFile(path: string, content: string): void {
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, content);
 }
 
 export interface BuildResult {

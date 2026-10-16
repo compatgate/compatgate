@@ -2,6 +2,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { join } from 'node:path';
 
 import { differences, placedAllow, positionOfByte, readCorpusFile, splitLines } from '../src/corpus.ts';
 
@@ -55,8 +56,8 @@ test('the header sets the targets, the filename and the allow entries', () => {
   // A copy of the corpus moves the filename and every `baseDir` into its root.
   assert.deepEqual(placedAllow('/tmp/r', file), [
     'a.b',
-    { feature: 'c', files: ['*.js'], baseDir: '/tmp/r/p/node_modules/x' },
-    { feature: 'd', baseDir: '/tmp/r/p' },
+    { feature: 'c', files: ['*.js'], baseDir: join('/tmp/r', 'p/node_modules/x') },
+    { feature: 'd', baseDir: join('/tmp/r', 'p') },
   ]);
 });
 

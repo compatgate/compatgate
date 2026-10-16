@@ -1,8 +1,10 @@
 import { beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { stripVTControlCharacters } from 'node:util';
+
+import { createProject, editFile } from '@compatgate/test-utils';
 
 import { clearProcessMessages } from '../src/plugin.ts';
 import {
@@ -10,8 +12,6 @@ import {
   TARGETS,
   backdateFiles,
   compatgateMessages,
-  createProject,
-  editFile,
   rspackBundler,
   webpackBundler,
   type Bundler,
@@ -82,8 +82,8 @@ function texts(messages: readonly string[]): string[] {
 
 for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
   describe(bundler.name, () => {
-    test('a finding of every module is an error of the build; a lowered syntax is no finding', async t => {
-      const { errors, warnings } = await bundler.build(createProject(t, PROJECT));
+    test('a finding of every module is an error of the build; a lowered syntax is no finding', async () => {
+      const { errors, warnings } = await bundler.build(createProject(PROJECT));
       const messages = texts(errors);
       assert.equal(messages.length, 3, errors.join('\n---\n'));
       const segmenter = messages.find(message => message.includes(SEGMENTER));
@@ -102,20 +102,20 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       assert.deepEqual(compatgateMessages(warnings), []);
     });
 
-    test('a severity of `warn` makes the findings warnings, and the build succeeds', async t => {
-      const { errors, warnings } = await bundler.build(createProject(t, PROJECT), { severity: { exact: 'warn' } });
+    test('a severity of `warn` makes the findings warnings, and the build succeeds', async () => {
+      const { errors, warnings } = await bundler.build(createProject(PROJECT), { severity: { exact: 'warn' } });
       assert.deepEqual(errors, []);
       assert.equal(compatgateMessages(warnings).length, 3, warnings.join('\n---\n'));
     });
 
-    test('a severity of `off` drops the findings', async t => {
-      const { errors, warnings } = await bundler.build(createProject(t, PROJECT), { severity: { exact: 'off' } });
+    test('a severity of `off` drops the findings', async () => {
+      const { errors, warnings } = await bundler.build(createProject(PROJECT), { severity: { exact: 'off' } });
       assert.deepEqual(errors, []);
       assert.deepEqual(compatgateMessages(warnings), []);
     });
 
-    test('heuristic and partial findings are warnings by default', async t => {
-      const root = createProject(t, {
+    test('heuristic and partial findings are warnings by default', async () => {
+      const root = createProject({
         'src/index.ts': 'export const sorted = (items: number[]) => items.toSorted();\nnew BarcodeDetector();\n',
       });
       const { errors, warnings } = await bundler.build(root, { targets: 'Chrome >= 97' });
@@ -131,8 +131,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       );
     });
 
-    test('with the source maps of the loaders a finding points at the line of the source', async t => {
-      const root = createProject(t, { ...PROJECT, 'src/split.ts': SPLIT_SOURCE });
+    test('with the source maps of the loaders a finding points at the line of the source', async () => {
+      const root = createProject({ ...PROJECT, 'src/split.ts': SPLIT_SOURCE });
       const messages = texts((await bundler.build(root, {}, { devtool: 'source-map' })).errors);
       assert.equal(messages.length, 3, messages.join('\n'));
       assert.ok(
@@ -144,8 +144,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       assert.ok(!messages.some(message => message.includes('transpiled')), messages.join('\n'));
     });
 
-    test('seven places of one partial feature are one warning at the end of the build', async t => {
-      const root = createProject(t, PARTIAL_PROJECT);
+    test('seven places of one partial feature are one warning at the end of the build', async () => {
+      const root = createProject(PARTIAL_PROJECT);
       const { errors, warnings } = await bundler.build(root, PARTIAL_OPTIONS, { devtool: 'source-map' });
       assert.deepEqual(compatgateMessages(errors), []);
       const messages = texts(warnings);
@@ -161,8 +161,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       assert.doesNotMatch(compatgateMessages(warnings)[0] ?? '', /Module Warning|unplugin/);
     });
 
-    test('a child compilation keeps its partial findings one by one, out of the summary', async t => {
-      const root = createProject(t, { ...PARTIAL_PROJECT, 'src/child.ts': 'new BarcodeDetector();\n'.repeat(2) });
+    test('a child compilation keeps its partial findings one by one, out of the summary', async () => {
+      const root = createProject({ ...PARTIAL_PROJECT, 'src/child.ts': 'new BarcodeDetector();\n'.repeat(2) });
       const { warnings, childWarnings } = await bundler.build(root, PARTIAL_OPTIONS, { child: './src/child.ts' });
       const messages = texts(warnings);
       assert.equal(messages.length, 1, messages.join('\n'));
@@ -175,15 +175,15 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       );
     });
 
-    test('partial findings of the level `error` are errors one by one', async t => {
-      const root = createProject(t, PARTIAL_PROJECT);
+    test('partial findings of the level `error` are errors one by one', async () => {
+      const root = createProject(PARTIAL_PROJECT);
       const { errors, warnings } = await bundler.build(root, { ...PARTIAL_OPTIONS, severity: { partial: 'error' } });
       assert.deepEqual(compatgateMessages(warnings), []);
       assert.equal(texts(errors).length, 7, errors.join('\n'));
     });
 
-    test('a build with modules from the persistent cache gives the partial findings one by one', async t => {
-      const root = createProject(t, PARTIAL_PROJECT);
+    test('a build with modules from the persistent cache gives the partial findings one by one', async () => {
+      const root = createProject(PARTIAL_PROJECT);
       backdateFiles(root);
       const first = await bundler.build(root, PARTIAL_OPTIONS, { cache: 'filesystem' });
       assert.equal(texts(first.warnings).length, 1, first.warnings.join('\n'));
@@ -199,7 +199,7 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
     });
 
     test('a watch rebuild gives one summary of the places of every module', async t => {
-      const root = createProject(t, PARTIAL_PROJECT);
+      const root = createProject(PARTIAL_PROJECT);
       backdateFiles(root);
       const compiler = bundler.compiler(root, PARTIAL_OPTIONS, { cache: true });
       t.after(() => compiler.close());
@@ -214,17 +214,17 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       assert.match(second[0] ?? '', summary);
     });
 
-    test('the `targets` option replaces the browserslist config', async t => {
-      const all = await bundler.build(createProject(t, PROJECT), { targets: 'Chrome >= 130' });
+    test('the `targets` option replaces the browserslist config', async () => {
+      const all = await bundler.build(createProject(PROJECT), { targets: 'Chrome >= 130' });
       assert.deepEqual(compatgateMessages(all.errors), []);
       // The config allows everything, and the option gives targets without `Intl.Segmenter`.
-      const root = createProject(t, { ...PROJECT, '.browserslistrc': 'Chrome >= 130' });
+      const root = createProject({ ...PROJECT, '.browserslistrc': 'Chrome >= 130' });
       assert.deepEqual(compatgateMessages((await bundler.build(root)).errors), []);
       assert.equal(compatgateMessages((await bundler.build(root, { targets: TARGETS })).errors).length, 3);
     });
 
-    test('a module that compatgate cannot parse is one warning, and the build goes on', async t => {
-      const root = createProject(t, {
+    test('a module that compatgate cannot parse is one warning, and the build goes on', async () => {
+      const root = createProject({
         ...PROJECT,
         'src/index.ts': "import text from 'flow-lib';\nimport css from './a.css';\nconsole.log(text, css);\n",
         'src/a.css': 'a { color: red }\n',
@@ -238,8 +238,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       ]);
     });
 
-    test('a style module gets no loader of the plugin', async t => {
-      const root = createProject(t, {
+    test('a style module gets no loader of the plugin', async () => {
+      const root = createProject({
         ...PROJECT,
         'src/index.ts': "import css from './a.css';\nconsole.log(css);\n",
         'src/a.css': 'a { color: red }\n',
@@ -252,11 +252,11 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       }
     });
 
-    test('allow entries of the options and of compatgate.jsonc suppress the findings', async t => {
-      const fromOptions = await bundler.build(createProject(t, PROJECT), { allow: [SEGMENTER, LOOKBEHIND] });
+    test('allow entries of the options and of compatgate.jsonc suppress the findings', async () => {
+      const fromOptions = await bundler.build(createProject(PROJECT), { allow: [SEGMENTER, LOOKBEHIND] });
       assert.deepEqual(compatgateMessages(fromOptions.errors), []);
 
-      const root = createProject(t, {
+      const root = createProject({
         ...PROJECT,
         'compatgate.jsonc': `{ "allow": ["${SEGMENTER}", { "feature": "${LOOKBEHIND}", "files": "src/match.ts" }] }`,
       });
@@ -265,8 +265,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       assert.match(fromConfig[0] ?? '', /src\/counter\.ts.*lookbehind_assertion/);
     });
 
-    test('the `extends` option adds a base list before the entries of the project', async t => {
-      const root = createProject(t, {
+    test('the `extends` option adds a base list before the entries of the project', async () => {
+      const root = createProject({
         ...PROJECT,
         'base.jsonc': `{ "allow": ["${SEGMENTER}"] }`,
         'compatgate.jsonc': `{ "allow": ["${LOOKBEHIND}"] }`,
@@ -275,8 +275,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       assert.deepEqual(compatgateMessages(errors), []);
     });
 
-    test('an allow entry with `packages` applies to the modules of that package only', async t => {
-      const root = createProject(t, {
+    test('an allow entry with `packages` applies to the modules of that package only', async () => {
+      const root = createProject({
         '.browserslistrc': TARGETS,
         'compatgate.jsonc': `{ "allow": [{ "feature": "${SEGMENTER}", "packages": ["seg-lib"] }] }`,
         'src/index.ts': "import { words } from 'seg-lib';\nconsole.log(words, new Intl.Segmenter('en'));\n",
@@ -288,8 +288,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       assert.match(messages[0] ?? '', /src\/index\.ts:2:/);
     });
 
-    test('a module of a dependency takes the configs of the project, not the ones the dependency ships', async t => {
-      const root = createProject(t, {
+    test('a module of a dependency takes the configs of the project, not the ones the dependency ships', async () => {
+      const root = createProject({
         '.browserslistrc': 'Chrome >= 97',
         'compatgate.jsonc': '{ "allow": [{ "feature": "api.structuredClone", "packages": ["lib"] }] }',
         'src/index.ts': "import { copy, groups } from 'lib';\nconsole.log(copy, groups);\n",
@@ -308,15 +308,17 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       assert.equal(messages.length, 1, errors.join('\n---\n'));
       assert.match(messages[0] ?? '', /node_modules\/lib\/index\.js:2:.*Object\.groupBy/);
       const configs = [...fileDependencies, ...missingDependencies].filter(
-        path => path.includes('node_modules') && /compatgate\.jsonc|\.browserslistrc|[\\/]browserslist$/.test(path),
+        path =>
+          path.includes('node_modules') &&
+          ['compatgate.jsonc', '.browserslistrc', 'browserslist'].includes(basename(path)),
       );
       assert.deepEqual(configs, []);
       assert.ok(fileDependencies.has(join(root, '.browserslistrc')), [...fileDependencies].join('\n'));
       assert.ok(fileDependencies.has(join(root, 'compatgate.jsonc')), [...fileDependencies].join('\n'));
     });
 
-    test('a project that lies inside node_modules keeps its own configs', async t => {
-      const root = createProject(t, {
+    test('a project that lies inside node_modules keeps its own configs', async () => {
+      const root = createProject({
         '.browserslistrc': 'Chrome >= 130',
         'compatgate.jsonc': '{ "allow": ["javascript.builtins.Object.groupBy"] }',
         'node_modules/proj/.browserslistrc': 'Chrome >= 97',
@@ -333,24 +335,24 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       assert.ok(fileDependencies.has(join(project, '.browserslistrc')), [...fileDependencies].join('\n'));
     });
 
-    test('`include` and `exclude` match the path of the module', async t => {
-      const excluded = await bundler.build(createProject(t, PROJECT), {
+    test('`include` and `exclude` match the path of the module', async () => {
+      const excluded = await bundler.build(createProject(PROJECT), {
         exclude: ['src/split.ts', /(match|counter)\.ts$/],
       });
       assert.deepEqual(compatgateMessages(excluded.errors), []);
-      const included = await bundler.build(createProject(t, PROJECT), { include: 'src/**/split.ts' });
+      const included = await bundler.build(createProject(PROJECT), { include: 'src/**/split.ts' });
       assert.equal(compatgateMessages(included.errors).length, 1);
     });
 
-    test('glob characters in the project root are literal in `include`', async t => {
-      const root = createProject(t, PROJECT, 'compatgate (1) [x]-');
+    test('glob characters in the project root are literal in `include`', async () => {
+      const root = createProject(PROJECT, 'compatgate (1) [x]-');
       const messages = texts((await bundler.build(root, { include: 'src/**/split.ts' })).errors);
       assert.equal(messages.length, 1, messages.join('\n'));
       assert.match(messages[0] ?? '', /^\[compatgate\/exact\] src\/split\.ts:/);
     });
 
-    test('a `#` in the project path is no hash of the module id', async t => {
-      const root = createProject(t, PROJECT, 'compatgate-C#-');
+    test('a `#` in the project path is no hash of the module id', async () => {
+      const root = createProject(PROJECT, 'compatgate-C#-');
       const messages = texts((await bundler.build(root)).errors);
       assert.equal(messages.length, 3, messages.join('\n'));
       assert.ok(
@@ -359,24 +361,24 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       );
     });
 
-    test('a config error is one error of the build with the text of the core', async t => {
-      const root = createProject(t, { ...PROJECT, 'compatgate.jsonc': '{ "allow": [{ "feature": 1 }] }' });
+    test('a config error is one error of the build with the text of the core', async () => {
+      const root = createProject({ ...PROJECT, 'compatgate.jsonc': '{ "allow": [{ "feature": 1 }] }' });
       const { errors } = await bundler.build(root);
       const messages = compatgateMessages(errors);
       assert.equal(messages.length, 1, errors.join('\n---\n'));
       assert.match(messages[0] ?? '', /compatgate\.jsonc: allow\[0\]: expected a feature id/);
     });
 
-    test('a wrong query of the targets is one error of the build', async t => {
-      const { errors } = await bundler.build(createProject(t, PROJECT), { targets: 'Chrome >= nonsense' });
+    test('a wrong query of the targets is one error of the build', async () => {
+      const { errors } = await bundler.build(createProject(PROJECT), { targets: 'Chrome >= nonsense' });
       const messages = compatgateMessages(errors);
       assert.equal(messages.length, 1, errors.join('\n---\n'));
       assert.match(messages[0] ?? '', /Chrome >= nonsense/);
     });
 
-    test('two browserslist configs in one directory are one error of the build', async t => {
+    test('two browserslist configs in one directory are one error of the build', async () => {
       // In a subdirectory: webpack reads the browserslist config of the root itself.
-      const root = createProject(t, {
+      const root = createProject({
         ...PROJECT,
         'src/index.ts': "import { a } from './lib/a.ts';\nimport { b } from './lib/b.ts';\nconsole.log(a, b);\n",
         'src/lib/.browserslistrc': 'Chrome >= 97',
@@ -389,8 +391,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       assert.match(messages[0] ?? '', /contains both \.browserslistrc and package\.json with browsers/);
     });
 
-    test('the build depends on the configs of its modules and on the places of a new config in the root', async t => {
-      const root = createProject(t, PROJECT);
+    test('the build depends on the configs of its modules and on the places of a new config in the root', async () => {
+      const root = createProject(PROJECT);
       const { fileDependencies, missingDependencies } = await bundler.build(root);
       assert.ok(fileDependencies.has(join(root, '.browserslistrc')), [...fileDependencies].join('\n'));
       for (const name of ['compatgate.jsonc', 'browserslist', 'package.json']) {
@@ -402,7 +404,7 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
     });
 
     test('a new compatgate.jsonc in the project root shows in the next build', async t => {
-      const root = createProject(t, PROJECT);
+      const root = createProject(PROJECT);
       const compiler = bundler.compiler(root, {}, { cache: true });
       t.after(() => compiler.close());
       assert.equal(texts((await compiler.run()).errors).length, 3);
@@ -412,7 +414,7 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
 
     test('a new browserslist config in the project root shows in the next build', async t => {
       const { '.browserslistrc': _, ...rest } = PROJECT;
-      const root = createProject(t, { ...rest, 'package.json': '{}' });
+      const root = createProject({ ...rest, 'package.json': '{}' });
       const compiler = bundler.compiler(root, { defaultTargets: TARGETS }, { cache: true });
       t.after(() => compiler.close());
       assert.equal(texts((await compiler.run()).errors).length, 3);
@@ -426,7 +428,7 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
     });
 
     test('a fix of a broken file of `extends` shows in the next build', async t => {
-      const root = createProject(t, {
+      const root = createProject({
         ...PROJECT,
         'base.jsonc': '{ "allow": [',
         'compatgate.jsonc': '{ "extends": "./base.jsonc" }',
@@ -443,7 +445,7 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
 
     test('an invalid glob of compatgate.jsonc is one error of the build, and its fix shows in the next build', async t => {
       // The glob fails in the binding, which names no config: the build watches every config of the configuration.
-      const root = createProject(t, {
+      const root = createProject({
         ...PROJECT,
         'compatgate.jsonc': `{ "allow": [{ "feature": "${SEGMENTER}", "files": ["src/[a"] }] }`,
       });
@@ -459,7 +461,7 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
     });
 
     test('a fix of conflicting browserslist configs shows in the next build', async t => {
-      const root = createProject(t, {
+      const root = createProject({
         ...PROJECT,
         'src/lib/.browserslistrc': TARGETS,
         'src/lib/package.json': JSON.stringify({ browserslist: [TARGETS] }),
@@ -485,7 +487,7 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
     });
 
     test('an edit of compatgate.jsonc or of the browserslist config shows in the next build', async t => {
-      const root = createProject(t, { ...PROJECT, 'compatgate.jsonc': `{ "allow": ["${LOOKBEHIND}"] }` });
+      const root = createProject({ ...PROJECT, 'compatgate.jsonc': `{ "allow": ["${LOOKBEHIND}"] }` });
       const compiler = bundler.compiler(root, {}, { cache: true });
       t.after(() => compiler.close());
       assert.equal(texts((await compiler.run()).errors).length, 1);
@@ -503,8 +505,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
     describe('the report of allow entries', () => {
       beforeEach(() => clearProcessMessages());
 
-      test('an own entry that every target supports is a warning; an entry of a base is not', async t => {
-        const root = createProject(t, {
+      test('an own entry that every target supports is a warning; an entry of a base is not', async () => {
+        const root = createProject({
           ...PROJECT,
           'base.jsonc': `{ "allow": ["${NATIVE}"] }`,
           'compatgate.jsonc': `{ "allow": ["${SEGMENTER}", "${LOOKBEHIND}", "${NATIVE}"] }`,
@@ -522,8 +524,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         assert.deepEqual(texts([...base.errors, ...base.warnings]), []);
       });
 
-      test('an inline entry names the options', async t => {
-        const { warnings } = await bundler.build(createProject(t, PROJECT), {
+      test('an inline entry names the options', async () => {
+        const { warnings } = await bundler.build(createProject(PROJECT), {
           allow: [SEGMENTER, LOOKBEHIND, NATIVE],
         });
         assert.deepEqual(texts(warnings), [
@@ -531,8 +533,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         ]);
       });
 
-      test('an unknown feature id of an own entry is an error of the build', async t => {
-        const root = createProject(t, {
+      test('an unknown feature id of an own entry is an error of the build', async () => {
+        const root = createProject({
           ...PROJECT,
           'compatgate.jsonc': `{ "allow": ["${SEGMENTER}", "api.Fetch", "${LOOKBEHIND}"] }`,
         });
@@ -542,8 +544,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         ]);
       });
 
-      test('own entries that suppressed nothing are one warning at the end; used and base entries are not', async t => {
-        const root = createProject(t, {
+      test('own entries that suppressed nothing are one warning at the end; used and base entries are not', async () => {
+        const root = createProject({
           ...PROJECT,
           'base.jsonc': `{ "allow": ["${UNUSED[0]}"] }`,
           'compatgate.jsonc': JSON.stringify({
@@ -558,8 +560,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         ]);
       });
 
-      test('each config has its own report', async t => {
-        const root = createProject(t, {
+      test('each config has its own report', async () => {
+        const root = createProject({
           ...PROJECT,
           'compatgate.jsonc': JSON.stringify({ allow: [SEGMENTER, UNUSED[1], LOOKBEHIND] }),
           'src/lib/compatgate.jsonc': JSON.stringify({ allow: [UNUSED[2], SEGMENTER] }),
@@ -574,8 +576,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         ]);
       });
 
-      test('the modules of a concatenated build count', async t => {
-        const root = createProject(t, {
+      test('the modules of a concatenated build count', async () => {
+        const root = createProject({
           ...PROJECT,
           'compatgate.jsonc': JSON.stringify({ allow: [SEGMENTER, LOOKBEHIND, UNUSED[1]] }),
         });
@@ -585,8 +587,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         ]);
       });
 
-      test('a build with modules from the persistent cache has no report of unused entries', async t => {
-        const root = createProject(t, {
+      test('a build with modules from the persistent cache has no report of unused entries', async () => {
+        const root = createProject({
           ...PROJECT,
           'compatgate.jsonc': JSON.stringify({ allow: [SEGMENTER, LOOKBEHIND, UNUSED[1]] }),
         });
@@ -600,7 +602,7 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       });
 
       test('a watch rebuild after an edit of one module gives the report of unused entries', async t => {
-        const root = createProject(t, {
+        const root = createProject({
           ...PROJECT,
           'compatgate.jsonc': JSON.stringify({ allow: [SEGMENTER, LOOKBEHIND, UNUSED[1]] }),
         });
@@ -619,7 +621,7 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       });
 
       test('an edit of compatgate.jsonc checks its modules again, and the report follows it', async t => {
-        const root = createProject(t, {
+        const root = createProject({
           ...PROJECT,
           'compatgate.jsonc': JSON.stringify({ allow: [SEGMENTER, LOOKBEHIND, UNUSED[1]] }),
           'src/lib/compatgate.jsonc': JSON.stringify({ allow: [UNUSED[2], SEGMENTER] }),
@@ -645,7 +647,7 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       });
 
       test('a module that leaves the build leaves the report of unused entries', async t => {
-        const root = createProject(t, {
+        const root = createProject({
           ...PROJECT,
           'compatgate.jsonc': JSON.stringify({ allow: [SEGMENTER, LOOKBEHIND, UNUSED[1]] }),
         });
@@ -671,7 +673,7 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       });
 
       test('a watch rebuild where another loader fails on a checked module has no report', async t => {
-        const root = createProject(t, {
+        const root = createProject({
           ...PROJECT,
           'compatgate.jsonc': JSON.stringify({ allow: [SEGMENTER, LOOKBEHIND, UNUSED[1]] }),
         });
@@ -686,8 +688,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         assert.deepEqual(texts(second.warnings), []);
       });
 
-      test('an entry that only a module of a child compilation needs is used', async t => {
-        const root = createProject(t, {
+      test('an entry that only a module of a child compilation needs is used', async () => {
+        const root = createProject({
           '.browserslistrc': TARGETS,
           'compatgate.jsonc': JSON.stringify({ allow: [SEGMENTER, UNUSED[1]] }),
           'src/index.ts': 'export const a = 1;\n',
@@ -700,9 +702,9 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         ]);
       });
 
-      test('two modules of one file have a record each', async t => {
+      test('two modules of one file have a record each', async () => {
         // A rule of the issuer gives `split.ts` of `other.ts` another loader: two modules with one resource.
-        const root = createProject(t, {
+        const root = createProject({
           '.browserslistrc': TARGETS,
           'compatgate.jsonc': JSON.stringify({ allow: [SEGMENTER, UNUSED[1]] }),
           'strip-loader.cjs': "module.exports = () => 'export const split = () => [];\\n';\n",
@@ -719,7 +721,7 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
       });
 
       test('a watch rebuild of the changed modules only gives the report; a failing loader stops it', async t => {
-        const root = createProject(t, {
+        const root = createProject({
           ...PROJECT,
           'compatgate.jsonc': JSON.stringify({ allow: [SEGMENTER, LOOKBEHIND, UNUSED[1]] }),
         });
@@ -742,8 +744,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         assert.deepEqual(texts(third.warnings), []);
       });
 
-      test('a module that fails in another loader stops the report of unused entries', async t => {
-        const root = createProject(t, {
+      test('a module that fails in another loader stops the report of unused entries', async () => {
+        const root = createProject({
           ...PROJECT,
           // The transpiler fails on the module, and the transform of compatgate never sees it.
           'src/split.ts': "export const split = new Intl.Segmenter('en');\nconst = ;\n",
@@ -754,8 +756,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         assert.deepEqual(texts(warnings), []);
       });
 
-      test('an unknown feature id of a base entry is a warning that names its file', async t => {
-        const root = createProject(t, {
+      test('an unknown feature id of a base entry is a warning that names its file', async () => {
+        const root = createProject({
           ...PROJECT,
           'config/base.jsonc': '{ "allow": ["api.BaseTypo"] }',
           'compatgate.jsonc': JSON.stringify({ extends: './config/base.jsonc', allow: [SEGMENTER, LOOKBEHIND] }),
@@ -767,8 +769,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         ]);
       });
 
-      test('a warning about a config shows once per process, on the build, not on a module', async t => {
-        const root = createProject(t, {
+      test('a warning about a config shows once per process, on the build, not on a module', async () => {
+        const root = createProject({
           ...PROJECT,
           'compatgate.jsonc': `{ "allow": ["${SEGMENTER}", "${LOOKBEHIND}", "${NATIVE}"] }`,
         });
@@ -779,8 +781,8 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         assert.deepEqual(texts((await bundler.build(root)).warnings), []);
       });
 
-      test('an unknown feature id of an own entry fails every build', async t => {
-        const root = createProject(t, {
+      test('an unknown feature id of an own entry fails every build', async () => {
+        const root = createProject({
           ...PROJECT,
           'compatgate.jsonc': `{ "allow": ["${SEGMENTER}", "api.Fetch", "${LOOKBEHIND}"] }`,
         });
@@ -789,9 +791,9 @@ for (const bundler of [rspackBundler, webpackBundler] satisfies Bundler[]) {
         }
       });
 
-      test('targets with browsers that compatgate has no data for are one warning', async t => {
+      test('targets with browsers that compatgate has no data for are one warning', async () => {
         // BCD has no data for Opera Mini by definition: it gives no warning.
-        const root = createProject(t, { ...PROJECT, '.browserslistrc': `${TARGETS}, op_mini all, ie 11` });
+        const root = createProject({ ...PROJECT, '.browserslistrc': `${TARGETS}, op_mini all, ie 11` });
         const { warnings } = await bundler.build(root, { severity: { exact: 'off' } });
         assert.deepEqual(texts(warnings), [
           `[compatgate] targets "${TARGETS}, op_mini all, ie 11" name browsers that compatgate has no data for: ie. compatgate does not check them`,

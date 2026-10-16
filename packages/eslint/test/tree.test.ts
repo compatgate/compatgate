@@ -3,11 +3,9 @@
 // Each directory with configs takes one computation of its configuration, whatever the number of files and the length
 // of the list; ESLint and oxlint give the same findings.
 
-import { after, before, beforeEach, test } from 'node:test';
+import { before, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,11 +15,12 @@ import { Linter } from 'eslint';
 // The counters are internal to the core. The plugin loads the core through the link of the workspace, and Node
 // resolves the link to this same file, so the plugin and the test share one module. A test that read another copy
 // would see no computation at all and fail.
+import { createProject, toSlashes } from '@compatgate/test-utils';
 import { counters } from '../../core/dist/configuration.js';
 import plugin from '../src/index.ts';
+import { runOxlint } from './run-oxlint.ts';
 
 const packageDir = fileURLToPath(new URL('..', import.meta.url));
-const oxlintBin = join(packageDir, 'node_modules/.bin/oxlint');
 const TARGETS = 'Chrome >= 97, iOS >= 15.5, Safari >= 15.6, Firefox >= 115';
 
 // A base list as a build tool ships it: the features that core-js closes.
@@ -112,11 +111,7 @@ let root: string;
 const files: string[] = [];
 
 before(() => {
-  root = realpathSync(mkdtempSync(join(tmpdir(), 'compatgate-tree-')));
-  for (const [name, content] of Object.entries(PROJECT)) {
-    mkdirSync(dirname(join(root, name)), { recursive: true });
-    writeFileSync(join(root, name), content);
-  }
+  root = createProject(PROJECT);
   for (const directory of DIRECTORIES) {
     mkdirSync(join(root, directory), { recursive: true });
     for (const name of ['one.js', 'two.js', 'three.js']) {
@@ -128,8 +123,6 @@ before(() => {
   mkdirSync(join(root, 'node_modules/@compatgate'), { recursive: true });
   symlinkSync(packageDir, join(root, 'node_modules/@compatgate/eslint'), 'dir');
 });
-
-after(() => rmSync(root, { recursive: true, force: true }));
 
 beforeEach(() => clearCaches());
 
@@ -183,16 +176,13 @@ test('oxlint gives the tree the findings of ESLint', () => {
       settings: { compatgate: SETTINGS },
     }),
   );
-  const run = spawnSync(oxlintBin, ['-c', config, '--format', 'json', 'src', 'apps', 'packages'], {
-    cwd: root,
-    encoding: 'utf8',
-  });
+  const run = runOxlint(['-c', config, '--format', 'json', 'src', 'apps', 'packages'], root);
   assert.ok(run.stdout.startsWith('{'), `oxlint failed: ${run.stdout}\n${run.stderr}`);
   const diagnostics: { message: string; code: string; filename: string }[] = JSON.parse(run.stdout).diagnostics;
   const found = diagnostics
     .map(diagnostic => {
       assert.match(diagnostic.code, /compatgate/, diagnostic.message);
-      const file = relative(root, join(root, diagnostic.filename)).replaceAll('\\', '/');
+      const file = toSlashes(relative(root, join(root, diagnostic.filename)));
       return `${file} ${diagnostic.message.split(' ')[0]}`;
     })
     .sort();

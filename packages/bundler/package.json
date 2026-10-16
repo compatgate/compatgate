@@ -81,6 +81,7 @@
     "unplugin": "catalog:"
   },
   "devDependencies": {
+    "@compatgate/test-utils": "workspace:*",
     "@rspack/core": "catalog:",
     "@swc/core": "catalog:",
     "@types/node": "catalog:",

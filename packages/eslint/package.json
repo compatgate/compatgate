@@ -50,6 +50,7 @@
     "@compatgate/core": "workspace:^"
   },
   "devDependencies": {
+    "@compatgate/test-utils": "workspace:*",
     "@types/node": "catalog:",
     "@typescript-eslint/parser": "^8.71.1",
     "eslint": "catalog:",

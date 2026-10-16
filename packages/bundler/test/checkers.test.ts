@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createResolver, type AllowEntryInput, type Configuration } from '@compatgate/core';
+import { FAKE_ROOT, fakePath, toSlashes } from '@compatgate/test-utils';
 
 import { CheckerRegistry, checkFile } from '../src/checkers.ts';
 import { TARGETS } from './helpers.ts';
@@ -11,7 +12,7 @@ const CODE = "new Intl.Segmenter('en');\n";
 
 /** The configuration of the core for inline entries of the project `/p`. */
 function resolved(targets: string, ...allow: (string | AllowEntryInput)[]): Configuration {
-  return createResolver({ targets, allow, baseDir: '/p' }).resolve('/p/src/a.ts');
+  return createResolver({ targets, allow, baseDir: FAKE_ROOT }).resolve(fakePath('p', 'src', 'a.ts'));
 }
 
 test('one configuration serves every module with the same checker of the core', () => {
@@ -26,7 +27,7 @@ test('one configuration serves every module with the same checker of the core', 
 test('a configuration checks a module and keeps no record of it', () => {
   const registry = new CheckerRegistry();
   const configuration = registry.configuration(resolved(TARGETS, 'api.fetch', SEGMENTER));
-  const result = checkFile(configuration, CODE, { path: '/p/src/a.ts' });
+  const result = checkFile(configuration, CODE, { path: fakePath('p', 'src', 'a.ts') });
   assert.deepEqual(result.findings, []);
   assert.deepEqual(result.suppressed, [{ index: 1, kind: 'builtin' }]);
   // The records of the modules live apart, in `ModuleRecords`: a module from a cache keeps its own.
@@ -70,12 +71,18 @@ test('a configuration keeps its messages until a build drops it', () => {
 
 test('`files` of an entry match the path of a component, not the name that selects the parser', () => {
   const registry = new CheckerRegistry();
-  const component = { path: '/p/src/App.vue', parseAs: '/p/src/App.vue.ts' };
+  const component = { path: fakePath('p', 'src', 'App.vue'), parseAs: fakePath('p', 'src', 'App.vue.ts') };
   const typed = 'const s: Intl.Segmenter = new Intl.Segmenter("en");\n';
   const check = (files: string) =>
     checkFile(registry.configuration(resolved(TARGETS, { feature: SEGMENTER, files })), typed, component);
 
-  for (const files of ['src/App.vue', 'src/*.vue', 'src/**', '**/*.vue', '/p/src/App.{vue,svelte}']) {
+  for (const files of [
+    'src/App.vue',
+    'src/*.vue',
+    'src/**',
+    '**/*.vue',
+    toSlashes(fakePath('p', 'src', 'App.{vue,svelte}')),
+  ]) {
     const result = check(files);
     assert.equal(result.parseError, undefined);
     assert.deepEqual(result.findings, [], files);
@@ -90,11 +97,14 @@ test('`packages` of an entry match a component of a package', () => {
   const registry = new CheckerRegistry();
   const configuration = registry.configuration(resolved(TARGETS, { feature: SEGMENTER, packages: 'ui-kit' }));
   const inPackage = checkFile(configuration, CODE, {
-    path: '/p/node_modules/ui-kit/Button.vue',
-    parseAs: '/p/node_modules/ui-kit/Button.vue.js',
+    path: fakePath('p', 'node_modules', 'ui-kit', 'Button.vue'),
+    parseAs: fakePath('p', 'node_modules', 'ui-kit', 'Button.vue.js'),
   });
   assert.deepEqual(inPackage.findings, []);
-  const outside = checkFile(configuration, CODE, { path: '/p/src/Button.vue', parseAs: '/p/src/Button.vue.js' });
+  const outside = checkFile(configuration, CODE, {
+    path: fakePath('p', 'src', 'Button.vue'),
+    parseAs: fakePath('p', 'src', 'Button.vue.js'),
+  });
   assert.equal(outside.findings.length, 1);
 });
 
@@ -102,9 +112,14 @@ test('a component is parsed by the language of `parseAs`', () => {
   const registry = new CheckerRegistry();
   const configuration = registry.configuration(resolved(TARGETS));
   const typed = 'const n: number = 1;\n';
-  assert.equal(checkFile(configuration, typed, { path: '/p/App.vue', parseAs: '/p/App.vue.ts' }).parseError, undefined);
   assert.equal(
-    checkFile(configuration, typed, { path: '/p/App.vue', parseAs: '/p/App.vue.js' }).parseError?.kind,
+    checkFile(configuration, typed, { path: fakePath('p', 'App.vue'), parseAs: fakePath('p', 'App.vue.ts') })
+      .parseError,
+    undefined,
+  );
+  assert.equal(
+    checkFile(configuration, typed, { path: fakePath('p', 'App.vue'), parseAs: fakePath('p', 'App.vue.js') }).parseError
+      ?.kind,
     'syntax',
   );
 });

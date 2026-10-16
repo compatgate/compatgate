@@ -287,6 +287,9 @@ importers:
         specifier: 'catalog:'
         version: 3.4.0(@rspack/core@2.2.8)(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.2)(vite@8.3.4(@types/node@24.19.1)(esbuild@0.28.2)(terser@5.51.2))(webpack@5.111.1(@swc/core@1.16.13)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.29)(uglify-js@3.19.3))
     devDependencies:
+      '@compatgate/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@rspack/core':
         specifier: 'catalog:'
         version: 2.2.8
@@ -336,6 +339,9 @@ importers:
         specifier: ^3.3.1
         version: 3.3.1
     devDependencies:
+      '@compatgate/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@emnapi/core':
         specifier: 2.0.0-alpha.6
         version: 2.0.0-alpha.6
@@ -364,6 +370,9 @@ importers:
         specifier: workspace:^
         version: link:../core
     devDependencies:
+      '@compatgate/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.1
@@ -379,6 +388,8 @@ importers:
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.2
         version: '@typescript/typescript6@6.0.2'
+
+  packages/test-utils: {}
 
 packages:
 
