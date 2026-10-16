@@ -41,8 +41,8 @@ export interface RuleModule {
 // The rule reads only the text: the core parses it with its own parser. With no visitor oxlint does not build
 // the AST in JavaScript, and a lint of 2 000 files takes 214 ms instead of 566 ms (README, "Performance").
 // `createOnce` with a `before` hook is as fast, but ESLint needs `create` anyway.
-// The README in the repository, as eslint-plugin-compat links its rules. GitHub makes the anchor `#exact` of the
-// heading `` ### `exact` ``.
+// The README in the repository: it describes the rules of the version on `main`. GitHub makes the anchor `#exact` of
+// the heading `` ### `exact` ``.
 const DOCS = 'https://github.com/compatgate/compatgate/tree/main/packages/eslint';
 
 function createRule(confidence: FindingConfidence, description: string): RuleModule {

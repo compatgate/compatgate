@@ -17,8 +17,8 @@ test('isInside holds for the directory itself and the paths below it', () => {
   assert.equal(isInside(join(root, 'src'), root), false);
 });
 
-// A relative name has `/` separators on every system, as in the messages of esbuild, Vite and TypeScript: a message
-// reads the same everywhere, and the name of a config goes into it as it is.
+// A relative name has `/` separators on every system: a message reads the same everywhere, and the name of a config
+// goes into it as it is.
 test('displayPaths names a path below the root relative to it, with / separators', () => {
   assert.equal(displayPaths(join(root, 'src', 'a.ts'), root), 'src/a.ts');
   assert.equal(displayPaths(join(root, '..a.ts'), root), '..a.ts');
@@ -44,7 +44,7 @@ test('displayPaths names every path of a message', () => {
   );
 });
 
-// A relative name has `/` separators on every system, as in the messages of esbuild and Vite.
+// A relative name has `/` separators on every system.
 test('displayPath names a path below the root relative to it, with / separators', () => {
   assert.equal(displayPath(join(root, 'src', 'a.ts'), root), 'src/a.ts');
   // A name that starts with two dots is a file of the root, not of its parent.

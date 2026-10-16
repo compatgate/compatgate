@@ -14,8 +14,8 @@ export function samePath(a: string, b: string): boolean {
 
 /**
  * The name of a path in a message: relative to `baseDir` with `/` separators when it lies below it, as it is
- * otherwise. `/` as in the messages of esbuild, Vite and TypeScript: a message reads the same on every system. The
- * root itself stays, as an empty name would say nothing. One rule for every message of compatgate.
+ * otherwise. `/` on every system: a message reads the same everywhere. The root itself stays, as an empty name would
+ * say nothing. One rule for every message of compatgate.
  */
 export function displayPath(path: string, baseDir: string): string {
   const name = relative(baseDir, path);
