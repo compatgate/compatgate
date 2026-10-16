@@ -24,3 +24,9 @@ allowBuilds:
   esbuild: true
   # The postinstall only checks the native binary; the platform package installs it.
   '@swc/core': false
+
+# verdaccio 6.10.5, the local registry of the smoke check, takes versions with known flaws. A dev tool that listens
+# on 127.0.0.1 in CI, but the alerts of the repository show them. braces has no fixed version yet.
+overrides:
+  handlebars: ^4.7.10
+  compression: ^1.8.2

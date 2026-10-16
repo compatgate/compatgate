@@ -2,7 +2,7 @@
 // installs them from npmjs.com. npm then picks the platform package of the core through its optionalDependencies, which
 // an install of tarballs by path skips. The other packages come from npmjs.com through the registry.
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { copyFileSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -42,7 +42,7 @@ async function waitFor(url) {
  * Gives the path of the new tarball.
  */
 function withPlatformPackages(core, platforms, directory) {
-  const work = mkdtempSync(join(tmpdir(), 'compatgate-core-'));
+  const work = mkdtempSync(join(directory, 'core-'));
   execFileSync('tar', ['-xzf', core, '-C', work]);
   const manifest = join(work, 'package', 'package.json');
   const pkg = JSON.parse(readFileSync(manifest, 'utf8'));
@@ -57,6 +57,18 @@ function withPlatformPackages(core, platforms, directory) {
   return join(out, readdirSync(out)[0]);
 }
 
+/**
+ * Removes a temporary directory. Windows holds the files of a process that has just been killed for a moment, so
+ * the removal tries again, and a failure is a warning: the check has its result already.
+ */
+export function remove(directory) {
+  try {
+    rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+  } catch (error) {
+    console.warn(`cannot remove ${directory}: ${error.message}`);
+  }
+}
+
 /** Starts the registry and publishes the tarballs of `directory`. Gives its address and a function that stops it. */
 export async function startRegistry(directory) {
   const root = mkdtempSync(join(tmpdir(), 'compatgate-registry-'));
@@ -69,7 +81,16 @@ export async function startRegistry(directory) {
   const server = spawn(process.execPath, [bin, '--config', config, '--listen', `127.0.0.1:${port}`], {
     stdio: 'inherit',
   });
-  const stop = () => server.kill();
+  // The registry, its storage and the repacked core live in `root`: stopping removes them, unless SMOKE_KEEP=1 keeps
+  // them to look into a failure.
+  const stop = () => {
+    server.kill();
+    if (process.env.SMOKE_KEEP === '1') {
+      console.log(`kept the local registry in ${root}`);
+    } else {
+      remove(root);
+    }
+  };
   try {
     await waitFor(`${url}/-/ping`);
     const user = await fetch(`${url}/-/user/org.couchdb.user:smoke`, {

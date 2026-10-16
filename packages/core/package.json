@@ -50,7 +50,7 @@
     "build:debug": "pnpm run build:native:debug && pnpm run build:js",
     "typecheck": "tsc -p tsconfig.test.json",
     "test": "node --test \"test/**/*.test.ts\"",
-    "prepublishOnly": "napi pre-publish -t npm"
+    "prepublishOnly": "napi pre-publish -t npm --no-gh-release"
   },
   "dependencies": {
     "browserslist": "^4.29.3",

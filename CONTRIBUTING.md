@@ -4,6 +4,8 @@
 
 - Node.js 24 and pnpm 12.9.1: `corepack enable` picks the version of `packageManager`.
 - Rust: rustup installs the toolchain of `rust-toolchain.toml`.
+- cargo-about 0.9.2, only for `pnpm third-party`, which writes the licenses of the crates of the binary:
+  `cargo install cargo-about@0.9.2 --features cli --locked`. CI pins the same version.
 
 ```sh
 pnpm install

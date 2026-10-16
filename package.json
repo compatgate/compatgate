@@ -13,7 +13,7 @@
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm run test:scripts && pnpm run test:rust && pnpm run test:js",
     "test:scripts": "node --test \"scripts/*.test.js\"",
-    "test:rust": "cargo test -p compatgate",
+    "test:rust": "cargo test --workspace",
     "test:js": "pnpm run build:debug && pnpm -r run test",
     "check": "pnpm run generate:check && pnpm run fmt:check && pnpm run lint && pnpm run test && pnpm run typecheck"
   },

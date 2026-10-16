@@ -9,6 +9,8 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
+import { remove, startRegistry } from './local-registry.js';
+
 const { values } = parseArgs({ options: { version: { type: 'string' }, tarballs: { type: 'string' } } });
 if (!values.version === !values.tarballs) {
   throw new Error('pass --version <version> or --tarballs <directory>');
@@ -25,16 +27,19 @@ if (values.tarballs) {
     throw new Error(`no tarball of @compatgate/core in ${directory}`);
   }
   version = core.replace(/^compatgate-core-/, '').replace(/\.tgz$/, '');
-  const { startRegistry } = await import('./local-registry.js');
   ({ url: registry, stop } = await startRegistry(directory));
 }
 
 const failures = [];
+// The project and the cache of npm go after the check, unless SMOKE_KEEP=1 keeps them to look into a failure.
+const temporary = [];
 try {
   const project = mkdtempSync(join(tmpdir(), 'compatgate-smoke-'));
+  temporary.push(project);
   cpSync(fileURLToPath(new URL('smoke', import.meta.url)), project, { recursive: true });
   // A fresh cache: a local registry serves the same version of a release that another check served before.
   const cache = mkdtempSync(join(tmpdir(), 'compatgate-npm-cache-'));
+  temporary.push(cache);
   execFileSync(
     windows ? 'npm.cmd' : 'npm',
     [
@@ -103,6 +108,13 @@ try {
   }
 } finally {
   stop();
+  for (const directory of temporary) {
+    if (process.env.SMOKE_KEEP === '1') {
+      console.log(`kept ${directory}`);
+    } else {
+      remove(directory);
+    }
+  }
 }
 if (failures.length > 0) {
   console.error(failures.join('\n\n'));
