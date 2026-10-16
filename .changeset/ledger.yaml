@@ -1,0 +1,12 @@
+"@compatgate/bundler@0.1.0-next.0":
+  dir: packages/bundler
+  intents:
+    - first-release
+"@compatgate/core@0.1.0-next.0":
+  dir: packages/core
+  intents:
+    - first-release
+"@compatgate/eslint@0.1.0-next.0":
+  dir: packages/eslint
+  intents:
+    - first-release
