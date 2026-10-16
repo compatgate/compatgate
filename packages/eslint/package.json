@@ -1,6 +1,6 @@
 {
   "name": "@compatgate/eslint",
-  "version": "0.0.0",
+  "version": "0.1.0-next.0",
   "description": "ESLint and oxlint rules that find JavaScript syntax and APIs that your browserslist targets do not support.",
   "keywords": [
     "browserslist",
