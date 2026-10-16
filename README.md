@@ -9,6 +9,13 @@ bundler, with one config and one set of findings.
 | [`@compatgate/bundler`](packages/bundler#readme) | A plugin for webpack, rspack, Vite, Rollup, Rolldown and esbuild.           |
 | [`@compatgate/core`](packages/core#readme)       | The checker that both use: a native module in Rust with a JavaScript layer. |
 
+## Requirements
+
+- Node.js 22.12 or later. The packages are ESM, and a CommonJS config loads them with `require`.
+- `@compatgate/eslint`: ESLint 9 or 10, or oxlint 1.
+- `@compatgate/bundler`: webpack 5, rspack 2, Vite 8, Rollup 4, Rolldown 1 or esbuild 0.28. The tests run on these
+  versions.
+
 ## Quick start
 
 The linter shows a finding in the editor:

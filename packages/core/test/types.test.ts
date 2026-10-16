@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import type * as binding from '../binding.js';
-import { createChecker } from '../src-js/checker.ts';
+import { createChecker } from './checker.ts';
 import type { AllowEntry, Configuration, Finding, ParseErrorKind, Suppression } from '../src-js/index.ts';
 import type { CoreAllowIssue, CoreCheckResult, CoreChecker } from '../src-js/types.ts';
 

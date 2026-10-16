@@ -93,12 +93,12 @@ test('a wrong severity is an error that names the option', () => {
   );
 });
 
-test('an unknown option is an error that lists the known options', () => {
+test('an unknown option is an error that lists the known keys', () => {
   assert.throws(
     () => bundler.compatgateRollup({ target: 'Chrome >= 97' } as never),
     (error: Error & { code?: string }) =>
       error.code === 'COMPATGATE_OPTIONS' &&
-      /^compatgate: unknown option "target"\. Known options: targets, defaultTargets, allow, extends, include, exclude, severity$/.test(
+      /^compatgate: unknown key "target"\. Known keys: targets, defaultTargets, allow, extends, include, exclude, severity$/.test(
         error.message,
       ),
   );

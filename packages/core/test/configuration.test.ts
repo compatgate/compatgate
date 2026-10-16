@@ -1,13 +1,20 @@
 import { after, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs, { rmSync, writeFileSync } from 'node:fs';
-import { syncBuiltinESMExports } from 'node:module';
+import fs, { readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createRequire, syncBuiltinESMExports } from 'node:module';
 import { isAbsolute, join, sep } from 'node:path';
 
 import browserslist from 'browserslist';
 
 import { createProject, editFile, fakePath, toSlashes } from '@compatgate/test-utils';
-import { cachedDirectories, clock, compiledTargets, counters, DIRECTORY_LIMIT } from '../src-js/configuration.ts';
+import {
+  cachedDirectories,
+  clock,
+  compiledTargets,
+  counters,
+  DIRECTORY_LIMIT,
+  TARGETS_VARIABLES,
+} from '../src-js/configuration.ts';
 import { describeAllowIssue } from '../src-js/describe.ts';
 import { readConfigurationOptions } from '../src-js/options.ts';
 import {
@@ -621,7 +628,10 @@ test('the message of an issue suggests the closest known id', () => {
 
 test('readConfigurationOptions checks the shared options and names the place', () => {
   assert.deepEqual(
-    readConfigurationOptions({ targets: 'Chrome >= 97', allow: ['api.a'], syntax: true }, 'settings.compatgate'),
+    readConfigurationOptions(
+      { targets: 'Chrome >= 97', allow: ['api.a'], where: 'settings.compatgate' },
+      'settings.compatgate',
+    ),
     { targets: 'Chrome >= 97', allow: ['api.a'] },
   );
   const cases: [Record<string, unknown>, RegExp][] = [
@@ -630,6 +640,8 @@ test('readConfigurationOptions checks the shared options and names the place', (
     [{ allow: 'api.a' }, /^settings\.compatgate\.allow: expected an array of feature ids and entries$/],
     [{ allow: [1] }, /^settings\.compatgate\.allow\[0\]: expected a feature id or an object$/],
     [{ extends: 'a' }, /^settings\.compatgate\.extends: expected an array of strings$/],
+    // The adapter checks its own keys, such as `syntax` of ESLint, and passes only these.
+    [{ syntax: true }, /^settings\.compatgate: unknown key "syntax"\. Known keys: /],
   ];
   for (const [options, message] of cases) {
     assert.throws(
@@ -644,6 +656,13 @@ test('readConfigurationOptions checks the shared options and names the place', (
   assert.throws(
     () => createResolver({ allow: 'api.a' as never, where: 'compatgate' }),
     /^OptionsError: compatgate\.allow: expected an array/,
+  );
+});
+
+test('createResolver does not accept an unknown option', () => {
+  assert.throws(
+    () => createResolver({ target: 'Chrome >= 97' } as never),
+    /^OptionsError: options: unknown key "target"\. Known keys: targets, defaultTargets, allow, extends, baseDir, where$/,
   );
 });
 
@@ -931,3 +950,65 @@ test(
     assert.deepEqual(configuration.checker.check('structuredClone(1);', file).findings, []);
   },
 );
+
+// A tool may give the drive in another case than `baseDir`, and the process directory: `c:\p` for `C:\p`.
+test(
+  'on Windows the case of the drive does not change the configs to watch',
+  {
+    skip: process.platform !== 'win32',
+  },
+  () => {
+    const root = createProject({ '.browserslistrc': 'Chrome >= 97\n', 'src/a.ts': '' });
+    const file = join(root, 'src', 'a.ts');
+    const lower = file.replace(/^[A-Z]:/, drive => drive.toLowerCase());
+    const upper = resolveConfiguration(file, { baseDir: root });
+    clearCaches();
+    const other = resolveConfiguration(lower, { baseDir: root });
+    assert.deepEqual(
+      other.missing.map(path => path.toLowerCase()),
+      upper.missing.map(path => path.toLowerCase()),
+    );
+    assert.deepEqual(
+      other.watch.map(path => path.toLowerCase()),
+      upper.watch.map(path => path.toLowerCase()),
+    );
+    assert.ok(
+      upper.missing.some(path => path.endsWith('compatgate.jsonc')),
+      upper.missing.join(', '),
+    );
+  },
+);
+
+test('a change of any variable of browserslist computes the configuration anew', () => {
+  const root = createProject({ '.browserslistrc': 'Chrome >= 97\n', 'src/a.ts': '', 'stats.json': '{}' });
+  const file = join(root, 'src', 'a.ts');
+  resolveConfiguration(file, { baseDir: root, allow: [] });
+  const before = counters.computations;
+  resolveConfiguration(file, { baseDir: root, allow: [] });
+  assert.equal(counters.computations, before, 'the same environment takes the cache');
+  // `BROWSERSLIST_ROOT_PATH` bounds the lookup of the config; the key once left it out.
+  for (const [name, value] of [
+    ['BROWSERSLIST_ROOT_PATH', root],
+    ['BROWSERSLIST_STATS', join(root, 'stats.json')],
+  ] as const) {
+    process.env[name] = value;
+    try {
+      const computed = counters.computations;
+      resolveConfiguration(file, { baseDir: root, allow: [] });
+      assert.equal(counters.computations, computed + 1, name);
+    } finally {
+      delete process.env[name];
+    }
+  }
+});
+
+// A new variable of browserslist would change the targets and leave the cache of compatgate as it was.
+test('the key of the cache takes every variable of browserslist that changes the targets', () => {
+  const source = readFileSync(createRequire(import.meta.url).resolve('browserslist/node.js'), 'utf8');
+  const read = new Set([...source.matchAll(/process\.env\.([A-Z_]+)/g)].map(match => match[1]));
+  // A cache, the age of the data and a trace: none of them changes what browserslist selects.
+  for (const name of ['BROWSERSLIST_DISABLE_CACHE', 'BROWSERSLIST_IGNORE_OLD_DATA', 'BROWSERSLIST_TRACE_WARNING']) {
+    read.delete(name);
+  }
+  assert.deepEqual([...read].sort(), [...TARGETS_VARIABLES].sort());
+});

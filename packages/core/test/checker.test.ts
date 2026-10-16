@@ -4,7 +4,7 @@ import { Worker } from 'node:worker_threads';
 import { sep } from 'node:path';
 
 import { FAKE_ROOT, fakePath } from '@compatgate/test-utils';
-import { createChecker } from '../src-js/checker.ts';
+import { createChecker } from './checker.ts';
 import { AllowConfigError, ConfigError, OptionsError, TargetsConfigError, isCheckable } from '../src-js/index.ts';
 import { check } from './resolve.ts';
 
@@ -277,7 +277,7 @@ test('checkers in several workers check at the same time', async () => {
       parentPort.postMessage(workerData.files.map((file, index) => checker.check(file, workerData.names[index])));
     });
   `;
-  const module = new URL('../src-js/checker.ts', import.meta.url).href;
+  const module = new URL('./checker.ts', import.meta.url).href;
   const results = await Promise.all(
     Array.from(
       { length: 4 },

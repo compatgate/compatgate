@@ -1,6 +1,7 @@
 [workspace]
 # A workspace without a root package has no edition, so the resolver must be set here.
-# Resolver 3 picks dependency versions that support our rust-version.
+# Resolver 3 picks dependency versions that support the Rust of rust-toolchain.toml: the crates declare no
+# rust-version, as none of them is published.
 resolver = "3"
 members = ["crates/compatgate", "packages/core"]
 
@@ -8,7 +9,6 @@ members = ["crates/compatgate", "packages/core"]
 version = "0.0.0"
 edition = "2024"
 # oxc_parser 0.152 needs Rust 1.96.
-rust-version = "1.96"
 license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]

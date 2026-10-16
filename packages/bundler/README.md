@@ -8,14 +8,18 @@ transpiler has lowered the syntax it can lower. So a class static block that SWC
 while a lookbehind assertion in a regular expression, which no transpiler lowers, is. The plugin does not change
 the code.
 
+## Requirements
+
+- Node.js 22.12 or later.
+- webpack 5, rspack 2, Vite 8, Rollup 4, Rolldown 1 or esbuild 0.28. The tests run on these versions.
+
 ## Install
 
 ```sh
 npm install --save-dev @compatgate/bundler
 ```
 
-The package is ESM. A CommonJS config, such as `webpack.config.js`, loads it with `require`
-(Node.js 22.12 and later).
+The package is ESM. A CommonJS config, such as `webpack.config.js`, loads it with `require`.
 
 ## Set up
 

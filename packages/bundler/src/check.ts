@@ -3,7 +3,7 @@ import { extname } from 'node:path';
 import type { Configuration, Finding } from '@compatgate/core';
 import { traceSegment } from '@jridgewell/trace-mapping';
 
-import { checkFile, usedEntries } from './checkers.ts';
+import { checkFile } from './checkers.ts';
 import { LoweringEngineError, type Lower, type LoweredCode } from './lowering.ts';
 import type { ModuleFile } from './module-id.ts';
 import { copiedColumns, textLines, traceMap, type Locate } from './source-map.ts';
@@ -50,7 +50,8 @@ export async function checkModule(
     return { configuration, used: [], partials: [] };
   }
   let findings = result.findings.filter(finding => state.severity[finding.confidence] !== 'off');
-  let used = usedEntries(result);
+  // The entries that suppressed a finding: the unique indexes of `suppressed`.
+  let used = [...new Set(result.suppressed.map(item => item.index))];
   const syntax =
     findings.some(finding => finding.kind === 'syntax') ||
     (reportsUnused && result.suppressed.some(item => item.kind === 'syntax'));

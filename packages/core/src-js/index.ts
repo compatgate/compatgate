@@ -5,8 +5,8 @@ export type { AllowEntry, AllowEntryInput, AllowOrigin, AllowSource } from './al
 export { clearCaches, createResolver } from './configuration.ts';
 export type { CheckOptions, Configuration, ResolveOptions, Resolver, ResolverOptions } from './configuration.ts';
 export { ConfigError } from './errors.ts';
-export { OptionsError } from './options.ts';
-export type { SharedOptions } from './options.ts';
+export { OptionsError, SHARED_SCHEMA, checkOptions } from './options.ts';
+export type { CheckOptionsSettings, OptionRule, OptionSchema, SharedOptions } from './options.ts';
 export { TargetsConfigError } from './targets.ts';
 export type {
   AllowIssue,

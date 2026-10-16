@@ -5,7 +5,7 @@ import browserslist from 'browserslist';
 
 import { ConfigError } from './errors.ts';
 import { fileState } from './file-state.ts';
-import { isInside } from './paths.ts';
+import { isInside, samePath } from './paths.ts';
 
 export class TargetsConfigError extends ConfigError {
   override name = 'TargetsConfigError';
@@ -103,7 +103,7 @@ function places(
     for (const path of TARGETS_FILES.map(name => join(root, name))) {
       if (!existsSync(path)) {
         missing.push(path);
-      } else if (path !== config) {
+      } else if (config === null || !samePath(path, config)) {
         watch.push(path);
       }
     }

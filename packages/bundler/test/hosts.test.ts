@@ -471,6 +471,35 @@ test('Rollup run outside the project names a module by its absolute path', async
   assert.ok(error.includes(`[compatgate/exact] ${toSlashes(join(root, 'src', 'index.js'))}:1:5: `), error);
 });
 
+// A config of Rollup may give one plugin to several builds, such as an array of configs with a shared plugin. Each
+// build reports the entries that its own code did not use: an entry for the other build is unused in this one.
+test('one plugin in two builds of Rollup reports each build by its own modules', async t => {
+  const root = createProject({
+    'compatgate.jsonc': `{ "allow": ["${SEGMENTER}"] }`,
+    'src/a.js': "new Intl.Segmenter('en');\n",
+    'src/b.js': 'console.log(1);\n',
+  });
+  const cwd = process.cwd();
+  process.chdir(root);
+  t.after(() => process.chdir(cwd));
+  const plugin = compatgateRollup({ targets: TARGETS });
+  const build = async (input: string) => {
+    const warnings: string[] = [];
+    const bundle = await rollup({
+      input: join(root, input),
+      plugins: [plugin],
+      onwarn: warning => warnings.push(warning.message),
+    });
+    await bundle.close();
+    return compatgateWarnings(warnings);
+  };
+  const unused = `compatgate.jsonc: allow entries that suppressed no finding in the code of this build: allow[0] "${SEGMENTER}". Remove them unless other code needs them`;
+  assert.deepEqual(await build('src/a.js'), []);
+  assert.deepEqual(await build('src/b.js'), [unused]);
+  // The second build leaves nothing behind for the next one.
+  assert.deepEqual(await build('src/a.js'), []);
+});
+
 describe('rollup watch', () => {
   test('the error of a build names the configs to watch, and the directory of a missing one', async t => {
     // Rollup watches only the files of the error after a failed build. A missing file is watched through a filter

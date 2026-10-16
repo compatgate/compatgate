@@ -32,6 +32,13 @@ test('an unknown key of the settings is an error that lists the known keys', () 
   );
 });
 
+test('the settings do not accept __proto__', () => {
+  assert.throws(
+    () => lint(JSON.parse('{ "__proto__": { "targets": "Chrome >= 97" } }')),
+    /settings\.compatgate: unknown key "__proto__"\. Known keys: targets, defaultTargets, allow, extends, syntax/,
+  );
+});
+
 test('a value of a wrong type is an error that names the key', () => {
   const cases: Array<[Record<string, unknown>, RegExp]> = [
     [{ targets: ['Chrome >= 97'] }, /settings\.compatgate\.targets: expected a string/],
@@ -71,7 +78,7 @@ test('an allow entry of a wrong shape is the error of the core', () => {
   assert.deepEqual(rest, []);
   assert.match(
     message ?? '',
-    /^settings\.compatgate\.allow\[0\]: unknown key "reason"\. Write the reason as a comment/,
+    /^settings\.compatgate\.allow\[0\]: unknown key "reason"\. Known keys: feature, packages, files, baseDir\. Write the reason as a comment/,
   );
 });
 

@@ -1,4 +1,4 @@
-import { OptionsError, type AllowEntryInput } from '@compatgate/core';
+import { SHARED_SCHEMA, checkOptions, type AllowEntryInput, type OptionSchema } from '@compatgate/core';
 
 /** `settings.compatgate` of an ESLint or oxlint config. The three rules share it and take no options. */
 export interface CompatgateSettings {
@@ -20,29 +20,17 @@ export interface CompatgateSettings {
 /** The name of the settings in messages: `settings.compatgate.allow[0]`. */
 export const WHERE = 'settings.compatgate';
 
-const KNOWN_KEYS: readonly (keyof CompatgateSettings)[] = ['targets', 'defaultTargets', 'allow', 'extends', 'syntax'];
+// The rules of the settings: the shared options of the core and `syntax`.
+const SCHEMA: OptionSchema = {
+  ...SHARED_SCHEMA,
+  syntax: [value => typeof value === 'boolean', 'a boolean'],
+};
 
-/**
- * Checks `settings.compatgate`: the unknown keys and `syntax`. `createResolver` of the core checks the keys that
- * select the targets and the entries. Throws `OptionsError` of the core.
- */
+/** Checks `settings.compatgate` against the rules of the core and of the plugin. Throws `OptionsError` of the core. */
 export function readSettings(value: unknown): CompatgateSettings {
   if (value === undefined) {
     return {};
   }
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    throw new OptionsError(`${WHERE}: expected an object`);
-  }
-  const settings = value as Readonly<Record<string, unknown>>;
-  for (const key of Object.keys(settings)) {
-    if (!(KNOWN_KEYS as readonly string[]).includes(key)) {
-      throw new OptionsError(`${WHERE}: unknown key "${key}". Known keys: ${KNOWN_KEYS.join(', ')}`);
-    }
-  }
-  // An absent value is the default: a shared config may unset a key this way.
-  const { syntax } = settings;
-  if (syntax !== undefined && typeof syntax !== 'boolean') {
-    throw new OptionsError(`${WHERE}.syntax: expected a boolean`);
-  }
-  return settings as CompatgateSettings;
+  checkOptions(value, SCHEMA, WHERE);
+  return value as CompatgateSettings;
 }

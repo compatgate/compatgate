@@ -7,6 +7,7 @@ import type { ParseError } from 'jsonc-parser';
 
 import { ConfigError } from './errors.ts';
 import { fileState } from './file-state.ts';
+import { checkOptions, isString, type OptionRule, type OptionSchema } from './options.ts';
 import { samePath } from './paths.ts';
 
 export const ALLOW_FILE = 'compatgate.jsonc';
@@ -172,9 +173,16 @@ function readConfig(path: string, chain: readonly string[], files: Map<string, s
   }
 }
 
+// A chain of `extends` is a few configs long. The reads of a chain go one call deeper for each config, and a chain of
+// thousands, from a broken generator or on purpose in a dependency, would end the stack.
+const MAX_EXTENDS = 100;
+
 function readConfigFile(path: string, chain: readonly string[], files: Map<string, string>): AllowEntry[] {
   if (chain.includes(path)) {
     throw new AllowConfigError(`${path}: circular "extends": ${[...chain, path].join(' -> ')}`);
+  }
+  if (chain.length >= MAX_EXTENDS) {
+    throw new AllowConfigError(`${path}: "extends" goes deeper than ${MAX_EXTENDS} configs`);
   }
   // The state is taken before the read: an edit between the two counts as a change at the next check.
   const state = fileState(path);
@@ -188,22 +196,13 @@ function readConfigFile(path: string, chain: readonly string[], files: Map<strin
   if (error) {
     throw new AllowConfigError(`${path}: ${jsonc.printParseErrorCode(error.error)} at offset ${error.offset}`);
   }
-  if (!isRecord(data)) {
-    throw new AllowConfigError(`${path}: expected an object`);
-  }
-  for (const key of Object.keys(data)) {
-    if (key !== 'extends' && key !== 'allow') {
-      throw new AllowConfigError(`${path}: unknown key "${key}"`);
-    }
-  }
+  checkOptions(data, FILE_SCHEMA, path, { error: AllowConfigError, label: key => `${path}: "${key}"` });
+  const fields = data as Readonly<Record<string, unknown>>;
   const nextChain = [...chain, path];
-  const inherited = stringList(data.extends, `${path}: "extends"`).flatMap(target =>
+  const inherited = stringList(fields.extends).flatMap(target =>
     readConfig(resolveExtends(target, dirname(path), `${path}: "extends"`), nextChain, files).map(inherit),
   );
-  const allow = data.allow ?? [];
-  if (!Array.isArray(allow)) {
-    throw new AllowConfigError(`${path}: "allow" must be an array`);
-  }
+  const allow = (fields.allow ?? []) as unknown[];
   const own = allow.map((entry, index) =>
     toEntry(entry, dirname(path), `${path}: allow[${index}]`, { file: path, index }, false),
   );
@@ -262,38 +261,38 @@ export function toEntry(
   if (!isRecord(value) || typeof value.feature !== 'string') {
     throw new AllowConfigError(`${where}: expected a feature id or { "feature": string, "packages"?, "files"? }`);
   }
-  for (const key of Object.keys(value)) {
-    if (key === 'feature' || key === 'packages' || key === 'files' || (inline && key === 'baseDir')) {
-      continue;
-    }
-    if (key === 'origin' || key === 'source') {
-      throw new AllowConfigError(`${where}: unknown key "${key}". compatgate sets the ${key} of an entry itself`);
-    }
-    throw new AllowConfigError(`${where}: unknown key "${key}". Write the reason as a comment`);
-  }
-  if (value.baseDir !== undefined && typeof value.baseDir !== 'string') {
-    throw new AllowConfigError(`${where}.baseDir: expected a string`);
-  }
+  checkOptions(value, inline ? INLINE_ENTRY_SCHEMA : ENTRY_SCHEMA, where, {
+    error: AllowConfigError,
+    hint: key =>
+      key === 'origin' || key === 'source'
+        ? `. compatgate sets the ${key} of an entry itself`
+        : '. Write the reason as a comment',
+  });
   return {
     feature: value.feature,
-    packages: stringList(value.packages, `${where}.packages`),
-    files: stringList(value.files, `${where}.files`),
+    packages: stringList(value.packages),
+    files: stringList(value.files),
     // A relative directory would never match: linters and bundlers pass absolute filenames.
-    baseDir: resolve(value.baseDir ?? baseDir),
+    baseDir: resolve((value.baseDir as string | undefined) ?? baseDir),
     origin: 'own',
     source,
   };
 }
 
-function stringList(value: unknown, where: string): string[] {
-  if (value === undefined) {
-    return [];
-  }
-  const list = typeof value === 'string' ? [value] : value;
-  if (!Array.isArray(list) || !list.every(item => typeof item === 'string')) {
-    throw new AllowConfigError(`${where}: expected a string or an array of strings`);
-  }
-  return list;
+const STRINGS: OptionRule = [
+  value => typeof value === 'string' || (Array.isArray(value) && value.every(isString)),
+  'a string or an array of strings',
+];
+
+// The keys of compatgate.jsonc and of an entry. An entry of the options may name its own `baseDir`; an entry of
+// compatgate.jsonc takes the directory of the file.
+const FILE_SCHEMA: OptionSchema = { extends: STRINGS, allow: [Array.isArray, 'an array'] };
+const ENTRY_SCHEMA: OptionSchema = { feature: [isString, 'a string'], packages: STRINGS, files: STRINGS };
+const INLINE_ENTRY_SCHEMA: OptionSchema = { ...ENTRY_SCHEMA, baseDir: [isString, 'a string'] };
+
+/** A string or a list of strings, checked by `STRINGS`, as a list. */
+function stringList(value: unknown): string[] {
+  return value === undefined ? [] : typeof value === 'string' ? [value] : (value as string[]);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

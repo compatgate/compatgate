@@ -4,6 +4,11 @@ ESLint rules that find JavaScript APIs and syntax that your browserslist targets
 The same plugin runs in oxlint as a JS plugin. The rules call `@compatgate/core`: it parses the file,
 compares what the code uses with browser compatibility data and returns findings.
 
+## Requirements
+
+- Node.js 22.12 or later. The packages are ESM, and a CommonJS config loads them with `require`.
+- ESLint 9 or 10, or oxlint 1 with JS plugins.
+
 ## Install
 
 ```sh

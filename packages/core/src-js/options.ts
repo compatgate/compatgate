@@ -22,39 +22,98 @@ export class OptionsError extends ConfigError {
   readonly code = 'COMPATGATE_OPTIONS';
 }
 
-const CHECKS: Record<keyof SharedOptions, [test: (value: unknown) => boolean, expected: string]> = {
+/**
+ * The rule of one option: a test of its value and what a message says the value should be. `where` names the
+ * option, such as `settings.compatgate.allow`: a test may throw its own error for a part of the value.
+ */
+export type OptionRule = readonly [test: (value: unknown, where: string) => boolean, expected: string];
+
+/** The keys of an object of options and their rules. */
+export type OptionSchema = Readonly<Record<string, OptionRule>>;
+
+export interface CheckOptionsSettings {
+  /** The class of the errors. Default: `OptionsError`. */
+  error?: new (message: string) => Error;
+  /** The name of a key in messages. Default: `<where>.<key>`. */
+  label?: (key: string) => string;
+  /** Advice after the message about an unknown key, such as `. Write the reason as a comment`. */
+  hint?: (key: string) => string;
+}
+
+/**
+ * Checks an object of options against `schema`: each key is known and each value passes its rule. A key set to
+ * `undefined` takes its default, as an omitted one does. One check for the options of every adapter, the settings
+ * of ESLint, compatgate.jsonc and its entries, so a typo fails the same way everywhere instead of changing the checks
+ * without a word.
+ */
+export function checkOptions(
+  value: unknown,
+  schema: OptionSchema,
+  where: string,
+  { error: Failure = OptionsError, label = key => `${where}.${key}`, hint = () => '' }: CheckOptionsSettings = {},
+): void {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Failure(`${where}: expected an object`);
+  }
+  const record = value as Readonly<Record<string, unknown>>;
+  // JSON gives an object a prototype of its own for a key `__proto__`, and `Object.keys` does not show it: the fields
+  // of the prototype would apply unchecked.
+  const prototype: unknown = Object.getPrototypeOf(value);
+  const keys = prototype === Object.prototype || prototype === null ? [] : ['__proto__'];
+  for (const key of [...keys, ...Object.keys(record)]) {
+    const item = key === '__proto__' ? prototype : record[key];
+    if (item === undefined) {
+      continue;
+    }
+    const rule = Object.hasOwn(schema, key) ? schema[key] : undefined;
+    if (rule === undefined) {
+      throw new Failure(`${where}: unknown key "${key}". Known keys: ${Object.keys(schema).join(', ')}${hint(key)}`);
+    }
+    const [test, expected] = rule;
+    if (!test(item, label(key))) {
+      throw new Failure(`${label(key)}: expected ${expected}`);
+    }
+  }
+}
+
+/** The rules of the options that every adapter shares. An adapter adds its own: `{ ...SHARED_SCHEMA, syntax }`. */
+export const SHARED_SCHEMA: { readonly [key in keyof SharedOptions]-?: OptionRule } = {
   targets: [isString, 'a string'],
   defaultTargets: [isString, 'a string'],
-  // The shape of each entry is checked when the entries are read, with the other errors of `allow`.
-  allow: [Array.isArray, 'an array of feature ids and entries'],
+  // The keys of each entry are checked when the entries are read, with the other errors of `allow`.
+  allow: [
+    (value, where) => {
+      if (!Array.isArray(value)) {
+        return false;
+      }
+      value.forEach((entry: unknown, index) => {
+        if (typeof entry !== 'string' && (typeof entry !== 'object' || entry === null || Array.isArray(entry))) {
+          throw new OptionsError(`${where}[${index}]: expected a feature id or an object`);
+        }
+      });
+      return true;
+    },
+    'an array of feature ids and entries',
+  ],
   extends: [value => Array.isArray(value) && value.every(isString), 'an array of strings'],
 };
 
 /**
- * Checks the shared options of an adapter and gives them. `where` names the options in messages, such as
- * `settings.compatgate`. Other keys stay to the adapter: it knows its own options. An option set to `undefined`
- * takes its default, as an omitted one does. Throws `OptionsError`.
+ * Checks the options of `createResolver` and gives the shared ones. `where` names the options in messages, such as
+ * `settings.compatgate`. Throws `OptionsError`.
  */
-export function readConfigurationOptions(options: Readonly<Record<string, unknown>>, where: string): SharedOptions {
-  const shared: Record<string, unknown> = {};
-  for (const [key, [test, expected]] of Object.entries(CHECKS)) {
-    const value = options[key];
-    if (value === undefined) {
-      continue;
+export function readConfigurationOptions(options: unknown, where: string): SharedOptions {
+  checkOptions(options, { ...SHARED_SCHEMA, baseDir: [isString, 'a string'], where: [isString, 'a string'] }, where);
+  const { targets, defaultTargets, allow, extends: bases } = options as SharedOptions;
+  const shared: SharedOptions = { targets, defaultTargets, allow, extends: bases };
+  for (const key of Object.keys(shared) as (keyof SharedOptions)[]) {
+    if (shared[key] === undefined) {
+      delete shared[key];
     }
-    if (!test(value)) {
-      throw new OptionsError(`${where}.${key}: expected ${expected}`);
-    }
-    shared[key] = value;
   }
-  (shared.allow as unknown[] | undefined)?.forEach((entry, index) => {
-    if (typeof entry !== 'string' && (typeof entry !== 'object' || entry === null || Array.isArray(entry))) {
-      throw new OptionsError(`${where}.allow[${index}]: expected a feature id or an object`);
-    }
-  });
-  return shared as SharedOptions;
+  return shared;
 }
 
-function isString(value: unknown): value is string {
+export function isString(value: unknown): value is string {
   return typeof value === 'string';
 }

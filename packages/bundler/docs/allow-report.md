@@ -59,6 +59,10 @@ module of either.
 The core gives the entries that suppressed a finding in the `suppressed` list of each check. In Vite, Rolldown and
 esbuild an entry for syntax that the bundler lowers is not used: see [lowering.md](lowering.md).
 
+The report covers one build. A project with several builds, such as an array of configs in `rollup.config.js` or
+several client environments of Vite, gets a report for each, even when the builds share one plugin. An entry that
+only another build needs shows as unused in this one: remove an entry only when no build of the project needs it.
+
 ## When a build has no report of unused entries
 
 The report needs a record of every checked module of the build. The plugin keeps a record per module: its

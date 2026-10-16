@@ -1,8 +1,8 @@
-import { inlineEntries, type AllowEntryInput } from './allow.ts';
-import { createCoreChecker } from './configuration.ts';
-import { OptionsError } from './options.ts';
-import { resolveBrowsers } from './targets.ts';
-import type { CoreChecker } from './types.ts';
+import { inlineEntries, type AllowEntryInput } from '../src-js/allow.ts';
+import { createCoreChecker } from '../src-js/configuration.ts';
+import { OptionsError } from '../src-js/options.ts';
+import { resolveBrowsers } from '../src-js/targets.ts';
+import type { CoreChecker } from '../src-js/types.ts';
 
 export interface CheckerOptions {
   /** browserslist query. A shared config of `extends` resolves from the process directory, then from `baseDir`. */
@@ -14,7 +14,7 @@ export interface CheckerOptions {
 }
 
 /**
- * @internal — tests only. The checker of the binding for one query and one list of entries, without the lookup of
+ * The checker of the binding for one query and one list of entries, without the lookup of
  * the configs and without the messages. Throws a `ConfigError`: `TargetsConfigError`, `AllowConfigError` or
  * `OptionsError`.
  */

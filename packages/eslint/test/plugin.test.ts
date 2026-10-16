@@ -19,14 +19,14 @@ test('the plugin has a name, a version and three rules', () => {
     assert.equal(rule.meta.type, 'problem');
     assert.equal(typeof rule.meta.docs.description, 'string');
     // The section of the rule in the README of the package on npm.
-    assert.equal(rule.meta.docs.url, `https://www.npmjs.com/package/@compatgate/eslint#${name}`);
+    assert.equal(rule.meta.docs.url, `https://github.com/compatgate/compatgate/tree/main/packages/eslint#${name}`);
   }
 });
 
 test('each rule has a section of its own in the README, which its url names', () => {
   const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
   for (const name of Object.keys(plugin.rules)) {
-    // npm makes the anchor `#exact` of the heading `` ### `exact` ``.
+    // GitHub makes the anchor `#exact` of the heading `` ### `exact` ``.
     assert.ok(readme.split('\n').includes(`### \`${name}\``), name);
   }
 });

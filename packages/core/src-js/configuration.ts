@@ -19,7 +19,7 @@ import { describeAllowIssue, describeFinding, type DescribeFindingOptions } from
 import { ConfigError } from './errors.ts';
 import { fileState } from './file-state.ts';
 import { configLookupDirectory } from './lookup.ts';
-import { displayPath, displayPaths } from './paths.ts';
+import { displayPath, displayPaths, samePath } from './paths.ts';
 import { readConfigurationOptions, type SharedOptions } from './options.ts';
 import { TARGETS_FILES, TargetsConfigError, clearTargetsCache, resolveBrowsers, resolveTargetsIn } from './targets.ts';
 import type { AllowIssue, CheckResult, Checker, CoreAllowIssue, CoreChecker, Finding } from './types.ts';
@@ -304,8 +304,21 @@ function lookupDirectory(scope: Scope, filename: string): string {
   return directory;
 }
 
+/**
+ * @internal — the variables that change what browserslist selects. A test checks the list against the source of
+ * browserslist.
+ */
+export const TARGETS_VARIABLES = [
+  'BROWSERSLIST',
+  'BROWSERSLIST_CONFIG',
+  'BROWSERSLIST_DANGEROUS_EXTEND',
+  'BROWSERSLIST_ENV',
+  'BROWSERSLIST_ROOT_PATH',
+  'BROWSERSLIST_STATS',
+  'NODE_ENV',
+] as const;
+
 function scopeKey(options: ResolverOptions, baseDir: string): string {
-  const { env } = process;
   return JSON.stringify([
     options.targets,
     options.defaultTargets,
@@ -313,12 +326,9 @@ function scopeKey(options: ResolverOptions, baseDir: string): string {
     options.extends,
     options.where,
     baseDir,
-    // The variables of browserslist change the targets of every directory.
-    env.BROWSERSLIST,
-    env.BROWSERSLIST_CONFIG,
-    env.BROWSERSLIST_ENV,
-    env.NODE_ENV,
-    env.BROWSERSLIST_DANGEROUS_EXTEND,
+    // The variables of browserslist change the targets of every directory, and a tool may set `NODE_ENV` after the
+    // first file. A list, not a filter of `process.env`: a filter took 22 µs a file, the list 1 µs.
+    TARGETS_VARIABLES.map(name => process.env[name]),
   ]);
 }
 
@@ -351,7 +361,9 @@ function resolveDirectory(scope: Scope, directory: string): Configuration {
   }
   const parent = dirname(directory);
   const configuration =
-    parent !== directory && directory !== scope.baseDir && !scope.names.some(name => existsSync(join(directory, name)))
+    parent !== directory &&
+    !samePath(directory, scope.baseDir) &&
+    !scope.names.some(name => existsSync(join(directory, name)))
       ? resolveDirectory(scope, parent)
       : compute(scope, directory);
   if (scope.directories.size >= DIRECTORY_LIMIT) {
@@ -562,15 +574,20 @@ function watchFailure(error: unknown, options: ResolverOptions, directory: strin
   const states = places.map(path => [path, fileState(path)] as const);
   const watch = states.filter(([, state]) => state !== '');
   error.watch = watch.map(([path]) => path);
-  error.missing = states.filter(([path, state]) => state === '' && dirname(path) === root).map(([path]) => path);
+  error.missing = states.filter(([path, state]) => state === '' && samePath(dirname(path), root)).map(([path]) => path);
   track(watch, error.missing);
 }
 
 // The directory and its parents, up to `root` when the directory lies inside it.
 function ancestors(directory: string, root: string): string[] {
   const list = [directory];
-  for (let parent = dirname(directory); parent !== list.at(-1) && list.at(-1) !== root; parent = dirname(parent)) {
+  for (let current = directory; !samePath(current, root);) {
+    const parent = dirname(current);
+    if (parent === current) {
+      break;
+    }
     list.push(parent);
+    current = parent;
   }
   return list;
 }

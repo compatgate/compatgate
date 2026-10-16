@@ -7,6 +7,10 @@ Use it through `@compatgate/eslint` or `@compatgate/bundler`, or call it directl
 The core does not read files and has no linter or bundler logic. Adapters read the sources,
 pass them in and show the findings.
 
+## Requirements
+
+Node.js 22.12 or later. The package is ESM, and a CommonJS config loads it with `require`.
+
 ## Quick start
 
 ```sh
@@ -149,12 +153,13 @@ createResolver({ targets?, defaultTargets?, allow?, extends?, baseDir?, where? }
 interface Resolver {
   resolve(filename: string, options?: { snapshot?: object }): Configuration;
   check(source: string, filename: string, options?: { parseAs?: string; snapshot?: object }): CheckResult;
+  displayPath(path: string): string;
 }
 ```
 
-Checks the options and gives a resolver of the configurations. An option of a wrong type is an `OptionsError` that
-names the option, such as `settings.compatgate.targets: expected a string`, so an adapter makes the resolver when
-it reads its options and the error shows at once, not at the first file.
+Checks the options and gives a resolver of the configurations. An unknown option or an option of a wrong type is an
+`OptionsError` that names the option, such as `settings.compatgate.targets: expected a string`, so an adapter makes
+the resolver when it reads its options and the error shows at once, not at the first file.
 
 `where` names the options in messages, such as `settings.compatgate`: an error names `settings.compatgate.targets`
 or `settings.compatgate.allow[0]`, and an inline entry has `source.options` `settings.compatgate`. The default is
@@ -168,6 +173,25 @@ build. Without `snapshot` a call checks the configs at most once in 250 ms: see 
 `check(source, filename, options?)` checks one file with the checker of `resolve(filename, options)`. The indexes
 of `suppressed` point into the `entries` of that configuration. `parseAs` selects the parser instead of `filename`:
 see "Checker".
+
+`displayPath(path)` names a path as the messages of compatgate name it: relative to `baseDir` with `/` separators
+when it lies below it, as it is otherwise. An adapter names the paths of its own messages with it.
+
+### checkOptions(value, schema, where, settings?)
+
+```ts
+checkOptions(value: unknown, schema: OptionSchema, where: string, settings?: CheckOptionsSettings): void
+
+type OptionSchema = Record<string, [test: (value: unknown, where: string) => boolean, expected: string]>;
+const SHARED_SCHEMA: OptionSchema; // targets, defaultTargets, allow, extends
+```
+
+Checks an object of options against a schema, as the core checks compatgate.jsonc and its entries: each key is
+known and each value passes its test. An adapter adds its own keys to the shared ones, so a typo fails in the same
+words everywhere: `{ ...SHARED_SCHEMA, syntax: [value => typeof value === 'boolean', 'a boolean'] }`. An unknown
+key is `<where>: unknown key "x". Known keys: …`, a value of a wrong type is `<where>.<key>: expected …`, and a key
+set to `undefined` counts as absent. A key `__proto__`, which JSON turns into the prototype of the object, is an
+unknown key. Throws `OptionsError`; `settings.error` gives another class.
 
 ### Configuration
 

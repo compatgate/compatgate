@@ -239,6 +239,12 @@ pub fn feature_ids() -> impl Iterator<Item = &'static str> {
     FEATURES.iter().map(|(id, _)| *id)
 }
 
+/// The length of the longest feature id, in bytes.
+pub(crate) fn longest_id() -> usize {
+    static LONGEST: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+    *LONGEST.get_or_init(|| FEATURES.iter().map(|(id, _)| id.len()).max().unwrap_or(0))
+}
+
 /// The ids that start with `prefix`, in order.
 pub(crate) fn ids_with_prefix(prefix: &str) -> impl Iterator<Item = &'static str> + '_ {
     let start = FEATURES.partition_point(|&(id, _)| id < prefix);

@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { createProject, FAKE_ROOT, fakePath } from '@compatgate/test-utils';
-import { createChecker } from '../src-js/checker.ts';
+import { createChecker } from './checker.ts';
 import { AllowConfigError, bcdVersion, clearCaches, createResolver } from '../src-js/index.ts';
 import { check, resolveConfiguration } from './resolve.ts';
 
@@ -103,8 +103,9 @@ test('the indexes of suppressed point into the entries of resolveConfiguration',
   const root = createProject();
   writeFileSync(join(root, 'base.jsonc'), '{ "allow": ["api.structuredClone"] }');
   writeFileSync(join(root, 'compatgate.jsonc'), '{ "extends": "./base.jsonc", "allow": ["api.fetch"] }');
-  const options = { filename: join(root, 'a.js'), targets: 'Chrome >= 97' };
-  const { entries } = resolveConfiguration(options.filename, options);
+  const filename = join(root, 'a.js');
+  const options = { targets: 'Chrome >= 97' };
+  const { entries } = resolveConfiguration(filename, options);
   assert.deepEqual(
     entries.map(entry => [entry.feature, entry.origin]),
     [
@@ -112,7 +113,7 @@ test('the indexes of suppressed point into the entries of resolveConfiguration',
       ['api.fetch', 'own'],
     ],
   );
-  assert.deepEqual(check('structuredClone(1);', options).suppressed, [{ index: 0, kind: 'api' }]);
+  assert.deepEqual(check('structuredClone(1);', { ...options, filename }).suppressed, [{ index: 0, kind: 'api' }]);
 });
 
 test('createChecker and check do not take the origin of an entry: compatgate sets it', () => {

@@ -67,7 +67,8 @@ const place = (item: Place) => `${item.module}:${item.line}:${item.column} ${ite
 /**
  * The name of `path` in the fixture with `/` separators, or undefined for a path outside it. `relative` takes both
  * separators on Windows, where Vite gives `/`; only the separator of the system becomes `/`, as `\\` is a character of
- * a name elsewhere.
+ * a name elsewhere. Its own copy of the rules of the bundler on purpose, as the strip of the query of a Vite id below:
+ * conformance checks the bundler from outside, and a mistake there would not hide in the test too.
  */
 function fixtureName(path: string): string | undefined {
   const name = relative(fixture, path);

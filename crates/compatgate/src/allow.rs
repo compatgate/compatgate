@@ -149,7 +149,12 @@ fn normalize(path: &str) -> String {
 /// The npm package that owns `path`. Uses the last `node_modules` segment,
 /// so nested and pnpm layouts resolve to the package that holds the file.
 pub(crate) fn package_name(path: &str) -> Option<&str> {
-    let start = path.rfind("node_modules/")? + "node_modules/".len();
+    // A whole segment only, as the lookup of the configs in JS: `vendor_node_modules` is a directory of the project.
+    let start = path
+        .rmatch_indices("node_modules/")
+        .map(|(index, _)| index)
+        .find(|&index| index == 0 || path.as_bytes()[index - 1] == b'/')?
+        + "node_modules/".len();
     let rest = &path[start..];
     let mut segments = rest.splitn(3, '/');
     let first = segments.next().filter(|segment| !segment.is_empty())?;
@@ -206,6 +211,10 @@ fn max_edits(typed: &str) -> usize {
 /// with the fewest edits in the last segment. A parent that is not in the data is corrected the same way, segment
 /// by segment. Only the entries with an issue need it, so it scans the sorted ids instead of keeping an index.
 fn suggestion(id: &str) -> Option<&'static str> {
+    // An id longer than any id of the data twice over has no close one: the search would only take time.
+    if id.len() > 2 * crate::data::longest_id() {
+        return None;
+    }
     let (parent, last) = id.rsplit_once('.').filter(|(_, last)| !last.is_empty())?;
     let prefix = format!("{}.", node(parent)?);
     for candidate in [format!("{prefix}{last}"), format!("{prefix}{last}_static")] {
@@ -217,27 +226,30 @@ fn suggestion(id: &str) -> Option<&'static str> {
     closest(last, siblings)
 }
 
-/// `path` or its correction, as a prefix of a known id: `api.URL` for `api.URl`.
+/// `path` or its correction, as a prefix of a known id: `api.URL` for `api.URl`. Segment by segment in a loop, not
+/// by recursion: a config of a dependency may hold an id of any depth.
 fn node(path: &str) -> Option<&'static str> {
-    if let Some(feature) = crate::data::FeatureId::find(path) {
-        return Some(feature.as_str());
+    let mut known: Option<&'static str> = None;
+    for segment in path.split('.') {
+        let prefix = known.map_or_else(String::new, |known| format!("{known}."));
+        let candidate = format!("{prefix}{segment}");
+        known = Some(if let Some(feature) = crate::data::FeatureId::find(&candidate) {
+            feature.as_str()
+        } else if let Some(id) = crate::data::ids_with_prefix(&format!("{candidate}.")).next() {
+            &id[..candidate.len()]
+        } else {
+            // The ids of one child are mostly adjacent, so skipping a repeat saves most of the distances.
+            let mut previous = "";
+            let children = crate::data::ids_with_prefix(&prefix)
+                .map(|id| {
+                    let rest = &id[prefix.len()..];
+                    &id[..prefix.len() + rest.find('.').unwrap_or(rest.len())]
+                })
+                .filter(move |child| std::mem::replace(&mut previous, child) != *child);
+            closest(segment, children)?
+        });
     }
-    if let Some(id) = crate::data::ids_with_prefix(&format!("{path}.")).next() {
-        return Some(&id[..path.len()]);
-    }
-    let (prefix, last) = match path.rsplit_once('.') {
-        Some((parent, last)) => (format!("{}.", node(parent)?), last),
-        None => (String::new(), path),
-    };
-    // The ids of one child are mostly adjacent, so skipping a repeat saves most of the distances.
-    let mut previous = "";
-    let children = crate::data::ids_with_prefix(&prefix)
-        .map(|id| {
-            let rest = &id[prefix.len()..];
-            &id[..prefix.len() + rest.find('.').unwrap_or(rest.len())]
-        })
-        .filter(move |child| std::mem::replace(&mut previous, child) != *child);
-    closest(last, children)
+    known
 }
 
 /// The candidate whose last segment is the fewest edits from `typed`, at most `max_edits(typed)`. Of equal
@@ -391,6 +403,10 @@ mod tests {
         );
         assert_eq!(package_name("/p/src/x.js"), None);
         assert_eq!(package_name("/p/node_modules/"), None);
+        // Only a whole segment: the lookup of the configs in JS treats these files as code of the project.
+        assert_eq!(package_name("/p/vendor_node_modules/lodash/x.js"), None);
+        assert_eq!(package_name("/p/node_modules/a/my_node_modules/b/x.js"), Some("a"));
+        assert_eq!(package_name("node_modules/a/x.js"), Some("a"));
     }
 
     #[test]
@@ -431,6 +447,28 @@ mod tests {
                 AllowIssue::UnknownFeature {
                     index: 1,
                     suggestion: Some("api.fetch")
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn a_very_long_unknown_id_is_an_unknown_feature_without_a_suggestion() {
+        let targets = crate::targets::Targets::resolve("Chrome >= 97").unwrap();
+        // A config of a dependency can hold any id. Each segment of the correction went one call deeper, and an id of
+        // 10 000 segments overflowed the stack: the process ended, past the guard that turns a panic into an error.
+        let deep = vec!["a"; 20_000].join(".");
+        let long = format!("api.{}", "a".repeat(100_000));
+        assert_eq!(
+            validate_allow(&[entry(&deep), entry(&long)], &targets),
+            [
+                AllowIssue::UnknownFeature {
+                    index: 0,
+                    suggestion: None
+                },
+                AllowIssue::UnknownFeature {
+                    index: 1,
+                    suggestion: None
                 },
             ]
         );

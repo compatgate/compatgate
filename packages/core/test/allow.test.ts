@@ -239,6 +239,17 @@ test('compatgate.jsonc does not accept origin: the loader sets it', () => {
   assert.throws(() => loadIn(root), /unknown key "origin"/);
 });
 
+// JSON gives an object a prototype of its own for a key `__proto__`, which `Object.keys` does not show: the fields
+// in it would apply unchecked.
+test('compatgate.jsonc does not accept __proto__, at the top or in an entry', () => {
+  const top = createProject({ 'compatgate.jsonc': '{ "__proto__": { "allow": ["api.fetch"] } }' });
+  assert.throws(() => loadIn(top), /compatgate\.jsonc: unknown key "__proto__"\. Known keys: extends, allow$/);
+  const entry = createProject({
+    'compatgate.jsonc': '{ "allow": [{ "feature": "api.a", "__proto__": { "files": "x" } }] }',
+  });
+  assert.throws(() => loadIn(entry), /allow\[0\]: unknown key "__proto__"/);
+});
+
 test('entries of the file are own, entries of its extends are inherited', () => {
   const root = createProject({
     'base/compatgate.jsonc': '{ "extends": "../deep.jsonc", "allow": ["api.B"] }',

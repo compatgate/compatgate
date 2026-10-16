@@ -9,11 +9,6 @@ export interface ConfigurationMessages {
   readonly warnings: readonly { readonly key: string; readonly message: string }[];
 }
 
-/** The indexes of the entries that suppressed a finding in a check: the unique indexes of `suppressed`. */
-export function usedEntries(result: CheckResult): number[] {
-  return [...new Set(result.suppressed.map(item => item.index))];
-}
-
 /** Checks a module. The record of the module, with the entries that it used, is up to the caller. */
 export function checkFile(configuration: Configuration, source: string, file: ModuleFile): CheckResult {
   // `path` matches the `files` of the entries, `parseAs` only selects the parser of a component.

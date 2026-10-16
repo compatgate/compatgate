@@ -1,6 +1,14 @@
 import { isAbsolute, posix, resolve, sep } from 'node:path';
 
-import { OptionsError, type AllowEntryInput, type FindingConfidence, type SharedOptions } from '@compatgate/core';
+import {
+  SHARED_SCHEMA,
+  checkOptions,
+  type AllowEntryInput,
+  type FindingConfidence,
+  type OptionRule,
+  type OptionSchema,
+  type SharedOptions,
+} from '@compatgate/core';
 import picomatch from 'picomatch';
 import type { FilterPattern } from 'unplugin';
 
@@ -29,7 +37,6 @@ export interface CompatgateBundlerOptions {
 
 /** The name of the options in messages: `compatgate.allow[0]`. */
 export const WHERE = 'compatgate';
-const KNOWN_OPTIONS = ['targets', 'defaultTargets', 'allow', 'extends', 'include', 'exclude', 'severity'] as const;
 const CONFIDENCES = ['exact', 'heuristic', 'partial'] as const satisfies readonly FindingConfidence[];
 const LEVELS: readonly string[] = ['error', 'warn', 'off'] satisfies Level[];
 
@@ -39,44 +46,37 @@ const DEFAULT_SEVERITY: Readonly<Record<FindingConfidence, Level>> = {
   partial: 'warn',
 };
 
+const FILTER: OptionRule = [
+  value => (Array.isArray(value) ? value : [value]).every(item => typeof item === 'string' || item instanceof RegExp),
+  'a glob, a regular expression or an array of them',
+];
+const LEVEL: OptionRule = [value => typeof value === 'string' && LEVELS.includes(value), '"error", "warn" or "off"'];
+const SEVERITY: OptionSchema = { exact: LEVEL, heuristic: LEVEL, partial: LEVEL };
+
+// The rules of the options: the shared options of the core, the filters and the levels.
+const SCHEMA: OptionSchema = {
+  ...SHARED_SCHEMA,
+  include: FILTER,
+  exclude: FILTER,
+  severity: [(value, where) => (checkOptions(value, SEVERITY, where), true), 'an object'],
+};
+
 // A typo in a level or in a filter would turn the checks off without a word, and a value of a wrong type would
-// fail in each module, so the options are checked when the plugin is made. An option set to `undefined` takes
-// its default, as an omitted one does. `createResolver` of the core checks the shared options and the keys of each
-// `allow` entry.
+// fail in each module, so the options are checked when the plugin is made. `createResolver` of the core checks the
+// keys of each `allow` entry.
 export function readOptions(options: CompatgateBundlerOptions): {
   shared: SharedOptions;
   severity: Record<FindingConfidence, Level>;
 } {
-  for (const [key, value] of Object.entries(options)) {
-    if (value !== undefined && !(KNOWN_OPTIONS as readonly string[]).includes(key)) {
-      throw new OptionsError(`${WHERE}: unknown option "${key}". Known options: ${KNOWN_OPTIONS.join(', ')}`);
-    }
-  }
+  checkOptions(options, SCHEMA, WHERE);
   const { targets, defaultTargets, allow, extends: bases } = options;
   const shared: SharedOptions = { targets, defaultTargets, allow, extends: bases };
-  for (const key of ['include', 'exclude'] as const) {
-    const value: unknown = options[key];
-    const items = Array.isArray(value) ? value : [value];
-    if (value !== undefined && !items.every(item => typeof item === 'string' || item instanceof RegExp)) {
-      throw new OptionsError(`${WHERE}.${key}: expected a glob, a regular expression or an array of them`);
-    }
-  }
-  const severity: unknown = options.severity ?? {};
-  if (typeof severity !== 'object' || severity === null || Array.isArray(severity)) {
-    throw new OptionsError(`${WHERE}.severity: expected an object`);
-  }
   const levels: Record<FindingConfidence, Level> = { ...DEFAULT_SEVERITY };
-  for (const [key, level] of Object.entries(severity)) {
-    if (!(CONFIDENCES as readonly string[]).includes(key)) {
-      throw new OptionsError(`${WHERE}.severity: unknown key "${key}". Known keys: ${CONFIDENCES.join(', ')}`);
+  for (const confidence of CONFIDENCES) {
+    const level = options.severity?.[confidence];
+    if (level !== undefined) {
+      levels[confidence] = level;
     }
-    if (level === undefined) {
-      continue;
-    }
-    if (typeof level !== 'string' || !LEVELS.includes(level)) {
-      throw new OptionsError(`${WHERE}.severity.${key}: expected "error", "warn" or "off"`);
-    }
-    levels[key as FindingConfidence] = level as Level;
   }
   return { shared, severity: levels };
 }

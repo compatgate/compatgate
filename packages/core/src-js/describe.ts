@@ -118,5 +118,13 @@ export function describeAllowIssue(
       ? 'compatgate ignores the entry.'
       : 'A feature id is a path in @mdn/browser-compat-data, such as "api.structuredClone".';
   const hint = issue.suggestion === undefined ? '' : ` Did you mean "${issue.suggestion}"?`;
-  return `${place}: unknown feature "${entry.feature}". ${advice}${hint}`;
+  return `${place}: unknown feature "${shortId(entry.feature)}". ${advice}${hint}`;
+}
+
+// The longest id of the data has 119 characters (an option of `Intl.DateTimeFormat`): a much longer one is no typo,
+// and the whole of it would make a message of any size. The start names it well enough, and `place` names the entry.
+const ID_LENGTH = 200;
+
+function shortId(id: string): string {
+  return id.length > ID_LENGTH ? `${id.slice(0, ID_LENGTH)}… (${id.length} characters)` : id;
 }
