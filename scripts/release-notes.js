@@ -33,21 +33,23 @@ export function notesOf(changelog, version) {
 }
 
 /**
- * The sections of the packages under their names. The item "Updated dependencies" names the packages of the same
- * release, so it goes; a package with nothing else goes too.
+ * The sections of the packages under their names; packages with the same section, such as one intent for all three,
+ * share a heading. The item "Updated dependencies" names the packages of the same release, so it goes; a package with
+ * nothing else goes too.
  */
 export function releaseNotes(sections) {
-  const parts = [];
+  // The names of the packages by their text, in the order of the packages.
+  const names = new Map();
   for (const [name, section] of sections) {
     const text = withoutDependencyUpdates(section);
     if (text !== '') {
-      parts.push(`## ${name}\n\n${text}`);
+      names.set(text, [...(names.get(text) ?? []), name]);
     }
   }
-  if (parts.length === 0) {
+  if (names.size === 0) {
     throw new Error('no changes to describe: every package only updates its dependencies');
   }
-  return parts.join('\n\n');
+  return [...names].map(([text, packages]) => `## ${packages.join(', ')}\n\n${text}`).join('\n\n');
 }
 
 function withoutDependencyUpdates(section) {

@@ -35,6 +35,19 @@ test('the notes of a release join the packages and leave out the updates of thei
   );
 });
 
+test('packages with the same section share one heading', () => {
+  const section = '### Minor Changes\n\n- The first release.';
+  const notes = releaseNotes([
+    ['@compatgate/core', section],
+    ['@compatgate/eslint', `${section}\n\n${UPDATED}`],
+    ['@compatgate/bundler', '### Patch Changes\n\n- Bundler fix.'],
+  ]);
+  assert.equal(
+    notes,
+    `## @compatgate/core, @compatgate/eslint\n\n${section}\n\n## @compatgate/bundler\n\n### Patch Changes\n\n- Bundler fix.`,
+  );
+});
+
 test('the notes keep the indent of a block of code in an item', () => {
   const section = '### Minor Changes\n\n- Set it up:\n\n  ```js\n  a();\n\n  b();\n  ```';
   assert.equal(releaseNotes([['@compatgate/core', section]]), `## @compatgate/core\n\n${section}`);
