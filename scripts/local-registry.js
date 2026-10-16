@@ -111,7 +111,9 @@ export async function startRegistry(directory) {
       throw new Error(`expected the tarballs of core, eslint and bundler in ${directory}`);
     }
     const publish = path => {
-      const run = spawnSync(npm, ['publish', path, '--userconfig', npmrc, '--registry', url, '--ignore-scripts'], {
+      // npm takes a prerelease such as 0.1.0-next.0 only with a tag; the check installs by version, so any tag will do.
+      const args = ['publish', path, '--userconfig', npmrc, '--registry', url, '--ignore-scripts', '--tag', 'smoke'];
+      const run = spawnSync(npm, args, {
         encoding: 'utf8',
         shell: windows,
       });

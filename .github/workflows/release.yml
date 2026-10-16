@@ -38,7 +38,16 @@ jobs:
         run: node scripts/unpublished.js >> "$GITHUB_OUTPUT"
       # Pending intents become new versions and changelogs in the PR "chore: version packages"; without them
       # `pnpm version -r` changes nothing and the PR is not opened.
-      - run: pnpm version -r
+      - id: bump
+        run: |
+          pnpm version -r
+          if git diff --quiet; then echo changed=false; else echo changed=true; fi >> "$GITHUB_OUTPUT"
+      # napi writes the version into the committed binding.js: a new version needs a new loader in the PR. The build
+      # of every target checks that the loader matches.
+      - if: steps.bump.outputs.changed == 'true'
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - if: steps.bump.outputs.changed == 'true'
+        run: pnpm --filter @compatgate/core run build:native:debug
       - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           branch: release/version-packages
