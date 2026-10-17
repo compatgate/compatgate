@@ -73,12 +73,14 @@ jobs:
     needs: [version, build]
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    # The environment holds the npm token and waits for the approval of the owner.
+    # The environment waits for the approval of the owner. The trusted publisher of each package on npm names it too:
+    # a publish from any other job or workflow is refused.
     environment: npm
     permissions:
       # `gh release create` tags the release.
       contents: write
-      # The provenance of the packages.
+      # Trusted publishing: npm takes the OIDC token of the job instead of a token in the secrets, and adds the
+      # provenance of the packages.
       id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -110,8 +112,6 @@ jobs:
           # The npm tag of the release: napi runs a bare `npm publish`, which reads it from here. npm refuses a
           # prerelease without a tag.
           NPM_CONFIG_TAG: ${{ needs.version.outputs.tag }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: 'true'
       # npm serves a new version only after its scan of the tarball, minutes after the publish: an install of the core
       # before then finds no platform package.
       - run: node scripts/wait-for-npm.js packages/core/npm/*
@@ -120,8 +120,6 @@ jobs:
       - run: pnpm publish -r --provenance --report-summary --no-git-checks --tag "$NPM_CONFIG_TAG"
         env:
           NPM_CONFIG_TAG: ${{ needs.version.outputs.tag }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: 'true'
       # The release and the check of the install start when an install can find the packages.
       - run: node scripts/wait-for-npm.js packages/core packages/eslint packages/bundler
       # One release for the three packages, which share the version. `--target` tags the commit of the release: no
