@@ -103,7 +103,9 @@ jobs:
       # npm already has, so a rerun publishes only the rest.
       - run: pnpm release
         env:
-          RELEASE_TAG: ${{ needs.version.outputs.tag }}
+          # The npm tag of the release. `pnpm release` passes it to pnpm; `napi pre-publish` runs a bare `npm publish`
+          # for the platform packages, and npm reads it from here. npm refuses a prerelease without a tag.
+          NPM_CONFIG_TAG: ${{ needs.version.outputs.tag }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
       # One release for the three packages, which share the version. `--target` tags the commit of the release: no

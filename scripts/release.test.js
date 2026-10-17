@@ -19,6 +19,6 @@ test('pnpm releases the three packages together and keeps their changelogs in th
   assert.equal(
     scripts.release,
     'pnpm -r run build:js && pnpm third-party && node scripts/prepare-platform-packages.js && pnpm publish -r --provenance ' +
-      '--report-summary --no-git-checks --tag "$RELEASE_TAG"',
+      '--report-summary --no-git-checks --tag "$NPM_CONFIG_TAG"',
   );
 });
