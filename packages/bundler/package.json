@@ -1,6 +1,6 @@
 {
   "name": "@compatgate/bundler",
-  "version": "0.1.0-next.0",
+  "version": "0.1.0",
   "description": "A bundler plugin for webpack, rspack, Vite, Rollup, Rolldown and esbuild that finds JavaScript syntax and APIs that your browserslist targets do not support.",
   "keywords": [
     "browserslist",
