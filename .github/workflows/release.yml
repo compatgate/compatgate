@@ -16,6 +16,7 @@ jobs:
   version:
     name: Versions and the release PR
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       # create-pull-request pushes the branch of the PR and opens it.
       contents: write
@@ -71,6 +72,7 @@ jobs:
     name: Publish to npm
     needs: [version, build]
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     # The environment holds the npm token and waits for the approval of the owner.
     environment: npm
     permissions:
@@ -99,15 +101,29 @@ jobs:
           path: packages/core/artifacts
       - working-directory: packages/core
         run: pnpm exec napi create-npm-dirs && pnpm exec napi artifacts --output-dir artifacts --npm-dir npm
-      # `prepublishOnly` of the core publishes the platform packages first. `pnpm publish -r` skips a version that
-      # npm already has, so a rerun publishes only the rest.
-      - run: pnpm release
+      - run: pnpm -r run build:js && pnpm third-party && node scripts/prepare-platform-packages.js
+      # The platform packages first: the core lists them in its optionalDependencies. napi skips a version that npm
+      # already has, so a rerun publishes only the rest.
+      - working-directory: packages/core
+        run: pnpm exec napi pre-publish -t npm --no-gh-release
         env:
-          # The npm tag of the release. `pnpm release` passes it to pnpm; `napi pre-publish` runs a bare `npm publish`
-          # for the platform packages, and npm reads it from here. npm refuses a prerelease without a tag.
+          # The npm tag of the release: napi runs a bare `npm publish`, which reads it from here. npm refuses a
+          # prerelease without a tag.
           NPM_CONFIG_TAG: ${{ needs.version.outputs.tag }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
+      # npm serves a new version only after its scan of the tarball, minutes after the publish: an install of the core
+      # before then finds no platform package.
+      - run: node scripts/wait-for-npm.js packages/core/npm/*
+      # `prepublishOnly` of the core runs napi with `--skip-optional-publish`: the platform packages are on npm.
+      # `pnpm publish -r` skips a version that npm already has.
+      - run: pnpm publish -r --provenance --report-summary --no-git-checks --tag "$NPM_CONFIG_TAG"
+        env:
+          NPM_CONFIG_TAG: ${{ needs.version.outputs.tag }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+      # The release and the check of the install start when an install can find the packages.
+      - run: node scripts/wait-for-npm.js packages/core packages/eslint packages/bundler
       # One release for the three packages, which share the version. `--target` tags the commit of the release: no
       # separate push of tags.
       - name: Tag the release and create the GitHub Release
@@ -124,6 +140,7 @@ jobs:
     name: Installed from npm on ${{ matrix.host }}
     needs: [version, publish]
     runs-on: ${{ matrix.host }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -135,6 +152,8 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
-      - run: node scripts/smoke.js --version "$VERSION"
+      # bash on every system: on Windows the default PowerShell reads `$VERSION` as a variable of its own.
+      - shell: bash
+        run: node scripts/smoke.js --version "$VERSION"
         env:
           VERSION: ${{ needs.version.outputs.version }}

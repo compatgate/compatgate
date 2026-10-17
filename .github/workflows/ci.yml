@@ -2,7 +2,8 @@ name: CI
 
 on:
   pull_request:
-    # `labeled`: the label `release-check` runs the build of every platform on any pull request.
+    # `labeled`: the label `release-check` runs the build of every platform on any pull request; another label runs
+    # nothing.
     # `ready_for_review`: the draft PR of a release gets its checks when the owner marks it ready.
     types: [opened, synchronize, reopened, labeled, ready_for_review]
   push:
@@ -11,14 +12,17 @@ on:
 permissions:
   contents: read
 
+# A label has a group of its own: a label must not cancel the checks of the code.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.event.action == 'labeled' && github.event.label.name || 'code' }}
   cancel-in-progress: true
 
 jobs:
   check:
     name: Repository (data, format, lint, tests, types)
+    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -38,7 +42,9 @@ jobs:
 
   node:
     name: Packages on Node ${{ matrix.node }}
+    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       # One version must not cancel the other: each shows its own failure.
       fail-fast: false
@@ -78,7 +84,9 @@ jobs:
 
   eslint-9:
     name: Rules on ESLint 9
+    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -97,7 +105,9 @@ jobs:
 
   package:
     name: Package contents (files, publint, attw)
+    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -124,7 +134,9 @@ jobs:
 
   deny:
     name: Crates (licenses, advisories)
+    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -133,7 +145,9 @@ jobs:
 
   zizmor:
     name: Workflows (zizmor)
+    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -149,8 +163,9 @@ jobs:
 
   dependency-review:
     name: New dependencies (advisories, licenses)
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.action != 'labeled'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
@@ -164,7 +179,12 @@ jobs:
 
   changes:
     name: Changed files
+    # The binaries are built on pull requests only: `main` takes a pull request only when it is up to date with
+    # `main`, so its head is the tree that lands. A push to `main` runs the cheap jobs, which fill the caches that
+    # pull requests read.
+    if: github.event_name == 'pull_request' && github.event.action != 'labeled'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       pull-requests: read
@@ -197,6 +217,10 @@ jobs:
   build:
     name: Binaries
     needs: changes
-    if: needs.changes.outputs.build == 'true' || contains(github.event.pull_request.labels.*.name, 'release-check')
+    # On the label `release-check` the job `changes` is skipped: `!cancelled()` runs the build anyway.
+    if: >-
+      !cancelled() && github.event_name == 'pull_request' &&
+      (github.event.action != 'labeled' || github.event.label.name == 'release-check') &&
+      (needs.changes.outputs.build == 'true' || contains(github.event.pull_request.labels.*.name, 'release-check'))
     # `$/` of GitHub fails actionlint 1.7.12.
     uses: ./.github/workflows/build.yml # zizmor: ignore[self-repository]

@@ -14,11 +14,9 @@ test('pnpm releases the three packages together and keeps their changelogs in th
   assert.match(workspace, /^ {2}changelog:\n {4}storage: repository$/m);
   // A major change waits in a branch of its own: `main` releases minors and patches only.
   assert.match(workspace, /^ {2}maxBump: minor$/m);
-  const { scripts } = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'));
-  assert.equal(scripts.change, 'pnpm change');
-  assert.equal(
-    scripts.release,
-    'pnpm -r run build:js && pnpm third-party && node scripts/prepare-platform-packages.js && pnpm publish -r --provenance ' +
-      '--report-summary --no-git-checks --tag "$NPM_CONFIG_TAG"',
-  );
+  assert.equal(JSON.parse(readFileSync(new URL('package.json', root), 'utf8')).scripts.change, 'pnpm change');
+  // release.yml publishes the platform packages in a step of its own and waits for npm to serve them: the publish of
+  // the core must not publish them again.
+  const core = JSON.parse(readFileSync(new URL('packages/core/package.json', root), 'utf8'));
+  assert.equal(core.scripts.prepublishOnly, 'napi pre-publish -t npm --no-gh-release --skip-optional-publish');
 });

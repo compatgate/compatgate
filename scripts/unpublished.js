@@ -18,7 +18,8 @@ export function listsVersion(status, body, version) {
   return Object.hasOwn(body.versions ?? {}, version);
 }
 
-async function isPublished(name, version) {
+/** Whether npm serves `version` of `name` to an install. */
+export async function isPublished(name, version) {
   const response = await fetch(`https://registry.npmjs.org/${name.replaceAll('/', '%2f')}`, {
     // The short form of the document: the versions without their readmes.
     headers: { accept: 'application/vnd.npm.install-v1+json' },
