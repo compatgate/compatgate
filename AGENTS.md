@@ -27,14 +27,14 @@ report. `packages/bundler/docs/model.md` describes the plugin as tables of rules
 ## Commands
 
 ```sh
-pnpm run check            # everything CI runs: generated data, format, lint, tests, types
+pnpm run check            # generated data, format, lint, tests, types; CI also builds the binaries
 pnpm run build:debug      # the debug binary of the core and the JS of every package
 pnpm --filter @compatgate/core test
-node --test --test-name-pattern='<name>' packages/core/test/configuration.test.ts   # one test
-cargo test -p compatgate <name>                                                    # one Rust test
+node --test --test-name-pattern='<name>' packages/bundler/test/plugin.test.ts   # one test
+cargo test -p compatgate <name>                                                # one Rust test
 BLESS=1 cargo test --test corpus   # writes the current findings into crates/compatgate/tests/corpus
 pnpm generate             # after an update of @mdn/browser-compat-data
-pnpm change               # records a change intent for a published package
+pnpm change               # a change intent; `pnpm change`, `pnpm version` and `pnpm lane` are pnpm 12 commands
 actionlint && zizmor .github       # after a change of the workflows
 ```
 
@@ -43,14 +43,18 @@ binary of the core: run `pnpm run build:debug` after a change of Rust.
 
 ## Where to start
 
-- A new check of syntax or API: `crates/compatgate/src/detect` (`syntax.rs`, `regex.rs`, `globals.rs`,
-  `methods.rs`), a snippet in the corpus, and `packages/core/docs/checks.md`.
+- A new check: `crates/compatgate/src/detect` — `syntax.rs` (syntax by AST node), `regex.rs` (regular
+  expressions), `globals.rs` (globals, constructors, members of singletons such as `navigator.x`), `methods.rs`
+  (prototype methods by name, such as `.toSorted()`); a snippet with its expected findings in the corpus; and
+  `packages/core/docs/checks.md`.
 - A new option or setting: the schema in `packages/core/src-js/options.ts` or in the adapter
-  (`packages/eslint/src/settings.ts`, `packages/bundler/src/options.ts`), and the README of the package.
+  (`packages/eslint/src/settings.ts`, `packages/bundler/src/options.ts`), a test in the `test` directory of the
+  package, and the README of the package.
 - A new bundler: a host in `packages/bundler/src/hosts` with its row in `hosts/index.ts`, an entry in `src` and in
   `exports`, `docs/hosts.md` and `docs/model.md`, and `conformance/test/bundlers.test.ts`.
-- An update of the support data: `pnpm generate`, then `BLESS=1` for the corpus and a review of the changed
-  expectations.
+- An update of the support data: `@mdn/browser-compat-data` and `@types/web` are pinned to exact versions in the
+  root `package.json`; update them with `pnpm add -D -w <name>@<version>`, run `pnpm generate`, then `BLESS=1`
+  for the corpus and a review of the changed expectations.
 
 ## Code
 
@@ -78,6 +82,8 @@ binary of the core: run `pnpm run build:debug` after a change of Rust.
 ## Tests
 
 - Write the test first and watch it fail.
+- The tests of a package live in its `test` directory; the tests of the checker in `crates/compatgate/tests` and in
+  the modules of `crates/compatgate/src`.
 - Temporary projects: `createProject` of `@compatgate/test-utils` (real paths, removed after the test file);
   `fakePath`/`FAKE_ROOT` for a path that must not exist.
 - A test of Windows behavior is skipped elsewhere: `{ skip: process.platform !== 'win32' }`. CI runs the tests on
@@ -102,8 +108,9 @@ The formatter leaves the files of pnpm (`.changeset`, `CHANGELOG.md`) alone: pnp
 
 ## Changes and releases
 
-- A change of a published package records an intent: `pnpm change` writes a file into `.changeset/`. Commit it with
-  the change. CI runs `pnpm change check`.
+- A change of a published package records an intent: `pnpm change` asks for the packages and the bump (`patch`,
+  `minor`, `major` or `none`) and writes a file into `.changeset/`. Commit it with the change. The release takes
+  the version from the intents: never set a version by hand. CI runs `pnpm change check`.
 - Commit messages follow Conventional Commits.
 - The three packages share one version (`versioning.fixed` in `pnpm-workspace.yaml`). `maxBump: minor` keeps a major
   intent out of `main`: a breaking change waits in a branch of its own.
@@ -114,9 +121,9 @@ The formatter leaves the files of pnpm (`.changeset`, `CHANGELOG.md`) alone: pnp
   "chore: version packages". The owner marks it ready, which starts CI, and merges it. The merge brings a version
   that npm lacks: `release.yml` builds the binaries, publishes the platform packages, waits until npm serves them,
   publishes the main packages, creates one GitHub Release `v<version>` and installs the packages from npm.
-- Prereleases: `pnpm lane next --filter …` for the three packages gives `X.Y.Z-next.N` under the npm tag `next`;
-  `pnpm lane main` returns to stable versions. `pnpm lane` rewrites the `versioning` block without its comments:
-  restore its form by hand.
+- Prereleases: `pnpm lane next --filter @compatgate/core --filter @compatgate/eslint --filter @compatgate/bundler`
+  gives `X.Y.Z-next.N` under the npm tag `next`; `pnpm lane main` returns to stable versions. `pnpm lane` rewrites
+  the `versioning` block without its comments: restore its form by hand.
 - napi writes the package version into the committed `packages/core/binding.js`; the version job of `release.yml`
   rebuilds it, and the build of every target checks that it matches.
 
