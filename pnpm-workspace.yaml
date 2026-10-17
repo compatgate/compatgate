@@ -40,11 +40,6 @@ versioning:
     - '@compatgate/test-utils'
   # A major change waits in a branch of its own: an intent `major` in `main` fails `pnpm change check`.
   maxBump: minor
-  # Prereleases `0.1.0-next.N` under the npm tag `next`; `pnpm lane main` returns to stable versions.
-  lanes:
-    '@compatgate/core': next
-    '@compatgate/eslint': next
-    '@compatgate/bundler': next
   # The changelogs live in the repository: the GitHub Releases take their text from them.
   changelog:
     storage: repository
