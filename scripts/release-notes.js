@@ -3,33 +3,32 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
+import { Lexer } from 'marked';
+
 const PACKAGES = ['core', 'eslint', 'bundler'];
 
-/** The text between `## <version>` and the next `## ` heading outside a block of code, without the blank lines around. */
+/**
+ * The text between `## <version>` and the next heading of level 1 or 2, without the blank lines around. The tokens of
+ * a Markdown lexer: a heading inside a block of code is part of the block.
+ */
 export function notesOf(changelog, version) {
-  const lines = changelog.split('\n');
-  const start = lines.indexOf(`## ${version}`);
+  const tokens = Lexer.lex(changelog);
+  const start = tokens.findIndex(token => token.type === 'heading' && token.depth === 2 && token.text === version);
   if (start === -1) {
     throw new Error(`no section "## ${version}"`);
   }
-  let fence = null;
-  let end = lines.length;
-  for (let index = start + 1; index < lines.length; index += 1) {
-    const line = lines[index];
-    const marker = /^(`{3,}|~{3,})/.exec(line)?.[1];
-    if (fence === null && marker !== undefined) {
-      fence = marker;
-    } else if (fence !== null && line.startsWith(fence)) {
-      fence = null;
-    } else if (fence === null && line.startsWith('## ')) {
-      end = index;
-      break;
-    }
-  }
-  return lines
-    .slice(start + 1, end)
-    .join('\n')
-    .trim();
+  const rest = tokens.slice(start + 1);
+  const end = rest.findIndex(token => token.type === 'heading' && token.depth <= 2);
+  return textOf(end === -1 ? rest : rest.slice(0, end));
+}
+
+/** The source text of tokens, without the line breaks around: the spaces at the start are the indent of a block. */
+function textOf(tokens) {
+  return tokens
+    .map(token => token.raw)
+    .join('')
+    .replace(/^\n+/, '')
+    .trimEnd();
 }
 
 /**
@@ -54,27 +53,22 @@ export function releaseNotes(sections) {
 
 function withoutDependencyUpdates(section) {
   const kept = [];
-  let skipping = false;
-  for (const line of section.split('\n')) {
-    if (line.startsWith('- Updated dependencies')) {
-      skipping = true;
-    } else if (!skipping || (!line.startsWith(' ') && line !== '')) {
-      // The nested list of the item and the blank lines after it end at the next line without an indent.
-      skipping = false;
-      kept.push(line);
+  for (const token of Lexer.lex(section)) {
+    if (token.type === 'list') {
+      const items = token.items.filter(item => !item.text.startsWith('Updated dependencies'));
+      if (items.length > 0) {
+        kept.push({ ...token, raw: items.map(item => item.raw).join('') });
+      }
+    } else if (token.type !== 'space') {
+      kept.push(token);
     }
   }
-  // A heading such as "### Patch Changes" with no items left under it goes as well.
-  const blocks = kept
-    .join('\n')
-    .split(/\n{2,}/)
-    // Only the line breaks at the edges: the spaces at the start are the indent of a block of code.
-    .map(block => block.replace(/^\n+|\n+$/g, ''))
-    .filter(block => block.trim() !== '');
-  return blocks
+  // A heading such as "### Patch Changes" with nothing left under it goes as well.
+  return kept
     .filter(
-      (block, index) => !block.startsWith('### ') || (index + 1 < blocks.length && !blocks[index + 1].startsWith('#')),
+      (token, index) => token.type !== 'heading' || (index + 1 < kept.length && kept[index + 1].type !== 'heading'),
     )
+    .map(token => textOf([token]))
     .join('\n\n');
 }
 

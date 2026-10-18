@@ -119,8 +119,11 @@ The formatter leaves the files of pnpm (`.changeset`, `CHANGELOG.md`) alone: pnp
   `napi pre-publish`, which publishes for real.
 - The release flow: a push to `main` runs `pnpm version -r`; pending intents update the draft PR
   "chore: version packages". The owner marks it ready, which starts CI, and merges it. The merge brings a version
-  that npm lacks: `release.yml` builds the binaries, publishes the platform packages, waits until npm serves them,
-  publishes the main packages, creates one GitHub Release `v<version>` and installs the packages from npm.
+  that npm lacks: `release.yml` builds the binaries, packs the 12 tarballs and the release notes in a job without
+  the OIDC token (`scripts/publish.js pack`), and publishes them from a job that installs nothing
+  (`scripts/publish.js publish`): the platform packages, a wait until npm serves them, the main packages, a wait.
+  Then it creates one GitHub Release `v<version>` and installs the packages from npm. Each job holds only its own
+  rights; a rerun skips what npm and GitHub already have.
 - Prereleases: `pnpm lane next --filter @compatgate/core --filter @compatgate/eslint --filter @compatgate/bundler`
   gives `X.Y.Z-next.N` under the npm tag `next`; `pnpm lane main` returns to stable versions. `pnpm lane` rewrites
   the `versioning` block without its comments: restore its form by hand.

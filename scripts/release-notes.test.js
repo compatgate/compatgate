@@ -15,6 +15,13 @@ test('a heading in a block of code does not end the section', () => {
   assert.equal(notesOf(changelog, '0.2.0'), 'Example:\n\n```md\n## 0.1.0\n```\n\n- After.');
 });
 
+test('a fence with an info string does not close a block of code', () => {
+  const changelog = '## 0.2.0\n\n````md\n```js\n## 0.1.0\n```\n````\n\n## 0.1.0\n\n- Old.\n';
+  assert.equal(notesOf(changelog, '0.2.0'), '````md\n```js\n## 0.1.0\n```\n````');
+  const tilde = '## 0.2.0\n\n```\n```js\n## 0.1.0\n```\n\n## 0.1.0\n';
+  assert.equal(notesOf(tilde, '0.2.0'), '```\n```js\n## 0.1.0\n```');
+});
+
 test('a version without a section is an error', () => {
   assert.throws(() => notesOf(CHANGELOG, '0.2.0'), /no section "## 0\.2\.0"/);
 });
@@ -50,6 +57,11 @@ test('packages with the same section share one heading', () => {
 
 test('the notes keep the indent of a block of code in an item', () => {
   const section = '### Minor Changes\n\n- Set it up:\n\n  ```js\n  a();\n\n  b();\n  ```';
+  assert.equal(releaseNotes([['@compatgate/core', section]]), `## @compatgate/core\n\n${section}`);
+});
+
+test('the notes keep the blank lines of a block of code', () => {
+  const section = '### Minor Changes\n\n- Set it up:\n\n  ```js\n  a();\n\n\n  b();\n  ```';
   assert.equal(releaseNotes([['@compatgate/core', section]]), `## @compatgate/core\n\n${section}`);
 });
 

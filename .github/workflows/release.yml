@@ -12,8 +12,28 @@ concurrency:
   group: release
   cancel-in-progress: false
 
+# Each job holds only the rights of its own step: the OIDC token of npm reaches only the job that publishes, which runs
+# no code of the dependencies, and the right to write the repository only the job that creates the GitHub Release.
 jobs:
-  version:
+  state:
+    name: Versions on npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      unpublished: ${{ steps.state.outputs.unpublished }}
+      version: ${{ steps.state.outputs.version }}
+      tag: ${{ steps.state.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - id: state
+        run: node scripts/unpublished.js >> "$GITHUB_OUTPUT"
+
+  version-pr:
     name: Versions and the release PR
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -21,10 +41,6 @@ jobs:
       # create-pull-request pushes the branch of the PR and opens it.
       contents: write
       pull-requests: write
-    outputs:
-      unpublished: ${{ steps.state.outputs.unpublished }}
-      version: ${{ steps.state.outputs.version }}
-      tag: ${{ steps.state.outputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -35,21 +51,20 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - id: state
-        run: node scripts/unpublished.js >> "$GITHUB_OUTPUT"
-      # Pending intents become new versions and changelogs in the PR "chore: version packages"; without them
-      # `pnpm version -r` changes nothing and the PR is not opened.
+      # Pending intents become new versions and changelogs in the PR "chore: version packages". Only a new version
+      # opens the PR: an intent `none` releases nothing, though `pnpm version -r` deletes its file.
       - id: bump
         run: |
           pnpm version -r
-          if git diff --quiet; then echo changed=false; else echo changed=true; fi >> "$GITHUB_OUTPUT"
+          if git diff --quiet -- 'packages/*/package.json'; then echo changed=false; else echo changed=true; fi >> "$GITHUB_OUTPUT"
       # napi writes the version into the committed binding.js: a new version needs a new loader in the PR. The build
       # of every target checks that the loader matches.
       - if: steps.bump.outputs.changed == 'true'
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - if: steps.bump.outputs.changed == 'true'
         run: pnpm --filter @compatgate/core run build:native:debug
-      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+      - if: steps.bump.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           branch: release/version-packages
           title: 'chore: version packages'
@@ -63,25 +78,16 @@ jobs:
 
   build:
     name: Binaries
-    needs: version
-    if: needs.version.outputs.unpublished == 'true'
+    needs: state
+    if: needs.state.outputs.unpublished == 'true'
     # `$/` of GitHub fails actionlint 1.7.12.
     uses: ./.github/workflows/build.yml # zizmor: ignore[self-repository]
 
-  publish:
-    name: Publish to npm
-    needs: [version, build]
+  pack:
+    name: Pack the packages
+    needs: [state, build]
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    # The environment waits for the approval of the owner. The trusted publisher of each package on npm names it too:
-    # a publish from any other job or workflow is refused.
-    environment: npm
-    permissions:
-      # `gh release create` tags the release.
-      contents: write
-      # Trusted publishing: npm takes the OIDC token of the job instead of a token in the secrets, and adds the
-      # provenance of the packages.
-      id-token: write
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -91,7 +97,6 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          registry-url: https://registry.npmjs.org
       - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
         with:
           tool: cargo-about@0.9.2
@@ -104,39 +109,96 @@ jobs:
       - working-directory: packages/core
         run: pnpm exec napi create-npm-dirs && pnpm exec napi artifacts --output-dir artifacts --npm-dir npm
       - run: pnpm -r run build:js && pnpm third-party && node scripts/prepare-platform-packages.js
-      # The platform packages first: the core lists them in its optionalDependencies. napi skips a version that npm
-      # already has, so a rerun publishes only the rest.
+      # napi only writes the platform packages into the optionalDependencies of the core: the job publish publishes.
       - working-directory: packages/core
-        run: pnpm exec napi pre-publish -t npm --no-gh-release
+        run: pnpm exec napi pre-publish -t npm --no-gh-release --skip-optional-publish
+      # The notes of the release before anything reaches npm: a changelog without the version stops the release here.
+      - run: |
+          node scripts/publish.js pack .release
+          node scripts/release-notes.js "$VERSION" > .release/notes.md
         env:
-          # The npm tag of the release: napi runs a bare `npm publish`, which reads it from here. npm refuses a
-          # prerelease without a tag.
-          NPM_CONFIG_TAG: ${{ needs.version.outputs.tag }}
-      # npm serves a new version only after its scan of the tarball, minutes after the publish: an install of the core
-      # before then finds no platform package.
-      - run: node scripts/wait-for-npm.js packages/core/npm/*
-      # `prepublishOnly` of the core runs napi with `--skip-optional-publish`: the platform packages are on npm.
-      # `pnpm publish -r` skips a version that npm already has.
-      - run: pnpm publish -r --provenance --report-summary --no-git-checks --tag "$NPM_CONFIG_TAG"
-        env:
-          NPM_CONFIG_TAG: ${{ needs.version.outputs.tag }}
-      # The release and the check of the install start when an install can find the packages.
-      - run: node scripts/wait-for-npm.js packages/core packages/eslint packages/bundler
-      # One release for the three packages, which share the version. `--target` tags the commit of the release: no
-      # separate push of tags.
-      - name: Tag the release and create the GitHub Release
+          VERSION: ${{ needs.state.outputs.version }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release
+          path: .release
+          if-no-files-found: error
+
+  publish:
+    name: Publish to npm
+    needs: [state, pack]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # The environment waits for the approval of the owner. The trusted publisher of each package on npm names it too:
+    # a publish from any other job or workflow is refused.
+    environment: npm
+    permissions:
+      contents: read
+      # Trusted publishing: npm takes the OIDC token of the job instead of a token in the secrets, and adds the
+      # provenance of the packages.
+      id-token: write
+    steps:
+      # The scripts of the repository only: no install, so no code of a dependency runs next to the token.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          path: .release
+      # Only the version in `main` is released: a rerun of an old run must not move the npm tag back.
+      - name: Check that main is at the version
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ needs.version.outputs.version }}
-          NEXT: ${{ needs.version.outputs.tag == 'next' }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ needs.state.outputs.version }}
         run: |
+          main=$(gh api "repos/$REPOSITORY/contents/packages/core/package.json?ref=main" --jq .content | base64 -d | jq -r .version)
+          if [ "$main" != "$VERSION" ]; then
+            echo "::error::main is at $main, this run releases $VERSION"
+            exit 1
+          fi
+      - run: node scripts/publish.js publish .release
+        env:
+          # npm refuses a prerelease without a tag.
+          NPM_CONFIG_TAG: ${{ needs.state.outputs.tag }}
+
+  release:
+    name: GitHub Release
+    needs: [state, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      # `gh release create` tags the release.
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          path: .release
+      # One release for the three packages, which share the version. `--target` tags the commit of the release: no
+      # separate push of tags. A rerun after a failure later in the run finds the release and keeps it.
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ needs.state.outputs.version }}
+          NEXT: ${{ needs.state.outputs.tag == 'next' }}
+        run: |
+          if gh release view "v$VERSION" --repo "$REPOSITORY" > /dev/null 2>&1; then
+            echo "v$VERSION exists"
+            exit 0
+          fi
           if [ "$NEXT" = true ]; then set -- --prerelease; fi
-          node scripts/release-notes.js "$VERSION" > notes.md
-          gh release create "v$VERSION" --target "$GITHUB_SHA" --title "v$VERSION" --notes-file notes.md "$@"
+          gh release create "v$VERSION" --repo "$REPOSITORY" --target "$GITHUB_SHA" --title "v$VERSION" \
+            --notes-file .release/notes.md "$@"
 
   smoke:
     name: Installed from npm on ${{ matrix.host }}
-    needs: [version, publish]
+    needs: [state, publish]
     runs-on: ${{ matrix.host }}
     timeout-minutes: 30
     strategy:
@@ -154,4 +216,4 @@ jobs:
       - shell: bash
         run: node scripts/smoke.js --version "$VERSION"
         env:
-          VERSION: ${{ needs.version.outputs.version }}
+          VERSION: ${{ needs.state.outputs.version }}

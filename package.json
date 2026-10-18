@@ -21,6 +21,7 @@
   "devDependencies": {
     "@mdn/browser-compat-data": "8.1.4",
     "@types/web": "0.0.358",
+    "marked": "18.1.1",
     "oxfmt": "^0.72.0",
     "oxlint": "catalog:",
     "typescript": "catalog:",
