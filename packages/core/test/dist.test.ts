@@ -37,3 +37,8 @@ test('the package exports its package.json', () => {
   const path = createRequire(import.meta.url).resolve('@compatgate/core/package.json');
   assert.equal(createRequire(import.meta.url)(path).name, '@compatgate/core');
 });
+
+test('the package exports the schema of compatgate.jsonc', () => {
+  const path = createRequire(import.meta.url).resolve('@compatgate/core/compatgate.schema.json');
+  assert.equal(createRequire(import.meta.url)(path).title, 'compatgate.jsonc');
+});

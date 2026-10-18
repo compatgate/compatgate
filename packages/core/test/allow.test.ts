@@ -243,11 +243,30 @@ test('compatgate.jsonc does not accept origin: the loader sets it', () => {
 // in it would apply unchecked.
 test('compatgate.jsonc does not accept __proto__, at the top or in an entry', () => {
   const top = createProject({ 'compatgate.jsonc': '{ "__proto__": { "allow": ["api.fetch"] } }' });
-  assert.throws(() => loadIn(top), /compatgate\.jsonc: unknown key "__proto__"\. Known keys: extends, allow$/);
+  assert.throws(
+    () => loadIn(top),
+    /compatgate\.jsonc: unknown key "__proto__"\. Known keys: \$schema, extends, allow$/,
+  );
   const entry = createProject({
     'compatgate.jsonc': '{ "allow": [{ "feature": "api.a", "__proto__": { "files": "x" } }] }',
   });
   assert.throws(() => loadIn(entry), /allow\[0\]: unknown key "__proto__"/);
+});
+
+test('compatgate.jsonc takes the path of its schema and ignores it', () => {
+  const root = createProject({
+    'compatgate.jsonc':
+      '{ "$schema": "./node_modules/@compatgate/core/compatgate.schema.json", "allow": ["api.fetch"] }',
+  });
+  assert.deepEqual(
+    loadIn(root).entries.map(entry => entry.feature),
+    ['api.fetch'],
+  );
+});
+
+test('the $schema of compatgate.jsonc is a string, as the schema says', () => {
+  const root = createProject({ 'compatgate.jsonc': '{ "$schema": 1 }' });
+  assert.throws(() => loadIn(root), /compatgate\.jsonc: "\$schema": expected a string$/);
 });
 
 test('entries of the file are own, entries of its extends are inherited', () => {

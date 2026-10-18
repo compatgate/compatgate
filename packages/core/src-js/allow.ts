@@ -7,7 +7,8 @@ import type { ParseError } from 'jsonc-parser';
 
 import { ConfigError } from './errors.ts';
 import { fileState } from './file-state.ts';
-import { checkOptions, isString, type OptionRule, type OptionSchema } from './options.ts';
+import { definitionOf, rulesOf, type SchemaNode } from './config-schema.ts';
+import { checkOptions, isString, type OptionSchema } from './options.ts';
 import { samePath } from './paths.ts';
 
 export const ALLOW_FILE = 'compatgate.jsonc';
@@ -279,18 +280,16 @@ export function toEntry(
   };
 }
 
-const STRINGS: OptionRule = [
-  value => typeof value === 'string' || (Array.isArray(value) && value.every(isString)),
-  'a string or an array of strings',
-];
-
-// The keys of compatgate.jsonc and of an entry. An entry of the options may name its own `baseDir`; an entry of
-// compatgate.jsonc takes the directory of the file.
-const FILE_SCHEMA: OptionSchema = { extends: STRINGS, allow: [Array.isArray, 'an array'] };
-const ENTRY_SCHEMA: OptionSchema = { feature: [isString, 'a string'], packages: STRINGS, files: STRINGS };
+// The keys of compatgate.jsonc and of an entry come from the schema that editors use. `require` reads JSON without
+// the warning that an import of a JSON module gives on some versions of Node of `engines`. The path is the same
+// from `src-js` and from `dist`.
+const SCHEMA = createRequire(import.meta.url)('../compatgate.schema.json') as SchemaNode;
+const FILE_SCHEMA: OptionSchema = rulesOf(SCHEMA, SCHEMA);
+const ENTRY_SCHEMA: OptionSchema = rulesOf(definitionOf(SCHEMA, 'entry'), SCHEMA);
+// An entry of the options may name its own `baseDir`; an entry of compatgate.jsonc takes the directory of the file.
 const INLINE_ENTRY_SCHEMA: OptionSchema = { ...ENTRY_SCHEMA, baseDir: [isString, 'a string'] };
 
-/** A string or a list of strings, checked by `STRINGS`, as a list. */
+/** A value that the schema allows as a string or a list of strings, as a list. */
 function stringList(value: unknown): string[] {
   return value === undefined ? [] : typeof value === 'string' ? [value] : (value as string[]);
 }

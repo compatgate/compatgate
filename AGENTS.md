@@ -50,6 +50,9 @@ binary of the core: run `pnpm run build:debug` after a change of Rust.
 - A new option or setting: the schema in `packages/core/src-js/options.ts` or in the adapter
   (`packages/eslint/src/settings.ts`, `packages/bundler/src/options.ts`), a test in the `test` directory of the
   package, and the README of the package.
+- A new key of `compatgate.jsonc`: `packages/core/compatgate.schema.json`. The core takes the rules of the file
+  from the schema (`packages/core/src-js/config-schema.ts`), and `pnpm run typecheck` compares the keys of an
+  entry with `AllowEntryInput`.
 - A new bundler: a host in `packages/bundler/src/hosts` with its row in `hosts/index.ts`, an entry in `src` and in
   `exports`, `docs/hosts.md` and `docs/model.md`, and `conformance/test/bundlers.test.ts`.
 - An update of the support data: `@mdn/browser-compat-data` and `@types/web` are pinned to exact versions in the

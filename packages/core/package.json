@@ -26,6 +26,7 @@
     "docs",
     "binding.js",
     "binding.d.ts",
+    "compatgate.schema.json",
     "LICENSE-MIT",
     "LICENSE-APACHE",
     "THIRD-PARTY-LICENSE"
@@ -36,6 +37,7 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./compatgate.schema.json": "./compatgate.schema.json",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -63,6 +65,7 @@
     "@napi-rs/cli": "catalog:",
     "@napi-rs/wasm-runtime": "^1.2.5",
     "@types/node": "catalog:",
+    "ajv": "8.20.0",
     "emnapi": "2.0.0-alpha.6",
     "typescript": "catalog:"
   },

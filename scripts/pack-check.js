@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const COMMON = ['package.json', 'README.md', 'LICENSE-MIT', 'LICENSE-APACHE', 'dist/index.js', 'dist/index.d.ts'];
 const REQUIRED = {
-  core: [...COMMON, 'binding.js', 'binding.d.ts', 'THIRD-PARTY-LICENSE'],
+  core: [...COMMON, 'binding.js', 'binding.d.ts', 'THIRD-PARTY-LICENSE', 'compatgate.schema.json'],
   eslint: COMMON,
   bundler: [
     ...COMMON,
@@ -25,7 +25,7 @@ const ALLOWED = [
   /^docs\/.+\.md$/,
   /^(package\.json|README\.md|CHANGELOG\.md|LICENSE-MIT|LICENSE-APACHE)$/,
 ];
-const CORE_ALLOWED = /^(binding\.js|binding\.d\.ts|THIRD-PARTY-LICENSE)$/;
+const CORE_ALLOWED = /^(binding\.js|binding\.d\.ts|THIRD-PARTY-LICENSE|compatgate\.schema\.json)$/;
 
 /** The errors of the file list of a tarball: missing required files first, in the order of `REQUIRED`. */
 export function checkFiles(name, files) {

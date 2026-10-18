@@ -15,7 +15,14 @@ test('the published tarball holds the loader and dist, but no native binary', ()
     }),
   );
   const files: string[] = report.files.map((file: { path: string }) => file.path);
-  for (const expected of ['package.json', 'README.md', 'binding.js', 'binding.d.ts', 'dist/index.js']) {
+  for (const expected of [
+    'package.json',
+    'README.md',
+    'binding.js',
+    'binding.d.ts',
+    'compatgate.schema.json',
+    'dist/index.js',
+  ]) {
     assert.ok(files.includes(expected), `${expected} is missing from ${files.join(', ')}`);
   }
   // Native binaries ship only in the platform packages. A local one would shadow them at load time.

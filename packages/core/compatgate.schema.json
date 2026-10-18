@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "compatgate.jsonc",
+  "description": "The features that the project may use beyond its browserslist targets. See the README of @compatgate/core.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "The path or the URL of this schema, for the editor. compatgate ignores it."
+    },
+    "extends": {
+      "$ref": "#/definitions/strings",
+      "description": "Base configs, whose entries come first: a relative path, a package name (its compatgate.jsonc), or a .jsonc file inside a package. See https://github.com/compatgate/compatgate/tree/main/packages/core#compatgatejsonc"
+    },
+    "allow": {
+      "type": "array",
+      "description": "The features that the project may use beyond its targets: a feature id, or an entry that limits it to packages or files. See https://github.com/compatgate/compatgate/tree/main/packages/core#compatgatejsonc",
+      "items": {
+        "anyOf": [{ "$ref": "#/definitions/featureId" }, { "$ref": "#/definitions/entry" }]
+      }
+    }
+  },
+  "definitions": {
+    "strings": {
+      "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+    },
+    "featureId": {
+      "type": "string",
+      "pattern": "^(api|javascript)\\.",
+      "description": "A feature id of @mdn/browser-compat-data, such as \"api.structuredClone\". Copy it from the message of a finding. See https://github.com/compatgate/compatgate/tree/main/packages/core#compatgatejsonc"
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["feature"],
+      "properties": {
+        "feature": { "$ref": "#/definitions/featureId" },
+        "packages": {
+          "$ref": "#/definitions/strings",
+          "description": "The entry applies only to the code of these packages. See https://github.com/compatgate/compatgate/tree/main/packages/core#compatgatejsonc"
+        },
+        "files": {
+          "$ref": "#/definitions/strings",
+          "description": "The entry applies only to these files: globs relative to this config. See https://github.com/compatgate/compatgate/tree/main/packages/core#compatgatejsonc"
+        }
+      }
+    }
+  }
+}
