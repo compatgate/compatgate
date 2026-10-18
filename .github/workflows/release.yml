@@ -123,6 +123,8 @@ jobs:
         with:
           name: release
           path: .release
+          # Every file of a directory whose name starts with a dot counts as hidden.
+          include-hidden-files: true
           if-no-files-found: error
 
   publish:

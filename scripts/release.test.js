@@ -23,3 +23,16 @@ test('pnpm releases the three packages together and keeps their changelogs in th
     assert.match(manifest.scripts.prepublishOnly, /exit 1/);
   }
 });
+
+test('an upload of a hidden directory includes its files', () => {
+  // upload-artifact skips hidden files by default, and every file of a directory whose name starts with a dot counts
+  // as hidden: the job packs the release and uploads nothing.
+  for (const name of ['release.yml', 'build.yml', 'ci.yml']) {
+    const workflow = readFileSync(new URL(`.github/workflows/${name}`, root), 'utf8');
+    const steps = workflow.split(/\n(?= {6}- )/).filter(step => step.includes('actions/upload-artifact@'));
+    for (const step of steps) {
+      const hidden = /^ {10}path: \.|^ {12}\./m.test(step);
+      assert.ok(!hidden || /^ {10}include-hidden-files: true$/m.test(step), `${name}:\n${step}`);
+    }
+  }
+});
