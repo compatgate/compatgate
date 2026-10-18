@@ -86,8 +86,9 @@ binary of the core: run `pnpm run build:debug` after a change of Rust.
   the modules of `crates/compatgate/src`.
 - Temporary projects: `createProject` of `@compatgate/test-utils` (real paths, removed after the test file);
   `fakePath`/`FAKE_ROOT` for a path that must not exist.
-- A test of Windows behavior is skipped elsewhere: `{ skip: process.platform !== 'win32' }`. CI runs the tests on
-  Windows x64 and arm64, macOS, Linux glibc and musl, and wasm.
+- A test of Windows behavior is skipped elsewhere: `{ skip: process.platform !== 'win32' }`. The binaries job of CI
+  (a pull request that changes the build, or Build by hand) runs the tests on Windows x64 and arm64, macOS, Linux
+  glibc and musl, and wasm.
 - A test that spawns a process passes a long script through stdin: a command line of Windows has a limit of 32 767
   characters.
 - The corpus (`crates/compatgate/tests/corpus`) holds snippets with their expected findings in comments; its
@@ -114,9 +115,12 @@ The formatter leaves the files of pnpm (`.changeset`, `CHANGELOG.md`) alone: pnp
 - Commit messages follow Conventional Commits.
 - The three packages share one version (`versioning.fixed` in `pnpm-workspace.yaml`). `maxBump: minor` keeps a major
   intent out of `main`: a breaking change waits in a branch of its own.
-- Only `release.yml` publishes, through npm trusted publishing (OIDC) in the environment `npm`. Never publish from a
-  machine, and never run `pnpm publish --dry-run` in this repository: `prepublishOnly` of the core runs
-  `napi pre-publish`, which publishes for real.
+- Only `release.yml` publishes, through npm trusted publishing (OIDC) in the environment `npm`, after the owner
+  approves. `prepublishOnly` of the three packages stops a publish from a machine: the core needs the
+  optionalDependencies that napi writes in the job that packs.
+- The wasm package installs only on request: `scripts/prepare-platform-packages.js` gives it `cpu: ["wasm32"]` after
+  `napi pre-publish`, which refuses the field. A load failure tells how to install `@compatgate/core-wasm32-wasi`
+  (`packages/core/src-js/binding.ts`).
 - The release flow: a push to `main` runs `pnpm version -r`; pending intents update the draft PR
   "chore: version packages". The owner marks it ready, which starts CI, and merges it. The merge brings a version
   that npm lacks: `release.yml` builds the binaries, packs the 12 tarballs and the release notes in a job without

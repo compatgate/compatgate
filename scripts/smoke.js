@@ -1,9 +1,9 @@
 // Installs the packages of a release into a copy of scripts/smoke, as a user installs them: by name and version, from
 // npmjs.com (`--version`) or from a local registry with the tarballs of a directory (`--tarballs`). It checks a finding
-// in oxlint and rspack. The native package of the platform must work on its own: the checks run once with the wasm
-// fallback moved away, and once more on the fallback alone, with the native package moved away, when npm installed it.
+// in oxlint and rspack, and the exact set of platform packages: one native package, and no wasm package: its `cpu`
+// field is wasm32, so npm installs it only on request.
 import { execFileSync, spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdtempSync, readdirSync, renameSync } from 'node:fs';
+import { cpSync, mkdtempSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -60,9 +60,8 @@ try {
 
   const scope = join(project, 'node_modules/@compatgate');
   const installed = readdirSync(scope).filter(name => name.startsWith('core-'));
-  const native = installed.filter(name => name !== 'core-wasm32-wasi');
-  if (native.length !== 1) {
-    failures.push(`expected one native platform package, got: ${installed.join(', ') || 'none'}`);
+  if (installed.length !== 1 || installed[0] === 'core-wasm32-wasi') {
+    failures.push(`expected one native platform package and no other, got: ${installed.join(', ') || 'none'}`);
   }
 
   const check = label => {
@@ -81,30 +80,9 @@ try {
     }
   };
 
-  // Each build is checked alone, with the other package moved away. NAPI_RS_FORCE_WASI would also force oxlint and
-  // rspack to wasm builds that a user does not install.
-  const checkWithout = (label, other) => {
-    const path = other === undefined ? undefined : join(scope, other);
-    if (path) {
-      renameSync(path, `${path}.away`);
-    }
-    try {
-      check(label);
-    } finally {
-      if (path) {
-        renameSync(`${path}.away`, path);
-      }
-    }
-  };
-  const wasm = 'core-wasm32-wasi';
-  const hasWasm = existsSync(join(scope, wasm));
-  checkWithout(native[0] ?? 'native', hasWasm ? wasm : undefined);
-  if (hasWasm && native.length === 1) {
-    checkWithout(wasm, native[0]);
-  }
+  check(installed[0] ?? 'native');
   if (failures.length === 0) {
-    const packages = [...native, ...(hasWasm ? [wasm] : [])];
-    console.log(`smoke ok: ${packages.join(', ')} report api.structuredClone`);
+    console.log(`smoke ok: ${installed.join(', ')} reports api.structuredClone`);
   }
 } finally {
   stop();

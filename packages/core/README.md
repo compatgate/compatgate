@@ -11,6 +11,10 @@ pass them in and show the findings.
 
 Node.js 22.12 or later. The package is ESM, and a CommonJS config loads it with `require`.
 
+Native binaries cover macOS, Linux (glibc and musl) and Windows on x64 and arm64. On another platform, such as
+FreeBSD or riscv64, install the WebAssembly build `@compatgate/core-wasm32-wasi`. Its `cpu` field is `wasm32`, so
+a package manager may skip it on your CPU; with npm, run `npm install --cpu=wasm32`.
+
 ## Quick start
 
 ```sh

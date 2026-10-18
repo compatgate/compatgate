@@ -54,7 +54,11 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: rustup target add ${{ matrix.target }}
+      # The values come from env: bash reads them on every host, PowerShell on Windows would not.
+      - shell: bash
+        run: rustup target add "$TARGET"
+        env:
+          TARGET: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           key: ${{ matrix.target }}
@@ -69,7 +73,11 @@ jobs:
           fallback: none
       - run: pnpm install --frozen-lockfile
       - working-directory: packages/core
-        run: pnpm run build:native --target ${{ matrix.target }} ${{ matrix.build }}
+        shell: bash
+        run: pnpm run build:native --target "$TARGET" ${BUILD:+"$BUILD"}
+        env:
+          TARGET: ${{ matrix.target }}
+          BUILD: ${{ matrix.build }}
       # The build must not change the committed loader and types: a change means a new export.
       - run: git diff --exit-code packages/core/binding.js packages/core/binding.d.ts
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -173,8 +181,12 @@ jobs:
           pattern: bindings-*
           path: packages/core/artifacts
       - run: pnpm -r run build:js && pnpm third-party
+      # The packages as release.yml packs them: napi writes the optionalDependencies of the core, then the platform
+      # packages get their licenses and the wasm package its `cpu`.
       - working-directory: packages/core
-        run: pnpm exec napi create-npm-dirs && pnpm exec napi artifacts --output-dir artifacts --npm-dir npm
+        run: |
+          pnpm exec napi create-npm-dirs && pnpm exec napi artifacts --output-dir artifacts --npm-dir npm
+          pnpm exec napi pre-publish -t npm --no-gh-release --skip-optional-publish
       - run: node scripts/prepare-platform-packages.js
       - shell: bash
         run: |

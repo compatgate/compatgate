@@ -38,14 +38,17 @@ async function waitFor(url) {
 }
 
 /**
- * The core as `napi pre-publish` publishes it: with the platform packages of the directory in its optionalDependencies.
- * Gives the path of the new tarball.
+ * The core with its optionalDependencies: as `napi pre-publish` wrote them, or, for a check with the tarball of one
+ * platform, the platform packages of the directory. Gives the path of the tarball.
  */
 function withPlatformPackages(core, platforms, directory) {
   const work = mkdtempSync(join(directory, 'core-'));
   execFileSync('tar', ['-xzf', core, '-C', work]);
   const manifest = join(work, 'package', 'package.json');
   const pkg = JSON.parse(readFileSync(manifest, 'utf8'));
+  if (pkg.optionalDependencies !== undefined) {
+    return core;
+  }
   pkg.optionalDependencies = Object.fromEntries(platforms.map(name => [name, pkg.version]));
   writeFileSync(manifest, `${JSON.stringify(pkg, null, 2)}\n`);
   const out = mkdtempSync(join(directory, '.core-'));

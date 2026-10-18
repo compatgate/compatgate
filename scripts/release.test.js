@@ -15,8 +15,11 @@ test('pnpm releases the three packages together and keeps their changelogs in th
   // A major change waits in a branch of its own: `main` releases minors and patches only.
   assert.match(workspace, /^ {2}maxBump: minor$/m);
   assert.equal(JSON.parse(readFileSync(new URL('package.json', root), 'utf8')).scripts.change, 'pnpm change');
-  // release.yml publishes the platform packages in a step of its own and waits for npm to serve them: the publish of
-  // the core must not publish them again.
-  const core = JSON.parse(readFileSync(new URL('packages/core/package.json', root), 'utf8'));
-  assert.equal(core.scripts.prepublishOnly, 'napi pre-publish -t npm --no-gh-release --skip-optional-publish');
+  // release.yml packs the tarballs and publishes them with `--ignore-scripts`; `pnpm pack` runs no prepublishOnly. A
+  // publish from a machine stops: the core needs the optionalDependencies that napi writes in the job pack.
+  for (const name of ['core', 'eslint', 'bundler']) {
+    const manifest = JSON.parse(readFileSync(new URL(`packages/${name}/package.json`, root), 'utf8'));
+    assert.match(manifest.scripts.prepublishOnly, /release\.yml/);
+    assert.match(manifest.scripts.prepublishOnly, /exit 1/);
+  }
 });

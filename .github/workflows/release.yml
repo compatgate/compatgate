@@ -108,10 +108,11 @@ jobs:
           path: packages/core/artifacts
       - working-directory: packages/core
         run: pnpm exec napi create-npm-dirs && pnpm exec napi artifacts --output-dir artifacts --npm-dir npm
-      - run: pnpm -r run build:js && pnpm third-party && node scripts/prepare-platform-packages.js
       # napi only writes the platform packages into the optionalDependencies of the core: the job publish publishes.
+      # Then the platform packages get their licenses and the wasm package its `cpu`, which napi refuses.
       - working-directory: packages/core
         run: pnpm exec napi pre-publish -t npm --no-gh-release --skip-optional-publish
+      - run: pnpm -r run build:js && pnpm third-party && node scripts/prepare-platform-packages.js
       # The notes of the release before anything reaches npm: a changelog without the version stops the release here.
       - run: |
           node scripts/publish.js pack .release

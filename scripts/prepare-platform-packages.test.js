@@ -45,3 +45,26 @@ test('a second run lists each license once', t => {
   const pkg = JSON.parse(readFileSync(join(npm, 'linux-x64-gnu', 'package.json'), 'utf8'));
   assert.deepEqual(pkg.files, ['a.node', 'LICENSE-MIT', 'LICENSE-APACHE', 'THIRD-PARTY-LICENSE']);
 });
+
+test('the wasm package installs only when the user asks for the wasm32 CPU', t => {
+  const npm = mkdtempSync(join(tmpdir(), 'compatgate-npm-'));
+  t.after(() => rmSync(npm, { recursive: true, force: true }));
+  const licenses = mkdtempSync(join(tmpdir(), 'compatgate-third-'));
+  t.after(() => rmSync(licenses, { recursive: true, force: true }));
+  const third = join(licenses, 'THIRD-PARTY-LICENSE');
+  writeFileSync(third, 'crates');
+  for (const [name, cpu] of [
+    ['darwin-arm64', ['arm64']],
+    ['wasm32-wasi', undefined],
+  ]) {
+    mkdirSync(join(npm, name));
+    writeFileSync(
+      join(npm, name, 'package.json'),
+      JSON.stringify({ name: `@compatgate/core-${name}`, files: [], cpu }),
+    );
+  }
+  preparePlatformPackages(npm, { thirdParty: third });
+  const cpuOf = name => JSON.parse(readFileSync(join(npm, name, 'package.json'), 'utf8')).cpu;
+  assert.deepEqual(cpuOf('wasm32-wasi'), ['wasm32']);
+  assert.deepEqual(cpuOf('darwin-arm64'), ['arm64']);
+});

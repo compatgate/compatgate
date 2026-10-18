@@ -50,7 +50,7 @@
     "build:debug": "pnpm run build:native:debug && pnpm run build:js",
     "typecheck": "tsc -p tsconfig.test.json",
     "test": "node --test \"test/**/*.test.ts\"",
-    "prepublishOnly": "napi pre-publish -t npm --no-gh-release --skip-optional-publish"
+    "prepublishOnly": "echo Publish through release.yml: it packs the packages as npm serves them. && exit 1"
   },
   "dependencies": {
     "browserslist": "^4.29.3",
@@ -79,7 +79,10 @@
       "x86_64-pc-windows-msvc",
       "aarch64-pc-windows-msvc",
       "wasm32-wasip1-threads"
-    ]
+    ],
+    "wasm": {
+      "optionalDependency": true
+    }
   },
   "engines": {
     "node": ">=22.12.0"

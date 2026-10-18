@@ -44,7 +44,8 @@
     "build": "pnpm run build:js",
     "build:debug": "pnpm run build:js",
     "typecheck": "tsc -p tsconfig.test.json",
-    "test": "node --test \"test/**/*.test.ts\""
+    "test": "node --test \"test/**/*.test.ts\"",
+    "prepublishOnly": "echo Publish through release.yml: it packs the packages as npm serves them. && exit 1"
   },
   "dependencies": {
     "@compatgate/core": "workspace:^"
