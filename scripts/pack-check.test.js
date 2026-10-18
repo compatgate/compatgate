@@ -7,7 +7,14 @@ const base = ['package.json', 'README.md', 'LICENSE-MIT', 'LICENSE-APACHE', 'dis
 
 test('a tarball with the expected files passes', () => {
   assert.deepEqual(
-    checkFiles('core', [...base, 'binding.js', 'binding.d.ts', 'THIRD-PARTY-LICENSE', 'docs/syntax-ranges.md']),
+    checkFiles('core', [
+      ...base,
+      'binding.js',
+      'binding.d.ts',
+      'THIRD-PARTY-LICENSE',
+      'compatgate.schema.json',
+      'docs/syntax-ranges.md',
+    ]),
     [],
   );
   assert.deepEqual(checkFiles('eslint', [...base, 'docs/configs.md']), []);
@@ -24,6 +31,7 @@ test('a missing required file is an error', () => {
       'core: missing binding.js',
       'core: missing binding.d.ts',
       'core: missing THIRD-PARTY-LICENSE',
+      'core: missing compatgate.schema.json',
     ],
   );
 });

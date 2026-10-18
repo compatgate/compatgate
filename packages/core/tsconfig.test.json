@@ -4,7 +4,8 @@
     "composite": false,
     "noEmit": true,
     "rootDir": "../..",
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true
   },
   "include": ["src-js", "test"]
 }

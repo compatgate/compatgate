@@ -88,6 +88,7 @@ A `node_modules` directory that holds the project root does not count, so a proj
 ### compatgate.jsonc
 
 The file lists the features that you may use beyond your targets.
+The package ships a JSON Schema of the file: `@compatgate/core/compatgate.schema.json`.
 The linter and the bundler read the same file, so an entry works in both places.
 
 ```jsonc

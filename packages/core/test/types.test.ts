@@ -3,13 +3,25 @@ import assert from 'node:assert/strict';
 
 import type * as binding from '../binding.js';
 import { createChecker } from './checker.ts';
-import type { AllowEntry, Configuration, Finding, ParseErrorKind, Suppression } from '../src-js/index.ts';
+import type {
+  AllowEntry,
+  AllowEntryInput,
+  Configuration,
+  Finding,
+  ParseErrorKind,
+  Suppression,
+} from '../src-js/index.ts';
 import type { CoreAllowIssue, CoreCheckResult, CoreChecker } from '../src-js/types.ts';
 
 // The public types are written by hand, so that the generated ones stay internal. These checks make
 // `pnpm typecheck` fail when the binding and the public types drift apart. Mutual assignability is not
 // enough: it lets an optional field differ, such as `since?` renamed on one side.
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
+// compatgate.schema.json is the source of the keys of an entry of compatgate.jsonc: the input type of an entry has
+// the same keys, and `baseDir`, which only the options take.
+type Schema = typeof import('../compatgate.schema.json', { with: { type: 'json' } });
+type SchemaEntryKeys = keyof Schema['definitions']['entry']['properties'];
 
 const checks: {
   result: Equal<ReturnType<binding.Checker['check']>, CoreCheckResult>;
@@ -20,6 +32,7 @@ const checks: {
   issueKind: Equal<binding.AllowIssueKind, CoreAllowIssue['kind']>;
   parseErrorKind: Equal<binding.ParseErrorKind, ParseErrorKind>;
   suppression: Equal<binding.SuppressionOutput, Suppression>;
+  schemaEntry: Equal<SchemaEntryKeys, Exclude<keyof AllowEntryInput, 'baseDir'>>;
 } = {
   result: true,
   checker: true,
@@ -29,6 +42,7 @@ const checks: {
   issueKind: true,
   parseErrorKind: true,
   suppression: true,
+  schemaEntry: true,
 };
 
 test('the binding types match the public types', () => {
