@@ -14,6 +14,10 @@
   dir: packages/core
   intents:
     - first-release
+"@compatgate/core@0.2.0":
+  dir: packages/core
+  intents:
+    - old-plums-pay
 "@compatgate/eslint@0.1.0":
   dir: packages/eslint
   intents:
