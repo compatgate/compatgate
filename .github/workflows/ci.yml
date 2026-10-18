@@ -2,25 +2,21 @@ name: CI
 
 on:
   pull_request:
-    # `labeled`: the label `release-check` runs the build of every platform on any pull request; another label runs
-    # nothing.
     # `ready_for_review`: the draft PR of a release gets its checks when the owner marks it ready.
-    types: [opened, synchronize, reopened, labeled, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
 
 permissions:
   contents: read
 
-# A label has a group of its own: a label must not cancel the checks of the code.
 concurrency:
-  group: ci-${{ github.ref }}-${{ github.event.action == 'labeled' && github.event.label.name || 'code' }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   check:
     name: Repository (data, format, lint, tests, types)
-    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -42,7 +38,6 @@ jobs:
 
   node:
     name: Packages on Node ${{ matrix.node }}
-    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -84,7 +79,6 @@ jobs:
 
   eslint-9:
     name: Rules on ESLint 9
-    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -105,7 +99,6 @@ jobs:
 
   package:
     name: Package contents (files, publint, attw)
-    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -134,7 +127,6 @@ jobs:
 
   deny:
     name: Crates (licenses, advisories)
-    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -145,7 +137,6 @@ jobs:
 
   zizmor:
     name: Workflows (zizmor)
-    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -163,7 +154,7 @@ jobs:
 
   dependency-review:
     name: New dependencies (advisories, licenses)
-    if: github.event_name == 'pull_request' && github.event.action != 'labeled'
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -182,18 +173,20 @@ jobs:
     # The binaries are built on pull requests only: `main` takes a pull request only when it is up to date with
     # `main`, so its head is the tree that lands. A push to `main` runs the cheap jobs, which fill the caches that
     # pull requests read.
-    if: github.event_name == 'pull_request' && github.event.action != 'labeled'
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
       pull-requests: read
     outputs:
-      build: ${{ steps.filter.outputs.build }}
+      build: ${{ steps.filter.outputs.build == 'true' || steps.lockfile.outputs.build == 'true' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The merge commit and its first parent, the head of the base branch.
+          fetch-depth: 2
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         with:
@@ -213,14 +206,36 @@ jobs:
               - 'scripts/local-registry.js'
               - 'scripts/verdaccio.yaml'
               - 'scripts/prepare-platform-packages.js'
+      # pnpm-lock.yaml stays out of the filter: most of its updates leave the binaries alone. The packages that build
+      # the binding change them.
+      - id: lockfile
+        run: |
+          if git diff HEAD^1 HEAD -- pnpm-lock.yaml | grep -qE '^[-+].*(napi-rs|emnapi)'; then
+            echo build=true >> "$GITHUB_OUTPUT"
+          fi
 
   build:
     name: Binaries
     needs: changes
-    # On the label `release-check` the job `changes` is skipped: `!cancelled()` runs the build anyway.
-    if: >-
-      !cancelled() && github.event_name == 'pull_request' &&
-      (github.event.action != 'labeled' || github.event.label.name == 'release-check') &&
-      (needs.changes.outputs.build == 'true' || contains(github.event.pull_request.labels.*.name, 'release-check'))
+    # Run the workflow Build by hand to build the binaries of a branch that does not change them.
+    if: needs.changes.outputs.build == 'true'
     # `$/` of GitHub fails actionlint 1.7.12.
     uses: ./.github/workflows/build.yml # zizmor: ignore[self-repository]
+
+  # The one required check of the ruleset of `main`: a new or renamed job needs no change of the ruleset, and a job
+  # skipped by mistake cannot pass as a required check. Only the jobs that skip on purpose may skip.
+  result:
+    name: CI result
+    needs: [check, node, eslint-9, package, deny, zizmor, dependency-review, changes, build]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -e '
+            to_entries
+            | map(select(.value.result == "failure" or .value.result == "cancelled"
+                or (.value.result == "skipped" and ([.key] | inside(["dependency-review", "changes", "build"]) | not))))
+            | if length == 0 then true else (map("\(.key): \(.value.result)") | join("\n") | halt_error) end'

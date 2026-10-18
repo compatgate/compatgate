@@ -2,6 +2,8 @@ name: Build
 
 on:
   workflow_call:
+  # A build of any branch by hand: Actions, Build, Run workflow.
+  workflow_dispatch:
 
 permissions:
   contents: read

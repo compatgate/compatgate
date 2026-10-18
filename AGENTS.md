@@ -130,8 +130,11 @@ The formatter leaves the files of pnpm (`.changeset`, `CHANGELOG.md`) alone: pnp
 ## CI
 
 - Pull requests run the cheap jobs; the binaries of 9 targets and their tests run when Rust, the binding, the
-  workflows or the smoke check change, or with the label `release-check`. A push to `main` runs the cheap jobs only:
-  `main` takes up-to-date pull requests, whose head CI built.
+  workflows, the smoke check or the napi packages in `pnpm-lock.yaml` change. To build another branch, run the
+  workflow Build by hand (Actions, Build, Run workflow). A push to `main` runs the cheap jobs only: `main` takes
+  up-to-date pull requests, whose head CI built.
+- The ruleset of `main` requires one check, `CI result`: it fails when any job of `ci.yml` fails, is cancelled or
+  skips where it should not. A new job goes into its `needs`, not into the ruleset.
 - Actions are pinned by commit SHA with the version in a comment. Every checkout sets `persist-credentials: false`;
   `taiki-e/install-action` installs pinned tools with `fallback: none`. A value of `${{ }}` reaches a `run` script
   through `env`, never inline. zizmor and actionlint check the workflows.
