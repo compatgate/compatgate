@@ -1,6 +1,6 @@
 {
   "name": "@compatgate/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Finds JavaScript syntax and APIs that your browserslist targets do not support.",
   "keywords": [
     "baseline",
